@@ -346,12 +346,51 @@ a:visited {
    5. LAYOUT COMPONENTS
    ================================ */
 
+/* Top Chrome (Header + Nav wrapper) */
+.top-chrome {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    max-height: calc(var(--header-height) + var(--nav-height));
+    overflow: hidden;
+    transition: max-height var(--transition-normal);
+}
+
+.top-chrome .header,
+.top-chrome .navigation {
+    transform: translateY(0);
+    transition: transform var(--transition-normal);
+    will-change: transform;
+}
+
+body.chrome-hidden .top-chrome {
+    max-height: 0;
+}
+
+body.chrome-hidden .top-chrome .header,
+body.chrome-hidden .top-chrome .navigation {
+    transform: translateY(-100%);
+}
+
+/* Remove individual borders when chrome is hidden (no ghost lines) */
+body.chrome-hidden .top-chrome .header {
+    border-bottom: none;
+    box-shadow: none;
+}
+
+body.chrome-hidden .top-chrome .navigation {
+    border-bottom: none;
+}
+
+
 /* Header */
 .header {
     background-color: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
-    position: sticky;
-    top: 0;
+    position: relative;
+    /* was sticky */
+    top: auto;
+    /* was 0 */
     z-index: 100;
     box-shadow: var(--shadow-sm);
 }
@@ -383,9 +422,16 @@ a:visited {
 .navigation {
     background-color: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
-    position: sticky;
-    top: var(--header-height);
+    position: relative;
+    /* was sticky */
+    top: auto;
+    /* was var(--header-height) */
     z-index: 99;
+}
+
+body.chrome-no-transition .header,
+body.chrome-no-transition .navigation {
+    transition: none !important;
 }
 
 .nav-content {
@@ -1037,7 +1083,7 @@ body:not(.steel-theme):not(.onyx-theme) .passage-text sup.footnote:hover {
 /* Search */
 .search-container {
     background-color: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: none;  /* <- was: 1px solid var(--border-color) */
     position: fixed;
     top: var(--header-height);
     left: 0;
@@ -1049,8 +1095,10 @@ body:not(.steel-theme):not(.onyx-theme) .passage-text sup.footnote:hover {
 }
 
 .search-container.active {
+    border-bottom: 1px solid var(--border-color);
     max-height: 600px;
 }
+
 
 .search-wrapper {
     max-width: var(--max-width);

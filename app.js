@@ -108,7 +108,7 @@ class BibleApp {
         // Cache for search debouncing
         this.searchTimeout = null;
 
-        // Search keyboard navigation state (DEFINE ONCE)
+        // Search keyboard navigation state
         this.searchSelectedIndex = -1;
         this.searchResultItems = [];
 
@@ -117,6 +117,57 @@ class BibleApp {
 
         // Reading position tracking
         this.lastScrollPosition = 0;
+
+        // Auto-hide chrome (Header + Nav)
+        this.chromeHidden = false;
+        this.chromeScrollLastY = window.scrollY || 0;
+        this.chromeDelta = 2;
+        this.chromeScrollTicking = false;
+        this.chromeSuspend = false;
+
+        // Define chrome functions ON THE INSTANCE (so they exist at runtime)
+        this.showChrome = () => {
+            if (!this.chromeHidden) return;
+            document.body.classList.remove('chrome-hidden');
+            this.chromeHidden = false;
+        };
+
+        this.hideChrome = () => {
+            if (this.chromeHidden) return;
+            document.body.classList.add('chrome-hidden');
+            this.chromeHidden = true;
+        };
+
+        this.handleChromeScroll = () => {
+            if (this.chromeScrollTicking) return;
+            this.chromeScrollTicking = true;
+            if (this.chromeSuspend) {
+                this.chromeScrollLastY = window.scrollY || window.pageYOffset || 0;
+                this.chromeScrollTicking = false;
+                return;
+            }
+
+            window.requestAnimationFrame(() => {
+                const y = window.scrollY || window.pageYOffset || 0;
+                const delta = y - this.chromeScrollLastY;
+
+                const modalOpen = !!document.querySelector('.modal.active');
+                const searchOpen = !!this.searchContainer?.classList.contains('active');
+
+                if (y <= 0 || modalOpen || searchOpen) {
+                    this.showChrome();
+                    this.chromeScrollLastY = y;
+                    this.chromeScrollTicking = false;
+                    return;
+                }
+
+                if (delta > this.chromeDelta) this.hideChrome();
+                if (delta < -this.chromeDelta) this.showChrome();
+
+                this.chromeScrollLastY = y;
+                this.chromeScrollTicking = false;
+            });
+        };
 
         // stores untouched HTML for current chapter
         this.originalPassageHtml = null;
@@ -131,6 +182,7 @@ class BibleApp {
         // Initialize app
         this.init();
     }
+
 
     // ================================
     // Initialization
@@ -580,13 +632,19 @@ class BibleApp {
             this.closeModal(this.userMenuModal)
         );
 
-        // Track scroll position
-        window.addEventListener('scroll', () => {
-            clearTimeout(this.scrollTimeout);
-            this.scrollTimeout = setTimeout(() => {
-                this.saveReadingPosition();
-            }, 500);
-        });
+        // Track scroll position + auto-hide chrome
+        window.addEventListener(
+            'scroll',
+            () => {
+                this.handleChromeScroll();
+
+                clearTimeout(this.scrollTimeout);
+                this.scrollTimeout = setTimeout(() => {
+                    this.saveReadingPosition();
+                }, 500);
+            },
+            { passive: true }
+        );
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => this.handleKeyboardShortcuts(e));
@@ -718,6 +776,8 @@ class BibleApp {
         const data = await this.bibleApi.fetchPassage(reference);
 
         if (!data) {
+            this.chromeSuspend = false;
+            document.body.classList.remove('chrome-no-transition');
             return;
         }
 
@@ -753,12 +813,24 @@ class BibleApp {
         // Reset verse selector
         this.currentVerseSpan.textContent = '1';
 
+        // Temporarily disable chrome hide/show while we programmatically scroll
+        this.chromeSuspend = true;
+        document.body.classList.add('chrome-no-transition');
+        this.showChrome(); // keep header/nav visible during load
+
         // Handle scroll position
         if (restoreScroll) {
             window.scrollTo(0, this.lastScrollPosition || 0);
         } else {
             window.scrollTo(0, 0);
         }
+
+        // Let the browser apply the scroll position first, then re-enable chrome logic
+        requestAnimationFrame(() => {
+            this.chromeScrollLastY = window.scrollY || window.pageYOffset || 0;
+            this.chromeSuspend = false;
+            document.body.classList.remove('chrome-no-transition');
+        });
 
         // Save reading position after loading
         this.saveReadingPosition();
