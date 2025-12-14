@@ -1105,6 +1105,24 @@ body:not(.steel-theme):not(.onyx-theme) .passage-text sup.footnote:hover {
     transform: translateX(4px);
 }
 
+/* Keyboard-selected search result (ArrowUp/ArrowDown) */
+.search-result-item.selected {
+    background-color: var(--bg-secondary);
+    border-color: var(--primary-color);
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    transform: translateX(4px);
+}
+
+/* Ensure selected state is visible in forced-colors/high-contrast modes */
+@media (forced-colors: active) {
+    .search-result-item.selected {
+        outline: 2px solid Highlight;
+        outline-offset: 2px;
+    }
+}
+
+
 .search-result-reference {
     font-weight: 600;
     color: var(--primary-color);
