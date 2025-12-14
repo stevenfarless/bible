@@ -697,16 +697,27 @@ class BibleApp {
     }
 
     displaySearchResults(results, query) {
-        const html = results.map(result => `
-            <div class="search-result-item" data-reference="${result.reference}">
-                <div class="search-result-reference">${result.reference}</div>
-                <div class="search-result-content">${this.highlightSearchTerm(result.content, query)}</div>
-            </div>
-        `).join('');
+        const html = results.map((result) => {
+            let highlightedContent = result.content;
+
+            try {
+                highlightedContent = this.highlightSearchTerm(result.content, query);
+            } catch (err) {
+                console.warn('displaySearchResults highlight failed; using raw content', err);
+                highlightedContent = result.content;
+            }
+
+            return `
+      <div class="search-result-item" data-reference="${result.reference}">
+        <div class="search-result-reference">${result.reference}</div>
+        <div class="search-result-content">${highlightedContent}</div>
+      </div>
+    `;
+        }).join('');
 
         this.searchResults.innerHTML = html;
 
-        // Add click handlers
+        // Re-attach click handlers
         this.searchResults.querySelectorAll('.search-result-item').forEach(item => {
             item.addEventListener('click', () => {
                 const reference = item.dataset.reference;
@@ -715,6 +726,7 @@ class BibleApp {
             });
         });
     }
+
 
     loadPassageFromReference(reference) {
         // Parse reference to extract book and chapter
@@ -726,9 +738,28 @@ class BibleApp {
         }
     }
 
+    escapeRegExp(str) {
+        return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
     highlightSearchTerm(text, term) {
-        const regex = new RegExp(term, 'gi');
-        return text.replace(regex, '<strong>$&</strong>');
+        if (text == null) return '';
+        const safeText = String(text);
+
+        const rawTerm = (term == null) ? '' : String(term).trim();
+        if (!rawTerm) return safeText;
+
+        // Treat the search term as literal text (not a regex)
+        const escapedTerm = this.escapeRegExp(rawTerm);
+
+        try {
+            const regex = new RegExp(escapedTerm, 'gi');
+            return safeText.replace(regex, (match) => `<strong>${match}</strong>`);
+        } catch (err) {
+            // If something unexpected happens, fail "open" (no highlighting) rather than breaking search UI
+            console.warn('highlightSearchTerm failed; returning un-highlighted text', err);
+            return safeText;
+        }
     }
 
     stripHTML(html) {
