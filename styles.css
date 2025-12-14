@@ -181,7 +181,6 @@ body.light-mode {
 :root.steel-theme,
 html.steel-theme,
 body.steel-theme {
-        {
         --bg-base: hsl(212, 30%, 9%);
         --bg-card: hsl(212, 28%, 12%);
         --bg-raised: hsl(212, 26%, 16%);
