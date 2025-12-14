@@ -121,8 +121,7 @@ class BibleApp {
         // Auto-hide chrome (Header + Nav)
         this.chromeHidden = false;
         this.chromeScrollLastY = window.scrollY || 0;
-        this.chromeHideThreshold = 0; // Allow hiding immediately (first scroll down)
-        this.chromeDelta = 2; // Smaller delta = triggers on first scroll gesture but still avoids jitter
+        this.chromeDelta = 2;
         this.chromeScrollTicking = false;
 
         // stores untouched HTML for current chapter
@@ -587,13 +586,19 @@ class BibleApp {
             this.closeModal(this.userMenuModal)
         );
 
-        // Track scroll position
-        window.addEventListener('scroll', () => {
-            clearTimeout(this.scrollTimeout);
-            this.scrollTimeout = setTimeout(() => {
-                this.saveReadingPosition();
-            }, 500);
-        });
+        // Track scroll position + auto-hide chrome
+        window.addEventListener(
+            'scroll',
+            () => {
+                this.handleChromeScroll();
+
+                clearTimeout(this.scrollTimeout);
+                this.scrollTimeout = setTimeout(() => {
+                    this.saveReadingPosition();
+                }, 500);
+            },
+            { passive: true }
+        );
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => this.handleKeyboardShortcuts(e));
