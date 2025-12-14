@@ -123,6 +123,7 @@ class BibleApp {
         this.chromeScrollLastY = window.scrollY || 0;
         this.chromeDelta = 2;
         this.chromeScrollTicking = false;
+        this.chromeSuspend = false;
 
         // Define chrome functions ON THE INSTANCE (so they exist at runtime)
         this.showChrome = () => {
@@ -140,6 +141,11 @@ class BibleApp {
         this.handleChromeScroll = () => {
             if (this.chromeScrollTicking) return;
             this.chromeScrollTicking = true;
+            if (this.chromeSuspend) {
+                this.chromeScrollLastY = window.scrollY || window.pageYOffset || 0;
+                this.chromeScrollTicking = false;
+                return;
+            }
 
             window.requestAnimationFrame(() => {
                 const y = window.scrollY || window.pageYOffset || 0;
@@ -770,6 +776,8 @@ class BibleApp {
         const data = await this.bibleApi.fetchPassage(reference);
 
         if (!data) {
+            this.chromeSuspend = false;
+            document.body.classList.remove('chrome-no-transition');
             return;
         }
 
@@ -805,12 +813,24 @@ class BibleApp {
         // Reset verse selector
         this.currentVerseSpan.textContent = '1';
 
+        // Temporarily disable chrome hide/show while we programmatically scroll
+        this.chromeSuspend = true;
+        document.body.classList.add('chrome-no-transition');
+        this.showChrome(); // keep header/nav visible during load
+
         // Handle scroll position
         if (restoreScroll) {
             window.scrollTo(0, this.lastScrollPosition || 0);
         } else {
             window.scrollTo(0, 0);
         }
+
+        // Let the browser apply the scroll position first, then re-enable chrome logic
+        requestAnimationFrame(() => {
+            this.chromeScrollLastY = window.scrollY || window.pageYOffset || 0;
+            this.chromeSuspend = false;
+            document.body.classList.remove('chrome-no-transition');
+        });
 
         // Save reading position after loading
         this.saveReadingPosition();
