@@ -372,6 +372,17 @@ body.chrome-hidden .top-chrome .navigation {
     transform: translateY(-100%);
 }
 
+/* Remove individual borders when chrome is hidden (no ghost lines) */
+body.chrome-hidden .top-chrome .header {
+    border-bottom: none;
+    box-shadow: none;
+}
+
+body.chrome-hidden .top-chrome .navigation {
+    border-bottom: none;
+}
+
+
 /* Header */
 .header {
     background-color: var(--bg-secondary);
