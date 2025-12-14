@@ -108,7 +108,7 @@ class BibleApp {
         // Cache for search debouncing
         this.searchTimeout = null;
 
-        // Search keyboard navigation state (DEFINE ONCE)
+        // Search keyboard navigation state
         this.searchSelectedIndex = -1;
         this.searchResultItems = [];
 
@@ -124,6 +124,45 @@ class BibleApp {
         this.chromeDelta = 2;
         this.chromeScrollTicking = false;
 
+        // Define chrome functions ON THE INSTANCE (so they exist at runtime)
+        this.showChrome = () => {
+            if (!this.chromeHidden) return;
+            document.body.classList.remove('chrome-hidden');
+            this.chromeHidden = false;
+        };
+
+        this.hideChrome = () => {
+            if (this.chromeHidden) return;
+            document.body.classList.add('chrome-hidden');
+            this.chromeHidden = true;
+        };
+
+        this.handleChromeScroll = () => {
+            if (this.chromeScrollTicking) return;
+            this.chromeScrollTicking = true;
+
+            window.requestAnimationFrame(() => {
+                const y = window.scrollY || window.pageYOffset || 0;
+                const delta = y - this.chromeScrollLastY;
+
+                const modalOpen = !!document.querySelector('.modal.active');
+                const searchOpen = !!this.searchContainer?.classList.contains('active');
+
+                if (y <= 0 || modalOpen || searchOpen) {
+                    this.showChrome();
+                    this.chromeScrollLastY = y;
+                    this.chromeScrollTicking = false;
+                    return;
+                }
+
+                if (delta > this.chromeDelta) this.hideChrome();
+                if (delta < -this.chromeDelta) this.showChrome();
+
+                this.chromeScrollLastY = y;
+                this.chromeScrollTicking = false;
+            });
+        };
+
         // stores untouched HTML for current chapter
         this.originalPassageHtml = null;
 
@@ -137,6 +176,7 @@ class BibleApp {
         // Initialize app
         this.init();
     }
+
 
     // ================================
     // Initialization
