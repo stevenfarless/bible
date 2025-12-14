@@ -27,14 +27,20 @@
     box-sizing: border-box;
 }
 
-
 /* ================================
    2. CSS CUSTOM PROPERTIES (VARIABLES)
    Official Dracula colors from https://spec.draculatheme.com
    ================================ */
 
 :root {
-    /* Dracula Theme Colors (Dark Mode - Default) */
+    /* ================================
+       Core tokens
+       - Dracula palette constants are the only theme-specific constants.
+       - Semantic tokens are the single source of truth.
+       - Existing app tokens (bg/text/border) are one-way aliases.
+       ================================ */
+
+    /* Dracula palette constants (official) */
     --dracula-bg: #282A36;
     --dracula-current-line: #44475A;
     --dracula-fg: #F8F8F2;
@@ -47,37 +53,11 @@
     --dracula-red: #FF5555;
     --dracula-yellow: #F1FA8C;
 
-    /* Dracula UI Shades */
+    /* Dracula UI shades */
     --dracula-bg-dark: #21222C;
     --dracula-bg-darker: #191A21;
     --dracula-bg-light: #343746;
     --dracula-bg-lighter: #424450;
-
-    /* Active Theme (Dracula by default) */
-    --primary-color: var(--dracula-purple);
-    --primary-dark: #9D75D6;
-    --primary-light: var(--dracula-pink);
-    --secondary-color: var(--dracula-orange);
-    --accent-color: var(--dracula-cyan);
-
-    /* Neutral Colors */
-    --text-primary: var(--dracula-fg);
-    --text-secondary: var(--dracula-comment);
-    --text-muted: var(--dracula-comment);
-    --bg-primary: var(--dracula-bg-dark);
-    --bg-secondary: var(--dracula-bg);
-    --bg-tertiary: var(--dracula-bg-light);
-    --border-color: var(--dracula-current-line);
-
-    /* Functional Colors */
-    --success-color: var(--dracula-green);
-    --warning-color: var(--dracula-yellow);
-    --error-color: var(--dracula-red);
-
-    /* Shadows */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
 
     /* Typography */
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -105,25 +85,50 @@
     --border-radius: 6px;
     --border-radius-lg: 12px;
 
+    /* Shadows (defaults tuned for dark UI) */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
 
     /* ================================
-       Sajid-style core UI tokens (dark-first HSL)
-       These variables map into the existing app tokens (bg/text/border)
+       Semantic tokens (canonical)
+       Default = Dracula Dark
        ================================ */
 
-    /* Neutrals (dark-first) */
-    --bg-base: hsl(220, 10%, 6%);
-    --bg-card: hsl(220, 10%, 10%);
-    --bg-raised: hsl(220, 10%, 14%);
+    /* Surfaces */
+    --bg-base: var(--dracula-bg-darker);
+    --bg-card: var(--dracula-bg-dark);
+    --bg-raised: var(--dracula-bg);
 
-    --text-heading: hsl(0, 0%, 92%);
-    --text-body: hsl(0, 0%, 78%);
-    --text-muted-2: hsl(0, 0%, 60%);
+    /* Text */
+    --text-heading: var(--dracula-fg);
+    --text-body: var(--dracula-comment);
+    --text-muted-2: var(--dracula-comment);
 
-    --border-neutral: hsl(220, 10%, 24%);
-    --highlight-border: hsl(220, 10%, 32%);
+    /* Borders */
+    --border-neutral: var(--dracula-current-line);
+    --highlight-border: color-mix(in srgb, var(--border-neutral) 60%, white);
 
-    /* Map Sajid tokens to existing app tokens used throughout the stylesheet */
+    /* Brand */
+    --primary-color: var(--dracula-purple);
+    --primary-dark: #9D75D6;
+    --primary-light: var(--dracula-pink);
+    --secondary-color: var(--dracula-orange);
+    --accent-color: var(--dracula-cyan);
+
+    /* Functional */
+    --success-color: var(--dracula-green);
+    --warning-color: var(--dracula-yellow);
+    --error-color: var(--dracula-red);
+
+    /* Component tokens */
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+    /* ================================
+       Legacy aliases (existing component contract)
+       Do not theme these directly; theme the semantic tokens above.
+       ================================ */
+
     --bg-primary: var(--bg-base);
     --bg-secondary: var(--bg-card);
     --bg-tertiary: var(--bg-raised);
@@ -133,219 +138,153 @@
     --text-muted: var(--text-muted-2);
 
     --border-color: var(--border-neutral);
-
-    /* Shadows tuned for reading (dark) */
-    --shadow-sm: 0 1px 3px hsla(0, 0%, 0%, 0.70);
-    --shadow-md: 0 6px 16px hsla(0, 0%, 0%, 0.65);
-    --shadow-lg: 0 16px 40px hsla(0, 0%, 0%, 0.70);
 }
+
 
 
 /* ================================
    3. THEME OVERRIDES
    ================================ */
 
-/* Alucard Theme (Light Mode) */
+/* Light mode (semantic, neutral) */
 body.light-mode {
-    /* Alucard Colors */
-    --alucard-bg: #F8F8F2;
-    --alucard-fg: #282A36;
-    --alucard-comment: #6272A4;
-    --alucard-cyan: #0D7D8C;
-    --alucard-green: #14710A;
-    --alucard-orange: #D3740D;
-    --alucard-pink: #C3356C;
-    --alucard-purple: #5B3599;
-    --alucard-red: #CB3A2A;
-    --alucard-yellow: #B89205;
+    --bg-base: hsl(0, 0%, 100%);
+    --bg-card: hsl(210, 30%, 98%);
+    --bg-raised: hsl(210, 20%, 92%);
 
-    /* Alucard UI Shades */
-    --alucard-bg-light: #FFFFFF;
-    --alucard-bg-dark: #E8E8E3;
-    --alucard-bg-darker: #D8D8D3;
+    --text-heading: hsl(220, 18%, 18%);
+    --text-body: hsl(220, 12%, 34%);
+    --text-muted-2: hsl(220, 10%, 52%);
 
-    /* Override theme variables for light mode */
-    --primary-color: var(--alucard-purple);
-    --primary-dark: #4A2A7A;
-    --primary-light: var(--alucard-pink);
-    --secondary-color: var(--alucard-orange);
-    --accent-color: var(--alucard-cyan);
+    --border-neutral: hsl(220, 12%, 84%);
+    --highlight-border: hsl(220, 20%, 94%);
 
-    --text-primary: var(--alucard-fg);
-    --text-secondary: var(--alucard-comment);
-    --text-muted: var(--alucard-comment);
-    --bg-primary: var(--alucard-bg-light);
-    --bg-secondary: var(--alucard-bg);
-    --bg-tertiary: var(--alucard-bg-dark);
-    --border-color: var(--alucard-bg-darker);
+    /* Keep the "Dracula brand" feel without introducing a named palette */
+    --primary-color: hsl(265, 60%, 45%);
+    --primary-dark: hsl(265, 62%, 38%);
+    --primary-light: hsl(315, 85%, 55%);
+    --secondary-color: hsl(28, 80%, 45%);
+    --accent-color: hsl(190, 70%, 30%);
 
-    --success-color: var(--alucard-green);
-    --warning-color: var(--alucard-yellow);
-    --error-color: var(--alucard-red);
+    --success-color: hsl(140, 50%, 35%);
+    --warning-color: hsl(45, 85%, 40%);
+    --error-color: hsl(6, 70%, 45%);
 
-    /* Lighter shadows for light mode */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
 }
 
-/* Steel Theme (Cool Blue - Dark Mode) */
+/* Steel theme (semantic HSL) */
 body.steel-theme {
-    /* Steel Dark Mode Colors */
-    --steel-blue: #4682B4;
-    --deep-blue: #2E5C8A;
-    --light-steel: #6FA8DC;
-    --slate: #556B7C;
-    --ice: #A8D4E8;
-    --mint: #7FCDBB;
-    --amber: #E8A15F;
+    --bg-base: hsl(212, 30%, 9%);
+    --bg-card: hsl(212, 28%, 12%);
+    --bg-raised: hsl(212, 26%, 16%);
 
-    /* Steel Dark Backgrounds */
-    --steel-dark-navy: #1B2838;
-    --steel-darker-navy: #141E2B;
-    --steel-medium-navy: #243447;
-    --steel-light-navy: #2E4156;
+    --text-heading: hsl(210, 20%, 92%);
+    --text-body: hsl(214, 14%, 68%);
+    --text-muted-2: hsl(214, 10%, 54%);
 
-    /* Override theme variables */
-    --primary-color: var(--steel-blue);
-    --primary-dark: var(--deep-blue);
-    --primary-light: var(--light-steel);
-    --secondary-color: var(--amber);
-    --accent-color: var(--ice);
+    --border-neutral: hsl(212, 18%, 26%);
+    --highlight-border: hsl(212, 18%, 34%);
 
-    --text-primary: #E8EDF2;
-    --text-secondary: #8799AC;
-    --text-muted: #8799AC;
+    --primary-color: hsl(210, 55%, 56%);
+    --primary-dark: hsl(210, 55%, 44%);
+    --primary-light: hsl(210, 70%, 70%);
+    --secondary-color: hsl(32, 70%, 60%);
+    --accent-color: hsl(195, 70%, 78%);
 
-    --bg-primary: var(--steel-darker-navy);
-    --bg-secondary: var(--steel-dark-navy);
-    --bg-tertiary: var(--steel-medium-navy);
-    --border-color: var(--steel-light-navy);
-
-    --success-color: var(--mint);
-    --warning-color: var(--amber);
-    --error-color: #D9534F;
-
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+    --success-color: hsl(160, 45%, 52%);
+    --warning-color: hsl(32, 70%, 60%);
+    --error-color: hsl(6, 65%, 56%);
 }
 
-/* Steel Light Mode */
 body.steel-theme.light-mode {
-    /* Steel Light Backgrounds */
-    --steel-light-bg: #F0F4F8;
-    --steel-lighter-bg: #FFFFFF;
-    --steel-light-secondary: #E1E8ED;
-    --steel-light-tertiary: #D1DCE5;
+    --bg-base: hsl(210, 30%, 98%);
+    --bg-card: hsl(210, 28%, 96%);
+    --bg-raised: hsl(210, 25%, 92%);
 
-    /* Override for light mode */
-    --primary-color: var(--steel-blue);
-    --primary-dark: var(--deep-blue);
-    --accent-color: var(--deep-blue);
+    --text-heading: hsl(212, 30%, 14%);
+    --text-body: hsl(212, 18%, 34%);
+    --text-muted-2: hsl(212, 12%, 50%);
 
-    --text-primary: #1B2838;
-    --text-secondary: #556B7C;
-    --text-muted: #8799AC;
+    --border-neutral: hsl(210, 20%, 86%);
+    --highlight-border: hsl(210, 25%, 94%);
 
-    --bg-primary: var(--steel-lighter-bg);
-    --bg-secondary: var(--steel-light-bg);
-    --bg-tertiary: var(--steel-light-secondary);
-    --border-color: var(--steel-light-tertiary);
+    --primary-color: hsl(210, 52%, 42%);
+    --primary-dark: hsl(210, 55%, 34%);
+    --primary-light: hsl(210, 55%, 52%);
+    --secondary-color: hsl(32, 70%, 46%);
+    --accent-color: hsl(210, 55%, 34%);
 
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --success-color: hsl(160, 42%, 36%);
+    --warning-color: hsl(32, 70%, 46%);
+    --error-color: hsl(6, 60%, 44%);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
 }
 
-/* Onyx Theme (Pure Black/White - OLED Friendly) */
+/* Onyx theme (semantic; OLED-friendly) */
 body.onyx-theme {
-    /* Onyx Dark Mode Colors - OLED Black */
-    --onyx-gold: #D4AF37;
-    --onyx-silver: #C0C0C0;
-    --onyx-bronze: #CD7F32;
-    --onyx-blue: #6B9BD1;
-    --onyx-green: #67C23A;
-    --onyx-red: #E86C5B;
-    --onyx-purple: #9B7EBD;
+    --bg-base: hsl(0, 0%, 0%);
+    --bg-card: hsl(0, 0%, 4%);
+    --bg-raised: hsl(0, 0%, 10%);
 
-    /* Pure Black Backgrounds */
-    --onyx-black: #000000;
-    --onyx-dark-gray: #0A0A0A;
-    --onyx-medium-gray: #1A1A1A;
-    --onyx-light-gray: #2A2A2A;
+    --text-heading: hsl(0, 0%, 96%);
+    --text-body: hsl(0, 0%, 72%);
+    --text-muted-2: hsl(0, 0%, 55%);
 
-    /* Override theme variables */
-    --primary-color: var(--onyx-gold);
-    --primary-dark: #B8941F;
-    --primary-light: #E6C968;
-    --secondary-color: var(--onyx-bronze);
-    --accent-color: var(--onyx-silver);
+    --border-neutral: hsl(0, 0%, 18%);
+    --highlight-border: hsl(0, 0%, 26%);
 
-    --text-primary: #F5F5F5;
-    --text-secondary: #B8B8B8;
-    --text-muted: #888888;
+    --primary-color: hsl(45, 85%, 55%);
+    --primary-dark: hsl(45, 85%, 45%);
+    --primary-light: hsl(45, 95%, 68%);
+    --secondary-color: hsl(30, 70%, 52%);
+    --accent-color: hsl(0, 0%, 78%);
 
-    --bg-primary: var(--onyx-black);
-    --bg-secondary: var(--onyx-dark-gray);
-    --bg-tertiary: var(--onyx-medium-gray);
-    --border-color: var(--onyx-light-gray);
+    --success-color: hsl(110, 45%, 50%);
+    --warning-color: hsl(45, 85%, 55%);
+    --error-color: hsl(8, 65%, 56%);
 
-    --success-color: var(--onyx-green);
-    --warning-color: var(--onyx-gold);
-    --error-color: var(--onyx-red);
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 26%, transparent);
 
-    --shadow-sm: 0 1px 3px rgba(255, 255, 255, 0.1);
-    --shadow-md: 0 4px 6px rgba(255, 255, 255, 0.1);
+    --shadow-sm: 0 1px 3px rgba(255, 255, 255, 0.10);
+    --shadow-md: 0 4px 6px rgba(255, 255, 255, 0.10);
     --shadow-lg: 0 10px 15px rgba(255, 255, 255, 0.15);
 }
 
-/* Onyx Light Mode - Pure White */
 body.onyx-theme.light-mode {
-    /* Onyx Light Colors */
-    --onyx-dark-gold: #8B7500;
-    --onyx-dark-bronze: #8B5A00;
-    --onyx-dark-blue: #2C5F9E;
-    --onyx-dark-gray-text: #333333;
+    --bg-base: hsl(0, 0%, 100%);
+    --bg-card: hsl(0, 0%, 98%);
+    --bg-raised: hsl(0, 0%, 94%);
 
-    /* Pure White Backgrounds */
-    --onyx-white: #FFFFFF;
-    --onyx-off-white: #F9F9F9;
-    --onyx-light-gray-bg: #EFEFEF;
-    --onyx-border-light: #DDDDDD;
+    --text-heading: hsl(0, 0%, 20%);
+    --text-body: hsl(0, 0%, 40%);
+    --text-muted-2: hsl(0, 0%, 58%);
 
-    /* Override for light mode */
-    --primary-color: var(--onyx-dark-gold);
-    --primary-dark: #6B5A00;
-    --primary-light: #A08C1A;
-    --secondary-color: var(--onyx-dark-bronze);
-    --accent-color: var(--onyx-dark-blue);
+    --border-neutral: hsl(0, 0%, 86%);
+    --highlight-border: hsl(0, 0%, 94%);
 
-    --text-primary: var(--onyx-dark-gray-text);
-    --text-secondary: #666666;
-    --text-muted: #999999;
+    --primary-color: hsl(45, 75%, 34%);
+    --primary-dark: hsl(45, 75%, 28%);
+    --primary-light: hsl(45, 70%, 44%);
+    --secondary-color: hsl(30, 60%, 36%);
+    --accent-color: hsl(210, 55%, 38%);
 
-    --bg-primary: var(--onyx-white);
-    --bg-secondary: var(--onyx-off-white);
-    --bg-tertiary: var(--onyx-light-gray-bg);
-    --border-color: var(--onyx-border-light);
-
-    --success-color: #52A832;
-    --warning-color: var(--onyx-dark-gold);
-    --error-color: #D64436;
+    --success-color: hsl(110, 45%, 34%);
+    --warning-color: hsl(45, 75%, 34%);
+    --error-color: hsl(8, 60%, 44%);
 
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.08);
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.12);
 }
 
-
-
-
-/* Reader Theme (Bible long-session, low-fatigue) */
-
+/* Reader theme (semantic; long-session, low-fatigue) */
 body.reader-theme {
-    /* Warm dark (default) */
     --bg-base: hsl(30, 20%, 10%);
     --bg-card: hsl(30, 18%, 14%);
     --bg-raised: hsl(30, 16%, 18%);
@@ -357,21 +296,18 @@ body.reader-theme {
     --border-neutral: hsl(30, 12%, 26%);
     --highlight-border: hsl(30, 18%, 32%);
 
-    /* Brand: calm teal + subtle gilded accent */
     --primary-color: hsl(190, 38%, 48%);
     --primary-dark: hsl(190, 38%, 36%);
     --primary-light: hsl(190, 50%, 60%);
     --secondary-color: hsl(45, 80%, 60%);
     --accent-color: hsl(190, 35%, 55%);
 
-    /* Semantic */
     --success-color: hsl(145, 32%, 52%);
     --warning-color: hsl(40, 70%, 58%);
     --error-color: hsl(4, 65%, 58%);
 }
 
 body.reader-theme.light-mode {
-    /* Paper/parchment */
     --bg-base: hsl(40, 32%, 96%);
     --bg-card: hsl(40, 28%, 94%);
     --bg-raised: hsl(40, 26%, 99%);
@@ -396,10 +332,6 @@ body.reader-theme.light-mode {
     --shadow-sm: 0 1px 2px hsla(30, 30%, 20%, 0.12);
     --shadow-md: 0 6px 16px hsla(30, 30%, 20%, 0.16);
     --shadow-lg: 0 16px 40px hsla(30, 30%, 20%, 0.20);
-}
-
-.reader-theme .passage-text sup.footnote:hover {
-    background-color: color-mix(in srgb, var(--primary-color) 18%, transparent);
 }
 
 
@@ -1141,29 +1073,9 @@ body.light-mode .crossref-item {
 
 .passage-text sup.footnote:hover {
     transform: scale(1.15);
+    background-color: var(--footnote-hover-bg);
 }
 
-/* Theme-specific footnote hover backgrounds */
-.steel-theme .passage-text sup.footnote:hover {
-    background-color: rgba(70, 130, 180, 0.15);
-}
-
-body:not(.steel-theme):not(.onyx-theme) .passage-text sup.footnote:hover {
-    background-color: rgba(189, 147, 249, 0.15);
-}
-
-/* Onyx theme - target the anchor tag specifically */
-.onyx-theme .passage-text sup.footnote a {
-    color: #ffd700 !important;
-}
-
-.onyx-theme .passage-text sup.footnote:hover a {
-    color: #ffed4e !important;
-}
-
-.onyx-theme .passage-text sup.footnote:hover {
-    background-color: rgba(255, 215, 0, 0.25) !important;
-}
 
 .passage-footer {
     margin-top: var(--spacing-xl);
@@ -1517,6 +1429,7 @@ body:not(.steel-theme):not(.onyx-theme) .passage-text sup.footnote:hover {
 }
 
 
+
 /* ================================
    8. INTERACTIVE STATES & EFFECTS
    ================================ */
@@ -1667,6 +1580,7 @@ body.light-mode .selected-verse-glow {
 }
 
 
+
 /* ================================
    10. RESPONSIVE DESIGN
    ================================ */
@@ -1753,6 +1667,7 @@ body.light-mode .selected-verse-glow {
 }
 
 
+
 /* ================================
    11. UTILITY CLASSES
    ================================ */
@@ -1789,6 +1704,7 @@ body.hide-verse-numbers .passage-text .verse-num {
     margin-top: 1.5rem;
     margin-bottom: 0.75rem;
 }
+
 
 
 /* ================================
