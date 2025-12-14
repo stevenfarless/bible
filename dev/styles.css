@@ -1083,7 +1083,7 @@ body:not(.steel-theme):not(.onyx-theme) .passage-text sup.footnote:hover {
 /* Search */
 .search-container {
     background-color: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: none;  /* <- was: 1px solid var(--border-color) */
     position: fixed;
     top: var(--header-height);
     left: 0;
@@ -1095,8 +1095,10 @@ body:not(.steel-theme):not(.onyx-theme) .passage-text sup.footnote:hover {
 }
 
 .search-container.active {
+    border-bottom: 1px solid var(--border-color);
     max-height: 600px;
 }
+
 
 .search-wrapper {
     max-width: var(--max-width);
