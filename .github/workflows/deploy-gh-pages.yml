@@ -1,4 +1,4 @@
-name: Deploy bugfix to GitHub Pages
+name: Deploy bugfixes to GitHub Pages
 
 permissions:
   contents: read
@@ -8,7 +8,7 @@ permissions:
 on:
   push:
     branches:
-      - bugfix
+      - bugfixes
 
 jobs:
   build-and-deploy:
@@ -20,11 +20,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Deploy to GitHub Pages (bugfix)
+      - name: Deploy to GitHub Pages (bugfixes)
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.ACTIONS }}
           publish_branch: gh-pages
           publish_dir: ./
-          destination_dir: bugfix
+          destination_dir: bugfixes
           keep_files: true
