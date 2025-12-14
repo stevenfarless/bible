@@ -118,6 +118,13 @@ class BibleApp {
         // Reading position tracking
         this.lastScrollPosition = 0;
 
+        // Auto-hide chrome (Header + Nav)
+        this.chromeHidden = false;
+        this.chromeScrollLastY = window.scrollY || 0;
+        this.chromeHideThreshold = 48; // px scrolled before hiding is allowed
+        this.chromeDelta = 6; // px direction change before toggle (prevents jitter)
+        this.chromeScrollTicking = false;
+
         // stores untouched HTML for current chapter
         this.originalPassageHtml = null;
 
