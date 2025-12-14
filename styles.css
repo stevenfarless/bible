@@ -418,6 +418,11 @@ body.chrome-hidden .top-chrome .navigation {
     z-index: 99;
 }
 
+body.chrome-no-transition .header,
+body.chrome-no-transition .navigation {
+    transition: none !important;
+}
+
 .nav-content {
     max-width: var(--max-width);
     margin: 0 auto;
