@@ -104,6 +104,40 @@
     /* Border Radius */
     --border-radius: 6px;
     --border-radius-lg: 12px;
+
+
+    /* ================================
+       Sajid-style core UI tokens (dark-first HSL)
+       These variables map into the existing app tokens (bg/text/border)
+       ================================ */
+
+    /* Neutrals (dark-first) */
+    --bg-base: hsl(220, 10%, 6%);
+    --bg-card: hsl(220, 10%, 10%);
+    --bg-raised: hsl(220, 10%, 14%);
+
+    --text-heading: hsl(0, 0%, 92%);
+    --text-body: hsl(0, 0%, 78%);
+    --text-muted-2: hsl(0, 0%, 60%);
+
+    --border-neutral: hsl(220, 10%, 24%);
+    --highlight-border: hsl(220, 10%, 32%);
+
+    /* Map Sajid tokens to existing app tokens used throughout the stylesheet */
+    --bg-primary: var(--bg-base);
+    --bg-secondary: var(--bg-card);
+    --bg-tertiary: var(--bg-raised);
+
+    --text-primary: var(--text-heading);
+    --text-secondary: var(--text-body);
+    --text-muted: var(--text-muted-2);
+
+    --border-color: var(--border-neutral);
+
+    /* Shadows tuned for reading (dark) */
+    --shadow-sm: 0 1px 3px hsla(0, 0%, 0%, 0.70);
+    --shadow-md: 0 6px 16px hsla(0, 0%, 0%, 0.65);
+    --shadow-lg: 0 16px 40px hsla(0, 0%, 0%, 0.70);
 }
 
 
@@ -303,6 +337,69 @@ body.onyx-theme.light-mode {
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.08);
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.12);
+}
+
+
+
+
+/* Reader Theme (Bible long-session, low-fatigue) */
+
+body.reader-theme {
+    /* Warm dark (default) */
+    --bg-base: hsl(30, 20%, 10%);
+    --bg-card: hsl(30, 18%, 14%);
+    --bg-raised: hsl(30, 16%, 18%);
+
+    --text-heading: hsl(40, 35%, 92%);
+    --text-body: hsl(40, 22%, 80%);
+    --text-muted-2: hsl(40, 12%, 56%);
+
+    --border-neutral: hsl(30, 12%, 26%);
+    --highlight-border: hsl(30, 18%, 32%);
+
+    /* Brand: calm teal + subtle gilded accent */
+    --primary-color: hsl(190, 38%, 48%);
+    --primary-dark: hsl(190, 38%, 36%);
+    --primary-light: hsl(190, 50%, 60%);
+    --secondary-color: hsl(45, 80%, 60%);
+    --accent-color: hsl(190, 35%, 55%);
+
+    /* Semantic */
+    --success-color: hsl(145, 32%, 52%);
+    --warning-color: hsl(40, 70%, 58%);
+    --error-color: hsl(4, 65%, 58%);
+}
+
+body.reader-theme.light-mode {
+    /* Paper/parchment */
+    --bg-base: hsl(40, 32%, 96%);
+    --bg-card: hsl(40, 28%, 94%);
+    --bg-raised: hsl(40, 26%, 99%);
+
+    --text-heading: hsl(30, 25%, 18%);
+    --text-body: hsl(30, 18%, 26%);
+    --text-muted-2: hsl(30, 10%, 54%);
+
+    --border-neutral: hsl(35, 20%, 85%);
+    --highlight-border: hsl(40, 30%, 94%);
+
+    --primary-color: hsl(190, 40%, 34%);
+    --primary-dark: hsl(190, 44%, 26%);
+    --primary-light: hsl(190, 45%, 44%);
+    --secondary-color: hsl(38, 65%, 46%);
+    --accent-color: hsl(190, 38%, 30%);
+
+    --success-color: hsl(145, 35%, 36%);
+    --warning-color: hsl(38, 80%, 46%);
+    --error-color: hsl(2, 60%, 48%);
+
+    --shadow-sm: 0 1px 2px hsla(30, 30%, 20%, 0.12);
+    --shadow-md: 0 6px 16px hsla(30, 30%, 20%, 0.16);
+    --shadow-lg: 0 16px 40px hsla(30, 30%, 20%, 0.20);
+}
+
+.reader-theme .passage-text sup.footnote:hover {
+    background-color: color-mix(in srgb, var(--primary-color) 18%, transparent);
 }
 
 
@@ -1083,7 +1180,8 @@ body:not(.steel-theme):not(.onyx-theme) .passage-text sup.footnote:hover {
 /* Search */
 .search-container {
     background-color: var(--bg-secondary);
-    border-bottom: none;  /* <- was: 1px solid var(--border-color) */
+    border-bottom: none;
+    /* <- was: 1px solid var(--border-color) */
     position: fixed;
     top: var(--header-height);
     left: 0;

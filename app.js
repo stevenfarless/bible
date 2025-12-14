@@ -1602,8 +1602,18 @@ class BibleApp {
         if (this.currentUser) {
             // Show user menu
             document.getElementById('userEmail').textContent = this.currentUser.email;
-            const theme = document.body.classList.contains('light-mode') ? 'Alucard (Light)' : 'Dracula (Dark)';
-            document.getElementById('userTheme').textContent = theme;
+            const isLight = document.body.classList.contains('light-mode');
+            const colorTheme = this.state?.colorTheme || localStorage.getItem('colorTheme') || 'dracula';
+
+            const themeNameMap = {
+                dracula: isLight ? 'Alucard (Light)' : 'Dracula (Dark)',
+                steel: `Steel (${isLight ? 'Light' : 'Dark'})`,
+                onyx: `Onyx (${isLight ? 'Light' : 'Dark'})`,
+                reader: `Reader (${isLight ? 'Parchment' : 'Night'})`
+            };
+
+            document.getElementById('userTheme').textContent =
+                themeNameMap[colorTheme] || (isLight ? 'Alucard (Light)' : 'Dracula (Dark)');
             this.openModal(this.userMenuModal);
         } else {
             // Show login modal
