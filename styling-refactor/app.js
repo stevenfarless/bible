@@ -1134,7 +1134,10 @@ class BibleApp {
         }
 
         // Auto-expand defaults if nothing has been expanded yet
-        if (this.searchExpandedTestaments.size === 0 && this.searchExpandedBooks.size === 0) {
+        if (
+            this.searchExpandedTestaments.size === 0 &&
+            this.searchExpandedBooks.size === 0
+        ) {
             const firstGroup = groups[0];
             if (firstGroup) {
                 this.searchExpandedTestaments.add(firstGroup.heading);
@@ -1225,7 +1228,6 @@ class BibleApp {
                     } else {
                         this.searchExpandedTestaments.add(testament);
                     }
-                    // Re-render with new expansion state
                     this.displaySearchResults(results, query);
                 });
             });
