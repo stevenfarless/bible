@@ -89,6 +89,7 @@ export function cacheElements(app) {
 export function loadTheme(app) {
 	const savedLightMode = localStorage.getItem('lightMode') === 'true';
 	if (savedLightMode) {
+		document.documentElement.classList.add('light-mode');
 		document.body.classList.add('light-mode');
 	}
 	updateThemeIcon(savedLightMode);
@@ -96,14 +97,14 @@ export function loadTheme(app) {
 
 // Toggle between light and dark mode
 export async function toggleTheme(app) {
+	document.documentElement.classList.toggle('light-mode');
 	document.body.classList.toggle('light-mode');
+
 	const isLightMode = document.body.classList.contains('light-mode');
 
-	// Save to Firebase if logged in
 	if (app.currentUser) {
 		await app.database.ref(`users/${app.currentUser.uid}/settings/lightMode`).set(isLightMode);
 	} else {
-		// Fallback to localStorage if not logged in
 		localStorage.setItem('lightMode', isLightMode);
 	}
 
@@ -150,21 +151,21 @@ export function updateThemeIcon(isLightMode) {
 
 // Change color theme (dracula, steel, or onyx)
 export async function changeColorTheme(app, theme) {
-    // Remove all theme classes (dracula is default = no extra class)
-    document.body.classList.remove("steel-theme", "onyx-theme", "reader-theme");
+	// Remove all theme classes (dracula is default = no extra class)
+	document.body.classList.remove("steel-theme", "onyx-theme", "reader-theme");
 
-    // Add new theme class
-    if (theme === "steel") document.body.classList.add("steel-theme");
-    else if (theme === "onyx") document.body.classList.add("onyx-theme");
-    else if (theme === "reader") document.body.classList.add("reader-theme");
+	// Add new theme class
+	if (theme === "steel") document.body.classList.add("steel-theme");
+	else if (theme === "onyx") document.body.classList.add("onyx-theme");
+	else if (theme === "reader") document.body.classList.add("reader-theme");
 
-    // Save to Firebase if logged in
-    if (app.currentUser) {
-        await app.database
-            .ref(`users/${app.currentUser.uid}/settings/colorTheme`)
-            .set(theme);
-    } else {
-        // Fallback to localStorage if not logged in
-        localStorage.setItem("colorTheme", theme);
-    }
+	// Save to Firebase if logged in
+	if (app.currentUser) {
+		await app.database
+			.ref(`users/${app.currentUser.uid}/settings/colorTheme`)
+			.set(theme);
+	} else {
+		// Fallback to localStorage if not logged in
+		localStorage.setItem("colorTheme", theme);
+	}
 }
