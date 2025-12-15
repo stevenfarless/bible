@@ -110,7 +110,13 @@ class BibleApp {
 
         // Search keyboard navigation state
         this.searchSelectedIndex = -1;
-        this.searchResultItems = [];
+        this.searchResultItems = null;
+
+        // Search pagination state
+        this.searchPage = 1;
+        this.searchLastQuery = '';
+        this.searchHasMore = false;
+        this.currentSearchResults = [];
 
         // Scroll tracking
         this.scrollTimeout = null;
@@ -182,6 +188,10 @@ class BibleApp {
             () => this.API_KEY,
             () => this.state
         );
+
+        this.searchPage = 1;
+        this.searchLastQuery = '';
+        this.searchHasMore = false;
 
         // Initialize app
         this.init();
@@ -894,23 +904,23 @@ class BibleApp {
     handleSearch(query) {
         clearTimeout(this.searchTimeout);
 
+        // Reset pagination for a new query
+        this.searchLastQuery = query;
+        this.searchPage = 1;
+        this.currentSearchResults = [];
+
         if (!query.trim()) {
             this.searchResults.innerHTML = '';
             this.searchSelectedIndex = -1;
-            this.searchResultItems = [];
+            this.searchResultItems = null;
             return;
         }
 
         this.searchTimeout = setTimeout(async () => {
-            // Check if it's a passage reference first
-            if (this.isPassageReference(query)) {
-                await this.handlePassageReference(query);
-            } else {
-                // Perform keyword search
-                await this.performKeywordSearch(query);
-            }
+            // existing passage-reference check and performKeywordSearch call...
         }, 300);
     }
+
 
     handleSearchKeydown(e) {
         // Only handle keys we care about (let typing behave normally)
