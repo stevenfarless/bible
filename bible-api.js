@@ -54,7 +54,8 @@ export class BibleApi {
 
         const params = new URLSearchParams({
             q: query,
-            'page-size': 20
+            'page-size': 100, // ESV API max per page
+            page: 1,
         });
 
         try {
