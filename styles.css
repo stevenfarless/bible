@@ -1135,7 +1135,6 @@ body.light-mode .crossref-item {
     max-height: 600px;
 }
 
-
 .search-wrapper {
     max-width: var(--max-width);
     margin: 0 auto;
@@ -1170,7 +1169,6 @@ body.light-mode .crossref-item {
     max-width: var(--max-width);
     margin: 0 auto;
     max-height: 400px;
-    /* overflow-y: auto; */
     padding: 8px;
     overflow-y: scroll;
     scrollbar-width: none;
@@ -1178,82 +1176,66 @@ body.light-mode .crossref-item {
 
 .search-results::-webkit-scrollbar {
     display: none;
-    /* hide scrollbar in WebKit/Chromium */
 }
 
-.search-result-item {
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-sm);
-    background-color: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.search-result-item:hover {
-    background-color: var(--bg-secondary);
-    border-color: var(--primary-color);
-    transform: translateX(4px);
-}
-
-/* Keyboard-selected search result (ArrowUp/ArrowDown) */
-.search-result-item.selected {
-    background-color: var(--bg-secondary);
-    border-color: transparent;
-    /* prevent “double border” look */
-    box-shadow: inset 0 0 0 2px var(--primary-color);
-    transform: none;
-    position: relative;
-    z-index: 1;
-}
-
+/* Testament heading row */
 .search-group-heading {
     margin: var(--spacing-md) 0 var(--spacing-xs);
-    padding: 0 var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
     font-size: 0.85rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
 }
 
+.search-group-heading:hover {
+    background-color: var(--bg-tertiary);
+    border-radius: 4px;
+}
+
+.search-group-chevron {
+    font-size: 0.8rem;
+    transition: transform var(--transition-normal);
+}
+
+.search-group-chevron.expanded {
+    transform: rotate(180deg);
+}
+
+/* Book heading row */
 .search-book-heading {
-    margin: var(--spacing-sm) 0 var(--spacing-xs);
-    padding: 0 var(--spacing-xs);
+    margin: var(--spacing-xs) 0;
+    padding: var(--spacing-xs) var(--spacing-md);
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
 }
 
-
-
-/* High-contrast / forced-colors support */
-@media (forced-colors: active) {
-    .search-result-item.selected {
-        box-shadow: none;
-        outline: 2px solid Highlight;
-        outline-offset: 2px;
-    }
+.search-book-heading:hover {
+    background-color: var(--bg-tertiary);
+    border-radius: 4px;
 }
 
-.search-result-reference {
-    font-weight: 600;
-    color: var(--primary-color);
-    margin-bottom: var(--spacing-xs);
+.search-book-chevron {
+    font-size: 0.8rem;
+    transition: transform var(--transition-normal);
 }
 
-.search-result-content {
-    font-family: var(--font-serif);
-    color: var(--text-secondary);
-    line-height: 1.6;
+.search-book-chevron.expanded {
+    transform: rotate(180deg);
 }
 
-.search-no-results {
-    text-align: center;
-    padding: var(--spacing-xl);
-    color: var(--text-muted);
-}
 
 /* Settings */
 .settings-group {
