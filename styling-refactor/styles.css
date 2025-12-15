@@ -1208,6 +1208,25 @@ body.light-mode .crossref-item {
     z-index: 1;
 }
 
+.search-group-heading {
+    margin: var(--spacing-md) 0 var(--spacing-xs);
+    padding: 0 var(--spacing-xs);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+}
+
+.search-book-heading {
+    margin: var(--spacing-sm) 0 var(--spacing-xs);
+    padding: 0 var(--spacing-xs);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+
 
 /* High-contrast / forced-colors support */
 @media (forced-colors: active) {

@@ -1045,42 +1045,55 @@ class BibleApp {
         }
     }
 
-    displaySearchResults(results, query) {
-        const html = results.map((result) => {
-            let highlightedContent = result.content;
+    // Group search results by Testament and book, in canonical order
+    groupSearchResultsByCanon(results) {
+        if (!Array.isArray(results)) return [];
 
-            try {
-                highlightedContent = this.highlightSearchTerm(result.content, query);
-            } catch (err) {
-                console.warn('displaySearchResults highlight failed, using raw content', err);
-                highlightedContent = result.content;
+        const otBooks = Object.keys(this.bibleBooks["Old Testament"]);
+        const ntBooks = Object.keys(this.bibleBooks["New Testament"]);
+
+        const otGroups = new Map(); // book -> [results]
+        const ntGroups = new Map(); // book -> [results]
+
+        for (const result of results) {
+            const parsed = this.parseReference?.(result.reference);
+            if (!parsed) continue;
+
+            const { book } = parsed;
+            const testament = this.getTestament?.(book);
+
+            if (testament === "Old Testament") {
+                if (!otGroups.has(book)) otGroups.set(book, []);
+                otGroups.get(book).push(result);
+            } else if (testament === "New Testament") {
+                if (!ntGroups.has(book)) ntGroups.set(book, []);
+                ntGroups.get(book).push(result);
             }
-
-            const safeRef = String(result.reference || '').replace(/"/g, '&quot;');
-
-            return (
-                '<div class="search-result-item" data-reference="' + safeRef + '">' +
-                '<div class="search-result-reference">' + safeRef + '</div>' +
-                '<div class="search-result-content">' + highlightedContent + '</div>' +
-                '</div>'
-            );
-        }).join('');
-
-        this.searchResults.innerHTML = html;
-
-        this.searchResults.querySelectorAll('.search-result-item').forEach((item) => {
-            item.addEventListener('click', async () => {
-                const reference = item.dataset.reference;
-                await this.loadPassageFromReference(reference);
-                this.closeSearch();
-            });
-        });
-
-        // If you have keyboard navigation helpers, keep this call; otherwise delete it.
-        if (typeof this.refreshSearchResultItems === 'function') {
-            this.refreshSearchResultItems(true);
         }
+
+        const grouped = [];
+
+        if (otGroups.size) {
+            grouped.push({
+                heading: "Old Testament",
+                books: otBooks
+                    .filter((b) => otGroups.has(b))
+                    .map((book) => ({ book, results: otGroups.get(book) })),
+            });
+        }
+
+        if (ntGroups.size) {
+            grouped.push({
+                heading: "New Testament",
+                books: ntBooks
+                    .filter((b) => ntGroups.has(b))
+                    .map((book) => ({ book, results: ntGroups.get(book) })),
+            });
+        }
+
+        return grouped;
     }
+
 
     async performKeywordSearch(query) {
         this.searchResults.innerHTML =
@@ -1100,43 +1113,83 @@ class BibleApp {
     }
 
     displaySearchResults(results, query) {
-        const html = results
-            .map((result) => {
-                let highlightedContent = result.content;
+  const groups = this.groupSearchResultsByCanon(results);
 
-                try {
-                    highlightedContent = this.highlightSearchTerm(result.content, query);
-                } catch (err) {
-                    console.warn(
-                        'displaySearchResults highlight failed, using raw content',
-                        err
-                    );
-                    highlightedContent = result.content;
-                }
+  if (!groups.length) {
+    this.searchResults.innerHTML =
+      '<div class="search-no-results">No results found</div>';
+    if (typeof this.refreshSearchResultItems === 'function') {
+      this.refreshSearchResultItems(false);
+    }
+    return;
+  }
 
-                return `
-          <div class="search-result-item" data-reference="${result.reference}">
-            <div class="search-result-reference">${result.reference}</div>
+  const escapeHtml = (str) =>
+    String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+  const parts = [];
+
+  for (const group of groups) {
+    // Testament heading
+    parts.push(
+      `<div class="search-group-heading">${escapeHtml(group.heading)}</div>`
+    );
+
+    for (const bookBlock of group.books) {
+      // Book subheading
+      parts.push(
+        `<div class="search-book-heading">${escapeHtml(bookBlock.book)}</div>`
+      );
+
+      for (const result of bookBlock.results) {
+        let highlightedContent = result.content;
+        try {
+          highlightedContent = this.highlightSearchTerm(
+            result.content,
+            query
+          );
+        } catch (err) {
+          console.warn(
+            'displaySearchResults highlight failed, using raw content',
+            err
+          );
+          highlightedContent = result.content;
+        }
+
+        const safeRef = escapeHtml(result.reference);
+
+        parts.push(`
+          <div class="search-result-item" data-reference="${safeRef}">
+            <div class="search-result-reference">${safeRef}</div>
             <div class="search-result-content">${highlightedContent}</div>
           </div>
-        `;
-            })
-            .join('');
-
-        this.searchResults.innerHTML = html;
-
-        // Re-attach click handlers (make them async so verse sync can complete before close)
-        this.searchResults.querySelectorAll('.search-result-item').forEach((item) => {
-            item.addEventListener('click', async () => {
-                const reference = item.dataset.reference;
-                await this.loadPassageFromReference(reference);
-                this.closeSearch();
-            });
-        });
-
-        // Enable keyboard selection (ArrowUp/ArrowDown) starting at the first result
-        this.refreshSearchResultItems(true);
+        `);
+      }
     }
+  }
+
+  this.searchResults.innerHTML = parts.join('');
+
+  this.searchResults
+    .querySelectorAll('.search-result-item')
+    .forEach((item) => {
+      item.addEventListener('click', async () => {
+        const reference = item.dataset.reference;
+        await this.loadPassageFromReference(reference);
+        this.closeSearch();
+      });
+    });
+
+  if (typeof this.refreshSearchResultItems === 'function') {
+    this.refreshSearchResultItems(true);
+  }
+}
+
 
     parseReference(reference) {
         const cleaned = String(reference || '').trim();
@@ -2111,6 +2164,69 @@ class BibleApp {
             header.classList.add('expanded');
         }
     }
+
+    // Group search results by Testament and book, in canonical order
+    groupSearchResultsByCanon(results) {
+        if (!Array.isArray(results)) return [];
+
+        // Build canonical order maps for quick sorting
+        const otBooks = Object.keys(this.bibleBooks["Old Testament"]);
+        const ntBooks = Object.keys(this.bibleBooks["New Testament"]);
+
+        const otOrder = new Map(otBooks.map((b, i) => [b, i]));
+        const ntOrder = new Map(ntBooks.map((b, i) => [b, i]));
+
+        const otGroups = new Map(); // book -> [results]
+        const ntGroups = new Map(); // book -> [results]
+
+        for (const result of results) {
+            const parsed = this.parseReference?.(result.reference);
+            if (!parsed) continue;
+
+            const { book } = parsed;
+            const testament = this.getTestament?.(book);
+
+            if (testament === "Old Testament") {
+                if (!otGroups.has(book)) otGroups.set(book, []);
+                otGroups.get(book).push(result);
+            } else if (testament === "New Testament") {
+                if (!ntGroups.has(book)) ntGroups.set(book, []);
+                ntGroups.get(book).push(result);
+            }
+            // If neither, ignore (unlikely with your data)
+        }
+
+        const grouped = [];
+
+        // Old Testament, canonical order
+        if (otGroups.size) {
+            grouped.push({
+                heading: "Old Testament",
+                books: otBooks
+                    .filter(b => otGroups.has(b))
+                    .map(book => ({
+                        book,
+                        results: otGroups.get(book),
+                    })),
+            });
+        }
+
+        // New Testament, canonical order
+        if (ntGroups.size) {
+            grouped.push({
+                heading: "New Testament",
+                books: ntBooks
+                    .filter(b => ntGroups.has(b))
+                    .map(book => ({
+                        book,
+                        results: ntGroups.get(book),
+                    })),
+            });
+        }
+
+        return grouped;
+    }
+
 
 } // ← End of BibleApp class
 
