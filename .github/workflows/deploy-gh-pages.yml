@@ -1,4 +1,4 @@
-name: Deploy styling-refactor to GitHub Pages
+name: Deploy Dev to GitHub Pages
 
 permissions:
   contents: read
@@ -8,7 +8,7 @@ permissions:
 on:
   push:
     branches:
-      - styling-refactor
+      - dev
 
 jobs:
   build-and-deploy:
@@ -20,11 +20,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Deploy to GitHub Pages (styling-refactor)
+      - name: Deploy to GitHub Pages (dev)
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.ACTIONS }}
           publish_branch: gh-pages
           publish_dir: ./
-          destination_dir: styling-refactor
+          destination_dir: dev
           keep_files: true
