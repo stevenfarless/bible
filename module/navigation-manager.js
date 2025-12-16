@@ -1,8 +1,8 @@
-// ==================== 
+// ====================
 // Navigation Management
-// ==================== 
+// ====================
 
-import { getAllBooks, getChapterCount } from './constants.js';
+import { BIBLE_BOOKS, getChapterCount } from "./constants.js";
 
 export class NavigationManager {
   constructor(state, bookAbbreviations) {
@@ -11,7 +11,11 @@ export class NavigationManager {
   }
 
   navigateChapter(direction, app) {
-    const books = getAllBooks();
+    const books = [
+      ...Object.keys(BIBLE_BOOKS["Old Testament"]),
+      ...Object.keys(BIBLE_BOOKS["New Testament"]),
+    ];
+
     const currentBookIndex = books.indexOf(this.state.currentBook);
     const maxChapter = getChapterCount(this.state.currentBook);
 
@@ -19,20 +23,18 @@ export class NavigationManager {
     let newBook = this.state.currentBook;
 
     if (newChapter < 1) {
-      // Go to previous book's last chapter
       if (currentBookIndex > 0) {
         newBook = books[currentBookIndex - 1];
         newChapter = getChapterCount(newBook);
       } else {
-        return; // Already at first chapter of first book
+        return;
       }
     } else if (newChapter > maxChapter) {
-      // Go to next book's first chapter
       if (currentBookIndex < books.length - 1) {
         newBook = books[currentBookIndex + 1];
         newChapter = 1;
       } else {
-        return; // Already at last chapter of last book
+        return;
       }
     }
 
@@ -42,12 +44,15 @@ export class NavigationManager {
   updateNavigationState(app) {
     const book = this.state.currentBook;
     const abbr = this.bookAbbreviations[book] || book;
-    
+
     app.currentBookSpan.textContent = abbr;
     app.currentChapterSpan.textContent = this.state.currentChapter;
 
-    // Update button states
-    const books = getAllBooks();
+    const books = [
+      ...Object.keys(BIBLE_BOOKS["Old Testament"]),
+      ...Object.keys(BIBLE_BOOKS["New Testament"]),
+    ];
+
     const currentBookIndex = books.indexOf(book);
     const isFirstChapter = this.state.currentChapter === 1;
     const isLastChapter = this.state.currentChapter === getChapterCount(book);
@@ -57,56 +62,108 @@ export class NavigationManager {
   }
 
   openBookModal(app) {
-    const bookList = app.bookModal.querySelector('.book-list');
-    if (!bookList) return;
+    const otContainer = document.getElementById("oldTestamentBooks");
+    const ntContainer = document.getElementById("newTestamentBooks");
+    if (!otContainer || !ntContainer) return;
 
-    bookList.innerHTML = '';
-    const books = getAllBooks();
+    otContainer.innerHTML = "";
+    ntContainer.innerHTML = "";
 
-    books.forEach(book => {
-      const bookItem = document.createElement('div');
-      bookItem.className = 'book-item';
-      if (book === this.state.currentBook) {
-        bookItem.classList.add('active');
-      }
-      bookItem.textContent = book;
-      bookItem.addEventListener('click', () => {
-        app.loadPassage(book, 1);
+    const renderBookButton = (book, container) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "book-item";
+      if (book === this.state.currentBook) btn.classList.add("active");
+
+      btn.textContent = book;
+
+      btn.addEventListener("click", async () => {
+        await app.loadPassage(book, 1);
         app.closeModal(app.bookModal);
       });
-      bookList.appendChild(bookItem);
-    });
+
+      container.appendChild(btn);
+    };
+
+    for (const book of Object.keys(BIBLE_BOOKS["Old Testament"])) {
+      renderBookButton(book, otContainer);
+    }
+
+    for (const book of Object.keys(BIBLE_BOOKS["New Testament"])) {
+      renderBookButton(book, ntContainer);
+    }
 
     app.openModal(app.bookModal);
   }
 
   openChapterModal(app) {
-    const chapterList = app.chapterModal.querySelector('.chapter-list');
-    if (!chapterList) return;
+    const chapterGrid = document.getElementById("chapterGrid");
+    const headerBook = document.getElementById("chapterModalBook");
+    if (!chapterGrid) return;
 
-    chapterList.innerHTML = '';
+    if (headerBook) headerBook.textContent = this.state.currentBook;
+
+    chapterGrid.innerHTML = "";
+
     const chapterCount = getChapterCount(this.state.currentBook);
 
     for (let i = 1; i <= chapterCount; i++) {
-      const chapterItem = document.createElement('div');
-      chapterItem.className = 'chapter-item';
-      if (i === this.state.currentChapter) {
-        chapterItem.classList.add('active');
-      }
-      chapterItem.textContent = i;
-      chapterItem.addEventListener('click', () => {
-        app.loadPassage(this.state.currentBook, i);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "chapter-item";
+      if (i === this.state.currentChapter) btn.classList.add("active");
+
+      btn.textContent = String(i);
+
+      btn.addEventListener("click", async () => {
+        await app.loadPassage(this.state.currentBook, i);
         app.closeModal(app.chapterModal);
       });
-      chapterList.appendChild(chapterItem);
+
+      chapterGrid.appendChild(btn);
     }
 
     app.openModal(app.chapterModal);
   }
 
   openVerseModal(app) {
-    // This would require verse count data
-    // For now, just open the modal
+    const verseGrid = document.getElementById("verseGrid");
+    const header = document.getElementById("verseModalBook");
+    if (!verseGrid) return;
+
+    if (header) header.textContent = `${this.state.currentBook} ${this.state.currentChapter}`;
+
+    verseGrid.innerHTML = "";
+
+    // NOTE: Without verse-count metadata, provide a practical default range.
+    // Many chapters are <= 50 verses; users can still jump quickly.
+    const maxVerses = 50;
+
+    for (let v = 1; v <= maxVerses; v++) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "chapter-item"; // reuse same grid button styles
+
+      btn.textContent = String(v);
+
+      btn.addEventListener("click", async () => {
+        // Load the chapter, then scroll to verse if verse numbers are displayed.
+        await app.loadPassage(this.state.currentBook, this.state.currentChapter);
+        app.closeModal(app.verseModal);
+
+        // Optional: try to scroll to verse marker in rendered HTML (best-effort).
+        // ESV HTML commonly includes verse anchors; this keeps it safe even if not present.
+        const verseAnchor =
+          document.querySelector(`[data-verse="${v}"]`) ||
+          document.getElementById(String(v)) ||
+          document.querySelector(`a[name="${v}"]`);
+
+        if (verseAnchor) verseAnchor.scrollIntoView({ block: "start" });
+      });
+
+      verseGrid.appendChild(btn);
+    }
+
     app.openModal(app.verseModal);
   }
 }
