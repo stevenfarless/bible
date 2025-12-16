@@ -20,7 +20,7 @@ class BibleApp {
   constructor() {
     // Configuration
     this.API_BASE_URL = API_CONFIG.BASE_URL;
-    this.API_KEY = API_CONFIG.DEFAULT_API_KEY;
+    this.API_KEY = localStorage.getItem('esvApiKey') || API_CONFIG.DEFAULT_API_KEY;
 
     // Firebase
     this.auth = window.firebaseAuth;
@@ -56,6 +56,7 @@ class BibleApp {
 
   init() {
     cacheElements(this);
+    this.checkApiKey();
     loadTheme(this);
     attachEventListeners(this);
     this.initializeAccordion();
