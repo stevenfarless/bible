@@ -48,31 +48,28 @@ export class BibleApi {
         }
     }
 
-    async searchPassages(query) {
+    async searchPassages(query, page = 1) {
         const apiKey = this.getApiKey();
         if (!apiKey) return null;
 
         const params = new URLSearchParams({
             q: query,
-            'page-size': 20
+            'page-size': 100,      // max per page
+            page: String(page),    // new page parameter
         });
 
         try {
-            // ✅ FIXED: Added leading slash
-            const response = await fetch(`${this.baseUrl}/passage/search/?${params}`, {
-                headers: {
-                    'Authorization': `Token ${apiKey}`
-                }
+            const response = await fetch(`${this.baseUrl}/passage/search?${params}`, {
+                headers: { Authorization: `Token ${apiKey}` },
             });
-
             if (!response.ok) {
                 throw new Error(`API Error: ${response.status}`);
             }
-
             return await response.json();
         } catch (error) {
             console.error('Error searching passages:', error);
             return null;
         }
     }
+
 }

@@ -110,7 +110,13 @@ class BibleApp {
 
         // Search keyboard navigation state
         this.searchSelectedIndex = -1;
-        this.searchResultItems = [];
+        this.searchResultItems = null;
+
+        // Search pagination state
+        this.searchPage = 1;
+        this.searchLastQuery = '';
+        this.searchHasMore = false;
+        this.currentSearchResults = [];
 
         // Scroll tracking
         this.scrollTimeout = null;
@@ -172,6 +178,10 @@ class BibleApp {
         // stores untouched HTML for current chapter
         this.originalPassageHtml = null;
 
+        // Search grouping expansion state
+        this.searchExpandedTestaments = new Set(); // e.g., "Old Testament", "New Testament"
+        this.searchExpandedBooks = new Set();      // e.g., "Genesis", "Romans"
+
         // ESV API client
         this.bibleApi = new BibleApi(
             this.API_BASE_URL,
@@ -179,9 +189,13 @@ class BibleApp {
             () => this.state
         );
 
+        // this.searchPage = 1;
+        // this.searchLastQuery = '';
+        // this.searchHasMore = false;
+
         // Initialize app
         this.init();
-    }
+    } // end constructor
 
 
     // ================================
@@ -890,22 +904,43 @@ class BibleApp {
     handleSearch(query) {
         clearTimeout(this.searchTimeout);
 
+        // Reset pagination for a new query
+        this.searchLastQuery = query;
+        this.searchPage = 1;
+        this.currentSearchResults = [];
+
         if (!query.trim()) {
             this.searchResults.innerHTML = '';
             this.searchSelectedIndex = -1;
-            this.searchResultItems = [];
+            this.searchResultItems = null;
             return;
         }
 
         this.searchTimeout = setTimeout(async () => {
-            // Check if it's a passage reference first
             if (this.isPassageReference(query)) {
                 await this.handlePassageReference(query);
             } else {
-                // Perform keyword search
-                await this.performKeywordSearch(query);
+                this.searchPage = 1;
+                await this.performKeywordSearch(query, false);
             }
         }, 300);
+    }
+
+    addLoadMoreButton() {
+        const old = this.searchResults.querySelector('.search-load-more');
+        if (old) old.remove();
+
+        if (!this.searchHasMore) return;
+
+        const btn = document.createElement('button');
+        btn.className = 'search-load-more';
+        btn.textContent = 'Load more results';
+        btn.addEventListener('click', async () => {
+            this.searchPage += 1;
+            await this.performKeywordSearch(this.searchLastQuery, true);
+        });
+
+        this.searchResults.appendChild(btn);
     }
 
     handleSearchKeydown(e) {
@@ -1045,41 +1080,83 @@ class BibleApp {
         }
     }
 
-    displaySearchResults(results, query) {
-        const html = results.map((result) => {
-            let highlightedContent = result.content;
+    async fetchAllSearchResults(query) {
+        this.currentSearchResults = [];
+        this.searchPage = 1;
 
-            try {
-                highlightedContent = this.highlightSearchTerm(result.content, query);
-            } catch (err) {
-                console.warn('displaySearchResults highlight failed, using raw content', err);
-                highlightedContent = result.content;
+        while (true) {
+            const data = await this.bibleApi.searchPassages(query, this.searchPage);
+            if (!data || !data.results || !data.results.length) break;
+
+            // Merge this page's results
+            this.currentSearchResults = this.currentSearchResults.concat(data.results);
+
+            const total = data.total_results ?? data.total;
+            const pageSize = data.page_size ?? 100;
+            const totalPages = total && pageSize ? Math.ceil(total / pageSize) : 1;
+
+            if (this.searchPage >= totalPages) {
+                break; // all pages loaded
             }
 
-            const safeRef = String(result.reference || '').replace(/"/g, '&quot;');
+            // Optional safety cap so you don't hammer the API on huge queries
+            if (this.searchPage >= 10) {
+                break; // stop after 10 pages even if more exist
+            }
 
-            return (
-                '<div class="search-result-item" data-reference="' + safeRef + '">' +
-                '<div class="search-result-reference">' + safeRef + '</div>' +
-                '<div class="search-result-content">' + highlightedContent + '</div>' +
-                '</div>'
-            );
-        }).join('');
-
-        this.searchResults.innerHTML = html;
-
-        this.searchResults.querySelectorAll('.search-result-item').forEach((item) => {
-            item.addEventListener('click', async () => {
-                const reference = item.dataset.reference;
-                await this.loadPassageFromReference(reference);
-                this.closeSearch();
-            });
-        });
-
-        // If you have keyboard navigation helpers, keep this call; otherwise delete it.
-        if (typeof this.refreshSearchResultItems === 'function') {
-            this.refreshSearchResultItems(true);
+            this.searchPage += 1;
         }
+
+        return this.currentSearchResults;
+    }
+
+    // Group search results by Testament and book, in canonical order
+    groupSearchResultsByCanon(results) {
+        if (!Array.isArray(results)) return [];
+
+        const otBooks = Object.keys(this.bibleBooks["Old Testament"]);
+        const ntBooks = Object.keys(this.bibleBooks["New Testament"]);
+
+        const otGroups = new Map(); // book -> [results]
+        const ntGroups = new Map(); // book -> [results]
+
+        for (const result of results) {
+            const parsed = this.parseReference?.(result.reference);
+            if (!parsed) continue;
+
+            const { book } = parsed;
+            const testament = this.getTestament?.(book);
+
+            if (testament === "Old Testament") {
+                if (!otGroups.has(book)) otGroups.set(book, []);
+                otGroups.get(book).push(result);
+            } else if (testament === "New Testament") {
+                if (!ntGroups.has(book)) ntGroups.set(book, []);
+                ntGroups.get(book).push(result);
+            }
+        }
+
+        const grouped = [];
+
+        if (otGroups.size) {
+            grouped.push({
+                heading: "Old Testament",
+                books: otBooks
+                    .filter((b) => otGroups.has(b))
+                    .map((book) => ({ book, results: otGroups.get(book) })),
+            });
+        }
+
+        if (ntGroups.size) {
+            grouped.push({
+                heading: "New Testament",
+                books: ntBooks
+                    .filter((b) => ntGroups.has(b))
+                    .map((book) => ({ book, results: ntGroups.get(book) })),
+            });
+        }
+
+        return grouped;
     }
 
     async performKeywordSearch(query) {
@@ -1088,54 +1165,212 @@ class BibleApp {
         this.searchSelectedIndex = -1;
         this.searchResultItems = [];
 
-        const data = await this.bibleApi.searchPassages(query);
+        // Reset expansion state for this new query
+        if (this.searchExpandedTestaments) this.searchExpandedTestaments.clear();
+        if (this.searchExpandedBooks) this.searchExpandedBooks.clear();
 
-        if (data && data.results && data.results.length > 0) {
-            this.displaySearchResults(data.results, query);
+        const allResults = await this.fetchAllSearchResults(query);
+
+        if (allResults && allResults.length > 0) {
+            this.displaySearchResults(allResults, query);
         } else {
             this.searchResults.innerHTML =
                 '<div class="search-no-results">No results found</div>';
-            this.refreshSearchResultItems(false);
+            if (typeof this.refreshSearchResultItems === 'function') {
+                this.refreshSearchResultItems(false);
+            }
         }
     }
 
-    displaySearchResults(results, query) {
-        const html = results
-            .map((result) => {
-                let highlightedContent = result.content;
 
-                try {
-                    highlightedContent = this.highlightSearchTerm(result.content, query);
-                } catch (err) {
-                    console.warn(
-                        'displaySearchResults highlight failed, using raw content',
-                        err
-                    );
-                    highlightedContent = result.content;
+    // async performKeywordSearch(query, append = false) {
+    //     if (!append) {
+    //         this.searchResults.innerHTML =
+    //             '<div class="loading" style="min-height: 100px">Searching...</div>';
+    //         this.searchSelectedIndex = -1;
+    //         this.searchResultItems = [];
+
+    //         // Reset expansion state for this new query
+    //         if (this.searchExpandedTestaments) this.searchExpandedTestaments.clear();
+    //         if (this.searchExpandedBooks) this.searchExpandedBooks.clear();
+    //     }
+
+    //     const data = await this.bibleApi.searchPassages(query, this.searchPage);
+
+    //     if (!data || !data.results || !data.results.length) {
+    //         if (!append) {
+    //             this.searchResults.innerHTML =
+    //                 '<div class="search-no-results">No results found</div>';
+    //             this.refreshSearchResultItems(false);
+    //         }
+    //         this.searchHasMore = false;
+    //         return;
+    //     }
+
+    //     const total = data.total_results ?? data.total;
+    //     const pageSize = data.page_size ?? 100;
+    //     const loadedSoFar = this.searchPage * pageSize;
+    //     this.searchHasMore = total && loadedSoFar < total;
+
+    //     if (append) {
+    //         this.currentSearchResults = this.currentSearchResults.concat(data.results);
+    //     } else {
+    //         this.currentSearchResults = data.results;
+    //     }
+
+    //     this.displaySearchResults(this.currentSearchResults, query);
+
+    //     if (this.searchHasMore && typeof this.addLoadMoreButton === 'function') {
+    //         this.addLoadMoreButton();
+    //     }
+
+    //     if (typeof this.refreshSearchResultItems === 'function') {
+    //         this.refreshSearchResultItems(true);
+    //     }
+    // }
+
+
+    displaySearchResults(results, query) {
+        const groups = this.groupSearchResultsByCanon(results);
+
+        if (!groups.length) {
+            this.searchResults.innerHTML =
+                '<div class="search-no-results">No results found</div>';
+            if (typeof this.refreshSearchResultItems === 'function') {
+                this.refreshSearchResultItems(false);
+            }
+            return;
+        }
+
+        // Auto-expand defaults if nothing has been expanded yet
+        if (
+            this.searchExpandedTestaments.size === 0 &&
+            this.searchExpandedBooks.size === 0
+        ) {
+            const firstGroup = groups[0];
+            if (firstGroup) {
+                this.searchExpandedTestaments.add(firstGroup.heading);
+                const firstBook = firstGroup.books && firstGroup.books[0];
+                if (firstBook) {
+                    this.searchExpandedBooks.add(firstBook.book);
+                }
+            }
+        }
+
+        const escapeHtml = (str) =>
+            String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+
+        const parts = [];
+
+        for (const group of groups) {
+            const testName = group.heading;
+            const testamentExpanded = this.searchExpandedTestaments.has(testName);
+
+            // Testament heading (clickable row)
+            parts.push(`
+      <div class="search-group-heading" data-testament="${escapeHtml(testName)}">
+        <span class="search-group-title">${escapeHtml(testName)}</span>
+        <span class="search-group-chevron ${testamentExpanded ? 'expanded' : ''}">▾</span>
+      </div>
+    `);
+
+            if (!testamentExpanded) {
+                continue; // skip rendering books/results under collapsed testament
+            }
+
+            for (const bookBlock of group.books) {
+                const bookName = bookBlock.book;
+                const bookExpanded = this.searchExpandedBooks.has(bookName);
+
+                // Book heading (clickable row)
+                parts.push(`
+        <div class="search-book-heading" data-book="${escapeHtml(bookName)}">
+          <span class="search-book-title">${escapeHtml(bookName)}</span>
+          <span class="search-book-chevron ${bookExpanded ? 'expanded' : ''}">▾</span>
+        </div>
+      `);
+
+                if (!bookExpanded) {
+                    continue; // skip verses for collapsed book
                 }
 
-                return `
-          <div class="search-result-item" data-reference="${result.reference}">
-            <div class="search-result-reference">${result.reference}</div>
+                for (const result of bookBlock.results) {
+                    let highlightedContent = result.content;
+                    try {
+                        highlightedContent = this.highlightSearchTerm(result.content, query);
+                    } catch (err) {
+                        console.warn(
+                            'displaySearchResults highlight failed, using raw content',
+                            err
+                        );
+                        highlightedContent = result.content;
+                    }
+
+                    const safeRef = escapeHtml(result.reference);
+
+                    parts.push(`
+          <div class="search-result-item" data-reference="${safeRef}">
+            <div class="search-result-reference">${safeRef}</div>
             <div class="search-result-content">${highlightedContent}</div>
           </div>
-        `;
-            })
-            .join('');
+        `);
+                }
+            }
+        }
 
-        this.searchResults.innerHTML = html;
+        this.searchResults.innerHTML = parts.join('');
 
-        // Re-attach click handlers (make them async so verse sync can complete before close)
-        this.searchResults.querySelectorAll('.search-result-item').forEach((item) => {
-            item.addEventListener('click', async () => {
-                const reference = item.dataset.reference;
-                await this.loadPassageFromReference(reference);
-                this.closeSearch();
+        // Testament toggle handlers
+        this.searchResults
+            .querySelectorAll('.search-group-heading')
+            .forEach((el) => {
+                el.addEventListener('click', () => {
+                    const testament = el.getAttribute('data-testament');
+                    if (!testament) return;
+                    if (this.searchExpandedTestaments.has(testament)) {
+                        this.searchExpandedTestaments.delete(testament);
+                    } else {
+                        this.searchExpandedTestaments.add(testament);
+                    }
+                    this.displaySearchResults(results, query);
+                });
             });
-        });
 
-        // Enable keyboard selection (ArrowUp/ArrowDown) starting at the first result
-        this.refreshSearchResultItems(true);
+        // Book toggle handlers
+        this.searchResults
+            .querySelectorAll('.search-book-heading')
+            .forEach((el) => {
+                el.addEventListener('click', () => {
+                    const book = el.getAttribute('data-book');
+                    if (!book) return;
+                    if (this.searchExpandedBooks.has(book)) {
+                        this.searchExpandedBooks.delete(book);
+                    } else {
+                        this.searchExpandedBooks.add(book);
+                    }
+                    this.displaySearchResults(results, query);
+                });
+            });
+
+        // Click handlers for actual results
+        this.searchResults
+            .querySelectorAll('.search-result-item')
+            .forEach((item) => {
+                item.addEventListener('click', async () => {
+                    const reference = item.dataset.reference;
+                    await this.loadPassageFromReference(reference);
+                    this.closeSearch();
+                });
+            });
+
+        if (typeof this.refreshSearchResultItems === 'function') {
+            this.refreshSearchResultItems(true);
+        }
     }
 
     parseReference(reference) {
@@ -1602,8 +1837,18 @@ class BibleApp {
         if (this.currentUser) {
             // Show user menu
             document.getElementById('userEmail').textContent = this.currentUser.email;
-            const theme = document.body.classList.contains('light-mode') ? 'Alucard (Light)' : 'Dracula (Dark)';
-            document.getElementById('userTheme').textContent = theme;
+            const isLight = document.body.classList.contains('light-mode');
+            const colorTheme = this.state?.colorTheme || localStorage.getItem('colorTheme') || 'dracula';
+
+            const themeNameMap = {
+                dracula: isLight ? 'Alucard (Light)' : 'Dracula (Dark)',
+                steel: `Steel (${isLight ? 'Light' : 'Dark'})`,
+                onyx: `Onyx (${isLight ? 'Light' : 'Dark'})`,
+                reader: `Reader (${isLight ? 'Parchment' : 'Night'})`
+            };
+
+            document.getElementById('userTheme').textContent =
+                themeNameMap[colorTheme] || (isLight ? 'Alucard (Light)' : 'Dracula (Dark)');
             this.openModal(this.userMenuModal);
         } else {
             // Show login modal
@@ -1891,7 +2136,8 @@ class BibleApp {
 
     // Make footnote superscripts clickable
     makeFootnotesClickable() {
-        const footnoteSupElements = this.passageText.querySelectorAll('sup.footnote');
+        const footnoteSupElements =
+            this.passageText.querySelectorAll('sup.footnote');
 
         footnoteSupElements.forEach((sup) => {
             // Make it look like a link
@@ -1924,7 +2170,11 @@ class BibleApp {
 
             currentElement = currentElement.previousElementSibling;
 
-            if (!currentElement || currentElement.tagName === 'H2' || currentElement.tagName === 'H3') {
+            if (
+                !currentElement ||
+                currentElement.tagName === 'H2' ||
+                currentElement.tagName === 'H3'
+            ) {
                 break;
             }
         }
@@ -1935,8 +2185,11 @@ class BibleApp {
             const verses = parent.querySelectorAll('.verse-num');
             if (verses.length > 0) {
                 for (let i = verses.length - 1; i >= 0; i--) {
-                    if (parent.contains(verses[i]) &&
-                        verses[i].compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING) {
+                    if (
+                        parent.contains(verses[i]) &&
+                        verses[i].compareDocumentPosition(element) &
+                        Node.DOCUMENT_POSITION_FOLLOWING
+                    ) {
                         const verseNumber = verses[i].textContent.trim();
                         return `${this.state.currentBook} ${this.state.currentChapter}:${verseNumber}`;
                     }
@@ -1954,7 +2207,7 @@ class BibleApp {
         const allSups = this.passageText.querySelectorAll('sup.footnote');
         let footnoteText = '';
 
-        allSups.forEach(sup => {
+        allSups.forEach((sup) => {
             const link = sup.querySelector('a.fn');
             if (!link) return;
 
@@ -1982,7 +2235,8 @@ class BibleApp {
         });
 
         if (!footnoteText) {
-            footnoteText = 'Footnote content not available with current API settings. To view full footnote text, enable "Show footnotes" in Settings.';
+            footnoteText =
+                'Footnote content not available with current API settings. To view full footnote text, enable "Show footnotes" in Settings.';
         }
 
         this.footnotesSection.style.display = 'block';
@@ -2000,14 +2254,16 @@ class BibleApp {
         this.referencesModal.classList.add('active');
     }
 
-
     // ==========================================
-    // END OF NEW FUNCTIONS
+    // CROSS-REFERENCE HELPERS
     // ==========================================
 
     loadCrossReferencesFromLink(link) {
         // Try to find cross-references in the title attribute or data attributes
-        let crossRefs = link.getAttribute('title') || link.getAttribute('data-cross-refs') || '';
+        const crossRefs =
+            link.getAttribute('title') ||
+            link.getAttribute('data-cross-refs') ||
+            '';
 
         // Also check the link text itself
         const linkText = link.textContent.trim();
@@ -2017,11 +2273,16 @@ class BibleApp {
 
         if (crossRefs) {
             // Split by common delimiters
-            references.push(...crossRefs.split(/[;,]/).map(r => r.trim()).filter(r => r));
+            references.push(
+                ...crossRefs
+                    .split(/[;,]/)
+                    .map((r) => r.trim())
+                    .filter((r) => r)
+            );
         }
 
         // Check if link text looks like a reference (e.g., "Gen. 1:1")
-        if (linkText && linkText.match(/[A-Z][a-z]*\.?\s*\d+:\d+/)) {
+        if (linkText && /[A-Z][a-z]*\.?\s*\d+:\d+/.test(linkText)) {
             references.push(linkText);
         }
 
@@ -2029,7 +2290,7 @@ class BibleApp {
         const parent = link.closest('.crossrefs, .cross-references, [class*="cross"]');
         if (parent) {
             const parentLinks = parent.querySelectorAll('a');
-            parentLinks.forEach(l => {
+            parentLinks.forEach((l) => {
                 const ref = l.textContent.trim();
                 if (ref && !references.includes(ref)) {
                     references.push(ref);
@@ -2048,15 +2309,15 @@ class BibleApp {
         references.forEach((ref, index) => {
             const safeId = `crossref-${index}-${Date.now()}`;
             content += `
-            <div class="crossref-item" data-reference="${ref}" data-id="${safeId}">
-                <div class="crossref-header" onclick="window.bibleApp.toggleCrossReference('${safeId}')">
-                    <span>${ref}</span>
-                </div>
-                <div class="crossref-verse-text" id="${safeId}">
-                    <div class="crossref-loading">Click to load verse...</div>
-                </div>
-            </div>
-        `;
+      <div class="crossref-item" data-reference="${ref}" data-id="${safeId}">
+        <div class="crossref-header" onclick="window.bibleApp.toggleCrossReference('${safeId}')">
+          <span>${ref}</span>
+        </div>
+        <div class="crossref-verse-text" id="${safeId}">
+          <div class="crossref-loading">Click to load verse...</div>
+        </div>
+      </div>
+    `;
         });
 
         this.crossReferencesContent.innerHTML = content;
@@ -2065,44 +2326,51 @@ class BibleApp {
 
     async toggleCrossReference(elementId) {
         const verseTextElement = document.getElementById(elementId);
+        if (!verseTextElement) return;
+
         const crossrefItem = verseTextElement.closest('.crossref-item');
+        if (!crossrefItem) return;
+
         const reference = crossrefItem.getAttribute('data-reference');
         const header = crossrefItem.querySelector('.crossref-header');
 
         // Toggle visibility
         if (verseTextElement.classList.contains('visible')) {
             verseTextElement.classList.remove('visible');
-            header.classList.remove('expanded');
-        } else {
-            // If not loaded yet, fetch the verse
-            if (verseTextElement.innerHTML.includes('Click to load')) {
-                verseTextElement.innerHTML = '<div class="crossref-loading">Loading...</div>';
-
-                try {
-                    const data = await this.bibleApi.fetchPassage(reference);
-
-                    if (data && data.passages && data.passages[0]) {
-                        // Strip HTML tags for cleaner display
-                        const verseText = this.stripHTML(data.passages[0]);
-                        verseTextElement.innerHTML = `
-                        <div class="crossref-reference">${reference}</div>
-                        <div>${verseText}</div>
-                    `;
-                    } else {
-                        verseTextElement.innerHTML = '<div class="crossref-loading">Verse not found.</div>';
-                    }
-                } catch (error) {
-                    console.error('Error loading cross-reference:', error);
-                    verseTextElement.innerHTML = '<div class="crossref-loading">Error loading verse.</div>';
-                }
-            }
-
-            verseTextElement.classList.add('visible');
-            header.classList.add('expanded');
+            header?.classList.remove('expanded');
+            return;
         }
-    }
 
-} // ← End of BibleApp class
+        // If not loaded yet, fetch the verse
+        if (verseTextElement.innerHTML.includes('Click to load')) {
+            verseTextElement.innerHTML =
+                '<div class="crossref-loading">Loading...</div>';
+
+            try {
+                const data = await this.bibleApi.fetchPassage(reference);
+
+                if (data && data.passages && data.passages[0]) {
+                    // Strip HTML tags for cleaner display
+                    const verseText = this.stripHTML(data.passages[0]);
+                    verseTextElement.innerHTML = `
+          <div class="crossref-reference">${reference}</div>
+          <div>${verseText}</div>
+        `;
+                } else {
+                    verseTextElement.innerHTML =
+                        '<div class="crossref-loading">Verse not found.</div>';
+                }
+            } catch (error) {
+                console.error('Error loading cross-reference:', error);
+                verseTextElement.innerHTML =
+                    '<div class="crossref-loading">Error loading verse.</div>';
+            }
+        }
+
+        verseTextElement.classList.add('visible');
+        header?.classList.add('expanded');
+    }
+}
 
 // ==========================================
 // INITIALIZE APP
