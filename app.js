@@ -1533,7 +1533,7 @@ class BibleApp {
         // Estimate verses - we'll get actual count from loaded passage
         const verseCount = this.getCurrentVerseCount();
 
-        for (let i = 1; i <= verseCount; i++) {  // Changed from i < verseCount to i <= verseCount
+        for (let i = 1; i <= verseCount; i++) {  // ✅ CORRECT - includes verseCount
             const btn = document.createElement('button');
             btn.className = 'chapter-item';
             btn.textContent = i;
@@ -1544,7 +1544,6 @@ class BibleApp {
             this.verseGrid.appendChild(btn);
         }
     }
-
 
     getCurrentVerseCount() {
         // Count verse numbers in current passage
