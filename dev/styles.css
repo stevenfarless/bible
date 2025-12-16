@@ -1838,3 +1838,40 @@ body.hide-verse-numbers .passage-text .verse-num {
         border: none;
     }
 }
+
+/* Red Letters - Words of Jesus */
+.red-letter {
+    color: #d32f2f;
+    font-weight: 500;
+}
+
+/* Light mode adjustments */
+[data-color-scheme="light"] .red-letter,
+.light-mode .red-letter {
+    color: #c62828;
+    font-weight: 500;
+}
+
+/* Dark mode adjustments */
+[data-color-scheme="dark"] .red-letter,
+.dark-mode .red-letter {
+    color: #ff5252;
+    font-weight: 500;
+}
+
+/* Theme-specific colors */
+body.dracula-theme .red-letter {
+    color: #ff79c6;
+}
+
+body.steel-theme .red-letter {
+    color: #e74c3c;
+}
+
+body.onyx-theme .red-letter {
+    color: #ff6b6b;
+}
+
+body.reader-theme .red-letter {
+    color: #b8360f;
+}

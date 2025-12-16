@@ -212,4 +212,9 @@ export function applyVerseGlow(app) {
     parent.removeChild(parentParagraph);
 
     selectedBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // RE-APPLY RED LETTERS after restoring HTML
+    if (typeof app.applyRedLetters === 'function') {
+        app.applyRedLetters();
+    }
 }
