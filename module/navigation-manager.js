@@ -137,7 +137,7 @@ export class NavigationManager {
 
     // NOTE: Without verse-count metadata, provide a practical default range.
     // Many chapters are <= 50 verses; users can still jump quickly.
-    const maxVerses = 50;
+    const maxVerses = 99999;
 
     for (let v = 1; v <= maxVerses; v++) {
       const btn = document.createElement("button");
