@@ -189,9 +189,9 @@ class BibleApp {
             () => this.state
         );
 
-        this.searchPage = 1;
-        this.searchLastQuery = '';
-        this.searchHasMore = false;
+        // this.searchPage = 1;
+        // this.searchLastQuery = '';
+        // this.searchHasMore = false;
 
         // Initialize app
         this.init();
