@@ -1137,7 +1137,8 @@ body.light-mode .crossref-item {
 .search-wrapper {
     max-width: var(--max-width);
     margin: 0 auto;
-    padding: var(--spacing-lg);
+    /* padding: var(--spacing-lg); */
+    padding: var(--spacing-sm);
     display: flex;
     gap: var(--spacing-sm);
     align-items: center;
