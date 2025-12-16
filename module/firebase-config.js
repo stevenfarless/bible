@@ -12,22 +12,22 @@ const firebaseConfig = {
   appId: "1:824462651620:web:5f46fe033ac46d2329bcf1",
 };
 
-// Initialize Firebase
+// Initialize Firebase (compat SDK style)
 firebase.initializeApp(firebaseConfig);
 
-// Firebase services (using Realtime Database, not Firestore)
+// Firebase services (Realtime Database, not Firestore)
 const auth = firebase.auth();
 const database = firebase.database();
 
-// Simple encryption for API keys
-const EncryptionHelper = {
-  encrypt(text) {
+// NOTE: This is obfuscation (base64), not cryptographic encryption.
+const ApiKeyCodec = {
+  encode(text) {
     return btoa(text);
   },
-  decrypt(ciphertext) {
+  decode(ciphertext) {
     try {
       return atob(ciphertext);
-    } catch (e) {
+    } catch {
       return "";
     }
   },
@@ -36,43 +36,19 @@ const EncryptionHelper = {
 // Export for use in app (globals)
 window.firebaseAuth = auth;
 window.firebaseDatabase = database;
-window.encryptionHelper = EncryptionHelper;
+window.apiKeyCodec = ApiKeyCodec;
 
-// Exported function for ES module imports
+// Optional helper if you want direct imports elsewhere
 export async function loadUserData(userId) {
   try {
     const snapshot = await database.ref(`users/${userId}`).once("value");
     const userData = snapshot.val();
     if (!userData) return null;
 
-    // Decrypt API key if present
     let apiKey = "";
-    if (userData.apiKey) {
-      apiKey = window.encryptionHelper.decrypt(userData.apiKey);
-    }
+    if (userData.apiKey) apiKey = ApiKeyCodec.decode(userData.apiKey);
 
-    // Extract settings or default values
-    const settings = {
-      fontSize: (userData.settings && userData.settings.fontSize) || 18,
-      showVerseNumbers:
-        userData.settings ? userData.settings.showVerseNumbers !== false : true,
-      showHeadings:
-        userData.settings ? userData.settings.showHeadings !== false : true,
-      showFootnotes:
-        userData.settings ? userData.settings.showFootnotes === true : false,
-      verseByVerse:
-        userData.settings ? userData.settings.verseByVerse === true : false,
-      colorTheme:
-        userData.settings && userData.settings.colorTheme
-          ? userData.settings.colorTheme
-          : "dracula",
-      lightMode:
-        userData.settings && typeof userData.settings.lightMode === "boolean"
-          ? userData.settings.lightMode
-          : false,
-    };;
-
-    return { apiKey, settings };
+    return { ...userData, apiKey };
   } catch (error) {
     console.error("Error loading user data:", error);
     return null;

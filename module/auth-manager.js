@@ -1,6 +1,6 @@
-// ==================== 
+// ====================
 // Authentication Management
-// ==================== 
+// ====================
 
 export class AuthManager {
   constructor(auth, database) {
@@ -39,12 +39,32 @@ export class AuthManager {
     if (!user || !this.database) return null;
 
     try {
-      const snapshot = await this.database.ref(`users/${user.uid}`).once('value');
+      const snapshot = await this.database.ref(`users/${user.uid}`).once("value");
       return snapshot.val();
     } catch (error) {
-      console.error('Error loading user data:', error);
+      console.error("Error loading user data:", error);
       return null;
     }
+  }
+
+  async saveUserApiKey(userId, apiKeyPlaintext) {
+    if (!userId || !this.database) return;
+
+    const encoded = window.apiKeyCodec?.encode
+      ? window.apiKeyCodec.encode(apiKeyPlaintext)
+      : apiKeyPlaintext;
+
+    await this.database.ref(`users/${userId}/apiKey`).set(encoded);
+  }
+
+  async loadUserApiKey(userId) {
+    if (!userId || !this.database) return "";
+
+    const snap = await this.database.ref(`users/${userId}/apiKey`).once("value");
+    const encoded = snap.val();
+    if (!encoded) return "";
+
+    return window.apiKeyCodec?.decode ? window.apiKeyCodec.decode(encoded) : encoded;
   }
 
   async saveReadingPosition(userId, book, chapter, scrollPosition) {
@@ -58,7 +78,7 @@ export class AuthManager {
         timestamp: Date.now(),
       });
     } catch (error) {
-      console.error('Error saving reading position:', error);
+      console.error("Error saving reading position:", error);
     }
   }
 
@@ -66,25 +86,23 @@ export class AuthManager {
     if (!userId || !this.database) return null;
 
     try {
-      const snapshot = await this.database.ref(`users/${userId}/readingPosition`).once('value');
+      const snapshot = await this.database.ref(`users/${userId}/readingPosition`).once("value");
       return snapshot.val();
     } catch (error) {
-      console.error('Error loading reading position:', error);
+      console.error("Error loading reading position:", error);
       return null;
     }
   }
 
   updateUserButton(user, userBtn, userEmail) {
+    if (!userBtn) return;
+
     if (user) {
-      userBtn.classList.add('logged-in');
-      if (userEmail) {
-        userEmail.textContent = user.email;
-      }
+      userBtn.classList.add("logged-in");
+      if (userEmail) userEmail.textContent = user.email || "";
     } else {
-      userBtn.classList.remove('logged-in');
-      if (userEmail) {
-        userEmail.textContent = '';
-      }
+      userBtn.classList.remove("logged-in");
+      if (userEmail) userEmail.textContent = "";
     }
   }
 }
