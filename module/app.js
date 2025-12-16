@@ -38,17 +38,14 @@ class BibleApp {
     // Managers
     this.chromeController = new ChromeController();
     this.modalManager = new ModalManager();
-    this.bibleApi = new BibleApi(
-      this.API_BASE_URL,
-      () => this.API_KEY,
-      () => this.state
-    );
+    this.bibleApi = new BibleApi(this.API_BASE_URL, () => this.API_KEY, () => this.state);
     this.passageRenderer = new PassageRenderer(this.bibleApi, this.state);
     this.searchManager = new SearchManager(this.bibleApi, this.passageRenderer);
     this.settingsManager = new SettingsManager(this.state, this.database);
     this.navigationManager = new NavigationManager(this.state, this.bookAbbreviations);
     this.authManager = new AuthManager(this.auth, this.database);
 
+    // Init
     this.init();
   }
 
@@ -89,11 +86,11 @@ class BibleApp {
 
   listenToAuthState() {
     this.auth.onAuthStateChanged(async (user) => {
-      // Logged in
+      // ---------- Logged in ----------
       if (user) {
         this.currentUser = user;
 
-        // Load user settings
+        // Load user settings (optional)
         const userData = await this.authManager.loadUserData(user);
         if (userData?.settings) Object.assign(this.state, userData.settings);
         this.settingsManager.applySettings();
@@ -102,8 +99,8 @@ class BibleApp {
         const apiKey = await this.authManager.loadUserApiKey(user.uid);
         if (!apiKey) {
           this.API_KEY = "";
-          this.openModal(this.settingsModal);
           this.authManager.updateUserButton(user, this.userBtn, this.userEmail);
+          this.openModal(this.settingsModal);
           return;
         }
 
@@ -114,14 +111,15 @@ class BibleApp {
         return;
       }
 
-      // Logged out
+      // ---------- Logged out ----------
       this.currentUser = null;
-      this.API_KEY = ""; // require login to use key
+      this.API_KEY = ""; // require sign-in for API key
+
       this.settingsManager.loadLocalSettings();
       this.settingsManager.applySettings();
       this.authManager.updateUserButton(null, this.userBtn, this.userEmail);
 
-      // Optional: show login prompt or keep reading disabled
+      // Optional: prompt login if you want
       // this.openModal(this.loginModal);
     });
   }
@@ -184,6 +182,7 @@ class BibleApp {
 
     const book = parts[1];
     const chapter = parseInt(parts[2], 10);
+
     await this.loadPassage(book, chapter);
     this.toggleSearch();
   }
@@ -209,7 +208,6 @@ class BibleApp {
     alert("API key saved to your account!");
     this.closeModal(this.settingsModal);
 
-    // Optionally load passage immediately after saving key
     await this.loadSavedReadingPosition();
   }
 
@@ -264,6 +262,7 @@ class BibleApp {
   makeFootnotesClickable() { }
 }
 
+// Initialize app when DOM is ready
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => {
     window.app = new BibleApp();
