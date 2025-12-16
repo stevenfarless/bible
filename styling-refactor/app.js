@@ -1080,6 +1080,36 @@ class BibleApp {
         }
     }
 
+    async fetchAllSearchResults(query) {
+        this.currentSearchResults = [];
+        this.searchPage = 1;
+
+        while (true) {
+            const data = await this.bibleApi.searchPassages(query, this.searchPage);
+            if (!data || !data.results || !data.results.length) break;
+
+            // Merge this page's results
+            this.currentSearchResults = this.currentSearchResults.concat(data.results);
+
+            const total = data.total_results ?? data.total;
+            const pageSize = data.page_size ?? 100;
+            const totalPages = total && pageSize ? Math.ceil(total / pageSize) : 1;
+
+            if (this.searchPage >= totalPages) {
+                break; // all pages loaded
+            }
+
+            // Optional safety cap so you don't hammer the API on huge queries
+            if (this.searchPage >= 10) {
+                break; // stop after 10 pages even if more exist
+            }
+
+            this.searchPage += 1;
+        }
+
+        return this.currentSearchResults;
+    }
+
     // Group search results by Testament and book, in canonical order
     groupSearchResultsByCanon(results) {
         if (!Array.isArray(results)) return [];
@@ -1129,51 +1159,75 @@ class BibleApp {
         return grouped;
     }
 
-    async performKeywordSearch(query, append = false) {
-        if (!append) {
+    async performKeywordSearch(query) {
+        this.searchResults.innerHTML =
+            '<div class="loading" style="min-height: 100px">Searching...</div>';
+        this.searchSelectedIndex = -1;
+        this.searchResultItems = [];
+
+        // Reset expansion state for this new query
+        if (this.searchExpandedTestaments) this.searchExpandedTestaments.clear();
+        if (this.searchExpandedBooks) this.searchExpandedBooks.clear();
+
+        const allResults = await this.fetchAllSearchResults(query);
+
+        if (allResults && allResults.length > 0) {
+            this.displaySearchResults(allResults, query);
+        } else {
             this.searchResults.innerHTML =
-                '<div class="loading" style="min-height: 100px">Searching...</div>';
-            this.searchSelectedIndex = -1;
-            this.searchResultItems = [];
-
-            // Reset expansion state for this new query
-            if (this.searchExpandedTestaments) this.searchExpandedTestaments.clear();
-            if (this.searchExpandedBooks) this.searchExpandedBooks.clear();
-        }
-
-        const data = await this.bibleApi.searchPassages(query, this.searchPage);
-
-        if (!data || !data.results || !data.results.length) {
-            if (!append) {
-                this.searchResults.innerHTML =
-                    '<div class="search-no-results">No results found</div>';
+                '<div class="search-no-results">No results found</div>';
+            if (typeof this.refreshSearchResultItems === 'function') {
                 this.refreshSearchResultItems(false);
             }
-            this.searchHasMore = false;
-            return;
-        }
-
-        const total = data.total_results ?? data.total;
-        const pageSize = data.page_size ?? 100;
-        const loadedSoFar = this.searchPage * pageSize;
-        this.searchHasMore = total && loadedSoFar < total;
-
-        if (append) {
-            this.currentSearchResults = this.currentSearchResults.concat(data.results);
-        } else {
-            this.currentSearchResults = data.results;
-        }
-
-        this.displaySearchResults(this.currentSearchResults, query);
-
-        if (this.searchHasMore && typeof this.addLoadMoreButton === 'function') {
-            this.addLoadMoreButton();
-        }
-
-        if (typeof this.refreshSearchResultItems === 'function') {
-            this.refreshSearchResultItems(true);
         }
     }
+
+
+    // async performKeywordSearch(query, append = false) {
+    //     if (!append) {
+    //         this.searchResults.innerHTML =
+    //             '<div class="loading" style="min-height: 100px">Searching...</div>';
+    //         this.searchSelectedIndex = -1;
+    //         this.searchResultItems = [];
+
+    //         // Reset expansion state for this new query
+    //         if (this.searchExpandedTestaments) this.searchExpandedTestaments.clear();
+    //         if (this.searchExpandedBooks) this.searchExpandedBooks.clear();
+    //     }
+
+    //     const data = await this.bibleApi.searchPassages(query, this.searchPage);
+
+    //     if (!data || !data.results || !data.results.length) {
+    //         if (!append) {
+    //             this.searchResults.innerHTML =
+    //                 '<div class="search-no-results">No results found</div>';
+    //             this.refreshSearchResultItems(false);
+    //         }
+    //         this.searchHasMore = false;
+    //         return;
+    //     }
+
+    //     const total = data.total_results ?? data.total;
+    //     const pageSize = data.page_size ?? 100;
+    //     const loadedSoFar = this.searchPage * pageSize;
+    //     this.searchHasMore = total && loadedSoFar < total;
+
+    //     if (append) {
+    //         this.currentSearchResults = this.currentSearchResults.concat(data.results);
+    //     } else {
+    //         this.currentSearchResults = data.results;
+    //     }
+
+    //     this.displaySearchResults(this.currentSearchResults, query);
+
+    //     if (this.searchHasMore && typeof this.addLoadMoreButton === 'function') {
+    //         this.addLoadMoreButton();
+    //     }
+
+    //     if (typeof this.refreshSearchResultItems === 'function') {
+    //         this.refreshSearchResultItems(true);
+    //     }
+    // }
 
 
     displaySearchResults(results, query) {
