@@ -917,10 +917,31 @@ class BibleApp {
         }
 
         this.searchTimeout = setTimeout(async () => {
-            // existing passage-reference check and performKeywordSearch call...
+            if (this.isPassageReference(query)) {
+                await this.handlePassageReference(query);
+            } else {
+                this.searchPage = 1;
+                await this.performKeywordSearch(query, false);
+            }
         }, 300);
     }
 
+    addLoadMoreButton() {
+        const old = this.searchResults.querySelector('.search-load-more');
+        if (old) old.remove();
+
+        if (!this.searchHasMore) return;
+
+        const btn = document.createElement('button');
+        btn.className = 'search-load-more';
+        btn.textContent = 'Load more results';
+        btn.addEventListener('click', async () => {
+            this.searchPage += 1;
+            await this.performKeywordSearch(this.searchLastQuery, true);
+        });
+
+        this.searchResults.appendChild(btn);
+    }
 
     handleSearchKeydown(e) {
         // Only handle keys we care about (let typing behave normally)
@@ -1108,25 +1129,49 @@ class BibleApp {
         return grouped;
     }
 
-
-    async performKeywordSearch(query) {
-        this.searchResults.innerHTML =
-            '<div class="loading" style="min-height: 100px">Searching...</div>';
-        this.searchSelectedIndex = -1;
-        this.searchResultItems = [];
-
-        // Reset expansion state for this new query
-        if (this.searchExpandedTestaments) this.searchExpandedTestaments.clear();
-        if (this.searchExpandedBooks) this.searchExpandedBooks.clear();
-
-        const data = await this.bibleApi.searchPassages(query);
-
-        if (data && data.results && data.results.length > 0) {
-            this.displaySearchResults(data.results, query);
-        } else {
+    async performKeywordSearch(query, append = false) {
+        if (!append) {
             this.searchResults.innerHTML =
-                '<div class="search-no-results">No results found</div>';
-            this.refreshSearchResultItems(false);
+                '<div class="loading" style="min-height: 100px">Searching...</div>';
+            this.searchSelectedIndex = -1;
+            this.searchResultItems = [];
+
+            // Reset expansion state for this new query
+            if (this.searchExpandedTestaments) this.searchExpandedTestaments.clear();
+            if (this.searchExpandedBooks) this.searchExpandedBooks.clear();
+        }
+
+        const data = await this.bibleApi.searchPassages(query, this.searchPage);
+
+        if (!data || !data.results || !data.results.length) {
+            if (!append) {
+                this.searchResults.innerHTML =
+                    '<div class="search-no-results">No results found</div>';
+                this.refreshSearchResultItems(false);
+            }
+            this.searchHasMore = false;
+            return;
+        }
+
+        const total = data.total_results ?? data.total;
+        const pageSize = data.page_size ?? 100;
+        const loadedSoFar = this.searchPage * pageSize;
+        this.searchHasMore = total && loadedSoFar < total;
+
+        if (append) {
+            this.currentSearchResults = this.currentSearchResults.concat(data.results);
+        } else {
+            this.currentSearchResults = data.results;
+        }
+
+        this.displaySearchResults(this.currentSearchResults, query);
+
+        if (this.searchHasMore && typeof this.addLoadMoreButton === 'function') {
+            this.addLoadMoreButton();
+        }
+
+        if (typeof this.refreshSearchResultItems === 'function') {
+            this.refreshSearchResultItems(true);
         }
     }
 

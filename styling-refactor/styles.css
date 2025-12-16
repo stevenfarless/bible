@@ -1282,6 +1282,28 @@ body.light-mode .crossref-item {
     line-height: 1.6;
 }
 
+.search-load-more {
+    display: block;
+    width: 100%;
+    margin: var(--spacing-md) 0;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all var(--transition-fast);
+}
+
+.search-load-more:hover {
+    background-color: var(--bg-secondary);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
 .search-no-results {
     text-align: center;
     padding: var(--spacing-xl);
