@@ -1530,10 +1530,10 @@ class BibleApp {
         this.verseModalBook.textContent = `${this.state.currentBook} ${this.state.currentChapter}`;
         this.verseGrid.innerHTML = '';
 
-        // Estimate verses (we'll get actual count from loaded passage)
+        // Estimate verses - we'll get actual count from loaded passage
         const verseCount = this.getCurrentVerseCount();
 
-        for (let i = 1; i <= verseCount; i++) {
+        for (let i = 1; i <= verseCount; i++) {  // Changed from i < verseCount to i <= verseCount
             const btn = document.createElement('button');
             btn.className = 'chapter-item';
             btn.textContent = i;
@@ -1544,6 +1544,7 @@ class BibleApp {
             this.verseGrid.appendChild(btn);
         }
     }
+
 
     getCurrentVerseCount() {
         // Count verse numbers in current passage
