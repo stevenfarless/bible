@@ -1530,10 +1530,15 @@ class BibleApp {
         this.verseModalBook.textContent = `${this.state.currentBook} ${this.state.currentChapter}`;
         this.verseGrid.innerHTML = '';
 
-        // Estimate verses - we'll get actual count from loaded passage
         const verseCount = this.getCurrentVerseCount();
 
-        for (let i = 1; i <= verseCount; i++) {  // ✅ CORRECT - includes verseCount
+        // Only populate if we have valid verse data
+        if (verseCount === 0) {
+            this.verseGrid.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-secondary);">No verses found in current passage</p>';
+            return;
+        }
+
+        for (let i = 1; i <= verseCount; i++) {
             const btn = document.createElement('button');
             btn.className = 'chapter-item';
             btn.textContent = i;
@@ -1548,7 +1553,8 @@ class BibleApp {
     getCurrentVerseCount() {
         // Count verse numbers in current passage
         const verseNums = this.passageText.querySelectorAll('.verse-num');
-        return verseNums.length || 50; // Default to 50 if none found
+        // Add 1 because verse 1 typically doesn't have a .verse-num element
+        return verseNums.length > 0 ? verseNums.length + 1 : 0;
     }
 
     scrollToVerse(verseNumber) {
