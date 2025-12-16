@@ -13,6 +13,7 @@ export class BibleApi {
         }
 
         const state = this.getState();
+
         const params = new URLSearchParams({
             q: reference,
             "include-headings": state.showHeadings,
@@ -21,7 +22,10 @@ export class BibleApi {
             "include-passage-references": false,
             "include-footnotes": state.showFootnotes,
             "include-footnote-body": state.showFootnotes,
-            "include-cross-references": state.showCrossReferences || false,
+
+            // FIX: ESV Passage HTML uses include-crossrefs (not include-cross-references)
+            "include-crossrefs": state.showCrossReferences || false,
+
             "include-selahs": true,
             "indent-poetry": true,
             "indent-paragraphs": 0,
@@ -57,7 +61,8 @@ export class BibleApi {
         });
 
         try {
-            const response = await fetch(`${this.baseUrl}/passage/search?${params}`, {
+            // FIX: match documented endpoint /v3/passage/search/
+            const response = await fetch(`${this.baseUrl}/passage/search/?${params}`, {
                 headers: { Authorization: `Token ${apiKey}` },
             });
 
