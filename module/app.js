@@ -55,14 +55,15 @@ class BibleApp {
   }
 
   init() {
-    cacheElements(this);
-    this.checkApiKey();
-    loadTheme(this);
-    attachEventListeners(this);
-    this.initializeAccordion();
-    this.setupModals();
-    this.listenToAuthState();
-  }
+  cacheElements(this);
+  this.checkApiKey();
+  loadTheme(this);
+  attachEventListeners(this);
+  this.initializeAccordion();
+  this.setupModals();
+  this.listenToAuthState();
+}
+
 
   setupModals() {
     const modals = [
