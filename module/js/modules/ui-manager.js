@@ -1,4 +1,4 @@
-// js/modules/ui-manager.js
+// js/modules/ui-manager.js NEW VERSION
 import { cacheElements, loadTheme, toggleTheme, changeColorTheme, updateThemeIcon } from './ui-utils.js';
 import { BOOK_ABBREVIATIONS, BIBLE_STRUCTURE, getChapterCount, getAllBooks } from './bible-structure.js';
 import { scrollToVerse } from './reading-state.js';

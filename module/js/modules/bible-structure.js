@@ -1,4 +1,4 @@
-// js/modules/bible-structure.js
+// js/modules/bible-structure.js NEW VERSION
 
 export const BOOK_ABBREVIATIONS = {
     Genesis: 'Gen', Exodus: 'Exod', Leviticus: 'Lev', Numbers: 'Num', Deuteronomy: 'Deut',

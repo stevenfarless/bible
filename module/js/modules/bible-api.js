@@ -1,3 +1,4 @@
+// js/module/bible-api.js NEW VERSION
 export class BibleApi {
     constructor(baseUrl, getApiKey, getState) {
         this.baseUrl = baseUrl;

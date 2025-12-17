@@ -1,4 +1,4 @@
-// js/modules/search-manager.js
+// js/modules/search-manager.js NEW VERSION
 import { getAllBooks, getTestament } from './bible-structure.js';
 
 export class SearchManager {

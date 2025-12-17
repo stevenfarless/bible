@@ -1,4 +1,4 @@
-// js/modules/references-manager.js
+// js/modules/references-manager.js NEW VERSION
 
 export class ReferencesManager {
     constructor(app) {

@@ -1,4 +1,4 @@
-// js/modules/firebase-manager.js
+// js/modules/firebase-manager.js NEW VERSION
 import { loadUserData as loadUserDataFromFirebase } from '../../firebase-config.js';
 import { updateThemeIcon, changeColorTheme } from './ui-utils.js';
 

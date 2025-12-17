@@ -1,4 +1,4 @@
-// js/modules/ui.js
+// js/modules/ui.js NEW VERSION
 
 // Responsibility: DOM caching, theme management
 

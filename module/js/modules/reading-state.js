@@ -1,4 +1,4 @@
-// js/modules/reading-state.js
+// js/modules/reading-state.js NEW VERSION
 import { getAllBooks, getChapterCount } from './bible-structure.js';
 
 export function initializeState() {

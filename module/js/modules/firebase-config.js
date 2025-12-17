@@ -1,3 +1,4 @@
+// js/module/firebase-config.js NEW VERSION
 // ================================
 // Firebase Configuration
 // ================================

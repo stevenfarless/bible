@@ -1,4 +1,4 @@
-// js/modules/app.js
+// js/modules/app.js NEW VERSION
 import { BibleApi } from './bible-api.js';
 import { initializeState, navigateChapter, applyVerseGlow } from './reading-state.js';
 import { BOOK_ABBREVIATIONS, getAllBooks, getChapterCount } from './bible-structure.js';

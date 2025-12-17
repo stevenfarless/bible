@@ -1,3 +1,4 @@
+// js/words-of-jesus.js NEW VERSION
 /**
  * Words of Jesus in the ESV Bible
  * 
