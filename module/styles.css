@@ -1875,3 +1875,16 @@ body.onyx-theme .red-letter {
 body.reader-theme .red-letter {
     color: #b8360f;
 }
+
+/* ================================
+   MODULE INITIALIZATION FIX
+   ================================ */
+body:not(.js-ready) .passage-container,
+body:not(.js-ready) .modal {
+    visibility: hidden;
+}
+
+body.js-ready .passage-container,
+body.js-ready .modal {
+    visibility: visible;
+}

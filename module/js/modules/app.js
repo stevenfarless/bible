@@ -14,14 +14,14 @@ class BibleApp {
         this.API_KEY = '';
 
         this.state = initializeState();
-        this.bookAbbreviations = BOOK_ABBREVIATIONS; 
+        this.bookAbbreviations = BOOK_ABBREVIATIONS;
 
         // Initialize Managers
         this.ui = new UIManager(this);
         this.search = new SearchManager(this);
         this.firebase = new FirebaseManager(this);
         this.references = new ReferencesManager(this);
-        
+
         this.bibleApi = new BibleApi(
             this.API_BASE_URL,
             () => this.API_KEY,
@@ -29,11 +29,26 @@ class BibleApp {
         );
 
         this.lastScrollPosition = 0;
-        
+
         this.init();
     }
 
     init() {
+        // ===== FIX: Force synchronous UI state initialization =====
+        document.body.classList.add('js-ready');
+        const passageContainer = document.querySelector('.passage-container');
+        const searchContainer = document.querySelector('.search-container');
+        const modals = document.querySelectorAll('.modal');
+
+        // Pre-apply critical styles
+        if (passageContainer) passageContainer.style.opacity = '1';
+        if (searchContainer) searchContainer.style.display = 'none';
+        modals.forEach(modal => {
+            modal.style.opacity = '0';
+            modal.style.pointerEvents = 'none';
+        });
+        // ===== END FIX =====
+
         this.ui.init();
         this.firebase.init(); // Sets up auth listeners & loads initial data
         this.attachGlobalListeners();
@@ -55,6 +70,7 @@ class BibleApp {
     // Core Logic
     // ===============================
 
+
     async loadPassage(book, chapter, restoreScroll = false) {
         if (!restoreScroll) this.firebase.saveReadingPosition();
 
@@ -75,12 +91,12 @@ class BibleApp {
 
         this.ui.passageTitle.textContent = reference;
         this.ui.passageText.innerHTML = data.passages[0];
-        
+
         // Post-load setup
         this.references.attachHandlers();
         this.references.makeFootnotesClickable();
         this.ui.applyRedLetters();
-        
+
         this.ui.copyright.textContent = `Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.`;
         this.ui.currentVerseSpan.textContent = '1';
 
@@ -161,7 +177,7 @@ class BibleApp {
         this.ui.passageText.style.fontSize = `${size}px`;
         this.firebase.saveSetting('fontSize', parseInt(size));
     }
-    
+
     toggleRedLetters() {
         const el = document.getElementById('redLettersToggle');
         if (!el) return;
