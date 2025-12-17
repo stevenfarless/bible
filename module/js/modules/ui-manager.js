@@ -254,8 +254,12 @@ export class UIManager {
         return nums.length > 0 ? nums.length + 1 : 0;
     }
 
+    // scrollToVerse(num) {
+    //     scrollToVerse(this, num);
+    // }
+
     scrollToVerse(num) {
-        scrollToVerse(this, num);
+        scrollToVerse(this.app, num);
     }
 
     // ===============================
