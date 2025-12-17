@@ -31,9 +31,6 @@ export class FirebaseManager {
     });
   }
 
-  // ===============================
-  // Auth
-  // ===============================
   async handleLogin(email, password) {
     try {
       await this.auth.signInWithEmailAndPassword(email, password);
@@ -102,9 +99,6 @@ export class FirebaseManager {
     }
   }
 
-  // ===============================
-  // Settings load/save
-  // ===============================
   async loadUserData() {
     if (!this.currentUser) return;
 
@@ -127,7 +121,6 @@ export class FirebaseManager {
     state.lightMode =
       typeof s.lightMode === 'boolean' ? s.lightMode : false;
 
-    // Apply theme immediately to DOM
     await changeColorTheme(this.app, state.colorTheme);
     updateThemeIcon(state.lightMode);
   }
@@ -191,9 +184,6 @@ export class FirebaseManager {
     }
   }
 
-  // ===============================
-  // Reading position
-  // ===============================
   async saveReadingPosition() {
     if (!this.currentUser) return;
 
