@@ -1,547 +1,404 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Bible Reader</title>
-	<link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ESV Bible Reader</title>
+    <!-- Favicon -->
+    <link rel="icon" href="https://api.esv.org/favicon.ico" type="image/x-icon">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
-	<!-- Wrapper around Header + Navigation (for auto-hide on scroll) -->
-	<div id="topChrome" class="top-chrome">
-		<header class="header">
-			<div class="header-content">
-				<h1 class="logo">Bible Dev</h1>
-				<div class="header-controls">
-					<button class="icon-btn" id="searchToggleBtn" title="Search (Ctrl+K)">
-						<!-- search icon svg -->
-						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-						</svg>
-					</button>
+    <!-- Top Chrome (Wrapper for Header & Navigation) -->
+    <div id="topChrome" class="top-chrome">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">ESV Bible</div>
+                <div class="header-controls">
+                    <button id="searchToggleBtn" class="icon-btn" aria-label="Search">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </button>
+                    <button id="themeToggleBtn" class="icon-btn" aria-label="Toggle Theme">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    </button>
+                    <button id="helpBtn" class="icon-btn" aria-label="Help">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    </button>
+                    <button id="userBtn" class="icon-btn" aria-label="User Account">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </button>
+                    <button id="settingsBtn" class="icon-btn" aria-label="Settings">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Search Container (Inside Header for better stacking context) -->
+            <div id="searchContainer" class="search-container">
+                <div class="search-wrapper">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search (e.g., 'John 3:16' or 'love')">
+                    <button id="closeSearchBtn" class="close-btn" aria-label="Close Search">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+                <div id="searchResults" class="search-results"></div>
+            </div>
+        </header>
 
-					<button class="icon-btn" id="helpBtn" title="Help / Shortcuts">
-						<!-- question mark icon -->
-						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
-							</path>
-						</svg>
-					</button>
+        <!-- Navigation -->
+        <nav class="navigation">
+            <div class="nav-content">
+                <button id="prevChapterBtn" class="nav-btn" aria-label="Previous Chapter">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                
+                <div class="current-reference">
+                    <button id="bookSelector" class="ref-btn"><span id="currentBook">Gen</span></button>
+                    <button id="chapterSelector" class="ref-btn"><span id="currentChapter">1</span></button>
+                    <button id="verseSelector" class="ref-btn">:<span id="currentVerse">1</span></button>
+                </div>
 
-					<button class="icon-btn" id="themeToggleBtn" title="Toggle Light/Dark Mode">
-						<!-- sun/moon icon injected by JS -->
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"></svg>
-					</button>
+                <button id="nextChapterBtn" class="nav-btn" aria-label="Next Chapter">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            </div>
+        </nav>
+    </div>
 
-					<button class="icon-btn" id="settingsBtn" title="Settings">
-						<!-- gear icon -->
-						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
-							</path>
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-						</svg>
-					</button>
+    <!-- Main Content -->
+    <main class="main-content">
+        <h2 id="passageTitle" class="passage-title">Genesis 1</h2>
+        <div id="passageText" class="passage-text">
+            <p class="loading">Loading passage...</p>
+        </div>
+        
+        <div class="passage-footer">
+            <div id="copyright" class="copyright"></div>
+        </div>
+    </main>
 
-					<button class="icon-btn" id="userBtn" title="Account">
-						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-						</svg>
-					</button>
-				</div>
-			</div>
-		</header>
+    <!-- Modals -->
+    
+    <!-- Book Selection Modal -->
+    <div id="bookModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Select Book</h3>
+                <button id="closeBookModal" class="close-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="book-category">
+                    <h4>Old Testament</h4>
+                    <div id="oldTestamentBooks" class="book-grid"></div>
+                </div>
+                <div class="book-category">
+                    <h4>New Testament</h4>
+                    <div id="newTestamentBooks" class="book-grid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-		<!-- Navigation bar -->
-		<nav class="navigation">
-			<div class="nav-content">
-				<button id="prevChapterBtn" class="nav-btn">
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<polyline points="15 18 9 12 15 6"></polyline>
-					</svg>
-					<span>Previous</span>
-				</button>
+    <!-- Chapter Selection Modal -->
+    <div id="chapterModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Select Chapter (<span id="chapterModalBook"></span>)</h3>
+                <button id="closeChapterModal" class="close-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="chapterGrid" class="chapter-grid"></div>
+            </div>
+        </div>
+    </div>
 
-				<div class="passage-selector">
-					<button id="bookSelector" class="selector-btn">
-						<span id="currentBook">Gen</span>
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-							stroke-width="2">
-							<polyline points="6 9 12 15 18 9"></polyline>
-						</svg>
-					</button>
+    <!-- Verse Selection Modal -->
+    <div id="verseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Select Verse (<span id="verseModalBook"></span>)</h3>
+                <button id="closeVerseModal" class="close-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="verseGrid" class="chapter-grid"></div>
+            </div>
+        </div>
+    </div>
 
-					<button id="chapterSelector" class="selector-btn">
-						<span id="currentChapter">1</span>
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-							stroke-width="2">
-							<polyline points="6 9 12 15 18 9"></polyline>
-						</svg>
-					</button>
+    <!-- References Modal (Footnotes & Cross-refs) -->
+    <div id="referencesModal" class="modal bottom-sheet">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="drag-handle"></div>
+                <h3>References</h3>
+                <button id="closeReferencesModal" class="close-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="footnotesSection" style="display: none;">
+                    <h4>Footnote</h4>
+                    <div id="footnotesContent"></div>
+                </div>
+                <div id="crossReferencesSection" style="display: none; margin-top: 1rem;">
+                    <h4>Cross References</h4>
+                    <div id="crossReferencesContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-					<button id="verseSelector" class="selector-btn">
-						<span id="currentVerse">1</span>
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-							stroke-width="2">
-							<polyline points="6 9 12 15 18 9"></polyline>
-						</svg>
-					</button>
-				</div>
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Keyboard Shortcuts</h3>
+                <button id="closeHelpModal" class="close-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcut-list">
+                    <div class="shortcut-item">
+                        <kbd>Ctrl</kbd> + <kbd>K</kbd>
+                        <span>Open Search</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Esc</kbd>
+                        <span>Close Modal / Search</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>←</kbd> / <kbd>→</kbd>
+                        <span>Previous / Next Chapter (when focused on buttons)</span>
+                    </div>
+                </div>
+                <div class="tips-section" style="margin-top: 2rem;">
+                    <h4>Search Tips</h4>
+                    <ul class="tips-list">
+                        <li><strong>Passage:</strong> Enter a reference like <code>John 3</code>, <code>John 3:16</code>, or <code>jn 3 16</code> to jump directly to it.</li>
+                        <li><strong>Keyword:</strong> Enter words like <code>love</code>, <code>light</code>, or <code>covenant</code> to search the Bible.</li>
+                        <li><strong>Exact Phrase:</strong> Use quotes for exact matches (e.g., <code>"in love"</code>).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 
-				<button id="nextChapterBtn" class="nav-btn">
-					<span>Next</span>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<polyline points="9 18 15 12 9 6"></polyline>
-					</svg>
-				</button>
-			</div>
-		</nav>
-	</div>
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content auth-modal">
+            <div class="modal-header">
+                <h3>Sign In</h3>
+                <button id="closeLoginModal" class="close-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="auth-intro">Account settings (email, theme, reading position) are automatically synced via Firebase when you're signed in.</p>
+                <form id="loginForm" class="auth-form">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" class="input-field" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" class="input-field" required>
+                    </div>
+                    <button type="submit" class="primary-btn full-width">Sign In</button>
+                </form>
+                <div class="auth-switch">
+                    <p>Don't have an account? <a href="#" id="showSignupLink">Sign up</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-	<!-- Search bar -->
-	<div id="searchContainer" class="search-container">
-		<div class="search-wrapper">
-			<input type="text" id="searchInput" class="search-input"
-				placeholder="Search passages or enter reference (e.g., John 3:16)" />
-			<button id="closeSearchBtn" class="close-btn" title="Close search">×</button>
-		</div>
-		<div id="searchResults" class="search-results"></div>
-	</div>
+    <!-- Signup Modal -->
+    <div id="signupModal" class="modal">
+        <div class="modal-content auth-modal">
+            <div class="modal-header">
+                <h3>Create Account</h3>
+                <button id="closeSignupModal" class="close-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="signupForm" class="auth-form">
+                    <div class="form-group">
+                        <label for="signupEmail">Email</label>
+                        <input type="email" id="signupEmail" class="input-field" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupPassword">Password</label>
+                        <input type="password" id="signupPassword" class="input-field" required>
+                    </div>
+                    <button type="submit" class="primary-btn full-width">Sign Up</button>
+                </form>
+                <div class="auth-switch">
+                    <p>Already have an account? <a href="#" id="showLoginLink">Sign in</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-	<!-- Main passage area -->
-	<main class="main-content">
-		<div class="passage-container">
-			<div class="passage-header">
-				<h2 id="passageTitle" class="passage-title">Genesis 1</h2>
-				<button id="copyBtn" class="icon-btn" title="Copy passage">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-						<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-					</svg>
-				</button>
-			</div>
-			<div id="passageText" class="passage-text">
-				<div class="loading">Loading passage...</div>
-			</div>
-			<div class="passage-footer">
-				<p id="copyright" class="copyright"></p>
-			</div>
-		</div>
-	</main>
+    <!-- User Menu Modal -->
+    <div id="userMenuModal" class="modal bottom-sheet">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Account</h3>
+                <button id="closeUserMenuModal" class="close-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="user-info">
+                    <p id="userEmail" class="user-email"></p>
+                </div>
+                <button id="logoutBtn" class="primary-btn full-width logout-btn">Sign Out</button>
+            </div>
+        </div>
+    </div>
 
-	<!-- Book modal -->
-	<div id="bookModal" class="modal">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h3>Select a Book</h3>
-				<button class="close-btn" id="closeBookModal">×</button>
-			</div>
-			<div class="modal-body">
-				<div class="book-category">
-					<h4>Old Testament</h4>
-					<div id="oldTestamentBooks" class="book-grid"></div>
-				</div>
-				<div class="book-category">
-					<h4>New Testament</h4>
-					<div id="newTestamentBooks" class="book-grid"></div>
-				</div>
-			</div>
-		</div>
-	</div>
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal bottom-sheet">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="drag-handle"></div>
+                <h3>Settings</h3>
+                <button id="closeSettingsModal" class="close-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-group">
+                    <h4>Appearance</h4>
+                    <div class="setting-item">
+                        <label for="fontSizeSlider">Font Size: <span id="fontSizeValue">18px</span></label>
+                        <input type="range" id="fontSizeSlider" min="14" max="32" value="18" class="slider">
+                    </div>
+                    <div class="setting-item">
+                        <label for="themeSelector">Color Theme</label>
+                        <select id="themeSelector" class="select-input">
+                            <option value="dracula">Dracula Dark</option>
+                            <option value="steel">Steel Blue</option>
+                            <option value="onyx">Onyx Black (OLED)</option>
+                            <option value="reader">Warm Reader</option>
+                        </select>
+                    </div>
+                    <div class="setting-item toggle-item">
+                        <label for="lightModeToggle">Light Mode</label>
+                        <label class="switch">
+                            <input type="checkbox" id="lightModeToggle">
+                            <span class="slider-round"></span>
+                        </label>
+                    </div>
+                </div>
 
-	<!-- Chapter modal -->
-	<div id="chapterModal" class="modal">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h3><span id="chapterModalBook">Genesis</span></h3>
-				<button class="close-btn" id="closeChapterModal">×</button>
-			</div>
-			<div class="modal-body">
-				<div id="chapterGrid" class="chapter-grid"></div>
-			</div>
-		</div>
-	</div>
+                <div class="settings-group">
+                    <h4>Display</h4>
+                    <div class="setting-item toggle-item">
+                        <label for="verseNumbersToggle">Verse Numbers</label>
+                        <label class="switch">
+                            <input type="checkbox" id="verseNumbersToggle" checked>
+                            <span class="slider-round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item toggle-item">
+                        <label for="headingsToggle">Section Headings</label>
+                        <label class="switch">
+                            <input type="checkbox" id="headingsToggle" checked>
+                            <span class="slider-round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item toggle-item">
+                        <label for="footnotesToggle">Footnotes</label>
+                        <label class="switch">
+                            <input type="checkbox" id="footnotesToggle">
+                            <span class="slider-round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item toggle-item">
+                        <label for="crossReferencesToggle">Cross References</label>
+                        <label class="switch">
+                            <input type="checkbox" id="crossReferencesToggle">
+                            <span class="slider-round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item toggle-item">
+                        <label for="redLettersToggle">Words of Jesus in Red</label>
+                        <label class="switch">
+                            <input type="checkbox" id="redLettersToggle">
+                            <span class="slider-round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item toggle-item">
+                        <label for="verseByVerseToggle">Verse-by-Verse Layout</label>
+                        <label class="switch">
+                            <input type="checkbox" id="verseByVerseToggle">
+                            <span class="slider-round"></span>
+                        </label>
+                    </div>
+                </div>
 
-	<!-- Verse modal -->
-	<div id="verseModal" class="modal">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h3><span id="verseModalBook">Genesis 1</span></h3>
-				<button class="close-btn" id="closeVerseModal">×</button>
-			</div>
-			<div class="modal-body">
-				<div id="verseGrid" class="chapter-grid"></div>
-			</div>
-		</div>
-	</div>
+                <div class="settings-group">
+                    <h4>API Configuration</h4>
+                    <div class="setting-item">
+                        <label for="apiKeyInput">ESV API Key</label>
+                        <input type="password" id="apiKeyInput" class="input-field" placeholder="Enter your API key">
+                        <span class="help-text">Get a free key at <a href="https://api.esv.org/" target="_blank">api.esv.org</a></span>
+                    </div>
+                    <button id="saveApiKeyBtn" class="primary-btn full-width">Save Key</button>
+                </div>
+                
+                <div class="settings-group">
+                    <button id="openAccountBtn" class="primary-btn full-width" style="margin-top: 10px;">Manage Account</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-	<!-- Settings modal (bottom sheet) -->
-	<div id="settingsModal" class="modal">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h3>Settings</h3>
-				<button class="close-btn" id="closeSettingsModal">×</button>
-			</div>
-			<div class="modal-body">
-				<!-- Accordion Section 1: Display Options -->
-				<div class="accordion-section" data-section="display">
-					<button class="accordion-header" data-target="display">
-						<span class="accordion-title">Display Options</span>
-						<svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
-							stroke="currentColor" stroke-width="2">
-							<polyline points="6 9 12 15 18 9"></polyline>
-						</svg>
-					</button>
-					<div class="accordion-panel" data-panel="display">
-						<div class="settings-group">
-							<div class="setting-item">
-								<label class="checkbox-label">
-									<input type="checkbox" id="verseNumbersToggle" checked />
-									<span>Show verse numbers</span>
-								</label>
-							</div>
-							<div class="setting-item">
-								<label class="checkbox-label">
-									<input type="checkbox" id="headingsToggle" checked />
-									<span>Show section headings</span>
-								</label>
-							</div>
-							<div class="setting-item">
-								<label class="checkbox-label">
-									<input type="checkbox" id="footnotesToggle" />
-									<span>Show footnotes</span>
-								</label>
-							</div>
-							<div class="setting-item">
-								<label class="checkbox-label">
-									<input type="checkbox" id="crossReferencesToggle" />
-									<span>Show cross-references</span>
-								</label>
-							</div>
-							<div class="setting-item">
-								<label class="checkbox-label">
-									<input type="checkbox" id="verseByVerseToggle" />
-									<span>Verse-by-verse display</span>
-								</label>
-							</div>
-							<div class="setting-item">
-								<label class="checkbox-label">
-									<input type="checkbox" id="redLettersToggle">
-									<span>Show red letters (words of Jesus)</span>
-								</label>
-								<small class="help-text">Highlights Jesus' words in red in the Gospels and Acts</small>
-							</div>
-							<div class="setting-item">
-								<label>Font Size</label>
-								<input type="range" id="fontSizeSlider" class="slider" min="12" max="32" value="18" />
-								<span id="fontSizeValue">18px</span>
-							</div>
-						</div>
-					</div>
-				</div>
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
 
-				<!-- Accordion Section 2: Theme -->
-				<div class="accordion-section" data-section="theme">
-					<button class="accordion-header" data-target="theme">
-						<span class="accordion-title">Theme</span>
-						<svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
-							stroke="currentColor" stroke-width="2">
-							<polyline points="6 9 12 15 18 9"></polyline>
-						</svg>
-					</button>
-					<div class="accordion-panel" data-panel="theme">
-						<div class="settings-group">
-							<div class="setting-item">
-								<label>Color Theme</label>
-								<select id="themeSelector" class="input-field">
-									<option value="dracula">Dracula (Purple/Pink)</option>
-									<option value="steel">Steel (Blue/Cool)</option>
-									<option value="onyx">Onyx (Gold/OLED)</option>
-									<option value="reader">Reader (Parchment)</option>
-								</select>
-								<small class="help-text">Choose your preferred color scheme.</small>
-							</div>
-							<div class="setting-item">
-								<label class="checkbox-label">
-									<input type="checkbox" id="lightModeToggle" />
-									<span>Light Mode</span>
-								</label>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<!-- Accordion Section 3: API & Data -->
-				<div class="accordion-section" data-section="api">
-					<button class="accordion-header" data-target="api">
-						<span class="accordion-title">API &amp; Data</span>
-						<svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
-							stroke="currentColor" stroke-width="2">
-							<polyline points="6 9 12 15 18 9"></polyline>
-						</svg>
-					</button>
-					<div class="accordion-panel" data-panel="api">
-						<div class="settings-group">
-							<div class="setting-item">
-								<label>ESV API Key</label>
-								<input type="text" id="apiKeyInput" class="input-field"
-									placeholder="Enter your API key" />
-								<small class="help-text">
-									Get your free API key at
-									<a href="https://api.esv.org/account" target="_blank">api.esv.org/account</a>.
-								</small>
-							</div>
-							<button id="saveApiKeyBtn" class="primary-btn">Save API Key</button>
-						</div>
-					</div>
-				</div>
-
-				<!-- Accordion Section 4: Account -->
-				<div class="accordion-section" data-section="account">
-					<button class="accordion-header" data-target="account">
-						<span class="accordion-title">Account</span>
-						<svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
-							stroke="currentColor" stroke-width="2">
-							<polyline points="6 9 12 15 18 9"></polyline>
-						</svg>
-					</button>
-					<div class="accordion-panel" data-panel="account">
-						<div class="settings-group">
-							<p class="help-text">
-								Account settings (email, theme, reading position) are automatically synced via Firebase
-								when you're
-								signed in.
-							</p>
-							<button id="openAccountBtn" class="primary-btn" style="width: 100%; margin-top: 1rem;">
-								Manage Account
-							</button>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<div id="helpModal" class="modal">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h3>Help &amp; Keyboard Shortcuts</h3>
-				<button class="close-btn" id="closeHelpModal">×</button>
-			</div>
-			<div class="modal-body">
-				<div class="settings-group">
-					<h4>Navigation Shortcuts</h4>
-					<div class="shortcut-list">
-						<div class="shortcut-item">
-							<kbd>H</kbd> or <kbd>←</kbd>
-							<span>Previous chapter</span>
-						</div>
-						<div class="shortcut-item">
-							<kbd>L</kbd> or <kbd>→</kbd>
-							<span>Next chapter</span>
-						</div>
-						<div class="shortcut-item">
-							<kbd>K</kbd> or <kbd>↑</kbd>
-							<span>Previous verse</span>
-						</div>
-						<div class="shortcut-item">
-							<kbd>J</kbd> or <kbd>↓</kbd>
-							<span>Next verse</span>
-						</div>
-					</div>
-				</div>
-
-				<div class="settings-group">
-					<h4>General Shortcuts</h4>
-					<div class="shortcut-list">
-						<div class="shortcut-item">
-							<kbd>Ctrl</kbd> + <kbd>K</kbd>
-							<span>Toggle search</span>
-						</div>
-						<div class="shortcut-item">
-							<kbd>Esc</kbd>
-							<span>Close modal/search</span>
-						</div>
-					</div>
-				</div>
-
-				<div class="settings-group">
-					<h4>Tips</h4>
-					<ul class="tips-list">
-						<li>Click on the book, chapter, or verse selector to jump to any location.</li>
-						<li>
-							Search by reference to jump quickly (examples: <code>John 3</code>, <code>John 3:16</code>,
-							<code>jn 3 16</code>).
-						</li>
-						<li>
-							Search by keywords to find mentions across the Bible (example: <code>covenant</code>).
-						</li>
-						<li>
-							Search for an exact phrase by wrapping it in double quotes (example:
-							<code>"in love"</code>).
-						</li>
-						<li>Toggle verse-by-verse mode for easier reading.</li>
-						<li>Your reading position and all settings sync across devices when signed in.</li>
-						<li>Choose from 3 themes (Dracula, Steel, Onyx) with light/dark modes.</li>
-					</ul>
-				</div>
-
-				<div class="settings-group">
-					<h4>Getting Started</h4>
-					<ul class="tips-list">
-						<li>
-							<strong>Get an API Key:</strong> Visit
-							<a href="https://api.esv.org" target="_blank" rel="noopener">api.esv.org</a>
-							to register for a free ESV API key.
-						</li>
-						<li>
-							<strong>Sign Up:</strong> Create an account to sync your settings and reading position
-							across devices.
-						</li>
-						<li>
-							<strong>Customize:</strong> Adjust font size, toggle verse numbers, headings, and more in
-							Settings.
-						</li>
-					</ul>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<!-- Login modal -->
-	<div id="loginModal" class="modal">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h3>Sign In</h3>
-				<button class="close-btn" id="closeLoginModal">×</button>
-			</div>
-			<div class="modal-body">
-				<form id="loginForm" class="auth-form">
-					<div class="setting-item">
-						<label>Email</label>
-						<input type="email" id="loginEmail" class="input-field" placeholder="your@email.com"
-							autocomplete="email" required />
-					</div>
-					<div class="setting-item">
-						<label>Password</label>
-						<input type="password" id="loginPassword" class="input-field" placeholder="Password"
-							autocomplete="current-password" required />
-					</div>
-					<button type="submit" class="primary-btn" style="width: 100%">Sign In</button>
-				</form>
-				<p class="auth-switch">
-					Don't have an account?
-					<a href="#" id="showSignupLink">Sign up</a>
-				</p>
-			</div>
-		</div>
-	</div>
-
-	<!-- Signup modal -->
-	<div id="signupModal" class="modal">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h3>Create Account</h3>
-				<button class="close-btn" id="closeSignupModal">×</button>
-			</div>
-			<div class="modal-body">
-				<form id="signupForm" class="auth-form">
-					<div class="setting-item">
-						<label>Email</label>
-						<input type="email" id="signupEmail" class="input-field" placeholder="your@email.com"
-							autocomplete="email" required />
-					</div>
-					<div class="setting-item">
-						<label>Password</label>
-						<input type="password" id="signupPassword" class="input-field"
-							placeholder="At least 6 characters" autocomplete="new-password" required />
-					</div>
-					<div class="setting-item">
-						<label>ESV API Key</label>
-						<input type="text" id="signupApiKey" class="input-field" placeholder="Your ESV API key"
-							autocomplete="off" required />
-						<small class="help-text">
-							Get your free API key at
-							<a href="https://api.esv.org/account" target="_blank">api.esv.org/account</a>.
-						</small>
-					</div>
-					<button type="submit" class="primary-btn" style="width: 100%">Create Account</button>
-				</form>
-				<p class="auth-switch">
-					Already have an account?
-					<a href="#" id="showLoginLink">Sign in</a>
-				</p>
-			</div>
-		</div>
-	</div>
-
-	<!-- User menu modal -->
-	<div id="userMenuModal" class="modal">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h3>Account</h3>
-				<button class="close-btn" id="closeUserMenuModal">×</button>
-			</div>
-			<div class="modal-body">
-				<div class="user-info-box">
-					<p>
-						<strong>Email</strong>
-						<span id="userEmail"></span>
-					</p>
-					<p>
-						<strong>Theme</strong>
-						<span id="userTheme">Dracula Dark</span>
-					</p>
-				</div>
-				<button id="logoutBtn" class="primary-btn" style="width: 100%">Sign Out</button>
-			</div>
-		</div>
-	</div>
-
-	<!-- Footnotes and Cross-References Modal (Bottom Sheet) -->
-	<div id="referencesModal" class="modal">
-		<div class="modal-content modal-bottom-sheet">
-			<div class="modal-header">
-				<h3><!-- Footnotes & Cross-References --></h3>
-				<button class="close-btn" id="closeReferencesModal">×</button>
-			</div>
-			<div class="modal-body">
-				<!-- Footnotes Section -->
-				<div id="footnotesSection" style="display: none;">
-					<h4 style="color: var(--secondary-color); margin-bottom: var(--spacing-md);">Footnotes</h4>
-					<div id="footnotesContent"></div>
-				</div>
-
-				<!-- Cross-References Section -->
-				<div id="crossReferencesSection" style="display: none;">
-					<h4 style="
-                color: var(--secondary-color);
-                margin-bottom: var(--spacing-md);
-                margin-top: var(--spacing-lg);
-              ">
-						Cross-References
-					</h4>
-					<div id="crossReferencesContent"></div>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<!-- Toast notification -->
-	<div id="toast" class="toast"></div>
-
-	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
-	<script type="module" src="firebase-config.js"></script>
-	<script type="module" src="app.js"></script>
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- Firebase Config (Root) -->
+    <script src="firebase-config.js"></script>
+    
+    <!-- Encryption Helper -->
+    <script>
+        // Simple encryption helper for API key storage
+        window.encryptionHelper = {
+            encrypt: function(text) {
+                // In a real app, use Web Crypto API. This is a basic obfuscation for the demo.
+                return btoa(text);
+            },
+            decrypt: function(encoded) {
+                try {
+                    return atob(encoded);
+                } catch (e) {
+                    return '';
+                }
+            }
+        };
+    </script>
+    
+    <!-- Main App Script (Modular) -->
+    <script type="module" src="js/modules/app.js"></script>
 </body>
-
 </html>
