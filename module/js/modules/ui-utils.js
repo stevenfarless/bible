@@ -1,150 +1,154 @@
-// js/modules/ui.js NEW VERSION
-
+// js/modules/ui-utils.js
 // Responsibility: DOM caching, theme management
 
+// Cache all DOM elements the UI layer needs
 export function cacheElements(app) {
-    // Top chrome wrapper (Header + Navigation)
-    app.topChrome = document.getElementById('topChrome');
+  // Top chrome wrapper (Header + Navigation)
+  app.topChrome = document.getElementById('topChrome');
 
-    // Header
-    app.searchToggleBtn = document.getElementById('searchToggleBtn');
-    app.helpBtn = document.getElementById('helpBtn');
-    app.settingsBtn = document.getElementById('settingsBtn');
-    app.themeToggleBtn = document.getElementById('themeToggleBtn');
-    app.userBtn = document.getElementById('userBtn');
+  // Header
+  app.searchToggleBtn  = document.getElementById('searchToggleBtn');
+  app.helpBtn          = document.getElementById('helpBtn');
+  app.settingsBtn      = document.getElementById('settingsBtn');
+  app.themeToggleBtn   = document.getElementById('themeToggleBtn');
+  app.userBtn          = document.getElementById('userBtn');
 
-    // Navigation
-    app.prevChapterBtn = document.getElementById('prevChapterBtn');
-    app.nextChapterBtn = document.getElementById('nextChapterBtn');
-    app.bookSelector = document.getElementById('bookSelector');
-    app.chapterSelector = document.getElementById('chapterSelector');
-    app.verseSelector = document.getElementById('verseSelector');
-    app.currentBookSpan = document.getElementById('currentBook');
-    app.currentChapterSpan = document.getElementById('currentChapter');
-    app.currentVerseSpan = document.getElementById('currentVerse');
+  // Navigation
+  app.prevChapterBtn       = document.getElementById('prevChapterBtn');
+  app.nextChapterBtn       = document.getElementById('nextChapterBtn');
+  app.bookSelector         = document.getElementById('bookSelector');
+  app.chapterSelector      = document.getElementById('chapterSelector');
+  app.verseSelector        = document.getElementById('verseSelector');
+  app.currentBookSpan      = document.getElementById('currentBook');
+  app.currentChapterSpan   = document.getElementById('currentChapter');
+  app.currentVerseSpan     = document.getElementById('currentVerse');
 
-    // Search
-    app.searchContainer = document.getElementById('searchContainer');
-    app.closeSearchBtn = document.getElementById('closeSearchBtn');
-    app.searchInput = document.getElementById('searchInput');
-    app.searchResults = document.getElementById('searchResults');
+  // Search
+  app.searchContainer  = document.getElementById('searchContainer');
+  app.closeSearchBtn   = document.getElementById('closeSearchBtn');
+  app.searchInput      = document.getElementById('searchInput');
+  app.searchResults    = document.getElementById('searchResults');
 
-    // Passage display
-    app.passageTitle = document.getElementById('passageTitle');
-    app.passageText = document.getElementById('passageText');
-    app.copyright = document.getElementById('copyright');
-    app.copyBtn = document.getElementById('copyBtn');
+  // Passage display
+  app.passageTitle = document.getElementById('passageTitle');
+  app.passageText  = document.getElementById('passageText');
+  app.copyright    = document.getElementById('copyright');
+  app.copyBtn      = document.getElementById('copyBtn');
 
-    // Modals
-    app.bookModal = document.getElementById('bookModal');
-    app.chapterModal = document.getElementById('chapterModal');
-    app.verseModal = document.getElementById('verseModal');
-    app.settingsModal = document.getElementById('settingsModal');
-    app.helpModal = document.getElementById('helpModal');
-    app.loginModal = document.getElementById('loginModal');
-    app.signupModal = document.getElementById('signupModal');
-    app.userMenuModal = document.getElementById('userMenuModal');
+  // Modals
+  app.bookModal      = document.getElementById('bookModal');
+  app.chapterModal   = document.getElementById('chapterModal');
+  app.verseModal     = document.getElementById('verseModal');
+  app.settingsModal  = document.getElementById('settingsModal');
+  app.helpModal      = document.getElementById('helpModal');
+  app.loginModal     = document.getElementById('loginModal');
+  app.signupModal    = document.getElementById('signupModal');
+  app.userMenuModal  = document.getElementById('userMenuModal');
+  app.referencesModal = document.getElementById('referencesModal');
 
-    // Modal close buttons
-    app.closeBookModal = document.getElementById('closeBookModal');
-    app.closeChapterModal = document.getElementById('closeChapterModal');
-    app.closeVerseModal = document.getElementById('closeVerseModal');
-    app.closeSettingsModal = document.getElementById('closeSettingsModal');
-    app.closeHelpModal = document.getElementById('closeHelpModal');
-    app.closeLoginModal = document.getElementById('closeLoginModal');
-    app.closeSignupModal = document.getElementById('closeSignupModal');
-    app.closeUserMenuModal = document.getElementById('closeUserMenuModal');
+  // Modal close buttons
+  app.closeBookModal        = document.getElementById('closeBookModal');
+  app.closeChapterModal     = document.getElementById('closeChapterModal');
+  app.closeVerseModal       = document.getElementById('closeVerseModal');
+  app.closeSettingsModal    = document.getElementById('closeSettingsModal');
+  app.closeHelpModal        = document.getElementById('closeHelpModal');
+  app.closeLoginModal       = document.getElementById('closeLoginModal');
+  app.closeSignupModal      = document.getElementById('closeSignupModal');
+  app.closeUserMenuModal    = document.getElementById('closeUserMenuModal');
+  app.closeReferencesModal  = document.getElementById('closeReferencesModal');
 
-    // Modal content
-    app.oldTestamentBooks = document.getElementById('oldTestamentBooks');
-    app.newTestamentBooks = document.getElementById('newTestamentBooks');
-    app.chapterModalBook = document.getElementById('chapterModalBook');
-    app.chapterGrid = document.getElementById('chapterGrid');
-    app.verseModalBook = document.getElementById('verseModalBook');
-    app.verseGrid = document.getElementById('verseGrid');
+  // Modal content
+  app.oldTestamentBooks = document.getElementById('oldTestamentBooks');
+  app.newTestamentBooks = document.getElementById('newTestamentBooks');
+  app.chapterModalBook  = document.getElementById('chapterModalBook');
+  app.chapterGrid       = document.getElementById('chapterGrid');
+  app.verseModalBook    = document.getElementById('verseModalBook');
+  app.verseGrid         = document.getElementById('verseGrid');
 
-    // Settings
-    app.apiKeyInput = document.getElementById('apiKeyInput');
-    app.saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
-    app.verseNumbersToggle = document.getElementById('verseNumbersToggle');
-    app.headingsToggle = document.getElementById('headingsToggle');
-    app.footnotesToggle = document.getElementById('footnotesToggle');
-    app.crossReferencesToggle = document.getElementById('crossReferencesToggle');
-    app.verseByVerseToggle = document.getElementById('verseByVerseToggle');
-    app.fontSizeSlider = document.getElementById('fontSizeSlider');
-    app.fontSizeValue = document.getElementById('fontSizeValue');
+  // Settings
+  app.apiKeyInput        = document.getElementById('apiKeyInput');
+  app.saveApiKeyBtn      = document.getElementById('saveApiKeyBtn');
+  app.verseNumbersToggle = document.getElementById('verseNumbersToggle');
+  app.headingsToggle     = document.getElementById('headingsToggle');
+  app.footnotesToggle    = document.getElementById('footnotesToggle');
+  app.crossReferencesToggle = document.getElementById('crossReferencesToggle');
+  app.verseByVerseToggle = document.getElementById('verseByVerseToggle');
+  app.fontSizeSlider     = document.getElementById('fontSizeSlider');
+  app.fontSizeValue      = document.getElementById('fontSizeValue');
 
-    // References modal (footnotes and cross-references)
-    app.referencesModal = document.getElementById('referencesModal');
-    app.closeReferencesModal = document.getElementById('closeReferencesModal');
-    app.footnotesSection = document.getElementById('footnotesSection');
-    app.footnotesContent = document.getElementById('footnotesContent');
-    app.crossReferencesSection = document.getElementById('crossReferencesSection');
-    app.crossReferencesContent = document.getElementById('crossReferencesContent');
+  // References modal (footnotes and cross-references)
+  app.footnotesSection      = document.getElementById('footnotesSection');
+  app.footnotesContent      = document.getElementById('footnotesContent');
+  app.crossReferencesSection = document.getElementById('crossReferencesSection');
+  app.crossReferencesContent = document.getElementById('crossReferencesContent');
 
-    // Toast
-    app.toast = document.getElementById('toast');
+  // Toast
+  app.toast = document.getElementById('toast');
 }
 
 // Load theme on app start (uses localStorage as initial fallback)
 export function loadTheme(app) {
-    const savedLightMode = localStorage.getItem('lightMode') === 'true';
-    if (savedLightMode) {
-        document.documentElement.classList.add('light-mode');
-        document.body.classList.add('light-mode');
-    }
-    updateThemeIcon(savedLightMode);
+  const savedLightMode = localStorage.getItem('lightMode') === 'true';
+  const savedTheme = localStorage.getItem('colorTheme') || 'dracula';
+
+  if (savedLightMode) {
+    document.documentElement.classList.add('light-mode');
+    document.body.classList.add('light-mode');
+  } else {
+    document.documentElement.classList.remove('light-mode');
+    document.body.classList.remove('light-mode');
+  }
+
+  // Apply color theme class
+  changeColorTheme(app, savedTheme);
+
+  updateThemeIcon(savedLightMode);
 }
 
 // Toggle between light and dark mode
 export async function toggleTheme(app) {
-    document.documentElement.classList.toggle('light-mode');
-    document.body.classList.toggle('light-mode');
+  document.documentElement.classList.toggle('light-mode');
+  document.body.classList.toggle('light-mode');
 
-    const isLightMode = document.body.classList.contains('light-mode');
+  const isLightMode = document.body.classList.contains('light-mode');
 
-    if (app.currentUser) {
-        await app.database.ref(`users/${app.currentUser.uid}/settings/lightMode`).set(isLightMode);
-    } else {
-        localStorage.setItem('lightMode', isLightMode);
-    }
-    updateThemeIcon(isLightMode);
+  if (app.firebase && app.firebase.currentUser && app.firebase.database) {
+    // Save to Firebase via FirebaseManager if available
+    await app.firebase.saveSetting('lightMode', isLightMode);
+  } else {
+    localStorage.setItem('lightMode', isLightMode);
+  }
+
+  updateThemeIcon(isLightMode);
 }
 
 // Update theme icon based on current mode
 export function updateThemeIcon(isLightMode) {
-    const btn = document.getElementById('themeToggleBtn');
-    if (!btn) return;
+  const btn = document.getElementById('themeToggleBtn');
+  if (!btn) return;
 
-    const svg = btn.querySelector('svg');
-    if (!svg) return;
-
-    if (isLightMode) {
-        // Light mode → show moon (to indicate you can switch to dark)
-        svg.outerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
-    } else {
-        // Dark mode → show sun (to indicate you can switch to light)
-        svg.outerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
-    }
+  // Replace inner SVG based on mode
+  btn.innerHTML = isLightMode
+    // Moon icon (light mode → can switch to dark)
+    ? `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`
+    // Sun icon (dark mode → can switch to light)
+    : `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
 }
 
-// Change color theme (dracula, steel, or onyx)
+// Change color theme (dracula, steel, onyx, reader)
 export async function changeColorTheme(app, theme) {
-    // Remove all theme classes (dracula is default = no extra class)
-    document.body.classList.remove("steel-theme", "onyx-theme", "reader-theme");
+  // Remove all theme classes (dracula is default = no extra class)
+  document.body.classList.remove('steel-theme', 'onyx-theme', 'reader-theme');
 
-    // Add new theme class
-    if (theme === "steel") document.body.classList.add("steel-theme");
-    else if (theme === "onyx") document.body.classList.add("onyx-theme");
-    else if (theme === "reader") document.body.classList.add("reader-theme");
+  // Add new theme class
+  if (theme === 'steel') document.body.classList.add('steel-theme');
+  else if (theme === 'onyx') document.body.classList.add('onyx-theme');
+  else if (theme === 'reader') document.body.classList.add('reader-theme');
 
-    // Save to Firebase if logged in
-    if (app.currentUser) {
-        await app.database
-            .ref(`users/${app.currentUser.uid}/settings/colorTheme`)
-            .set(theme);
-    } else {
-        // Fallback to localStorage if not logged in
-        localStorage.setItem("colorTheme", theme);
-    }
+  // Persist selection
+  if (app.firebase && app.firebase.currentUser && app.firebase.database) {
+    await app.firebase.saveSetting('colorTheme', theme);
+  } else {
+    localStorage.setItem('colorTheme', theme);
+  }
 }
