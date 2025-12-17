@@ -1,20 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ESV Bible Reader</title>
+
     <!-- Favicon -->
     <link rel="icon" href="https://api.esv.org/favicon.ico" type="image/x-icon">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
     <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-    <!-- Top Chrome (Wrapper for Header & Navigation) -->
+    <!-- Top Chrome Wrapper for Header + Navigation -->
     <div id="topChrome" class="top-chrome">
         <!-- Header -->
         <header class="header">
@@ -22,29 +29,66 @@
                 <div class="logo">ESV Bible</div>
                 <div class="header-controls">
                     <button id="searchToggleBtn" class="icon-btn" aria-label="Search">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
                     </button>
                     <button id="themeToggleBtn" class="icon-btn" aria-label="Toggle Theme">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                        <!-- Sun/Moon icon injected by JS -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
                     </button>
                     <button id="helpBtn" class="icon-btn" aria-label="Help">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
                     </button>
                     <button id="userBtn" class="icon-btn" aria-label="User Account">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
                     </button>
                     <button id="settingsBtn" class="icon-btn" aria-label="Settings">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        <!-- Settings gear icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path
+                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                            </path>
+                        </svg>
                     </button>
                 </div>
             </div>
-            
-            <!-- Search Container (Inside Header for better stacking context) -->
+
+            <!-- Search Container Inside Header for better stacking context -->
             <div id="searchContainer" class="search-container">
                 <div class="search-wrapper">
-                    <input type="text" id="searchInput" class="search-input" placeholder="Search (e.g., 'John 3:16' or 'love')">
+                    <input type="text" id="searchInput" class="search-input"
+                        placeholder="Search (e.g., John 3:16 or love)">
                     <button id="closeSearchBtn" class="close-btn" aria-label="Close Search">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
                     </button>
                 </div>
                 <div id="searchResults" class="search-results"></div>
@@ -55,17 +99,21 @@
         <nav class="navigation">
             <div class="nav-content">
                 <button id="prevChapterBtn" class="nav-btn" aria-label="Previous Chapter">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
                 </button>
-                
                 <div class="current-reference">
                     <button id="bookSelector" class="ref-btn"><span id="currentBook">Gen</span></button>
                     <button id="chapterSelector" class="ref-btn"><span id="currentChapter">1</span></button>
-                    <button id="verseSelector" class="ref-btn">:<span id="currentVerse">1</span></button>
+                    <button id="verseSelector" class="ref-btn"><span id="currentVerse">1</span></button>
                 </div>
-
                 <button id="nextChapterBtn" class="nav-btn" aria-label="Next Chapter">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
                 </button>
             </div>
         </nav>
@@ -73,25 +121,39 @@
 
     <!-- Main Content -->
     <main class="main-content">
-        <h2 id="passageTitle" class="passage-title">Genesis 1</h2>
-        <div id="passageText" class="passage-text">
-            <p class="loading">Loading passage...</p>
-        </div>
-        
-        <div class="passage-footer">
-            <div id="copyright" class="copyright"></div>
+        <div class="passage-container">
+            <div class="passage-header">
+                <h2 id="passageTitle" class="passage-title">Genesis 1</h2>
+                <button id="copyBtn" class="icon-btn" title="Copy passage">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="passageText" class="passage-text">
+                <div class="loading">Loading passage...</div>
+            </div>
+            <div class="passage-footer">
+                <p id="copyright" class="copyright"></p>
+            </div>
         </div>
     </main>
 
     <!-- Modals -->
-    
+
     <!-- Book Selection Modal -->
     <div id="bookModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Select Book</h3>
                 <button id="closeBookModal" class="close-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
                 </button>
             </div>
             <div class="modal-body">
@@ -111,9 +173,13 @@
     <div id="chapterModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Select Chapter (<span id="chapterModalBook"></span>)</h3>
+                <h3>Select Chapter <span id="chapterModalBook"></span></h3>
                 <button id="closeChapterModal" class="close-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
                 </button>
             </div>
             <div class="modal-body">
@@ -126,9 +192,13 @@
     <div id="verseModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Select Verse (<span id="verseModalBook"></span>)</h3>
+                <h3>Select Verse <span id="verseModalBook"></span></h3>
                 <button id="closeVerseModal" class="close-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
                 </button>
             </div>
             <div class="modal-body">
@@ -137,14 +207,18 @@
         </div>
     </div>
 
-    <!-- References Modal (Footnotes & Cross-refs) -->
+    <!-- References Modal (Footnotes + Cross-refs) -->
     <div id="referencesModal" class="modal bottom-sheet">
         <div class="modal-content">
             <div class="modal-header">
                 <div class="drag-handle"></div>
                 <h3>References</h3>
                 <button id="closeReferencesModal" class="close-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
                 </button>
             </div>
             <div class="modal-body">
@@ -166,30 +240,29 @@
             <div class="modal-header">
                 <h3>Keyboard Shortcuts</h3>
                 <button id="closeHelpModal" class="close-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
                 </button>
             </div>
             <div class="modal-body">
                 <div class="shortcut-list">
-                    <div class="shortcut-item">
-                        <kbd>Ctrl</kbd> + <kbd>K</kbd>
-                        <span>Open Search</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <kbd>Esc</kbd>
-                        <span>Close Modal / Search</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <kbd>←</kbd> / <kbd>→</kbd>
-                        <span>Previous / Next Chapter (when focused on buttons)</span>
-                    </div>
+                    <div class="shortcut-item"><kbd>Ctrl</kbd> + <kbd>K</kbd> <span>Open Search</span></div>
+                    <div class="shortcut-item"><kbd>Esc</kbd> <span>Close Modal / Search</span></div>
+                    <div class="shortcut-item"><kbd>←</kbd> / <kbd>→</kbd> <span>Previous / Next Chapter (when focused
+                            on buttons)</span></div>
                 </div>
                 <div class="tips-section" style="margin-top: 2rem;">
                     <h4>Search Tips</h4>
                     <ul class="tips-list">
-                        <li><strong>Passage:</strong> Enter a reference like <code>John 3</code>, <code>John 3:16</code>, or <code>jn 3 16</code> to jump directly to it.</li>
-                        <li><strong>Keyword:</strong> Enter words like <code>love</code>, <code>light</code>, or <code>covenant</code> to search the Bible.</li>
-                        <li><strong>Exact Phrase:</strong> Use quotes for exact matches (e.g., <code>"in love"</code>).</li>
+                        <li><strong>Passage:</strong> Enter a reference like <code>John 3</code>,
+                            <code>John 3:16</code>, or <code>jn 3 16</code> to jump directly to it.</li>
+                        <li><strong>Keyword:</strong> Enter words like <code>love</code>, <code>light</code>, or
+                            <code>covenant</code> to search the Bible.</li>
+                        <li><strong>Exact Phrase:</strong> Use quotes for exact matches (e.g., <code>"in love"</code>).
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -202,11 +275,16 @@
             <div class="modal-header">
                 <h3>Sign In</h3>
                 <button id="closeLoginModal" class="close-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
                 </button>
             </div>
             <div class="modal-body">
-                <p class="auth-intro">Account settings (email, theme, reading position) are automatically synced via Firebase when you're signed in.</p>
+                <p class="auth-intro">Account settings (email, theme, reading position) are automatically synced via
+                    Firebase when you're signed in.</p>
                 <form id="loginForm" class="auth-form">
                     <div class="form-group">
                         <label for="loginEmail">Email</label>
@@ -231,7 +309,11 @@
             <div class="modal-header">
                 <h3>Create Account</h3>
                 <button id="closeSignupModal" class="close-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
                 </button>
             </div>
             <div class="modal-body">
@@ -259,7 +341,11 @@
             <div class="modal-header">
                 <h3>Account</h3>
                 <button id="closeUserMenuModal" class="close-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
                 </button>
             </div>
             <div class="modal-body">
@@ -278,14 +364,19 @@
                 <div class="drag-handle"></div>
                 <h3>Settings</h3>
                 <button id="closeSettingsModal" class="close-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
                 </button>
             </div>
             <div class="modal-body">
+                <!-- Appearance -->
                 <div class="settings-group">
                     <h4>Appearance</h4>
                     <div class="setting-item">
-                        <label for="fontSizeSlider">Font Size: <span id="fontSizeValue">18px</span></label>
+                        <label for="fontSizeSlider">Font Size <span id="fontSizeValue">18px</span></label>
                         <input type="range" id="fontSizeSlider" min="14" max="32" value="18" class="slider">
                     </div>
                     <div class="setting-item">
@@ -306,6 +397,7 @@
                     </div>
                 </div>
 
+                <!-- Display -->
                 <div class="settings-group">
                     <h4>Display</h4>
                     <div class="setting-item toggle-item">
@@ -352,18 +444,22 @@
                     </div>
                 </div>
 
+                <!-- API Configuration -->
                 <div class="settings-group">
                     <h4>API Configuration</h4>
                     <div class="setting-item">
                         <label for="apiKeyInput">ESV API Key</label>
                         <input type="password" id="apiKeyInput" class="input-field" placeholder="Enter your API key">
-                        <span class="help-text">Get a free key at <a href="https://api.esv.org/" target="_blank">api.esv.org</a></span>
+                        <span class="help-text">Get a free key at <a href="https://api.esv.org"
+                                target="_blank">api.esv.org</a></span>
                     </div>
                     <button id="saveApiKeyBtn" class="primary-btn full-width">Save Key</button>
                 </div>
-                
+
+                <!-- Account -->
                 <div class="settings-group">
-                    <button id="openAccountBtn" class="primary-btn full-width" style="margin-top: 10px;">Manage Account</button>
+                    <button id="openAccountBtn" class="primary-btn full-width" style="margin-top: 10px;">Manage
+                        Account</button>
                 </div>
             </div>
         </div>
@@ -376,19 +472,19 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    
+
     <!-- Firebase Config (Root) -->
     <!-- <script src="firebase-config.js"></script> -->
-    
+
     <!-- Encryption Helper -->
     <script>
         // Simple encryption helper for API key storage
         window.encryptionHelper = {
-            encrypt: function(text) {
+            encrypt: function (text) {
                 // In a real app, use Web Crypto API. This is a basic obfuscation for the demo.
                 return btoa(text);
             },
-            decrypt: function(encoded) {
+            decrypt: function (encoded) {
                 try {
                     return atob(encoded);
                 } catch (e) {
@@ -397,8 +493,9 @@
             }
         };
     </script>
-    
+
     <!-- Main App Script (Modular) -->
     <script type="module" src="js/modules/app.js"></script>
 </body>
+
 </html>
