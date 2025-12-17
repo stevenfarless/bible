@@ -1,4 +1,4 @@
-// js/modules/ui-manager.js NEW VERSION
+// js/modules/ui-manager.js
 import { cacheElements, loadTheme, toggleTheme, changeColorTheme, updateThemeIcon } from './ui-utils.js';
 import { BOOK_ABBREVIATIONS, BIBLE_STRUCTURE, getChapterCount, getAllBooks } from './bible-structure.js';
 import { scrollToVerse } from './reading-state.js';
@@ -7,8 +7,7 @@ import { getRedLetterVerses } from './words-of-jesus.js';
 export class UIManager {
     constructor(app) {
         this.app = app;
-        this.elements = {};
-
+        
         // Chrome/Scroll state
         this.chromeHidden = false;
         this.chromeScrollLastY = 0;
@@ -20,8 +19,6 @@ export class UIManager {
 
     init() {
         cacheElements(this);
-        this.elements = this;
-
         this.loadTheme();
         this.attachEventListeners();
         this.initializeAccordion();
@@ -31,7 +28,7 @@ export class UIManager {
         loadTheme(this);
         const themeSelector = document.getElementById('themeSelector');
         const lightModeToggle = document.getElementById('lightModeToggle');
-
+        
         if (themeSelector) {
             themeSelector.value = localStorage.getItem('colorTheme') || 'dracula';
         }
@@ -41,15 +38,22 @@ export class UIManager {
     }
 
     attachEventListeners() {
-        // Header & Nav
+        // Header Nav
         this.searchToggleBtn.addEventListener('click', () => this.app.search.toggleSearch());
         this.helpBtn.addEventListener('click', () => this.openModal(this.helpModal));
         this.settingsBtn.addEventListener('click', () => this.openModal(this.settingsModal));
+        this.userBtn.addEventListener('click', () => this.app.handleUserButtonClick());
+
+        // Copy Button
+        const copyBtn = document.getElementById('copyBtn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => this.copyPassage());
+        }
 
         // Navigation Buttons
         this.prevChapterBtn.addEventListener('click', () => this.app.navigateChapter(-1));
         this.nextChapterBtn.addEventListener('click', () => this.app.navigateChapter(1));
-
+        
         // Selectors
         this.bookSelector.addEventListener('click', () => this.openBookModal());
         this.chapterSelector.addEventListener('click', () => this.openChapterModal());
@@ -63,7 +67,7 @@ export class UIManager {
         // Settings
         this.saveApiKeyBtn.addEventListener('click', () => {
             this.app.firebase.saveApiKey(this.apiKeyInput.value.trim())
-                .then(success => {
+                .then((success) => {
                     if (success) {
                         this.showToast('API key saved!');
                         this.closeModal(this.settingsModal);
@@ -78,9 +82,12 @@ export class UIManager {
         this.verseNumbersToggle.addEventListener('change', () => this.app.toggleSetting('showVerseNumbers'));
         this.headingsToggle.addEventListener('change', () => this.app.toggleSetting('showHeadings'));
         this.footnotesToggle.addEventListener('change', () => this.app.toggleSetting('showFootnotes'));
+        
         const crossRefToggle = document.getElementById('crossReferencesToggle');
-        if (crossRefToggle) crossRefToggle.addEventListener('change', () => this.app.toggleSetting('showCrossReferences'));
-
+        if (crossRefToggle) {
+            crossRefToggle.addEventListener('change', () => this.app.toggleSetting('showCrossReferences'));
+        }
+        
         this.verseByVerseToggle.addEventListener('change', () => this.app.toggleVerseByVerse());
         this.fontSizeSlider.addEventListener('input', (e) => this.app.updateFontSize(e.target.value));
 
@@ -93,31 +100,40 @@ export class UIManager {
 
         // Theme
         this.themeToggleBtn.addEventListener('click', () => toggleTheme(this));
+        
         const themeSelector = document.getElementById('themeSelector');
-        if (themeSelector) themeSelector.addEventListener('change', (e) => changeColorTheme(this, e.target.value));
+        if (themeSelector) {
+            themeSelector.addEventListener('change', (e) => changeColorTheme(this, e.target.value));
+        }
+        
         const lightModeToggle = document.getElementById('lightModeToggle');
-        if (lightModeToggle) lightModeToggle.addEventListener('change', () => toggleTheme(this));
+        if (lightModeToggle) {
+            lightModeToggle.addEventListener('change', () => toggleTheme(this));
+        }
 
         // Auth
-        this.userBtn.addEventListener('click', () => this.app.handleUserButtonClick());
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
             this.app.firebase.handleLogin(
                 document.getElementById('loginEmail').value,
                 document.getElementById('loginPassword').value
-            ).then(success => {
-                if (success === true) this.closeModal(this.loginModal);
+            ).then((success) => {
+                if (success === true) {
+                    this.closeModal(this.loginModal);
+                }
             });
         });
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
-            this.app.firebase.handleLogout().then(() => this.closeModal(this.userMenuModal));
+            this.app.firebase.handleLogout().then(() => {
+                this.closeModal(this.userMenuModal);
+            });
         });
 
         // Modals - Close on click outside
-        [this.bookModal, this.chapterModal, this.verseModal, this.settingsModal,
-        this.helpModal, this.loginModal, this.signupModal, this.userMenuModal,
-        this.referencesModal].forEach(modal => {
+        [this.bookModal, this.chapterModal, this.verseModal, this.settingsModal, 
+         this.helpModal, this.loginModal, this.signupModal, this.userMenuModal, 
+         this.referencesModal].forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) this.closeModal(modal);
             });
@@ -133,10 +149,15 @@ export class UIManager {
 
         // Auth switching
         document.getElementById('showSignupLink').addEventListener('click', (e) => {
-            e.preventDefault(); this.closeModal(this.loginModal); this.openModal(this.signupModal);
+            e.preventDefault();
+            this.closeModal(this.loginModal);
+            this.openModal(this.signupModal);
         });
+
         document.getElementById('showLoginLink').addEventListener('click', (e) => {
-            e.preventDefault(); this.closeModal(this.signupModal); this.openModal(this.loginModal);
+            e.preventDefault();
+            this.closeModal(this.signupModal);
+            this.openModal(this.loginModal);
         });
     }
 
@@ -146,19 +167,19 @@ export class UIManager {
                 header.closest('.accordion-section').classList.toggle('active');
             });
         });
+
         const openAccountBtn = document.getElementById('openAccountBtn');
         if (openAccountBtn) {
             openAccountBtn.addEventListener('click', () => {
                 this.closeModal(this.settingsModal);
-                this.app.firebase.currentUser ? this.openModal(this.userMenuModal) : this.openModal(this.loginModal);
+                this.app.firebase.currentUser ? 
+                    this.openModal(this.userMenuModal) : 
+                    this.openModal(this.loginModal);
             });
         }
     }
 
-    // ===============================
     // Modals
-    // ===============================
-
     openModal(modal) {
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -196,10 +217,16 @@ export class UIManager {
             });
             return btn;
         };
+
         this.oldTestamentBooks.innerHTML = '';
-        Object.keys(BIBLE_STRUCTURE['Old Testament']).forEach(b => this.oldTestamentBooks.appendChild(createBtn(b)));
+        Object.keys(BIBLE_STRUCTURE['Old Testament']).forEach(b => {
+            this.oldTestamentBooks.appendChild(createBtn(b));
+        });
+
         this.newTestamentBooks.innerHTML = '';
-        Object.keys(BIBLE_STRUCTURE['New Testament']).forEach(b => this.newTestamentBooks.appendChild(createBtn(b)));
+        Object.keys(BIBLE_STRUCTURE['New Testament']).forEach(b => {
+            this.newTestamentBooks.appendChild(createBtn(b));
+        });
     }
 
     openChapterModal() {
@@ -211,6 +238,7 @@ export class UIManager {
         this.chapterModalBook.textContent = this.app.state.currentBook;
         this.chapterGrid.innerHTML = '';
         const count = getChapterCount(this.app.state.currentBook);
+        
         for (let i = 1; i <= count; i++) {
             const btn = document.createElement('button');
             btn.className = 'chapter-item';
@@ -233,10 +261,12 @@ export class UIManager {
         this.verseModalBook.textContent = `${this.app.state.currentBook} ${this.app.state.currentChapter}`;
         this.verseGrid.innerHTML = '';
         const count = this.getCurrentVerseCount();
+        
         if (count === 0) {
             this.verseGrid.innerHTML = '<p>No verses found</p>';
             return;
         }
+        
         for (let i = 1; i <= count; i++) {
             const btn = document.createElement('button');
             btn.className = 'chapter-item';
@@ -254,31 +284,41 @@ export class UIManager {
         return nums.length > 0 ? nums.length + 1 : 0;
     }
 
-    // scrollToVerse(num) {
-    //     scrollToVerse(this, num);
-    // }
-
     scrollToVerse(num) {
         scrollToVerse(this.app, num);
     }
 
-    // ===============================
-    // Red Letters & Chrome
-    // ===============================
+    // Copy Passage
+    copyPassage() {
+        const textContent = this.stripHTML(this.passageText.innerHTML);
+        const reference = this.passageTitle.textContent;
+        const fullText = `${reference}\n\n${textContent}\n\n${this.copyright.textContent}`;
+        
+        navigator.clipboard.writeText(fullText)
+            .then(() => this.showToast('Passage copied to clipboard!'))
+            .catch(err => {
+                console.error('Failed to copy', err);
+                this.showToast('Failed to copy passage');
+            });
+    }
 
+    // Red Letters
     applyRedLetters() {
         if (!this.app.state.showRedLetters) {
             this.passageText.querySelectorAll('.red-letter').forEach(el => el.classList.remove('red-letter'));
             return;
         }
+
         const redVerses = getRedLetterVerses(this.app.state.currentBook, this.app.state.currentChapter);
         if (!redVerses || redVerses.length === 0) return;
 
-        this.passageText.querySelectorAll('p[id^="p"]').forEach(p => {
+        this.passageText.querySelectorAll('p[id],div[id]').forEach(p => {
             const match = p.id.match(/p(\d{10})/);
             if (match) {
                 const verseNum = parseInt(match[1].substring(5, 8), 10);
-                if (redVerses.includes(verseNum)) this.colorizeVerse(p);
+                if (redVerses.includes(verseNum)) {
+                    this.colorizeVerse(p);
+                }
             }
         });
     }
@@ -289,12 +329,16 @@ export class UIManager {
             verseElement.classList.add('red-letter');
             return;
         }
+
         const walker = document.createTreeWalker(verseElement, NodeFilter.SHOW_TEXT, null, false);
         const nodes = [];
         let node;
-        while (node = walker.nextNode()) {
-            if (!verseNumEl.contains(node) && node.nodeValue.trim()) nodes.push(node);
+        while ((node = walker.nextNode())) {
+            if (!verseNumEl.contains(node) && node.nodeValue.trim()) {
+                nodes.push(node);
+            }
         }
+
         nodes.forEach(textNode => {
             const span = document.createElement('span');
             span.className = 'red-letter';
@@ -303,6 +347,7 @@ export class UIManager {
         });
     }
 
+    // Chrome show/hide
     showChrome() {
         if (!this.chromeHidden) return;
         document.body.classList.remove('chrome-hidden');
@@ -331,23 +376,22 @@ export class UIManager {
             const modalOpen = !!document.querySelector('.modal.active');
             const searchOpen = !!this.searchContainer?.classList.contains('active');
 
-            if (y <= 0 || modalOpen || searchOpen) {
+            if (y < 50 || modalOpen || searchOpen) {
                 this.showChrome();
                 this.chromeScrollLastY = y;
                 this.chromeScrollTicking = false;
                 return;
             }
+
             if (delta > this.chromeDelta) this.hideChrome();
             if (delta < -this.chromeDelta) this.showChrome();
+
             this.chromeScrollLastY = y;
             this.chromeScrollTicking = false;
         });
     }
 
-    // ===============================
     // Utilities
-    // ===============================
-
     showToast(message) {
         this.toast.textContent = message;
         this.toast.classList.add('show');
@@ -363,8 +407,12 @@ export class UIManager {
     applySettings() {
         const theme = this.app.state.colorTheme || 'dracula';
         changeColorTheme(this, theme);
-        if (this.app.state.lightMode) document.body.classList.add('light-mode');
-        else document.body.classList.remove('light-mode');
+        
+        if (this.app.state.lightMode) {
+            document.body.classList.add('light-mode');
+        } else {
+            document.body.classList.remove('light-mode');
+        }
         updateThemeIcon(this.app.state.lightMode);
     }
 }
