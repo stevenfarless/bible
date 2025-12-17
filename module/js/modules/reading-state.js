@@ -1,67 +1,91 @@
-// js/modules/reading-state.js NEW VERSION
-import { getAllBooks, getChapterCount } from './bible-structure.js';
+// js/modules/reading-state.js
+// Responsibility: app-level state shape, chapter/verse navigation, verse scrolling
 
 export function initializeState() {
-    return {
-        currentBook: 'Genesis',
-        currentChapter: 1,
-        fontSize: 18,
-        showVerseNumbers: true,
-        showHeadings: true,
-        showFootnotes: false,
-        showCrossReferences: false,
-        showRedLetters: false,
-        verseByVerse: false,
-        selectedVerse: null,
-        lightMode: false,
-        colorTheme: 'dracula'
-    };
+  return {
+    currentBook: 'Genesis',
+    currentChapter: 1,
+    selectedVerse: null,
+
+    // display settings
+    fontSize: 18,
+    showVerseNumbers: true,
+    showHeadings: true,
+    showFootnotes: false,
+    showCrossReferences: false,
+    verseByVerse: false,
+    showRedLetters: true,
+
+    // theme
+    colorTheme: 'dracula',
+    lightMode: false,
+  };
 }
 
+// Chapter navigation (same semantics as old app)
 export function navigateChapter(app, direction) {
-    const books = getAllBooks();
-    const currentBookIndex = books.indexOf(app.state.currentBook);
-    const chapterCount = getChapterCount(app.state.currentBook);
+  const books = app.getAllBooks ? app.getAllBooks() : [];
+  const book = app.state.currentBook;
+  const chapter = app.state.currentChapter;
 
-    let newBook = app.state.currentBook;
-    let newChapter = app.state.currentChapter + direction;
+  const currentBookIndex = books.indexOf(book);
+  if (currentBookIndex === -1) return;
 
-    if (newChapter > chapterCount) {
-        if (currentBookIndex < books.length - 1) {
-            newBook = books[currentBookIndex + 1];
-            newChapter = 1;
-        } else {
-            return; // Last chapter of Revelation
-        }
-    } else if (newChapter < 1) {
-        if (currentBookIndex > 0) {
-            newBook = books[currentBookIndex - 1];
-            newChapter = getChapterCount(newBook);
-        } else {
-            return; // First chapter of Genesis
-        }
-    }
+  const chapterCount = app.getChapterCount
+    ? app.getChapterCount(book)
+    : 1;
 
-    app.loadPassage(newBook, newChapter);
+  let newBook = book;
+  let newChapter = chapter + direction;
+
+  if (direction > 0 && newChapter > chapterCount) {
+    // next book
+    if (currentBookIndex >= books.length - 1) return;
+    newBook = books[currentBookIndex + 1];
+    newChapter = 1;
+  } else if (direction < 0 && newChapter < 1) {
+    // previous book
+    if (currentBookIndex <= 0) return;
+    newBook = books[currentBookIndex - 1];
+    newChapter = app.getChapterCount
+      ? app.getChapterCount(newBook)
+      : 1;
+  }
+
+  app.state.selectedVerse = null;
+  app.loadPassage(newBook, newChapter);
 }
 
-export function scrollToVerse(app, verseNum) {
-    const verses = Array.from(app.ui.passageText.querySelectorAll('.verse-num'));
-    const target = verses.find(v => v.textContent.trim() === String(verseNum));
+// Scroll to a verse and remember selection
+export function scrollToVerse(app, verseNumber) {
+  if (!app.ui || !app.ui.passageText) return;
 
-    if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        applyVerseGlow(target);
-        app.state.selectedVerse = verseNum;
-    }
+  app.state.selectedVerse = verseNumber;
+
+  const container = app.ui.passageText;
+  const verseSelector = `.verse-num[id^="v"][id*="${verseNumber}-"]`;
+  const verseEl =
+    container.querySelector(verseSelector) ||
+    container.querySelector(`[data-verse="${verseNumber}"]`);
+
+  if (!verseEl) return;
+
+  const rect = verseEl.getBoundingClientRect();
+  const offset = window.scrollY + rect.top - 80; // offset for header/nav
+  window.scrollTo({
+    top: offset,
+    behavior: 'smooth',
+  });
+
+  applyVerseGlow(app, verseEl);
 }
 
-export function applyVerseGlow(element) {
-    let container = element.closest('span.verse-span');
-    if (!container) container = element.parentElement;
+// Add a temporary glow highlight to a verse container
+export function applyVerseGlow(app, verseElement) {
+  if (!verseElement) return;
+  const row = verseElement.closest('p, div');
+  if (!row) return;
 
-    container.classList.add('verse-glow');
-    setTimeout(() => {
-        container.classList.remove('verse-glow');
-    }, 2000);
+  row.classList.add('verse-glow');
+  setTimeout(() => row.classList.remove('verse-glow'), 800);
 }
