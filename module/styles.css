@@ -1,50 +1,385 @@
 /* ================================
-   ESV Bible Reader - FIXED STYLES
+   ESV Bible Reader - Styles
+
+   TABLE OF CONTENTS
+   1. CSS Reset & Base
+   2. CSS Custom Properties (Variables)
+   3. Theme Overrides
+   4. Typography & Base Elements
+   5. Layout Components
+   6. UI Components (Alphabetical)
+   7. Modals & Overlays
+   8. Interactive States & Effects
+   9. Animations
+   10. Responsive Design
+   11. Utility Classes
+   12. Print Styles
    ================================ */
 
-/* 1. RESET & BASE */
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { 
-    height: 100%; 
+/* ================================
+   1. CSS RESET & BASE
+   ================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    overflow: scroll;
+    scrollbar-width: none;
+    height: 100%;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--bg-base);
     color: var(--text-heading);
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* 2. VARIABLES (Themed) */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    display: none;
+}
+
+/* ================================
+   2. CSS CUSTOM PROPERTIES (VARIABLES)
+   Official Dracula colors from https://spec.draculatheme.com
+   ================================ */
 :root {
+    /* ================================
+       Core tokens
+       - Dracula palette constants are the only theme-specific constants.
+       - Semantic tokens are the single source of truth.
+       - Existing app tokens (bg/text/border) are one-way aliases.
+       ================================ */
+
+    /* Dracula palette constants (official) */
     --dracula-bg: #282A36;
-    --dracula-bg-dark: #21222C;
+    --dracula-current-line: #44475A;
     --dracula-fg: #F8F8F2;
     --dracula-comment: #6272A4;
-    --dracula-purple: #BD93F9;
+    --dracula-cyan: #8BE9FD;
+    --dracula-green: #50FA7B;
+    --dracula-orange: #FFB86C;
     --dracula-pink: #FF79C6;
-    
-    /* Semantic Defaults (Dracula) */
-    --bg-base: var(--dracula-bg-dark);
-    --bg-card: var(--dracula-bg);
+    --dracula-purple: #BD93F9;
+    --dracula-red: #FF5555;
+    --dracula-yellow: #F1FA8C;
+
+    /* Dracula UI shades */
+    --dracula-bg-dark: #21222C;
+    --dracula-bg-darker: #191A21;
+    --dracula-bg-light: #343746;
+    --dracula-bg-lighter: #424450;
+
+    /* Typography */
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-serif: 'Crimson Text', Georgia, serif;
+    --font-size-base: 18px;
+
+    /* Spacing */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-xxl: 3rem;
+
+    /* Layout */
+    --max-width: 800px;
+    --header-height: 45px;
+    --nav-height: 56px;
+
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-normal: 250ms ease;
+
+    /* Border Radius */
+    --border-radius: 6px;
+    --border-radius-lg: 12px;
+
+    /* Shadows (defaults tuned for dark UI) */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+
+    /* ================================
+       Semantic tokens (canonical)
+       Default = Dracula Dark
+       ================================ */
+
+    /* Surfaces */
+    --bg-base: var(--dracula-bg-darker);
+    --bg-card: var(--dracula-bg-dark);
+    --bg-raised: var(--dracula-bg);
+
+    /* Text */
     --text-heading: var(--dracula-fg);
-    --text-body: #E0E0E0;
-    --text-muted: var(--dracula-comment);
+    --text-body: var(--dracula-comment);
+    --text-muted-2: var(--dracula-comment);
+
+    /* Borders */
+    --border-neutral: var(--dracula-current-line);
+    --highlight-border: color-mix(in srgb, var(--border-neutral) 60%, white);
+
+    /* Brand */
     --primary-color: var(--dracula-purple);
-    --accent-color: var(--dracula-pink);
-    --border-color: #44475A;
+    --primary-dark: #9D75D6;
+    --primary-light: var(--dracula-pink);
+    --secondary-color: var(--dracula-orange);
+    --accent-color: var(--dracula-cyan);
+
+    /* Functional */
+    --success-color: var(--dracula-green);
+    --warning-color: var(--dracula-yellow);
+    --error-color: var(--dracula-red);
+
+    /* Component tokens */
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+    /* ================================
+       Legacy aliases (existing component contract)
+       Do not theme these directly; theme the semantic tokens above.
+       ================================ */
+    --bg-primary: var(--bg-base);
+    --bg-secondary: var(--bg-card);
+    --bg-tertiary: var(--bg-raised);
+    --text-primary: var(--text-heading);
+    --text-secondary: var(--text-body);
+    --text-muted: var(--text-muted-2);
+    --border-color: var(--border-neutral);
 }
 
-/* Light Mode Override */
+/* ================================
+   3. THEME OVERRIDES
+   ================================ */
+
+/* Light mode (semantic, neutral) */
+:root.light-mode,
+html.light-mode,
 body.light-mode {
-    --bg-base: #f4f4f5;
-    --bg-card: #ffffff;
-    --text-heading: #18181b;
-    --text-body: #3f3f46;
-    --text-muted: #71717a;
-    --primary-color: #7c3aed;
-    --accent-color: #db2777;
-    --border-color: #e4e4e7;
+    --bg-base: hsl(0, 0%, 100%);
+    --bg-card: hsl(210, 30%, 98%);
+    --bg-raised: hsl(210, 20%, 92%);
+
+    --text-heading: hsl(220, 18%, 18%);
+    --text-body: hsl(220, 12%, 34%);
+    --text-muted-2: hsl(220, 10%, 52%);
+
+    --border-neutral: hsl(220, 12%, 84%);
+    --highlight-border: hsl(220, 20%, 94%);
+
+    /* Keep the "Dracula brand" feel without introducing a named palette */
+    --primary-color: hsl(265, 60%, 45%);
+    --primary-dark: hsl(265, 62%, 38%);
+    --primary-light: hsl(315, 85%, 55%);
+    --secondary-color: hsl(28, 80%, 45%);
+    --accent-color: hsl(190, 70%, 30%);
+
+    --success-color: hsl(140, 50%, 35%);
+    --warning-color: hsl(45, 85%, 40%);
+    --error-color: hsl(6, 70%, 45%);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
 }
 
-/* 3. LAYOUT */
+/* Steel theme (semantic HSL) */
+:root.steel-theme,
+html.steel-theme,
+body.steel-theme {
+    --bg-base: hsl(212, 30%, 9%);
+    --bg-card: hsl(212, 28%, 12%);
+    --bg-raised: hsl(212, 26%, 16%);
+
+    --text-heading: hsl(210, 20%, 92%);
+    --text-body: hsl(214, 14%, 68%);
+    --text-muted-2: hsl(214, 10%, 54%);
+
+    --border-neutral: hsl(212, 18%, 26%);
+    --highlight-border: hsl(212, 18%, 34%);
+
+    --primary-color: hsl(210, 55%, 56%);
+    --primary-dark: hsl(210, 55%, 44%);
+    --primary-light: hsl(210, 70%, 70%);
+    --secondary-color: hsl(32, 70%, 60%);
+    --accent-color: hsl(195, 70%, 78%);
+
+    --success-color: hsl(160, 45%, 52%);
+    --warning-color: hsl(32, 70%, 60%);
+    --error-color: hsl(6, 65%, 56%);
+}
+
+:root.steel-theme.light-mode,
+html.steel-theme.light-mode,
+body.steel-theme.light-mode {
+    --bg-base: hsl(210, 30%, 98%);
+    --bg-card: hsl(210, 28%, 96%);
+    --bg-raised: hsl(210, 25%, 92%);
+
+    --text-heading: hsl(212, 30%, 14%);
+    --text-body: hsl(212, 18%, 34%);
+    --text-muted-2: hsl(212, 12%, 50%);
+
+    --border-neutral: hsl(210, 20%, 86%);
+    --highlight-border: hsl(210, 25%, 94%);
+
+    --primary-color: hsl(210, 52%, 42%);
+    --primary-dark: hsl(210, 55%, 34%);
+    --primary-light: hsl(210, 55%, 52%);
+    --secondary-color: hsl(32, 70%, 46%);
+    --accent-color: hsl(210, 55%, 34%);
+
+    --success-color: hsl(160, 42%, 36%);
+    --warning-color: hsl(32, 70%, 46%);
+    --error-color: hsl(6, 60%, 44%);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Onyx theme (semantic HSL) */
+:root.onyx-theme,
+html.onyx-theme,
+body.onyx-theme {
+    --bg-base: hsl(0, 0%, 0%);
+    --bg-card: hsl(0, 0%, 7%);
+    --bg-raised: hsl(0, 0%, 12%);
+
+    --text-heading: hsl(0, 0%, 90%);
+    --text-body: hsl(0, 0%, 60%);
+    --text-muted-2: hsl(0, 0%, 40%);
+
+    --border-neutral: hsl(0, 0%, 20%);
+    --highlight-border: hsl(0, 0%, 30%);
+
+    --primary-color: hsl(0, 0%, 80%);
+    --primary-dark: hsl(0, 0%, 60%);
+    --primary-light: hsl(0, 0%, 100%);
+    --secondary-color: hsl(0, 0%, 60%);
+    --accent-color: hsl(0, 0%, 80%);
+
+    --success-color: hsl(120, 30%, 50%);
+    --warning-color: hsl(45, 50%, 50%);
+    --error-color: hsl(0, 40%, 50%);
+}
+
+:root.onyx-theme.light-mode,
+html.onyx-theme.light-mode,
+body.onyx-theme.light-mode {
+    --bg-base: hsl(0, 0%, 94%);
+    --bg-card: hsl(0, 0%, 98%);
+    --bg-raised: hsl(0, 0%, 90%);
+
+    --text-heading: hsl(0, 0%, 10%);
+    --text-body: hsl(0, 0%, 30%);
+    --text-muted-2: hsl(0, 0%, 50%);
+
+    --border-neutral: hsl(0, 0%, 80%);
+    --highlight-border: hsl(0, 0%, 70%);
+
+    --primary-color: hsl(0, 0%, 20%);
+    --primary-dark: hsl(0, 0%, 10%);
+    --primary-light: hsl(0, 0%, 40%);
+    --secondary-color: hsl(0, 0%, 40%);
+    --accent-color: hsl(0, 0%, 20%);
+}
+
+/* Reader theme (semantic HSL) */
+:root.reader-theme,
+html.reader-theme,
+body.reader-theme {
+    --bg-base: hsl(30, 20%, 92%);
+    --bg-card: hsl(30, 25%, 96%);
+    --bg-raised: hsl(30, 15%, 88%);
+
+    --text-heading: hsl(25, 15%, 20%);
+    --text-body: hsl(25, 10%, 30%);
+    --text-muted-2: hsl(25, 8%, 50%);
+
+    --border-neutral: hsl(30, 10%, 80%);
+    --highlight-border: hsl(30, 15%, 75%);
+
+    --primary-color: hsl(20, 40%, 40%);
+    --primary-dark: hsl(20, 45%, 30%);
+    --primary-light: hsl(20, 35%, 50%);
+    --secondary-color: hsl(35, 40%, 45%);
+    --accent-color: hsl(20, 40%, 40%);
+
+    --success-color: hsl(100, 25%, 40%);
+    --warning-color: hsl(35, 60%, 45%);
+    --error-color: hsl(5, 50%, 45%);
+
+    --shadow-sm: 0 1px 2px rgba(60, 50, 40, 0.08);
+    --shadow-md: 0 4px 8px rgba(60, 50, 40, 0.08);
+    --shadow-lg: 0 8px 16px rgba(60, 50, 40, 0.12);
+}
+
+/* ================================
+   4. TYPOGRAPHY & BASE ELEMENTS
+   ================================ */
+body {
+    line-height: 1.6;
+    font-size: var(--font-size-base);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--text-heading);
+    margin-bottom: 0.5em;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: var(--primary-light);
+    text-decoration: underline;
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+/* API Content Classes */
+.chapter-num {
+    font-size: 2.5em;
+    color: var(--text-muted-2);
+    float: left;
+    margin-right: 0.2em;
+    line-height: 0.8;
+    font-weight: 300;
+}
+
+.verse-num {
+    font-size: 0.75em;
+    color: var(--text-muted-2);
+    vertical-align: super;
+    margin-right: 0.2em;
+    font-weight: bold;
+    user-select: none;
+}
+
+.woc,
+.red-letter {
+    color: var(--error-color);
+}
+
+/* ================================
+   5. LAYOUT COMPONENTS
+   ================================ */
 .app-container {
     display: flex;
     flex-direction: column;
@@ -52,9 +387,9 @@ body.light-mode {
     max-width: 800px;
     margin: 0 auto;
     position: relative;
+    background-color: var(--bg-base);
 }
 
-/* 4. HEADER & NAV */
 .header {
     display: flex;
     align-items: center;
@@ -62,50 +397,72 @@ body.light-mode {
     padding: 0 1rem;
     height: 50px;
     background-color: var(--bg-card);
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-neutral);
     flex-shrink: 0;
 }
 
-.logo { font-weight: bold; color: var(--primary-color); letter-spacing: 1px; }
-
-.header-actions { display: flex; gap: 0.5rem; }
-.icon-btn {
-    background: none; border: none; cursor: pointer;
-    color: var(--text-muted); padding: 8px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
+.logo {
+    font-weight: bold;
+    color: var(--primary-color);
+    letter-spacing: 1px;
 }
-.icon-btn:hover { background-color: rgba(128,128,128,0.1); color: var(--text-heading); }
 
-/* Navigation Bar */
+.header-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted-2);
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+}
+
+.icon-btn:hover {
+    background-color: rgba(128, 128, 128, 0.1);
+    color: var(--text-heading);
+}
+
+/* Navigation */
 .navigation {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0.5rem 1rem;
     background-color: var(--bg-card);
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-neutral);
     flex-shrink: 0;
 }
+
 .passage-selector {
     display: flex;
     gap: 0.5rem;
     flex: 1;
     justify-content: center;
 }
+
 .nav-btn {
-    background: rgba(128,128,128,0.1);
+    background: rgba(128, 128, 128, 0.1);
     border: none;
     color: var(--text-heading);
     padding: 6px 12px;
     border-radius: 4px;
-    cursor: pointer;
     font-size: 0.9rem;
     font-weight: 500;
+    transition: background-color 0.2s ease;
 }
-.nav-btn:hover { background: rgba(128,128,128,0.2); }
 
-/* 5. MAIN CONTENT AREA */
+.nav-btn:hover {
+    background: rgba(128, 128, 128, 0.2);
+}
+
+/* Main Content */
 .main-content {
     flex: 1;
     overflow-y: auto;
@@ -114,187 +471,83 @@ body.light-mode {
     scroll-behavior: smooth;
 }
 
-/* Passage Text Styling */
 .passage-container {
     max-width: 650px;
     margin: 0 auto;
     line-height: 1.6;
     font-size: 1.125rem;
 }
+
 .passage-header h2 {
     text-align: center;
     margin-bottom: 1.5rem;
     color: var(--primary-color);
 }
+
 .passage-text {
     color: var(--text-body);
 }
 
-/* API Specific Classes (CRITICAL) */
-.chapter-num {
-    font-size: 2.5em;
-    color: var(--text-muted);
-    float: left;
-    margin-right: 0.2em;
-    line-height: 0.8;
-    font-weight: 300;
-}
-.verse-num {
-    font-size: 0.75em;
-    color: var(--text-muted);
-    vertical-align: super;
-    margin-right: 0.2em;
-    font-weight: bold;
-    user-select: none;
-}
-.woc { /* Words of Christ */
-    color: var(--dracula-red); /* Default red for both modes if needed, or variable */
-}
-body.light-mode .woc { color: #d32f2f; }
-body.dark-mode .woc, body:not(.light-mode) .woc { color: #ff5555; }
+/* ================================
+   6. UI COMPONENTS
+   ================================ */
 
-/* 6. SEARCH CONTAINER (Fixed Visibility) */
+/* Search Container */
 .search-container {
+    display: none;
     background-color: var(--bg-card);
-    border-bottom: 1px solid var(--border-color);
-    padding: 1rem;
-    display: none; /* Hidden by default */
+    border-bottom: 1px solid var(--border-neutral);
+    padding: var(--spacing-md);
 }
-.search-container.active { display: block; }
+
+.search-container.active {
+    display: block;
+    animation: slideDown 0.2s ease-out;
+}
 
 .search-input-wrapper {
     display: flex;
     gap: 0.5rem;
     margin-bottom: 1rem;
 }
+
 #searchInput {
     flex: 1;
     padding: 8px 12px;
     border-radius: 4px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border-neutral);
     background-color: var(--bg-base);
     color: var(--text-heading);
 }
+
 .search-results {
     max-height: 300px;
     overflow-y: auto;
 }
+
 .search-result-item {
     padding: 0.75rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-neutral);
     cursor: pointer;
 }
-.search-result-item:hover { background-color: rgba(128,128,128,0.1); }
+
+.search-result-item:hover {
+    background-color: rgba(128, 128, 128, 0.1);
+}
+
 .search-result-reference {
     font-weight: bold;
     color: var(--primary-color);
     display: block;
     margin-bottom: 0.25rem;
 }
+
 .search-result-preview {
     font-size: 0.9rem;
-    color: var(--text-muted);
+    color: var(--text-muted-2);
 }
 
-/* 7. MODALS */
-.modal {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background-color: rgba(0,0,0,0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-}
-.modal.active { opacity: 1; pointer-events: auto; }
-
-.modal-content {
-    background-color: var(--bg-card);
-    width: 90%;
-    max-width: 500px;
-    max-height: 80vh;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-}
-.modal-header {
-    padding: 1rem;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.modal-header h3 { color: var(--text-heading); }
-.modal-body {
-    padding: 1rem;
-    overflow-y: auto;
-}
-
-/* Grids for Books/Chapters */
-.book-grid, .chapter-grid, .verse-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-    gap: 0.5rem;
-}
-.book-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
-
-.book-item, .chapter-item {
-    background-color: var(--bg-base);
-    border: 1px solid var(--border-color);
-    color: var(--text-heading);
-    padding: 0.75rem 0.25rem;
-    text-align: center;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-}
-.book-item:hover, .chapter-item:hover {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-}
-
-/* 8. SETTINGS MODAL */
-.setting-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid var(--border-color);
-}
-.setting-label { color: var(--text-heading); }
-
-/* Toggle Switch */
-.toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 40px; height: 20px;
-}
-.toggle-switch input { opacity: 0; width: 0; height: 0; }
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: #555;
-    transition: .4s;
-    border-radius: 20px;
-}
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 16px; width: 16px;
-    left: 2px; bottom: 2px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-}
-input:checked + .slider { background-color: var(--primary-color); }
-input:checked + .slider:before { transform: translateX(20px); }
-
-/* 9. TOAST NOTIFICATION */
+/* Toast */
 .toast {
     position: fixed;
     bottom: 2rem;
@@ -304,14 +557,230 @@ input:checked + .slider:before { transform: translateX(20px); }
     color: #fff;
     padding: 0.75rem 1.5rem;
     border-radius: 50px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     z-index: 2000;
 }
-.toast.show { transform: translateX(-50%) translateY(0); }
 
-/* 10. RESPONSIVE */
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ================================
+   7. MODALS & OVERLAYS
+   ================================ */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.modal.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background-color: var(--bg-card);
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-neutral);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    color: var(--text-heading);
+}
+
+.modal-body {
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+/* Grids for Books/Chapters */
+.book-grid,
+.chapter-grid,
+.verse-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 0.5rem;
+}
+
+.book-item,
+.chapter-item {
+    background-color: var(--bg-base);
+    border: 1px solid var(--border-neutral);
+    color: var(--text-heading);
+    padding: 0.75rem 0.25rem;
+    text-align: center;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.book-item:hover,
+.chapter-item:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* Settings Rows */
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-neutral);
+}
+
+.setting-label {
+    color: var(--text-heading);
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #555;
+    transition: 0.4s;
+    border-radius: 20px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: var(--primary-color);
+}
+
+input:checked+.slider:before {
+    transform: translateX(20px);
+}
+
+/* ================================
+   9. ANIMATIONS
+   ================================ */
+@keyframes slideDown {
+    from {
+        transform: translateY(-10px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ================================
+   10. RESPONSIVE DESIGN
+   ================================ */
 @media (max-width: 600px) {
-    .passage-text { font-size: 1rem; padding: 0 0.5rem; }
-    .book-grid { grid-template-columns: repeat(2, 1fr); }
+    .passage-text {
+        font-size: 1rem;
+        padding: 0 0.5rem;
+    }
+
+    .book-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ================================
+   11. UTILITY CLASSES
+   ================================ */
+body.hide-verse-numbers .passage-text .verse-num {
+    display: none !important;
+}
+
+.verse-by-verse .verse-num {
+    display: inline;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-right: 0.5em;
+}
+
+.verse-by-verse .verse-num::before {
+    content: "\A";
+    white-space: pre;
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.verse-by-verse p:first-of-type .verse-num:first-of-type::before {
+    content: none;
+}
+
+.verse-by-verse p {
+    margin: 0.5rem 0;
+}
+
+/* ================================
+   12. PRINT STYLES
+   ================================ */
+@media print {
+
+    .header,
+    .navigation,
+    .modal,
+    .toast {
+        display: none !important;
+    }
+
+    .main-content {
+        padding: 0;
+    }
+
+    .passage-container {
+        box-shadow: none;
+        border: none;
+    }
 }
