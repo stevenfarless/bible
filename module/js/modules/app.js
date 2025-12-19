@@ -29,6 +29,7 @@ class BibleApp {
     );
 
     this.lastScrollPosition = 0;
+    this.originalPassageHtml = null;
 
     this.init();
   }
@@ -84,27 +85,27 @@ class BibleApp {
     this.ui.passageTitle.textContent = reference;
     this.ui.passageText.innerHTML = data.passages[0];
 
+    // Cache original HTML for verse glow
     this.originalPassageHtml = this.ui.passageText.innerHTML;
 
     // Post-load setup
-    // In app.js, around line 85-95
-this.references.attachHandlers();
-this.references.makeFootnotesClickable();
-this.ui.applyRedLetters();
+    this.references.attachHandlers();
+    this.references.makeFootnotesClickable();
+    this.ui.applyRedLetters();
 
-// Add defensive check
-if (this.ui.copyright) {
-  this.ui.copyright.textContent =
-    'Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), ' +
-    'copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. ' +
-    'Used by permission. All rights reserved.';
-} else {
-  console.warn('⚠️ Copyright element not found');
-}
+    // Add defensive check for copyright
+    if (this.ui.copyright) {
+      this.ui.copyright.textContent =
+        'Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), ' +
+        'copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. ' +
+        'Used by permission. All rights reserved.';
+    } else {
+      console.warn('⚠️ Copyright element not found');
+    }
 
-if (this.ui.currentVerseSpan) {
-  this.ui.currentVerseSpan.textContent = '1';
-}
+    if (this.ui.currentVerseSpan) {
+      this.ui.currentVerseSpan.textContent = '1';
+    }
 
     // Scroll handling + chrome
     this.ui.chromeSuspend = true;
@@ -127,79 +128,77 @@ if (this.ui.currentVerseSpan) {
   }
 
   updateNavigationUI() {
-  const book = this.state.currentBook;
-  const abbr = this.bookAbbreviations[book] || book;
+    const book = this.state.currentBook;
+    const abbr = this.bookAbbreviations[book] || book;
 
-  if (this.ui.currentBookSpan) {
-    this.ui.currentBookSpan.textContent = abbr;
+    if (this.ui.currentBookSpan) {
+      this.ui.currentBookSpan.textContent = abbr;
+    }
+    if (this.ui.currentChapterSpan) {
+      this.ui.currentChapterSpan.textContent = this.state.currentChapter;
+    }
+
+    const books = getAllBooks();
+    const currentBookIndex = books.indexOf(book);
+    const isFirst = this.state.currentChapter === 1;
+    const isLast = this.state.currentChapter === getChapterCount(book);
+
+    // Previous button: disable only if at Genesis 1
+    if (this.ui.prevChapterBtn) {
+      this.ui.prevChapterBtn.disabled = currentBookIndex === 0 && isFirst;
+    }
+
+    // Next button: disable only if at Revelation last chapter
+    if (this.ui.nextChapterBtn) {
+      this.ui.nextChapterBtn.disabled = currentBookIndex === books.length - 1 && isLast;
+    }
   }
-  if (this.ui.currentChapterSpan) {
-    this.ui.currentChapterSpan.textContent = this.state.currentChapter;
-  }
-
-  const books = getAllBooks();
-  const currentBookIndex = books.indexOf(book);
-  const isFirst = this.state.currentChapter === 1;
-  const isLast = this.state.currentChapter === getChapterCount(book);
-
-  // Previous button: disable only if at Genesis 1
-  if (this.ui.prevChapterBtn) {
-    this.ui.prevChapterBtn.disabled = currentBookIndex === 0 && isFirst;
-  }
-
-  // Next button: disable only if at Revelation last chapter
-  if (this.ui.nextChapterBtn) {
-    this.ui.nextChapterBtn.disabled = currentBookIndex === books.length - 1 && isLast;
-  }
-}
-
 
   navigateChapter(direction) {
     navigateChapter(this, direction);
   }
 
-navigateToNextVerse() {
-  const currentVerse = this.state.selectedVerse || 1;
-  const maxVerse = this.getCurrentVerseCount();
+  navigateToNextVerse() {
+    const currentVerse = this.state.selectedVerse || 1;
+    const maxVerse = this.getCurrentVerseCount();
 
-  if (currentVerse < maxVerse) {
-    // Go to next verse in current chapter
-    this.ui.scrollToVerse(currentVerse + 1);
-  } else {
-    // At last verse, go to next chapter
-    this.navigateChapter(1);
-  }
-}
-
-navigateToPreviousVerse() {
-  const currentVerse = this.state.selectedVerse || 1;
-
-  if (currentVerse > 1) {
-    // Go to previous verse in current chapter
-    this.ui.scrollToVerse(currentVerse - 1);
-  } else {
-    // At first verse, go to previous chapter and its last verse
-    const books = getAllBooks();
-    const currentBookIndex = books.indexOf(this.state.currentBook);
-    const isFirstChapter = this.state.currentChapter === 1;
-
-    if (currentBookIndex === 0 && isFirstChapter) {
-      // Already at Genesis 1:1, can't go back further
-      return;
+    if (currentVerse < maxVerse) {
+      // Go to next verse in current chapter
+      this.ui.scrollToVerse(currentVerse + 1);
+    } else {
+      // At last verse, go to next chapter
+      this.navigateChapter(1);
     }
-
-    // Navigate to previous chapter
-    this.navigateChapter(-1);
   }
-}
 
-getCurrentVerseCount() {
-  // Count verse numbers in current passage
-  const verseNums = this.ui.passageText.querySelectorAll('.verse-num');
-  // Add 1 because verse 1 typically doesn't have a .verse-num element
-  return verseNums.length > 0 ? verseNums.length + 1 : 0;
-}
+  navigateToPreviousVerse() {
+    const currentVerse = this.state.selectedVerse || 1;
 
+    if (currentVerse > 1) {
+      // Go to previous verse in current chapter
+      this.ui.scrollToVerse(currentVerse - 1);
+    } else {
+      // At first verse, go to previous chapter and its last verse
+      const books = getAllBooks();
+      const currentBookIndex = books.indexOf(this.state.currentBook);
+      const isFirstChapter = this.state.currentChapter === 1;
+
+      if (currentBookIndex === 0 && isFirstChapter) {
+        // Already at Genesis 1:1, can't go back further
+        return;
+      }
+
+      // Navigate to previous chapter
+      this.navigateChapter(-1);
+    }
+  }
+
+  getCurrentVerseCount() {
+    // Count verse numbers in current passage
+    const verseNums = this.ui.passageText.querySelectorAll('.verse-num');
+    // Add 1 because verse 1 typically doesn't have a .verse-num element
+    return verseNums.length > 0 ? verseNums.length + 1 : 0;
+  }
 
   // ===============================
   // Settings Logic
@@ -271,93 +270,60 @@ getCurrentVerseCount() {
     }
   }
 
-handleKeyboardShortcuts(e) {
-  // Don't capture keys if user is typing in an input/textarea
-  const activeElement = document.activeElement;
-  const isTyping = activeElement && (
-    activeElement.tagName === 'INPUT' ||
-    activeElement.tagName === 'TEXTAREA' ||
-    activeElement.isContentEditable
-  );
+  handleKeyboardShortcuts(e) {
+    // Don't capture keys if user is typing in an input/textarea
+    const activeElement = document.activeElement;
+    const isTyping = activeElement && (
+      activeElement.tagName === 'INPUT' ||
+      activeElement.tagName === 'TEXTAREA' ||
+      activeElement.isContentEditable
+    );
 
-  // Ctrl/Cmd + K to open search (works even when typing)
-  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-    e.preventDefault();
-    this.search.toggleSearch();
-    return;
-  }
+    // Ctrl/Cmd + K to open search (works even when typing)
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      this.search.toggleSearch();
+      return;
+    }
 
-  // Escape to close modals (works even when typing)
-  if (e.key === 'Escape') {
-    const activeModal = document.querySelector('.modal.active');
-    if (activeModal) {
-      this.ui.closeModal(activeModal);
+    // Escape to close modals (works even when typing)
+    if (e.key === 'Escape') {
+      const activeModal = document.querySelector('.modal.active');
+      if (activeModal) {
+        this.ui.closeModal(activeModal);
+      }
+      if (this.ui.searchContainer && this.ui.searchContainer.classList.contains('active')) {
+        this.search.closeSearch();
+      }
+      return;
     }
-    if (this.ui.searchContainer && this.ui.searchContainer.classList.contains('active')) {
-      this.search.closeSearch();
-    }
-    return;
-  }
 
-  // Don't process navigation shortcuts if typing
-  if (isTyping) return;
+    // Don't process navigation shortcuts if typing
+    if (isTyping) return;
 
-  // Navigation shortcuts - only when no modal is open and search is closed
-  const modalOpen = document.querySelector('.modal.active');
-  const searchOpen = this.ui.searchContainer && this.ui.searchContainer.classList.contains('active');
+    // Navigation shortcuts - only when no modal is open and search is closed
+    const modalOpen = document.querySelector('.modal.active');
+    const searchOpen = this.ui.searchContainer && this.ui.searchContainer.classList.contains('active');
 
-  if (!modalOpen && !searchOpen) {
-    // Chapter navigation: Arrow Left/Right or H/L
-    if (e.key === 'ArrowLeft' || e.key === 'h' || e.key === 'H') {
-      e.preventDefault();
-      this.navigateChapter(-1);
-    } else if (e.key === 'ArrowRight' || e.key === 'l' || e.key === 'L') {
-      e.preventDefault();
-      this.navigateChapter(1);
-    }
-    // Verse navigation: Arrow Up/Down or K/J
-    else if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') {
-      e.preventDefault();
-      this.navigateToPreviousVerse();
-    } else if (e.key === 'ArrowDown' || e.key === 'j' || e.key === 'J') {
-      e.preventDefault();
-      this.navigateToNextVerse();
-    }
-  }
-}
-
-  // Escape to close modals
-  if (e.key === 'Escape') {
-    const activeModal = document.querySelector('.modal.active');
-    if (activeModal) {
-      this.ui.closeModal(activeModal);
-    }
-    if (this.ui.searchContainer.classList.contains('active')) {
-      this.search.closeSearch();
-    }
-    return;
-  }
-
-  // Navigation shortcuts - only when no modal is open and search is closed
-  if (!document.querySelector('.modal.active') && !this.ui.searchContainer.classList.contains('active')) {
-    // Chapter navigation: Arrow Left/Right or H/L
-    if (e.key === 'ArrowLeft' || e.key === 'h') {
-      e.preventDefault();
-      this.navigateChapter(-1);
-    } else if (e.key === 'ArrowRight' || e.key === 'l') {
-      e.preventDefault();
-      this.navigateChapter(1);
-    }
-    // Verse navigation: Arrow Up/Down or K/J
-    else if (e.key === 'ArrowUp' || e.key === 'k') {
-      e.preventDefault();
-      this.navigateToPreviousVerse();
-    } else if (e.key === 'ArrowDown' || e.key === 'j') {
-      e.preventDefault();
-      this.navigateToNextVerse();
+    if (!modalOpen && !searchOpen) {
+      // Chapter navigation: Arrow Left/Right or H/L
+      if (e.key === 'ArrowLeft' || e.key === 'h' || e.key === 'H') {
+        e.preventDefault();
+        this.navigateChapter(-1);
+      } else if (e.key === 'ArrowRight' || e.key === 'l' || e.key === 'L') {
+        e.preventDefault();
+        this.navigateChapter(1);
+      }
+      // Verse navigation: Arrow Up/Down or K/J
+      else if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') {
+        e.preventDefault();
+        this.navigateToPreviousVerse();
+      } else if (e.key === 'ArrowDown' || e.key === 'j' || e.key === 'J') {
+        e.preventDefault();
+        this.navigateToNextVerse();
+      }
     }
   }
-}
 }
 
 document.addEventListener('DOMContentLoaded', () => {
