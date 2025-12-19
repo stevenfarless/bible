@@ -216,13 +216,8 @@ export class ReferencesManager {
     return;
   }
 
-  console.log('🎯 showFootnoteModal called with content:', content);
-  console.log('footnotesSection element:', this.app.ui.footnotesSection);
-  console.log('footnotesContent element:', this.app.ui.footnotesContent);
-
   if (this.app.ui.footnotesSection) {
     this.app.ui.footnotesSection.style.display = 'block';
-    console.log('Set footnotesSection display to block');
   }
   if (this.app.ui.crossReferencesSection) {
     this.app.ui.crossReferencesSection.style.display = 'none';
@@ -230,12 +225,11 @@ export class ReferencesManager {
 
   if (this.app.ui.footnotesContent) {
     this.app.ui.footnotesContent.innerHTML = content;
-    console.log('Set footnotesContent innerHTML:', this.app.ui.footnotesContent.innerHTML);
   }
 
   this.app.ui.openModal(this.app.ui.referencesModal);
-  console.log('Modal opened');
 }
+
 
 
   showCrossRefModal(content) {
