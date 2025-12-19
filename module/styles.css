@@ -1476,69 +1476,92 @@ body.light-mode .crossref-item {
 }
 
 /* References Modal (Bottom Sheet) */
-.modal-bottom-sheet {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    top: auto;
-    transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-    border-radius: 12px 12px 0 0;
-    max-width: 100%;
-    width: 100%;
-    height: 50vh;
-    max-height: 90vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
+#referencesModal {
+  align-items: flex-end !important;
+  justify-content: center !important;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
-.modal.active .modal-bottom-sheet {
-    transform: translateY(0);
-}
-
-
-.modal-bottom-sheet .modal-header {
-    cursor: grab;
-    user-select: none;
-    flex-shrink: 0;
-}
-
-.modal-bottom-sheet .modal-header:active {
-    cursor: grabbing;
-}
-
-.modal-bottom-sheet .modal-body {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-}
-
-.modal-bottom-sheet.dragging {
-    transition: none;
-}
-
-#referencesModal .modal-header::before {
-    content: '';
-    position: absolute;
-    top: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 40px;
-    height: 4px;
-    background-color: var(--text-muted);
-    border-radius: 2px;
-    opacity: 0.5;
+#referencesModal .modal-content {
+  margin: 0;
+  width: 100%;
+  max-width: var(--max-width);
+  height: auto;
+  min-height: 200px;
+  max-height: 70vh;
+  border-radius: 16px 16px 0 0;
+  animation: slideUpFromBottom 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
 }
 
 #referencesModal .modal-header {
-    padding-top: calc(var(--spacing-md) + 12px);
-    position: relative;
+  padding: calc(var(--spacing-md) + 12px) var(--spacing-lg) var(--spacing-md);
+  position: relative;
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-color);
 }
 
+#referencesModal .modal-header:active {
+  cursor: grabbing;
+}
+
+#referencesModal .modal-header::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 4px;
+  background-color: var(--text-muted);
+  border-radius: 2px;
+  opacity: 0.5;
+}
+
+#referencesModal .modal-body {
+  flex: 1;
+  max-height: calc(70vh - 60px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--spacing-lg);
+}
+
+/* Footnote and cross-reference content styling */
+#footnotesSection h4,
+#crossReferencesSection h4 {
+  color: var(--secondary-color);
+  margin-bottom: var(--spacing-md);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+#footnotesContent,
+#crossReferencesContent {
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+#footnotesContent p,
+#crossReferencesContent p {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+#footnotesContent strong,
+#crossReferencesContent strong {
+  color: var(--secondary-color);
+  margin-right: 0.5rem;
+  font-weight: 600;
+}
+
+#footnotesContent i,
+#crossReferencesContent i {
+  font-style: italic;
+  color: var(--text-secondary);
+}
 
 
 /* ================================
