@@ -1,6 +1,6 @@
-// js/module/firebase-config.js NEW VERSION
+// js/modules/firebase-config.js
 // ================================
-// Firebase Configuration
+// Firebase Configuration (Compat SDK)
 // ================================
 
 const firebaseConfig = {
@@ -14,14 +14,13 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-
-// Firebase services (using Realtime Database, not Firestore)
-const auth = firebase.auth();
-const database = firebase.database();
+const app = firebase.initializeApp(firebaseConfig);
+export const auth = firebase.auth();
+export const db = firebase.firestore();
+export const database = firebase.database();
 
 // Simple encryption for API keys
-const EncryptionHelper = {
+export const EncryptionHelper = {
   encrypt(text) {
     return btoa(text);
   },
@@ -29,17 +28,13 @@ const EncryptionHelper = {
     try {
       return atob(ciphertext);
     } catch (e) {
+      console.error('Decryption failed:', e);
       return "";
     }
   },
 };
 
-// Export for use in app (globals)
-window.firebaseAuth = auth;
-window.firebaseDatabase = database;
-window.encryptionHelper = EncryptionHelper;
-
-// Exported function for ES module imports
+// Export function to load user data
 export async function loadUserData(userId) {
   try {
     const snapshot = await database.ref(`users/${userId}`).once("value");
@@ -49,29 +44,21 @@ export async function loadUserData(userId) {
     // Decrypt API key if present
     let apiKey = "";
     if (userData.apiKey) {
-      apiKey = window.encryptionHelper.decrypt(userData.apiKey);
+      apiKey = EncryptionHelper.decrypt(userData.apiKey);
     }
 
-    // Extract settings or default values
+    // Extract settings with defaults
     const settings = {
-      fontSize: (userData.settings && userData.settings.fontSize) || 18,
-      showVerseNumbers:
-        userData.settings ? userData.settings.showVerseNumbers !== false : true,
-      showHeadings:
-        userData.settings ? userData.settings.showHeadings !== false : true,
-      showFootnotes:
-        userData.settings ? userData.settings.showFootnotes === true : false,
-      verseByVerse:
-        userData.settings ? userData.settings.verseByVerse === true : false,
-      colorTheme:
-        userData.settings && userData.settings.colorTheme
-          ? userData.settings.colorTheme
-          : "dracula",
-      lightMode:
-        userData.settings && typeof userData.settings.lightMode === "boolean"
-          ? userData.settings.lightMode
-          : false,
-    };;
+      fontSize: userData.settings?.fontSize || 18,
+      showVerseNumbers: userData.settings?.showVerseNumbers !== false,
+      showHeadings: userData.settings?.showHeadings !== false,
+      showFootnotes: userData.settings?.showFootnotes === true,
+      showCrossReferences: userData.settings?.showCrossReferences === true,
+      showRedLetters: userData.settings?.showRedLetters === true,
+      verseByVerse: userData.settings?.verseByVerse === true,
+      colorTheme: userData.settings?.colorTheme || "dracula",
+      lightMode: userData.settings?.lightMode === true,
+    };
 
     return { apiKey, settings };
   } catch (error) {

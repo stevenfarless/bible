@@ -1,9 +1,8 @@
-// js/module/app.js
+// js/modules/app.js
 
 import { BibleApi } from './bible-api.js';
 import { initializeState, navigateChapter } from './reading-state.js';
 import { BOOK_ABBREVIATIONS, getAllBooks, getChapterCount } from './bible-structure.js';
-
 import { UIManager } from './ui-manager.js';
 import { SearchManager } from './search-manager.js';
 import { FirebaseManager } from './firebase-manager.js';
@@ -39,7 +38,7 @@ class BibleApp {
     this.firebase.init(); // auth + settings + initial passage
     this.attachGlobalListeners();
 
-    // NEW: mark DOM as ready so CSS shows content
+    // Mark DOM as ready so CSS shows content
     document.body.classList.add('js-ready');
   }
 
@@ -85,7 +84,7 @@ class BibleApp {
     this.ui.passageTitle.textContent = reference;
     this.ui.passageText.innerHTML = data.passages[0];
 
-    // Post‑load setup
+    // Post-load setup
     this.references.attachHandlers();
     this.references.makeFootnotesClickable();
     this.ui.applyRedLetters();
@@ -156,10 +155,8 @@ class BibleApp {
     this.firebase.saveSetting(setting, el.checked);
 
     if (setting === 'showVerseNumbers') {
-      // CSS‑only toggle
       this.ui.applySettings();
     } else {
-      // Reload with preserved scroll
       this.lastScrollPosition =
         window.pageYOffset || document.documentElement.scrollTop || 0;
       await this.loadPassage(

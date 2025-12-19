@@ -19,6 +19,20 @@ export class UIManager {
 
   init() {
     cacheElements(this);
+    
+    // Verify critical elements loaded
+    const required = [
+      'searchToggleBtn', 'helpBtn', 'settingsBtn', 'userBtn',
+      'prevChapterBtn', 'nextChapterBtn', 'bookSelector', 'chapterSelector',
+      'passageText', 'passageTitle', 'toast'
+    ];
+    
+    const missing = required.filter(key => !this[key]);
+    if (missing.length > 0) {
+      console.error('❌ Missing required elements:', missing);
+      console.error('Check that these IDs exist in index.html');
+    }
+    
     loadTheme(this.app);
     this.attachEventListeners();
     this.initializeAccordion();
@@ -26,51 +40,86 @@ export class UIManager {
 
   attachEventListeners() {
     // Header
-    this.searchToggleBtn.addEventListener('click', () => this.app.search.toggleSearch());
-    this.helpBtn.addEventListener('click', () => this.openModal(this.helpModal));
-    this.settingsBtn.addEventListener('click', () => this.openModal(this.settingsModal));
-    this.userBtn.addEventListener('click', () => this.app.handleUserButtonClick());
-
+    if (this.searchToggleBtn) {
+      this.searchToggleBtn.addEventListener('click', () => this.app.search.toggleSearch());
+    }
+    if (this.helpBtn) {
+      this.helpBtn.addEventListener('click', () => this.openModal(this.helpModal));
+    }
+    if (this.settingsBtn) {
+      this.settingsBtn.addEventListener('click', () => this.openModal(this.settingsModal));
+    }
+    if (this.userBtn) {
+      this.userBtn.addEventListener('click', () => this.app.handleUserButtonClick());
+    }
     if (this.copyBtn) {
       this.copyBtn.addEventListener('click', () => this.copyPassage());
     }
 
     // Navigation
-    this.prevChapterBtn.addEventListener('click', () => this.app.navigateChapter(-1));
-    this.nextChapterBtn.addEventListener('click', () => this.app.navigateChapter(1));
-
-    this.bookSelector.addEventListener('click', () => this.openBookModal());
-    this.chapterSelector.addEventListener('click', () => this.openChapterModal());
-    this.verseSelector.addEventListener('click', () => this.openVerseModal());
+    if (this.prevChapterBtn) {
+      this.prevChapterBtn.addEventListener('click', () => this.app.navigateChapter(-1));
+    }
+    if (this.nextChapterBtn) {
+      this.nextChapterBtn.addEventListener('click', () => this.app.navigateChapter(1));
+    }
+    if (this.bookSelector) {
+      this.bookSelector.addEventListener('click', () => this.openBookModal());
+    }
+    if (this.chapterSelector) {
+      this.chapterSelector.addEventListener('click', () => this.openChapterModal());
+    }
+    if (this.verseSelector) {
+      this.verseSelector.addEventListener('click', () => this.openVerseModal());
+    }
 
     // Search
-    this.closeSearchBtn.addEventListener('click', () => this.app.search.closeSearch());
-    this.searchInput.addEventListener('input', (e) => this.app.search.handleInput(e.target.value));
-    this.searchInput.addEventListener('keydown', (e) => this.app.search.handleKeydown(e));
+    if (this.closeSearchBtn) {
+      this.closeSearchBtn.addEventListener('click', () => this.app.search.closeSearch());
+    }
+    if (this.searchInput) {
+      this.searchInput.addEventListener('input', (e) => this.app.search.handleInput(e.target.value));
+      this.searchInput.addEventListener('keydown', (e) => this.app.search.handleKeydown(e));
+    }
 
-    // Settings
-    this.saveApiKeyBtn.addEventListener('click', () => {
-      this.app.firebase.saveApiKey(this.apiKeyInput.value.trim()).then((success) => {
-        if (success) {
-          this.showToast('API key saved!');
-          this.closeModal(this.settingsModal);
-          this.app.loadPassage(this.app.state.currentBook, this.app.state.currentChapter);
-        } else {
-          this.showToast('Failed to save API key');
-        }
+    // Settings - API Key Form
+    const apiKeyForm = document.getElementById('apiKeyForm');
+    if (apiKeyForm && this.app.firebase) {
+      apiKeyForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.app.firebase.saveApiKey(this.apiKeyInput.value.trim()).then((success) => {
+          if (success) {
+            this.showToast('API key saved!');
+            this.closeModal(this.settingsModal);
+            this.app.loadPassage(this.app.state.currentBook, this.app.state.currentChapter);
+          } else {
+            this.showToast('Failed to save API key');
+          }
+        });
       });
-    });
+    }
 
-    this.verseNumbersToggle.addEventListener('change', () => this.app.toggleSetting('showVerseNumbers'));
-    this.headingsToggle.addEventListener('change', () => this.app.toggleSetting('showHeadings'));
-    this.footnotesToggle.addEventListener('change', () => this.app.toggleSetting('showFootnotes'));
+    // Settings toggles
+    if (this.verseNumbersToggle) {
+      this.verseNumbersToggle.addEventListener('change', () => this.app.toggleSetting('showVerseNumbers'));
+    }
+    if (this.headingsToggle) {
+      this.headingsToggle.addEventListener('change', () => this.app.toggleSetting('showHeadings'));
+    }
+    if (this.footnotesToggle) {
+      this.footnotesToggle.addEventListener('change', () => this.app.toggleSetting('showFootnotes'));
+    }
     if (this.crossReferencesToggle) {
       this.crossReferencesToggle.addEventListener('change', () =>
         this.app.toggleSetting('showCrossReferences')
       );
     }
-    this.verseByVerseToggle.addEventListener('change', () => this.app.toggleVerseByVerse());
-    this.fontSizeSlider.addEventListener('input', (e) => this.app.updateFontSize(e.target.value));
+    if (this.verseByVerseToggle) {
+      this.verseByVerseToggle.addEventListener('change', () => this.app.toggleVerseByVerse());
+    }
+    if (this.fontSizeSlider) {
+      this.fontSizeSlider.addEventListener('input', (e) => this.app.updateFontSize(e.target.value));
+    }
 
     const redToggle = document.getElementById('redLettersToggle');
     if (redToggle) {
@@ -79,7 +128,9 @@ export class UIManager {
     }
 
     // Theme
-    this.themeToggleBtn.addEventListener('click', () => toggleTheme(this.app));
+    if (this.themeToggleBtn) {
+      this.themeToggleBtn.addEventListener('click', () => toggleTheme(this.app));
+    }
     const themeSelector = document.getElementById('themeSelector');
     if (themeSelector) {
       themeSelector.addEventListener('change', (e) => changeColorTheme(this.app, e.target.value));
@@ -90,23 +141,27 @@ export class UIManager {
     }
 
     // Auth
-    document.getElementById('loginForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.app.firebase
-        .handleLogin(
-          document.getElementById('loginEmail').value,
-          document.getElementById('loginPassword').value
-        )
-        .then((success) => {
-          if (success === true) this.closeModal(this.loginModal);
-        });
-    });
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm && this.app.firebase) {
+      loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.app.firebase
+          .handleLogin(
+            document.getElementById('loginEmail').value,
+            document.getElementById('loginPassword').value
+          )
+          .then((success) => {
+            if (success === true) this.closeModal(this.loginModal);
+          });
+      });
+    }
 
-    document
-      .getElementById('logoutBtn')
-      .addEventListener('click', () =>
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn && this.app.firebase) {
+      logoutBtn.addEventListener('click', () =>
         this.app.firebase.handleLogout().then(() => this.closeModal(this.userMenuModal))
       );
+    }
 
     // Click outside to close
     [
@@ -127,11 +182,21 @@ export class UIManager {
     });
 
     // Modal close buttons
-    this.closeBookModal.addEventListener('click', () => this.closeModal(this.bookModal));
-    this.closeChapterModal.addEventListener('click', () => this.closeModal(this.chapterModal));
-    this.closeVerseModal.addEventListener('click', () => this.closeModal(this.verseModal));
-    this.closeHelpModal.addEventListener('click', () => this.closeModal(this.helpModal));
-    this.closeSettingsModal.addEventListener('click', () => this.closeModal(this.settingsModal));
+    if (this.closeBookModal) {
+      this.closeBookModal.addEventListener('click', () => this.closeModal(this.bookModal));
+    }
+    if (this.closeChapterModal) {
+      this.closeChapterModal.addEventListener('click', () => this.closeModal(this.chapterModal));
+    }
+    if (this.closeVerseModal) {
+      this.closeVerseModal.addEventListener('click', () => this.closeModal(this.verseModal));
+    }
+    if (this.closeHelpModal) {
+      this.closeHelpModal.addEventListener('click', () => this.closeModal(this.helpModal));
+    }
+    if (this.closeSettingsModal) {
+      this.closeSettingsModal.addEventListener('click', () => this.closeModal(this.settingsModal));
+    }
     this.closeLoginModal?.addEventListener('click', () => this.closeModal(this.loginModal));
     this.closeSignupModal?.addEventListener('click', () => this.closeModal(this.signupModal));
     this.closeUserMenuModal?.addEventListener('click', () => this.closeModal(this.userMenuModal));
@@ -140,16 +205,22 @@ export class UIManager {
     );
 
     // Auth switching
-    document.getElementById('showSignupLink').addEventListener('click', (e) => {
-      e.preventDefault();
-      this.closeModal(this.loginModal);
-      this.openModal(this.signupModal);
-    });
-    document.getElementById('showLoginLink').addEventListener('click', (e) => {
-      e.preventDefault();
-      this.closeModal(this.signupModal);
-      this.openModal(this.loginModal);
-    });
+    const showSignupLink = document.getElementById('showSignupLink');
+    if (showSignupLink) {
+      showSignupLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.closeModal(this.loginModal);
+        this.openModal(this.signupModal);
+      });
+    }
+    const showLoginLink = document.getElementById('showLoginLink');
+    if (showLoginLink) {
+      showLoginLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.closeModal(this.signupModal);
+        this.openModal(this.loginModal);
+      });
+    }
   }
 
   initializeAccordion() {
@@ -218,15 +289,19 @@ export class UIManager {
       return btn;
     };
 
-    this.oldTestamentBooks.innerHTML = '';
-    Object.keys(BIBLE_STRUCTURE['Old Testament']).forEach((b) =>
-      this.oldTestamentBooks.appendChild(createBtn(b))
-    );
+    if (this.oldTestamentBooks) {
+      this.oldTestamentBooks.innerHTML = '';
+      Object.keys(BIBLE_STRUCTURE['Old Testament']).forEach((b) =>
+        this.oldTestamentBooks.appendChild(createBtn(b))
+      );
+    }
 
-    this.newTestamentBooks.innerHTML = '';
-    Object.keys(BIBLE_STRUCTURE['New Testament']).forEach((b) =>
-      this.newTestamentBooks.appendChild(createBtn(b))
-    );
+    if (this.newTestamentBooks) {
+      this.newTestamentBooks.innerHTML = '';
+      Object.keys(BIBLE_STRUCTURE['New Testament']).forEach((b) =>
+        this.newTestamentBooks.appendChild(createBtn(b))
+      );
+    }
   }
 
   openChapterModal() {
@@ -235,20 +310,24 @@ export class UIManager {
   }
 
   populateChapterModal() {
-    this.chapterModalBook.textContent = this.app.state.currentBook;
-    this.chapterGrid.innerHTML = '';
-    const count = getChapterCount(this.app.state.currentBook);
+    if (this.chapterModalBook) {
+      this.chapterModalBook.textContent = this.app.state.currentBook;
+    }
+    if (this.chapterGrid) {
+      this.chapterGrid.innerHTML = '';
+      const count = getChapterCount(this.app.state.currentBook);
 
-    for (let i = 1; i <= count; i++) {
-      const btn = document.createElement('button');
-      btn.className = 'chapter-item';
-      btn.textContent = String(i);
-      btn.addEventListener('click', () => {
-        this.app.state.selectedVerse = null;
-        this.app.loadPassage(this.app.state.currentBook, i);
-        this.closeModal(this.chapterModal);
-      });
-      this.chapterGrid.appendChild(btn);
+      for (let i = 1; i <= count; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'chapter-item';
+        btn.textContent = String(i);
+        btn.addEventListener('click', () => {
+          this.app.state.selectedVerse = null;
+          this.app.loadPassage(this.app.state.currentBook, i);
+          this.closeModal(this.chapterModal);
+        });
+        this.chapterGrid.appendChild(btn);
+      }
     }
   }
 
@@ -258,29 +337,33 @@ export class UIManager {
   }
 
   populateVerseModal() {
-    this.verseModalBook.textContent = `${this.app.state.currentBook} ${this.app.state.currentChapter}`;
-    this.verseGrid.innerHTML = '';
-    const count = this.getCurrentVerseCount();
-
-    if (count === 0) {
-      this.verseGrid.innerHTML =
-        '<p style="text-align:center;padding:20px;color:var(--text-secondary)">No verses found in current passage</p>';
-      return;
+    if (this.verseModalBook) {
+      this.verseModalBook.textContent = `${this.app.state.currentBook} ${this.app.state.currentChapter}`;
     }
+    if (this.verseGrid) {
+      this.verseGrid.innerHTML = '';
+      const count = this.getCurrentVerseCount();
 
-    for (let i = 1; i <= count; i++) {
-      const btn = document.createElement('button');
-      btn.className = 'chapter-item';
-      btn.textContent = String(i);
-      btn.addEventListener('click', () => {
-        this.scrollToVerse(i);
-        this.closeModal(this.verseModal);
-      });
-      this.verseGrid.appendChild(btn);
+      if (count === 0) {
+        this.verseGrid.innerHTML = '<p class="empty-state">No verses found in current passage</p>';
+        return;
+      }
+
+      for (let i = 1; i <= count; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'chapter-item';
+        btn.textContent = String(i);
+        btn.addEventListener('click', () => {
+          this.scrollToVerse(i);
+          this.closeModal(this.verseModal);
+        });
+        this.verseGrid.appendChild(btn);
+      }
     }
   }
 
   getCurrentVerseCount() {
+    if (!this.passageText) return 0;
     const nums = this.passageText.querySelectorAll('.verse-num');
     return nums.length > 0 ? nums.length + 1 : 0;
   }
@@ -291,6 +374,7 @@ export class UIManager {
 
   // Copy passage
   copyPassage() {
+    if (!this.passageText || !this.passageTitle) return;
     const textContent = this.stripHTML(this.passageText.innerHTML);
     const reference = this.passageTitle.textContent;
     const fullText = `${reference}\n\n${textContent}\n\n${this.copyright.textContent}`;
@@ -306,6 +390,8 @@ export class UIManager {
 
   // Red letters
   applyRedLetters() {
+    if (!this.passageText) return;
+    
     if (!this.app.state.showRedLetters) {
       this.passageText
         .querySelectorAll('.red-letter')
@@ -404,6 +490,7 @@ export class UIManager {
 
   // Utils
   showToast(message) {
+    if (!this.toast) return;
     this.toast.textContent = message;
     this.toast.classList.add('show');
     setTimeout(() => this.toast.classList.remove('show'), 3000);
@@ -428,14 +515,18 @@ export class UIManager {
     updateThemeIcon(this.app.state.lightMode);
 
     // Font size
-    this.passageText.style.fontSize = `${this.app.state.fontSize}px`;
-    this.fontSizeValue.textContent = `${this.app.state.fontSize}px`;
+    if (this.passageText && this.fontSizeValue) {
+      this.passageText.style.fontSize = `${this.app.state.fontSize}px`;
+      this.fontSizeValue.textContent = `${this.app.state.fontSize}px`;
+    }
 
     // Verse-by-verse
-    if (this.app.state.verseByVerse) {
-      this.passageText.classList.add('verse-by-verse');
-    } else {
-      this.passageText.classList.remove('verse-by-verse');
+    if (this.passageText) {
+      if (this.app.state.verseByVerse) {
+        this.passageText.classList.add('verse-by-verse');
+      } else {
+        this.passageText.classList.remove('verse-by-verse');
+      }
     }
   }
 }

@@ -43,19 +43,32 @@ body::-webkit-scrollbar {
 
 
 /* ================================
+   1. CSS RESET & BASE
+   ================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    overflow-y: scroll;
+    scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    display: none;
+}
+
+/* ================================
    2. CSS CUSTOM PROPERTIES (VARIABLES)
-   Official Dracula colors from https://spec.draculatheme.com
    ================================ */
 
 :root {
-    /* ================================
-       Core tokens
-       - Dracula palette constants are the only theme-specific constants.
-       - Semantic tokens are the single source of truth.
-       - Existing app tokens (bg/text/border) are one-way aliases.
-       ================================ */
-
-    /* Dracula palette constants (official) */
+    /* Dracula palette constants */
     --dracula-bg: #282A36;
     --dracula-current-line: #44475A;
     --dracula-fg: #F8F8F2;
@@ -100,61 +113,44 @@ body::-webkit-scrollbar {
     --border-radius: 6px;
     --border-radius-lg: 12px;
 
-    /* Shadows (defaults tuned for dark UI) */
+    /* Shadows */
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
     --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
     --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
 
-    /* ================================
-       Semantic tokens (canonical)
-       Default = Dracula Dark
-       ================================ */
-
-    /* Surfaces */
+    /* Semantic tokens (Dracula Dark default) */
     --bg-base: var(--dracula-bg-darker);
     --bg-card: var(--dracula-bg-dark);
     --bg-raised: var(--dracula-bg);
 
-    /* Text */
     --text-heading: var(--dracula-fg);
     --text-body: var(--dracula-comment);
     --text-muted-2: var(--dracula-comment);
 
-    /* Borders */
     --border-neutral: var(--dracula-current-line);
     --highlight-border: color-mix(in srgb, var(--border-neutral) 60%, white);
 
-    /* Brand */
     --primary-color: var(--dracula-purple);
     --primary-dark: #9D75D6;
     --primary-light: var(--dracula-pink);
     --secondary-color: var(--dracula-orange);
     --accent-color: var(--dracula-cyan);
 
-    /* Functional */
     --success-color: var(--dracula-green);
     --warning-color: var(--dracula-yellow);
     --error-color: var(--dracula-red);
 
-    /* Component tokens */
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
 
-    /* ================================
-       Legacy aliases (existing component contract)
-       Do not theme these directly; theme the semantic tokens above.
-       ================================ */
-
+    /* Legacy aliases */
     --bg-primary: var(--bg-base);
     --bg-secondary: var(--bg-card);
     --bg-tertiary: var(--bg-raised);
-
     --text-primary: var(--text-heading);
     --text-secondary: var(--text-body);
     --text-muted: var(--text-muted-2);
-
     --border-color: var(--border-neutral);
 }
-
 
 
 /* ================================
@@ -1817,6 +1813,12 @@ body.hide-verse-numbers .passage-text .verse-num {
     margin-bottom: 0.75rem;
 }
 
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-muted);
+    font-style: italic;
+}
 
 
 /* ================================
