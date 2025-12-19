@@ -8,88 +8,120 @@ export class ReferencesManager {
   attachHandlers() {
     if (!this.app.ui.passageText) return;
 
-    // Handle all footnote markers (sup elements with footnote class or links)
+    // Handle all footnote markers (links inside sup.footnote)
     const footnoteMarkers = this.app.ui.passageText.querySelectorAll(
-      'sup.footnote, sup.footnote a, a.footnote, a.fn'
+      'sup.footnote a, a.fn'
     );
 
-    footnoteMarkers.forEach((el) => {
-      el.style.cursor = 'pointer';
-      el.addEventListener('click', (e) => {
+    footnoteMarkers.forEach((link) => {
+      link.style.cursor = 'pointer';
+      link.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        this.openFootnoteFromMarker(el);
+        this.openFootnoteFromMarker(link);
       });
     });
 
     // Handle cross-reference markers
     const crossrefMarkers = this.app.ui.passageText.querySelectorAll(
-      'sup.crossref, sup.crossref a, a.crossref'
+      'sup.crossref a'
     );
 
-    crossrefMarkers.forEach((el) => {
-      el.style.cursor = 'pointer';
-      el.addEventListener('click', (e) => {
+    crossrefMarkers.forEach((link) => {
+      link.style.cursor = 'pointer';
+      link.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        this.openCrossRefFromMarker(el);
+        this.openCrossRefFromMarker(link);
       });
     });
   }
 
   makeFootnotesClickable() {
+    // Alias for attachHandlers
     this.attachHandlers();
   }
 
-  openFootnoteFromMarker(marker) {
-    // Get the link element (might be the marker itself or a child)
-    let link = marker.tagName === 'A' ? marker : marker.querySelector('a');
+  openFootnoteFromMarker(link) {
+    // Get the href which points to the footnote body at the bottom
+    const href = link.getAttribute('href');
     
-    if (!link) {
-      console.warn('No link found in footnote marker');
+    if (!href) {
+      console.warn('No href found in footnote link');
       return;
     }
 
-    // ESV API stores footnote content in the title attribute!
-    const titleContent = link.getAttribute('title');
+    // Remove the # to get the ID
+    const footnoteId = href.startsWith('#') ? href.substring(1) : href;
     
-    if (!titleContent) {
-      console.warn('No title attribute found in footnote link');
+    console.log('Looking for footnote with ID:', footnoteId);
+    
+    // Find the footnote body element (ESV puts these at the bottom of the passage)
+    const footnoteBody = document.getElementById(footnoteId);
+    
+    if (!footnoteBody) {
+      console.warn(`Footnote body not found: ${footnoteId}`);
+      
+      // Fallback: try to get from title attribute
+      const titleContent = link.getAttribute('title');
+      if (titleContent) {
+        console.log('Using title attribute as fallback');
+        const decodedContent = this.decodeHTMLEntities(titleContent);
+        const noteContent = this.extractNoteContent(decodedContent);
+        this.showFootnoteModal(noteContent);
+        return;
+      }
+      
+      this.showFootnoteModal('<p>Footnote content not available.</p>');
       return;
     }
 
-    // The title contains HTML-encoded content like:
-    // <note class="alternative">Or <i>from above</i>...</note>
+    console.log('Found footnote body:', footnoteBody);
+
+    // Get the HTML content of the footnote
+    let content = footnoteBody.innerHTML;
     
-    // Decode HTML entities and extract the note content
-    const decodedContent = this.decodeHTMLEntities(titleContent);
+    // Remove the back-reference link (the arrow that links back to the text)
+    content = content.replace(/<a[^>]*href="#fb[^"]*"[^>]*>.*?<\/a>/gi, '');
     
-    // Extract the text from the <note> element
-    const noteContent = this.extractNoteContent(decodedContent);
+    // Wrap in a paragraph if not already wrapped
+    if (!content.trim().startsWith('<p')) {
+      content = `<p>${content}</p>`;
+    }
     
-    // Display in modal
-    this.showFootnoteModal(noteContent);
+    console.log('Footnote content:', content);
+    
+    this.showFootnoteModal(content);
   }
 
-  openCrossRefFromMarker(marker) {
-    let link = marker.tagName === 'A' ? marker : marker.querySelector('a');
+  openCrossRefFromMarker(link) {
+    const href = link.getAttribute('href');
     
-    if (!link) {
-      console.warn('No link found in cross-ref marker');
+    if (!href) {
+      console.warn('No href found in cross-ref link');
       return;
     }
 
-    const titleContent = link.getAttribute('title');
+    const crossrefId = href.startsWith('#') ? href.substring(1) : href;
+    const crossrefBody = document.getElementById(crossrefId);
     
-    if (!titleContent) {
-      console.warn('No title attribute found');
+    if (!crossrefBody) {
+      console.warn(`Cross-reference body not found: ${crossrefId}`);
+      this.showCrossRefModal('<p>Cross-reference content not available.</p>');
       return;
     }
 
-    const decodedContent = this.decodeHTMLEntities(titleContent);
-    const noteContent = this.extractNoteContent(decodedContent);
+    let content = crossrefBody.innerHTML;
     
-    this.showCrossRefModal(noteContent);
+    // Remove the back-reference link
+    content = content.replace(/<a[^>]*href="#cb[^"]*"[^>]*>.*?<\/a>/gi, '');
+    
+    // Wrap in a paragraph if not already wrapped
+    if (!content.trim().startsWith('<p')) {
+      content = `<p>${content}</p>`;
+    }
+    
+    this.showCrossRefModal(content);
   }
 
   decodeHTMLEntities(text) {
@@ -116,7 +148,6 @@ export class ReferencesManager {
     
     // Get the note type for styling
     const noteClass = noteElement.getAttribute('class');
-    const subClass = noteElement.getAttribute('sub-class');
     
     // Add a label based on the note type
     let label = '';
@@ -139,6 +170,8 @@ export class ReferencesManager {
       return;
     }
 
+    console.log('Showing footnote modal');
+
     // Show footnotes section, hide cross-references
     if (this.app.ui.footnotesSection) {
       this.app.ui.footnotesSection.style.display = 'block';
@@ -150,6 +183,7 @@ export class ReferencesManager {
     // Set content
     if (this.app.ui.footnotesContent) {
       this.app.ui.footnotesContent.innerHTML = content;
+      console.log('Set footnote content to:', content);
     }
 
     // Open modal
@@ -161,6 +195,8 @@ export class ReferencesManager {
       console.error('References modal not found');
       return;
     }
+
+    console.log('Showing cross-ref modal');
 
     // Show cross-references section, hide footnotes
     if (this.app.ui.crossReferencesSection) {
