@@ -272,12 +272,60 @@ getCurrentVerseCount() {
   }
 
   handleKeyboardShortcuts(e) {
-  // Ctrl/Cmd + K to open search
+  // Don't capture keys if user is typing in an input/textarea
+  const activeElement = document.activeElement;
+  const isTyping = activeElement && (
+    activeElement.tagName === 'INPUT' ||
+    activeElement.tagName === 'TEXTAREA' ||
+    activeElement.isContentEditable
+  );
+
+  // Ctrl/Cmd + K to open search (works even when typing)
   if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
     e.preventDefault();
     this.search.toggleSearch();
     return;
   }
+
+  // Escape to close modals (works even when typing)
+  if (e.key === 'Escape') {
+    const activeModal = document.querySelector('.modal.active');
+    if (activeModal) {
+      this.ui.closeModal(activeModal);
+    }
+    if (this.ui.searchContainer.classList.contains('active')) {
+      this.search.closeSearch();
+    }
+    return;
+  }
+
+  // Don't process navigation shortcuts if typing
+  if (isTyping) return;
+
+  // Navigation shortcuts - only when no modal is open and search is closed
+  const modalOpen = document.querySelector('.modal.active');
+  const searchOpen = this.ui.searchContainer?.classList.contains('active');
+
+  if (!modalOpen && !searchOpen) {
+    // Chapter navigation: Arrow Left/Right or H/L
+    if (e.key === 'ArrowLeft' || e.key === 'h' || e.key === 'H') {
+      e.preventDefault();
+      this.navigateChapter(-1);
+    } else if (e.key === 'ArrowRight' || e.key === 'l' || e.key === 'L') {
+      e.preventDefault();
+      this.navigateChapter(1);
+    }
+    // Verse navigation: Arrow Up/Down or K/J
+    else if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') {
+      e.preventDefault();
+      this.navigateToPreviousVerse();
+    } else if (e.key === 'ArrowDown' || e.key === 'j' || e.key === 'J') {
+      e.preventDefault();
+      this.navigateToNextVerse();
+    }
+  }
+}
+
 
   // Escape to close modals
   if (e.key === 'Escape') {
