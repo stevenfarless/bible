@@ -31,12 +31,13 @@ export class BibleApi {
         });
 
         try {
-            // ✅ FIXED: Added leading slash
             const response = await fetch(`${this.baseUrl}/passage/html/?${params}`, {
                 headers: {
                     'Authorization': `Token ${apiKey}`
                 }
             });
+
+            console.log('ESV API response status:', response.status);
 
             if (!response.ok) {
                 throw new Error(`API Error: ${response.status}`);

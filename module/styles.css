@@ -30,7 +30,7 @@
 
 html,
 body {
-    overflow: scroll;
+    overflow-y: scroll;
     scrollbar-width: none;
 }
 
@@ -38,6 +38,8 @@ html::-webkit-scrollbar,
 body::-webkit-scrollbar {
     display: none;
 }
+
+
 
 
 /* ================================
