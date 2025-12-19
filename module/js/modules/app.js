@@ -85,16 +85,24 @@ class BibleApp {
     this.ui.passageText.innerHTML = data.passages[0];
 
     // Post-load setup
-    this.references.attachHandlers();
-    this.references.makeFootnotesClickable();
-    this.ui.applyRedLetters();
+    // In app.js, around line 85-95
+this.references.attachHandlers();
+this.references.makeFootnotesClickable();
+this.ui.applyRedLetters();
 
-    this.ui.copyright.textContent =
-      'Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), ' +
-      'copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. ' +
-      'Used by permission. All rights reserved.';
+// Add defensive check
+if (this.ui.copyright) {
+  this.ui.copyright.textContent =
+    'Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), ' +
+    'copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. ' +
+    'Used by permission. All rights reserved.';
+} else {
+  console.warn('⚠️ Copyright element not found');
+}
 
-    this.ui.currentVerseSpan.textContent = '1';
+if (this.ui.currentVerseSpan) {
+  this.ui.currentVerseSpan.textContent = '1';
+}
 
     // Scroll handling + chrome
     this.ui.chromeSuspend = true;

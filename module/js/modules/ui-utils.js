@@ -4,15 +4,13 @@
 // Cache all DOM elements the UI layer needs
 // NOTE: this takes the UI MANAGER instance, not the app
 export function cacheElements(ui) {
-  // Top chrome wrapper (Header + Navigation)
-  ui.topChrome = document.getElementById('topChrome');
-
   // Header
   ui.searchToggleBtn = document.getElementById('searchToggleBtn');
   ui.helpBtn = document.getElementById('helpBtn');
   ui.settingsBtn = document.getElementById('settingsBtn');
-  ui.themeToggleBtn = document.getElementById('themeToggleBtn');
   ui.userBtn = document.getElementById('userBtn');
+  ui.copyBtn = document.getElementById('copyBtn');
+  ui.themeToggleBtn = document.getElementById('themeToggleBtn');
 
   // Navigation
   ui.prevChapterBtn = document.getElementById('prevChapterBtn');
@@ -24,17 +22,16 @@ export function cacheElements(ui) {
   ui.currentChapterSpan = document.getElementById('currentChapter');
   ui.currentVerseSpan = document.getElementById('currentVerse');
 
-  // Search
-  ui.searchContainer = document.getElementById('searchContainer');
-  ui.closeSearchBtn = document.getElementById('closeSearchBtn');
-  ui.searchInput = document.getElementById('searchInput');
-  ui.searchResults = document.getElementById('searchResults');
-
-  // Passage display
+  // Passage
   ui.passageTitle = document.getElementById('passageTitle');
   ui.passageText = document.getElementById('passageText');
-  ui.copyright = document.getElementById('copyright');
-  ui.copyBtn = document.getElementById('copyBtn');
+  ui.copyright = document.getElementById('copyrightText'); // ← ADD THIS LINE
+
+  // Search
+  ui.searchContainer = document.getElementById('searchContainer');
+  ui.searchInput = document.getElementById('searchInput');
+  ui.searchResults = document.getElementById('searchResults');
+  ui.closeSearchBtn = document.getElementById('closeSearchBtn');
 
   // Modals
   ui.bookModal = document.getElementById('bookModal');
@@ -45,6 +42,7 @@ export function cacheElements(ui) {
   ui.loginModal = document.getElementById('loginModal');
   ui.signupModal = document.getElementById('signupModal');
   ui.userMenuModal = document.getElementById('userMenuModal');
+  ui.referencesModal = document.getElementById('referencesModal');
 
   // Modal close buttons
   ui.closeBookModal = document.getElementById('closeBookModal');
@@ -55,14 +53,16 @@ export function cacheElements(ui) {
   ui.closeLoginModal = document.getElementById('closeLoginModal');
   ui.closeSignupModal = document.getElementById('closeSignupModal');
   ui.closeUserMenuModal = document.getElementById('closeUserMenuModal');
+  ui.closeReferencesModal = document.getElementById('closeReferencesModal');
 
-  // Modal content
+  // Modal content areas
   ui.oldTestamentBooks = document.getElementById('oldTestamentBooks');
   ui.newTestamentBooks = document.getElementById('newTestamentBooks');
   ui.chapterModalBook = document.getElementById('chapterModalBook');
   ui.chapterGrid = document.getElementById('chapterGrid');
   ui.verseModalBook = document.getElementById('verseModalBook');
   ui.verseGrid = document.getElementById('verseGrid');
+  ui.referencesContent = document.getElementById('referencesContent');
 
   // Settings
   ui.apiKeyInput = document.getElementById('apiKeyInput');
@@ -74,14 +74,6 @@ export function cacheElements(ui) {
   ui.verseByVerseToggle = document.getElementById('verseByVerseToggle');
   ui.fontSizeSlider = document.getElementById('fontSizeSlider');
   ui.fontSizeValue = document.getElementById('fontSizeValue');
-
-  // References modal (footnotes and cross-references)
-  ui.referencesModal = document.getElementById('referencesModal');
-  ui.closeReferencesModal = document.getElementById('closeReferencesModal');
-  ui.footnotesSection = document.getElementById('footnotesSection');
-  ui.footnotesContent = document.getElementById('footnotesContent');
-  ui.crossReferencesSection = document.getElementById('crossReferencesSection');
-  ui.crossReferencesContent = document.getElementById('crossReferencesContent');
 
   // Toast
   ui.toast = document.getElementById('toast');
