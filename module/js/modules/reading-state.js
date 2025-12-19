@@ -19,20 +19,6 @@ export function initializeState() {
   };
 }
 
-// Navigation
-if (this.prevChapterBtn) {
-  this.prevChapterBtn.addEventListener('click', () => {
-    console.log('← Previous chapter clicked');
-    this.app.navigateChapter(-1);
-  });
-}
-if (this.nextChapterBtn) {
-  this.nextChapterBtn.addEventListener('click', () => {
-    console.log('→ Next chapter clicked');
-    this.app.navigateChapter(1);
-  });
-}
-
 export function navigateChapter(app, direction) {
   const books = getAllBooks();
   const currentBookIndex = books.indexOf(app.state.currentBook);
@@ -51,7 +37,6 @@ export function navigateChapter(app, direction) {
       app.state.selectedVerse = null;
       app.loadPassage(nextBook, 1);
     }
-    // If at last chapter of last book, do nothing
   } else if (direction === -1) {
     // Previous chapter
     if (currentChapter > 1) {
@@ -65,27 +50,22 @@ export function navigateChapter(app, direction) {
       app.state.selectedVerse = null;
       app.loadPassage(prevBook, prevBookMaxChapter);
     }
-    // If at first chapter of first book, do nothing
   }
 }
 
 export function scrollToVerse(app, verseNumber) {
   if (!app.ui.passageText) return;
 
-  // Find all verse number elements
   const verseElements = app.ui.passageText.querySelectorAll('.verse-num');
   
-  // Find the verse number that matches
   for (let i = 0; i < verseElements.length; i++) {
     const verseEl = verseElements[i];
     const verseText = verseEl.textContent.trim();
     
     if (parseInt(verseText) === verseNumber) {
-      // Get the parent paragraph/div
       const parent = verseEl.closest('p, div');
       if (parent) {
-        // Scroll to it with offset for header
-        const headerHeight = 120; // Adjust if needed
+        const headerHeight = 120;
         const elementPosition = parent.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
 
@@ -94,7 +74,6 @@ export function scrollToVerse(app, verseNumber) {
           behavior: 'smooth'
         });
 
-        // Highlight the verse temporarily
         parent.style.transition = 'background-color 0.3s ease';
         parent.style.backgroundColor = 'var(--primary-color)';
         parent.style.opacity = '0.2';

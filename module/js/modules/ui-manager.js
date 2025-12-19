@@ -24,7 +24,7 @@ export class UIManager {
     const required = [
       'searchToggleBtn', 'helpBtn', 'settingsBtn', 'userBtn',
       'prevChapterBtn', 'nextChapterBtn', 'bookSelector', 'chapterSelector',
-      'passageText', 'passageTitle', 'toast'
+      'passageText', 'passageTitle', 'toast', 'copyright'
     ];
     
     const missing = required.filter(key => !this[key]);
@@ -58,10 +58,16 @@ export class UIManager {
 
     // Navigation
     if (this.prevChapterBtn) {
-      this.prevChapterBtn.addEventListener('click', () => this.app.navigateChapter(-1));
+      this.prevChapterBtn.addEventListener('click', () => {
+        console.log('← Previous chapter clicked');
+        this.app.navigateChapter(-1);
+      });
     }
     if (this.nextChapterBtn) {
-      this.nextChapterBtn.addEventListener('click', () => this.app.navigateChapter(1));
+      this.nextChapterBtn.addEventListener('click', () => {
+        console.log('→ Next chapter clicked');
+        this.app.navigateChapter(1);
+      });
     }
     if (this.bookSelector) {
       this.bookSelector.addEventListener('click', () => this.openBookModal());
@@ -156,6 +162,21 @@ export class UIManager {
       });
     }
 
+    const signupForm = document.getElementById('signupForm');
+    if (signupForm && this.app.firebase) {
+      signupForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.app.firebase
+          .handleSignup(
+            document.getElementById('signupEmail').value,
+            document.getElementById('signupPassword').value
+          )
+          .then((success) => {
+            if (success === true) this.closeModal(this.signupModal);
+          });
+      });
+    }
+
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn && this.app.firebase) {
       logoutBtn.addEventListener('click', () =>
@@ -197,12 +218,20 @@ export class UIManager {
     if (this.closeSettingsModal) {
       this.closeSettingsModal.addEventListener('click', () => this.closeModal(this.settingsModal));
     }
-    this.closeLoginModal?.addEventListener('click', () => this.closeModal(this.loginModal));
-    this.closeSignupModal?.addEventListener('click', () => this.closeModal(this.signupModal));
-    this.closeUserMenuModal?.addEventListener('click', () => this.closeModal(this.userMenuModal));
-    this.closeReferencesModal?.addEventListener('click', () =>
-      this.closeModal(this.referencesModal)
-    );
+    if (this.closeLoginModal) {
+      this.closeLoginModal.addEventListener('click', () => this.closeModal(this.loginModal));
+    }
+    if (this.closeSignupModal) {
+      this.closeSignupModal.addEventListener('click', () => this.closeModal(this.signupModal));
+    }
+    if (this.closeUserMenuModal) {
+      this.closeUserMenuModal.addEventListener('click', () => this.closeModal(this.userMenuModal));
+    }
+    if (this.closeReferencesModal) {
+      this.closeReferencesModal.addEventListener('click', () =>
+        this.closeModal(this.referencesModal)
+      );
+    }
 
     // Auth switching
     const showSignupLink = document.getElementById('showSignupLink');
@@ -377,7 +406,8 @@ export class UIManager {
     if (!this.passageText || !this.passageTitle) return;
     const textContent = this.stripHTML(this.passageText.innerHTML);
     const reference = this.passageTitle.textContent;
-    const fullText = `${reference}\n\n${textContent}\n\n${this.copyright.textContent}`;
+    const copyrightText = this.copyright ? this.copyright.textContent : '';
+    const fullText = `${reference}\n\n${textContent}\n\n${copyrightText}`;
 
     navigator.clipboard
       .writeText(fullText)
