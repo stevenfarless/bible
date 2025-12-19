@@ -2,7 +2,7 @@
 
 import { cacheElements, loadTheme, toggleTheme, updateThemeIcon, changeColorTheme } from './ui-utils.js';
 import { scrollToVerse, applyVerseGlow } from './reading-state.js';
-import { getAllBooks, getChapterCount, BIBLE_BOOKS } from './bible-structure.js';
+import { getAllBooks, getChapterCount, BIBLE_STRUCTURE } from './bible-structure.js';
 
 export class UIManager {
   constructor(app) {
@@ -501,14 +501,14 @@ export class UIManager {
 
     if (this.oldTestamentBooks) {
       this.oldTestamentBooks.innerHTML = '';
-      Object.keys(BIBLE_BOOKS['Old Testament']).forEach(book => {
+      Object.keys(BIBLE_STRUCTURE['Old Testament']).forEach(book => {
         this.oldTestamentBooks.appendChild(createBookButton(book));
       });
     }
 
     if (this.newTestamentBooks) {
       this.newTestamentBooks.innerHTML = '';
-      Object.keys(BIBLE_BOOKS['New Testament']).forEach(book => {
+      Object.keys(BIBLE_STRUCTURE['New Testament']).forEach(book => {
         this.newTestamentBooks.appendChild(createBookButton(book));
       });
     }
