@@ -8,7 +8,7 @@ export class ReferencesManager {
   attachHandlers() {
     if (!this.app.ui.passageText) return;
 
-    // Handle all footnote markers (links inside sup.footnote)
+    // Handle all footnote markers
     const footnoteMarkers = this.app.ui.passageText.querySelectorAll(
       'sup.footnote a, a.fn'
     );
@@ -38,12 +38,10 @@ export class ReferencesManager {
   }
 
   makeFootnotesClickable() {
-    // Alias for attachHandlers
     this.attachHandlers();
   }
 
   openFootnoteFromMarker(link) {
-    // Get the href which points to the footnote body at the bottom
     const href = link.getAttribute('href');
     
     if (!href) {
@@ -51,47 +49,70 @@ export class ReferencesManager {
       return;
     }
 
-    // Remove the # to get the ID
     const footnoteId = href.startsWith('#') ? href.substring(1) : href;
     
     console.log('Looking for footnote with ID:', footnoteId);
     
-    // Find the footnote body element (ESV puts these at the bottom of the passage)
-    const footnoteBody = document.getElementById(footnoteId);
+    // Strategy 1: Look for a paragraph or div containing the footnote ID
+    let footnoteContent = null;
     
-    if (!footnoteBody) {
-      console.warn(`Footnote body not found: ${footnoteId}`);
+    // Try finding parent paragraph/div of the element with this ID
+    const footnoteElement = document.getElementById(footnoteId);
+    if (footnoteElement) {
+      console.log('Found element with ID:', footnoteElement);
       
-      // Fallback: try to get from title attribute
+      // Check if parent has the actual content
+      const parent = footnoteElement.parentElement;
+      console.log('Parent element:', parent);
+      
+      if (parent && (parent.tagName === 'P' || parent.tagName === 'DIV')) {
+        footnoteContent = parent.innerHTML;
+        // Remove the back-reference link
+        footnoteContent = footnoteContent.replace(/<a[^>]*href="#fb[^"]*"[^>]*>.*?<\/a>/gi, '');
+      }
+    }
+    
+    // Strategy 2: Look for footnotes section
+    if (!footnoteContent) {
+      const footnotesSection = this.app.ui.passageText.querySelector('.footnotes, .notes');
+      console.log('Footnotes section:', footnotesSection);
+      
+      if (footnotesSection) {
+        // Look for the specific footnote within the section
+        const footnoteItem = footnotesSection.querySelector(`#${footnoteId}`)?.closest('p, li, div');
+        if (footnoteItem) {
+          footnoteContent = footnoteItem.innerHTML;
+          footnoteContent = footnoteContent.replace(/<a[^>]*href="#fb[^"]*"[^>]*>.*?<\/a>/gi, '');
+        }
+      }
+    }
+    
+    // Strategy 3: Fallback to title attribute
+    if (!footnoteContent) {
+      console.log('Trying title attribute fallback');
       const titleContent = link.getAttribute('title');
       if (titleContent) {
-        console.log('Using title attribute as fallback');
         const decodedContent = this.decodeHTMLEntities(titleContent);
         const noteContent = this.extractNoteContent(decodedContent);
         this.showFootnoteModal(noteContent);
         return;
       }
-      
+    }
+    
+    if (!footnoteContent || footnoteContent.trim() === '') {
+      console.error('Could not find footnote content');
       this.showFootnoteModal('<p>Footnote content not available.</p>');
       return;
     }
-
-    console.log('Found footnote body:', footnoteBody);
-
-    // Get the HTML content of the footnote
-    let content = footnoteBody.innerHTML;
     
-    // Remove the back-reference link (the arrow that links back to the text)
-    content = content.replace(/<a[^>]*href="#fb[^"]*"[^>]*>.*?<\/a>/gi, '');
-    
-    // Wrap in a paragraph if not already wrapped
-    if (!content.trim().startsWith('<p')) {
-      content = `<p>${content}</p>`;
+    // Wrap in paragraph if needed
+    if (!footnoteContent.trim().startsWith('<p')) {
+      footnoteContent = `<p>${footnoteContent}</p>`;
     }
     
-    console.log('Footnote content:', content);
+    console.log('Final footnote content:', footnoteContent);
     
-    this.showFootnoteModal(content);
+    this.showFootnoteModal(footnoteContent);
   }
 
   openCrossRefFromMarker(link) {
@@ -103,25 +124,29 @@ export class ReferencesManager {
     }
 
     const crossrefId = href.startsWith('#') ? href.substring(1) : href;
-    const crossrefBody = document.getElementById(crossrefId);
     
-    if (!crossrefBody) {
-      console.warn(`Cross-reference body not found: ${crossrefId}`);
+    // Try to find parent element
+    const crossrefElement = document.getElementById(crossrefId);
+    let crossrefContent = null;
+    
+    if (crossrefElement) {
+      const parent = crossrefElement.parentElement;
+      if (parent && (parent.tagName === 'P' || parent.tagName === 'DIV')) {
+        crossrefContent = parent.innerHTML;
+        crossrefContent = crossrefContent.replace(/<a[^>]*href="#cb[^"]*"[^>]*>.*?<\/a>/gi, '');
+      }
+    }
+    
+    if (!crossrefContent || crossrefContent.trim() === '') {
       this.showCrossRefModal('<p>Cross-reference content not available.</p>');
       return;
     }
-
-    let content = crossrefBody.innerHTML;
     
-    // Remove the back-reference link
-    content = content.replace(/<a[^>]*href="#cb[^"]*"[^>]*>.*?<\/a>/gi, '');
-    
-    // Wrap in a paragraph if not already wrapped
-    if (!content.trim().startsWith('<p')) {
-      content = `<p>${content}</p>`;
+    if (!crossrefContent.trim().startsWith('<p')) {
+      crossrefContent = `<p>${crossrefContent}</p>`;
     }
     
-    this.showCrossRefModal(content);
+    this.showCrossRefModal(crossrefContent);
   }
 
   decodeHTMLEntities(text) {
@@ -131,25 +156,18 @@ export class ReferencesManager {
   }
 
   extractNoteContent(htmlString) {
-    // Create a temporary element to parse the HTML
     const temp = document.createElement('div');
     temp.innerHTML = htmlString;
     
-    // Get the note element
     const noteElement = temp.querySelector('note');
     
     if (!noteElement) {
-      // If no note element, return the text content
       return temp.textContent || htmlString;
     }
 
-    // Get the note's HTML content (preserves formatting like <i> tags)
     let content = noteElement.innerHTML;
-    
-    // Get the note type for styling
     const noteClass = noteElement.getAttribute('class');
     
-    // Add a label based on the note type
     let label = '';
     if (noteClass === 'translation') {
       label = '<strong>Translation Note:</strong> ';
@@ -170,9 +188,6 @@ export class ReferencesManager {
       return;
     }
 
-    console.log('Showing footnote modal');
-
-    // Show footnotes section, hide cross-references
     if (this.app.ui.footnotesSection) {
       this.app.ui.footnotesSection.style.display = 'block';
     }
@@ -180,13 +195,10 @@ export class ReferencesManager {
       this.app.ui.crossReferencesSection.style.display = 'none';
     }
 
-    // Set content
     if (this.app.ui.footnotesContent) {
       this.app.ui.footnotesContent.innerHTML = content;
-      console.log('Set footnote content to:', content);
     }
 
-    // Open modal
     this.app.ui.openModal(this.app.ui.referencesModal);
   }
 
@@ -196,9 +208,6 @@ export class ReferencesManager {
       return;
     }
 
-    console.log('Showing cross-ref modal');
-
-    // Show cross-references section, hide footnotes
     if (this.app.ui.crossReferencesSection) {
       this.app.ui.crossReferencesSection.style.display = 'block';
     }
@@ -206,12 +215,10 @@ export class ReferencesManager {
       this.app.ui.footnotesSection.style.display = 'none';
     }
 
-    // Set content
     if (this.app.ui.crossReferencesContent) {
       this.app.ui.crossReferencesContent.innerHTML = content;
     }
 
-    // Open modal
     this.app.ui.openModal(this.app.ui.referencesModal);
   }
 }
