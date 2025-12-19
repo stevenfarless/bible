@@ -75,6 +75,11 @@ export function cacheElements(ui) {
   ui.fontSizeSlider = document.getElementById('fontSizeSlider');
   ui.fontSizeValue = document.getElementById('fontSizeValue');
 
+  ui.footnotesSection = document.getElementById('footnotesSection');
+  ui.footnotesContent = document.getElementById('footnotesContent');
+  ui.crossReferencesSection = document.getElementById('crossReferencesSection');
+  ui.crossReferencesContent = document.getElementById('crossReferencesContent');
+
   // Toast
   ui.toast = document.getElementById('toast');
 }
