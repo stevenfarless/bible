@@ -1542,33 +1542,49 @@ body.light-mode .crossref-item {
    8. INTERACTIVE STATES & EFFECTS
    ================================ */
 
-/* Verse Selection Glow */
+/* Verse glow highlight */
 .selected-verse-glow {
-    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05));
-    border-left: 4px solid rgba(255, 215, 0, 0.6);
-    border-radius: 8px;
-    padding: 12px;
-    margin: 8px 0;
-    box-shadow:
-        0 0 20px rgba(255, 215, 0, 0.3),
-        inset 0 0 10px rgba(255, 215, 0, 0.1);
-    transform: scale(1.02);
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    animation: verseGlowPulse 0.5s ease-out;
+    background: linear-gradient(90deg,
+            rgba(var(--primary-color-rgb), 0.15) 0%,
+            rgba(var(--primary-color-rgb), 0.08) 100%);
+    border-left: 3px solid var(--primary-color);
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+    border-radius: 6px;
+    animation: verseGlow 0.4s ease-out;
+    transition: background 0.3s ease;
 }
 
-.selected-verse-glow+h2,
-.selected-verse-glow+h3,
-.selected-verse-glow+h4 {
-    margin-top: 0.25rem;
+@keyframes verseGlow {
+    0% {
+        background: rgba(var(--primary-color-rgb), 0.3);
+        transform: translateX(-4px);
+    }
+
+    100% {
+        background: linear-gradient(90deg,
+                rgba(var(--primary-color-rgb), 0.15) 0%,
+                rgba(var(--primary-color-rgb), 0.08) 100%);
+        transform: translateX(0);
+    }
 }
 
-body.light-mode .selected-verse-glow {
-    box-shadow: 0 0 12px rgba(255, 165, 0, 0.4),
-        0 0 20px rgba(255, 165, 0, 0.2);
-    background-color: rgba(255, 165, 0, 0.08);
-    border-left: 3px solid rgba(255, 165, 0, 0.8);
-    animation: verse-highlight-light 0.6s ease;
+/* Add RGB versions of primary color for each theme */
+:root {
+    --primary-color-rgb: 189, 147, 249;
+    /* Dracula purple */
+}
+
+:root.steel-theme {
+    --primary-color-rgb: 92, 148, 204;
+}
+
+:root.onyx-theme {
+    --primary-color-rgb: 240, 203, 92;
+}
+
+:root.reader-theme {
+    --primary-color-rgb: 96, 150, 136;
 }
 
 

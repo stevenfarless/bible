@@ -84,6 +84,8 @@ class BibleApp {
     this.ui.passageTitle.textContent = reference;
     this.ui.passageText.innerHTML = data.passages[0];
 
+    this.originalPassageHtml = this.ui.passageText.innerHTML;
+
     // Post-load setup
     // In app.js, around line 85-95
 this.references.attachHandlers();
