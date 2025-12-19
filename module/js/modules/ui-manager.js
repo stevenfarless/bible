@@ -1,20 +1,69 @@
 // js/modules/ui-manager.js
 
-import { cacheElements, loadTheme, toggleTheme, changeColorTheme, updateThemeIcon } from './ui-utils.js';
-import { BOOK_ABBREVIATIONS, BIBLE_STRUCTURE, getChapterCount } from './bible-structure.js';
-import { scrollToVerse } from './reading-state.js';
-import { getRedLetterVerses } from './words-of-jesus.js';
+import { cacheElements, loadTheme, toggleTheme, updateThemeIcon, changeColorTheme } from './ui-utils.js';
+import { scrollToVerse, applyVerseGlow } from './reading-state.js';
+import { getAllBooks, getChapterCount, BIBLE_BOOKS } from './bible-structure.js';
 
 export class UIManager {
   constructor(app) {
     this.app = app;
-
+    
+    // Chrome auto-hide state
     this.chromeHidden = false;
-    this.chromeScrollLastY = 0;
+    this.chromeScrollLastY = window.scrollY || 0;
     this.chromeDelta = 2;
     this.chromeScrollTicking = false;
     this.chromeSuspend = false;
     this.scrollTimeout = null;
+
+    // Define chrome functions on instance
+    this.showChrome = () => {
+      if (!this.chromeHidden) return;
+      document.body.classList.remove('chrome-hidden');
+      this.chromeHidden = false;
+    };
+
+    this.hideChrome = () => {
+      if (this.chromeHidden) return;
+      document.body.classList.add('chrome-hidden');
+      this.chromeHidden = true;
+    };
+
+    this.handleChromeScroll = () => {
+      if (this.chromeScrollTicking) return;
+      this.chromeScrollTicking = true;
+
+      if (this.chromeSuspend) {
+        this.chromeScrollLastY = window.scrollY || window.pageYOffset || 0;
+        this.chromeScrollTicking = false;
+        return;
+      }
+
+      window.requestAnimationFrame(() => {
+        const y = window.scrollY || window.pageYOffset || 0;
+        const delta = y - this.chromeScrollLastY;
+
+        const modalOpen = !!document.querySelector('.modal.active');
+        const searchOpen = !!this.searchContainer?.classList.contains('active');
+
+        if (y <= 0 || modalOpen || searchOpen) {
+          this.showChrome();
+          this.chromeScrollLastY = y;
+          this.chromeScrollTicking = false;
+          return;
+        }
+
+        if (delta > this.chromeDelta) {
+          this.hideChrome();
+        }
+        if (delta < -this.chromeDelta) {
+          this.showChrome();
+        }
+
+        this.chromeScrollLastY = y;
+        this.chromeScrollTicking = false;
+      });
+    };
   }
 
   init() {
@@ -36,10 +85,11 @@ export class UIManager {
     loadTheme(this.app);
     this.attachEventListeners();
     this.initializeAccordion();
+    this.initModalDragResize();
   }
 
   attachEventListeners() {
-    // Header
+    // Header buttons
     if (this.searchToggleBtn) {
       this.searchToggleBtn.addEventListener('click', () => this.app.search.toggleSearch());
     }
@@ -52,22 +102,16 @@ export class UIManager {
     if (this.userBtn) {
       this.userBtn.addEventListener('click', () => this.app.handleUserButtonClick());
     }
-    if (this.copyBtn) {
-      this.copyBtn.addEventListener('click', () => this.copyPassage());
+    if (this.themeToggleBtn) {
+      this.themeToggleBtn.addEventListener('click', () => toggleTheme(this.app));
     }
 
     // Navigation
     if (this.prevChapterBtn) {
-      this.prevChapterBtn.addEventListener('click', () => {
-        console.log('← Previous chapter clicked');
-        this.app.navigateChapter(-1);
-      });
+      this.prevChapterBtn.addEventListener('click', () => this.app.navigateChapter(-1));
     }
     if (this.nextChapterBtn) {
-      this.nextChapterBtn.addEventListener('click', () => {
-        console.log('→ Next chapter clicked');
-        this.app.navigateChapter(1);
-      });
+      this.nextChapterBtn.addEventListener('click', () => this.app.navigateChapter(1));
     }
     if (this.bookSelector) {
       this.bookSelector.addEventListener('click', () => this.openBookModal());
@@ -79,33 +123,43 @@ export class UIManager {
       this.verseSelector.addEventListener('click', () => this.openVerseModal());
     }
 
-    // Search
-    if (this.closeSearchBtn) {
-      this.closeSearchBtn.addEventListener('click', () => this.app.search.closeSearch());
-    }
-    if (this.searchInput) {
-      this.searchInput.addEventListener('input', (e) => this.app.search.handleInput(e.target.value));
-      this.searchInput.addEventListener('keydown', (e) => this.app.search.handleKeydown(e));
+    // Close modal buttons
+    const closeButtons = {
+      closeBookModal: this.bookModal,
+      closeChapterModal: this.chapterModal,
+      closeVerseModal: this.verseModal,
+      closeHelpModal: this.helpModal,
+      closeSettingsModal: this.settingsModal,
+      closeLoginModal: this.loginModal,
+      closeSignupModal: this.signupModal,
+      closeUserMenuModal: this.userMenuModal,
+      closeReferencesModal: this.referencesModal,
+    };
+
+    for (const [btnKey, modal] of Object.entries(closeButtons)) {
+      if (this[btnKey] && modal) {
+        this[btnKey].addEventListener('click', () => this.closeModal(modal));
+      }
     }
 
-    // Settings - API Key Form
-    const apiKeyForm = document.getElementById('apiKeyForm');
-    if (apiKeyForm && this.app.firebase) {
-      apiKeyForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        this.app.firebase.saveApiKey(this.apiKeyInput.value.trim()).then((success) => {
-          if (success) {
-            this.showToast('API key saved!');
-            this.closeModal(this.settingsModal);
-            this.app.loadPassage(this.app.state.currentBook, this.app.state.currentChapter);
-          } else {
-            this.showToast('Failed to save API key');
+    // Click outside modal to close
+    const allModals = [
+      this.bookModal, this.chapterModal, this.verseModal,
+      this.helpModal, this.settingsModal, this.loginModal,
+      this.signupModal, this.userMenuModal, this.referencesModal
+    ];
+
+    allModals.forEach(modal => {
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            this.closeModal(modal);
           }
         });
-      });
-    }
+      }
+    });
 
-    // Settings toggles
+    // Settings
     if (this.verseNumbersToggle) {
       this.verseNumbersToggle.addEventListener('change', () => this.app.toggleSetting('showVerseNumbers'));
     }
@@ -116,9 +170,7 @@ export class UIManager {
       this.footnotesToggle.addEventListener('change', () => this.app.toggleSetting('showFootnotes'));
     }
     if (this.crossReferencesToggle) {
-      this.crossReferencesToggle.addEventListener('change', () =>
-        this.app.toggleSetting('showCrossReferences')
-      );
+      this.crossReferencesToggle.addEventListener('change', () => this.app.toggleSetting('showCrossReferences'));
     }
     if (this.verseByVerseToggle) {
       this.verseByVerseToggle.addEventListener('change', () => this.app.toggleVerseByVerse());
@@ -127,114 +179,21 @@ export class UIManager {
       this.fontSizeSlider.addEventListener('input', (e) => this.app.updateFontSize(e.target.value));
     }
 
-    const redToggle = document.getElementById('redLettersToggle');
-    if (redToggle) {
-      redToggle.checked = this.app.state.showRedLetters;
-      redToggle.addEventListener('change', () => this.app.toggleRedLetters());
-    }
-
-    // Theme
-    if (this.themeToggleBtn) {
-      this.themeToggleBtn.addEventListener('click', () => toggleTheme(this.app));
-    }
+    // Theme selector
     const themeSelector = document.getElementById('themeSelector');
+    const lightModeToggle = document.getElementById('lightModeToggle');
+    
     if (themeSelector) {
       themeSelector.addEventListener('change', (e) => changeColorTheme(this.app, e.target.value));
     }
-    const lightModeToggle = document.getElementById('lightModeToggle');
     if (lightModeToggle) {
       lightModeToggle.addEventListener('change', () => toggleTheme(this.app));
     }
 
-    // Auth
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm && this.app.firebase) {
-      loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        this.app.firebase
-          .handleLogin(
-            document.getElementById('loginEmail').value,
-            document.getElementById('loginPassword').value
-          )
-          .then((success) => {
-            if (success === true) this.closeModal(this.loginModal);
-          });
-      });
-    }
-
-    const signupForm = document.getElementById('signupForm');
-    if (signupForm && this.app.firebase) {
-      signupForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        this.app.firebase
-          .handleSignup(
-            document.getElementById('signupEmail').value,
-            document.getElementById('signupPassword').value
-          )
-          .then((success) => {
-            if (success === true) this.closeModal(this.signupModal);
-          });
-      });
-    }
-
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn && this.app.firebase) {
-      logoutBtn.addEventListener('click', () =>
-        this.app.firebase.handleLogout().then(() => this.closeModal(this.userMenuModal))
-      );
-    }
-
-    // Click outside to close
-    [
-      this.bookModal,
-      this.chapterModal,
-      this.verseModal,
-      this.settingsModal,
-      this.helpModal,
-      this.loginModal,
-      this.signupModal,
-      this.userMenuModal,
-      this.referencesModal,
-    ].forEach((modal) => {
-      if (!modal) return;
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) this.closeModal(modal);
-      });
-    });
-
-    // Modal close buttons
-    if (this.closeBookModal) {
-      this.closeBookModal.addEventListener('click', () => this.closeModal(this.bookModal));
-    }
-    if (this.closeChapterModal) {
-      this.closeChapterModal.addEventListener('click', () => this.closeModal(this.chapterModal));
-    }
-    if (this.closeVerseModal) {
-      this.closeVerseModal.addEventListener('click', () => this.closeModal(this.verseModal));
-    }
-    if (this.closeHelpModal) {
-      this.closeHelpModal.addEventListener('click', () => this.closeModal(this.helpModal));
-    }
-    if (this.closeSettingsModal) {
-      this.closeSettingsModal.addEventListener('click', () => this.closeModal(this.settingsModal));
-    }
-    if (this.closeLoginModal) {
-      this.closeLoginModal.addEventListener('click', () => this.closeModal(this.loginModal));
-    }
-    if (this.closeSignupModal) {
-      this.closeSignupModal.addEventListener('click', () => this.closeModal(this.signupModal));
-    }
-    if (this.closeUserMenuModal) {
-      this.closeUserMenuModal.addEventListener('click', () => this.closeModal(this.userMenuModal));
-    }
-    if (this.closeReferencesModal) {
-      this.closeReferencesModal.addEventListener('click', () =>
-        this.closeModal(this.referencesModal)
-      );
-    }
-
-    // Auth switching
+    // Auth modal switching
     const showSignupLink = document.getElementById('showSignupLink');
+    const showLoginLink = document.getElementById('showLoginLink');
+    
     if (showSignupLink) {
       showSignupLink.addEventListener('click', (e) => {
         e.preventDefault();
@@ -242,7 +201,6 @@ export class UIManager {
         this.openModal(this.signupModal);
       });
     }
-    const showLoginLink = document.getElementById('showLoginLink');
     if (showLoginLink) {
       showLoginLink.addEventListener('click', (e) => {
         e.preventDefault();
@@ -250,15 +208,39 @@ export class UIManager {
         this.openModal(this.loginModal);
       });
     }
+
+    // Auth form submissions
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    if (loginForm) {
+      loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.app.firebase.handleLogin();
+      });
+    }
+    if (signupForm) {
+      signupForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.app.firebase.handleSignup();
+      });
+    }
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => this.app.firebase.handleLogout());
+    }
   }
 
   initializeAccordion() {
-    document.querySelectorAll('.accordion-header').forEach((header) => {
+    const accordionHeaders = document.querySelectorAll('.accordion-header');
+    accordionHeaders.forEach(header => {
       header.addEventListener('click', () => {
-        header.closest('.accordion-section')?.classList.toggle('active');
+        const section = header.closest('.accordion-section');
+        section.classList.toggle('active');
       });
     });
 
+    // Handle Manage Account button
     const openAccountBtn = document.getElementById('openAccountBtn');
     if (openAccountBtn) {
       openAccountBtn.addEventListener('click', () => {
@@ -272,7 +254,205 @@ export class UIManager {
     }
   }
 
-  // Modals
+  initModalDragResize() {
+    // Settings Modal drag-to-resize
+    const settingsContent = this.settingsModal?.querySelector('.modal-content');
+    const settingsHeader = this.settingsModal?.querySelector('.modal-header');
+    const settingsBody = this.settingsModal?.querySelector('.modal-body');
+
+    if (settingsContent && settingsHeader && settingsBody) {
+      let isDragging = false;
+      let startY = 0;
+      let startHeight = 0;
+      let startScrollTop = 0;
+
+      // Touch events (mobile)
+      const handleTouchStart = (e) => {
+        if (!settingsHeader.contains(e.target)) return;
+        isDragging = true;
+        startY = e.touches[0].clientY;
+        startHeight = settingsContent.offsetHeight;
+        startScrollTop = settingsBody.scrollTop;
+        settingsContent.classList.add('dragging');
+      };
+
+      const handleTouchMove = (e) => {
+        if (!isDragging) return;
+        const currentY = e.touches[0].clientY;
+        const deltaY = startY - currentY;
+        let newHeight = startHeight + deltaY;
+
+        const minHeight = 200;
+        const maxHeight = window.innerHeight * 0.9;
+        newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
+
+        settingsContent.style.height = `${newHeight}px`;
+        e.preventDefault();
+      };
+
+      const handleTouchEnd = (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        settingsContent.classList.remove('dragging');
+
+        const endY = e.changedTouches[0].clientY;
+        const totalDragDistance = endY - startY;
+
+        if (totalDragDistance > 150 && startScrollTop === 0) {
+          this.closeModal(this.settingsModal);
+          setTimeout(() => {
+            settingsContent.style.height = '50vh';
+          }, 300);
+        }
+      };
+
+      settingsHeader.addEventListener('touchstart', handleTouchStart, { passive: false });
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+      // Mouse events (desktop)
+      let isMouseDragging = false;
+      let mouseStartY = 0;
+      let mouseStartHeight = 0;
+
+      settingsHeader.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.close-btn')) return;
+        isMouseDragging = true;
+        mouseStartY = e.clientY;
+        mouseStartHeight = settingsContent.offsetHeight;
+        settingsContent.classList.add('dragging');
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isMouseDragging) return;
+        const deltaY = mouseStartY - e.clientY;
+        let newHeight = mouseStartHeight + deltaY;
+
+        const minHeight = 200;
+        const maxHeight = window.innerHeight * 0.9;
+        newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
+
+        settingsContent.style.height = `${newHeight}px`;
+      });
+
+      document.addEventListener('mouseup', (e) => {
+        if (!isMouseDragging) return;
+        isMouseDragging = false;
+        settingsContent.classList.remove('dragging');
+
+        const endY = e.clientY;
+        const totalDragDistance = endY - mouseStartY;
+
+        if (totalDragDistance > 150) {
+          this.closeModal(this.settingsModal);
+          setTimeout(() => {
+            settingsContent.style.height = '50vh';
+          }, 300);
+        }
+      });
+    }
+
+    // References Modal drag-to-resize
+    const referencesContent = this.referencesModal?.querySelector('.modal-content');
+    const referencesHeader = this.referencesModal?.querySelector('.modal-header');
+    const referencesBody = this.referencesModal?.querySelector('.modal-body');
+
+    if (referencesContent && referencesHeader && referencesBody) {
+      let isRefDragging = false;
+      let refStartY = 0;
+      let refStartHeight = 0;
+      let refStartScrollTop = 0;
+
+      // Touch events (mobile)
+      const handleRefTouchStart = (e) => {
+        if (!referencesHeader.contains(e.target)) return;
+        isRefDragging = true;
+        refStartY = e.touches[0].clientY;
+        refStartHeight = referencesContent.offsetHeight;
+        refStartScrollTop = referencesBody.scrollTop;
+        referencesContent.classList.add('dragging');
+      };
+
+      const handleRefTouchMove = (e) => {
+        if (!isRefDragging) return;
+        const currentY = e.touches[0].clientY;
+        const deltaY = refStartY - currentY;
+        let newHeight = refStartHeight + deltaY;
+
+        const minHeight = 200;
+        const maxHeight = window.innerHeight * 0.9;
+        newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
+
+        referencesContent.style.height = `${newHeight}px`;
+        e.preventDefault();
+      };
+
+      const handleRefTouchEnd = (e) => {
+        if (!isRefDragging) return;
+        isRefDragging = false;
+        referencesContent.classList.remove('dragging');
+
+        const endY = e.changedTouches[0].clientY;
+        const totalDragDistance = endY - refStartY;
+
+        if (totalDragDistance > 150 && refStartScrollTop === 0) {
+          this.closeModal(this.referencesModal);
+          setTimeout(() => {
+            referencesContent.style.height = '50vh';
+          }, 300);
+        }
+      };
+
+      referencesHeader.addEventListener('touchstart', handleRefTouchStart, { passive: false });
+      document.addEventListener('touchmove', handleRefTouchMove, { passive: false });
+      document.addEventListener('touchend', handleRefTouchEnd, { passive: true });
+
+      // Mouse events (desktop)
+      let isRefMouseDragging = false;
+      let refMouseStartY = 0;
+      let refMouseStartHeight = 0;
+
+      referencesHeader.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.close-btn')) return;
+        isRefMouseDragging = true;
+        refMouseStartY = e.clientY;
+        refMouseStartHeight = referencesContent.offsetHeight;
+        referencesContent.classList.add('dragging');
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isRefMouseDragging) return;
+        const deltaY = refMouseStartY - e.clientY;
+        let newHeight = refMouseStartHeight + deltaY;
+
+        const minHeight = 200;
+        const maxHeight = window.innerHeight * 0.9;
+        newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
+
+        referencesContent.style.height = `${newHeight}px`;
+      });
+
+      document.addEventListener('mouseup', (e) => {
+        if (!isRefMouseDragging) return;
+        isRefMouseDragging = false;
+        referencesContent.classList.remove('dragging');
+
+        const endY = e.clientY;
+        const totalDragDistance = endY - refMouseStartY;
+
+        if (totalDragDistance > 150) {
+          this.closeModal(this.referencesModal);
+          setTimeout(() => {
+            referencesContent.style.height = '50vh';
+          }, 300);
+        }
+      });
+    }
+  }
+
+  // Modal Management
   openModal(modal) {
     if (!modal) return;
     modal.classList.add('active');
@@ -281,6 +461,8 @@ export class UIManager {
 
   closeModal(modal) {
     if (!modal) return;
+
+    // Add closing animation for settings and references
     if (modal === this.settingsModal || modal === this.referencesModal) {
       const content = modal.querySelector('.modal-content');
       if (content) {
@@ -290,26 +472,25 @@ export class UIManager {
           document.body.style.overflow = '';
           content.style.animation = '';
         }, 250);
-      } else {
-        modal.classList.remove('active');
-        document.body.style.overflow = '';
+        return;
       }
-    } else {
-      modal.classList.remove('active');
-      document.body.style.overflow = '';
     }
+
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
   }
 
+  // Book Modal
   openBookModal() {
     this.populateBookModal();
     this.openModal(this.bookModal);
   }
 
   populateBookModal() {
-    const createBtn = (book) => {
+    const createBookButton = (book) => {
       const btn = document.createElement('button');
       btn.className = 'book-item';
-      btn.textContent = BOOK_ABBREVIATIONS[book] || book;
+      btn.textContent = this.app.bookAbbreviations[book] || book;
       btn.addEventListener('click', () => {
         this.app.state.selectedVerse = null;
         this.app.loadPassage(book, 1);
@@ -320,19 +501,20 @@ export class UIManager {
 
     if (this.oldTestamentBooks) {
       this.oldTestamentBooks.innerHTML = '';
-      Object.keys(BIBLE_STRUCTURE['Old Testament']).forEach((b) =>
-        this.oldTestamentBooks.appendChild(createBtn(b))
-      );
+      Object.keys(BIBLE_BOOKS['Old Testament']).forEach(book => {
+        this.oldTestamentBooks.appendChild(createBookButton(book));
+      });
     }
 
     if (this.newTestamentBooks) {
       this.newTestamentBooks.innerHTML = '';
-      Object.keys(BIBLE_STRUCTURE['New Testament']).forEach((b) =>
-        this.newTestamentBooks.appendChild(createBtn(b))
-      );
+      Object.keys(BIBLE_BOOKS['New Testament']).forEach(book => {
+        this.newTestamentBooks.appendChild(createBookButton(book));
+      });
     }
   }
 
+  // Chapter Modal
   openChapterModal() {
     this.populateChapterModal();
     this.openModal(this.chapterModal);
@@ -342,14 +524,15 @@ export class UIManager {
     if (this.chapterModalBook) {
       this.chapterModalBook.textContent = this.app.state.currentBook;
     }
+
     if (this.chapterGrid) {
       this.chapterGrid.innerHTML = '';
-      const count = getChapterCount(this.app.state.currentBook);
+      const chapterCount = getChapterCount(this.app.state.currentBook);
 
-      for (let i = 1; i <= count; i++) {
+      for (let i = 1; i <= chapterCount; i++) {
         const btn = document.createElement('button');
         btn.className = 'chapter-item';
-        btn.textContent = String(i);
+        btn.textContent = i;
         btn.addEventListener('click', () => {
           this.app.state.selectedVerse = null;
           this.app.loadPassage(this.app.state.currentBook, i);
@@ -360,6 +543,7 @@ export class UIManager {
     }
   }
 
+  // Verse Modal
   openVerseModal() {
     this.populateVerseModal();
     this.openModal(this.verseModal);
@@ -369,19 +553,20 @@ export class UIManager {
     if (this.verseModalBook) {
       this.verseModalBook.textContent = `${this.app.state.currentBook} ${this.app.state.currentChapter}`;
     }
+
     if (this.verseGrid) {
       this.verseGrid.innerHTML = '';
-      const count = this.getCurrentVerseCount();
+      const verseCount = this.getCurrentVerseCount();
 
-      if (count === 0) {
-        this.verseGrid.innerHTML = '<p class="empty-state">No verses found in current passage</p>';
+      if (verseCount === 0) {
+        this.verseGrid.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-secondary)">No verses found in current passage</p>';
         return;
       }
 
-      for (let i = 1; i <= count; i++) {
+      for (let i = 1; i <= verseCount; i++) {
         const btn = document.createElement('button');
         btn.className = 'chapter-item';
-        btn.textContent = String(i);
+        btn.textContent = i;
         btn.addEventListener('click', () => {
           this.scrollToVerse(i);
           this.closeModal(this.verseModal);
@@ -392,171 +577,62 @@ export class UIManager {
   }
 
   getCurrentVerseCount() {
-    if (!this.passageText) return 0;
-    const nums = this.passageText.querySelectorAll('.verse-num');
-    return nums.length > 0 ? nums.length + 1 : 0;
+    const verseNums = this.passageText?.querySelectorAll('.verse-num');
+    return verseNums && verseNums.length > 0 ? verseNums.length + 1 : 0;
   }
 
-  scrollToVerse(num) {
-    scrollToVerse(this.app, num);
+  // Verse Navigation
+  scrollToVerse(verseNumber) {
+    scrollToVerse(this.app, verseNumber);
   }
 
-  // Copy passage
-  copyPassage() {
-    if (!this.passageText || !this.passageTitle) return;
-    const textContent = this.stripHTML(this.passageText.innerHTML);
-    const reference = this.passageTitle.textContent;
-    const copyrightText = this.copyright ? this.copyright.textContent : '';
-    const fullText = `${reference}\n\n${textContent}\n\n${copyrightText}`;
+  // Settings UI
+  applySettings() {
+    // Apply verse numbers visibility
+    if (this.app.state.showVerseNumbers) {
+      this.passageText?.classList.remove('hide-verse-numbers');
+    } else {
+      this.passageText?.classList.add('hide-verse-numbers');
+    }
 
-    navigator.clipboard
-      .writeText(fullText)
-      .then(() => this.showToast('Passage copied to clipboard!'))
-      .catch((err) => {
-        console.error('Failed to copy', err);
-        this.showToast('Failed to copy passage');
-      });
+    // Apply verse-by-verse mode
+    if (this.app.state.verseByVerse) {
+      this.passageText?.classList.add('verse-by-verse');
+    } else {
+      this.passageText?.classList.remove('verse-by-verse');
+    }
+
+    // Apply font size
+    if (this.passageText) {
+      this.passageText.style.fontSize = `${this.app.state.fontSize}px`;
+    }
+    if (this.fontSizeValue) {
+      this.fontSizeValue.textContent = `${this.app.state.fontSize}px`;
+    }
   }
 
-  // Red letters
   applyRedLetters() {
     if (!this.passageText) return;
-    
-    if (!this.app.state.showRedLetters) {
-      this.passageText
-        .querySelectorAll('.red-letter')
-        .forEach((el) => el.classList.remove('red-letter'));
-      return;
-    }
 
-    const redVerses = getRedLetterVerses(
-      this.app.state.currentBook,
-      this.app.state.currentChapter
-    );
-    if (!redVerses || redVerses.length === 0) return;
+    const { showRedLetters } = this.app.state;
+    const wordsOfJesus = this.passageText.querySelectorAll('.woj');
 
-    this.passageText.querySelectorAll('p[id],div[id]').forEach((p) => {
-      const match = p.id.match(/p(\d{10})/);
-      if (!match) return;
-      const verseNum = parseInt(match[1].substring(5, 8), 10);
-      if (redVerses.includes(verseNum)) {
-        this.colorizeVerse(p);
+    wordsOfJesus.forEach(element => {
+      if (showRedLetters) {
+        element.style.color = '#FF5555';
+      } else {
+        element.style.color = '';
       }
     });
   }
 
-  colorizeVerse(verseElement) {
-    const verseNumEl = verseElement.querySelector('.verse-num');
-    if (!verseNumEl) {
-      verseElement.classList.add('red-letter');
-      return;
-    }
-
-    const walker = document.createTreeWalker(
-      verseElement,
-      NodeFilter.SHOW_TEXT,
-      null,
-      false
-    );
-    const nodes = [];
-    let node;
-    while ((node = walker.nextNode())) {
-      if (!verseNumEl.contains(node) && node.nodeValue.trim()) {
-        nodes.push(node);
-      }
-    }
-
-    nodes.forEach((textNode) => {
-      const span = document.createElement('span');
-      span.className = 'red-letter';
-      textNode.parentNode.insertBefore(span, textNode);
-      span.appendChild(textNode);
-    });
-  }
-
-  // Chrome show/hide
-  showChrome() {
-    if (!this.chromeHidden) return;
-    document.body.classList.remove('chrome-hidden');
-    this.chromeHidden = false;
-  }
-
-  hideChrome() {
-    if (this.chromeHidden) return;
-    document.body.classList.add('chrome-hidden');
-    this.chromeHidden = true;
-  }
-
-  handleChromeScroll() {
-    if (this.chromeScrollTicking) return;
-    this.chromeScrollTicking = true;
-
-    if (this.chromeSuspend) {
-      this.chromeScrollLastY = window.scrollY || 0;
-      this.chromeScrollTicking = false;
-      return;
-    }
-
-    window.requestAnimationFrame(() => {
-      const y = window.scrollY || 0;
-      const delta = y - this.chromeScrollLastY;
-      const modalOpen = !!document.querySelector('.modal.active');
-      const searchOpen = !!this.searchContainer?.classList.contains('active');
-
-      if (y < 50 || modalOpen || searchOpen) {
-        this.showChrome();
-        this.chromeScrollLastY = y;
-        this.chromeScrollTicking = false;
-        return;
-      }
-
-      if (delta > this.chromeDelta) this.hideChrome();
-      if (delta < -this.chromeDelta) this.showChrome();
-
-      this.chromeScrollLastY = y;
-      this.chromeScrollTicking = false;
-    });
-  }
-
-  // Utils
+  // Toast Notifications
   showToast(message) {
     if (!this.toast) return;
     this.toast.textContent = message;
     this.toast.classList.add('show');
-    setTimeout(() => this.toast.classList.remove('show'), 3000);
-  }
-
-  stripHTML(html) {
-    const tmp = document.createElement('div');
-    tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || '';
-  }
-
-  applySettings() {
-    // Theme
-    const theme = this.app.state.colorTheme || 'dracula';
-    changeColorTheme(this.app, theme);
-
-    if (this.app.state.lightMode) {
-      document.body.classList.add('light-mode');
-    } else {
-      document.body.classList.remove('light-mode');
-    }
-    updateThemeIcon(this.app.state.lightMode);
-
-    // Font size
-    if (this.passageText && this.fontSizeValue) {
-      this.passageText.style.fontSize = `${this.app.state.fontSize}px`;
-      this.fontSizeValue.textContent = `${this.app.state.fontSize}px`;
-    }
-
-    // Verse-by-verse
-    if (this.passageText) {
-      if (this.app.state.verseByVerse) {
-        this.passageText.classList.add('verse-by-verse');
-      } else {
-        this.passageText.classList.remove('verse-by-verse');
-      }
-    }
+    setTimeout(() => {
+      this.toast.classList.remove('show');
+    }, 3000);
   }
 }
