@@ -125,21 +125,32 @@ if (this.ui.currentVerseSpan) {
   }
 
   updateNavigationUI() {
-    const book = this.state.currentBook;
-    const abbr = this.bookAbbreviations[book] || book;
+  const book = this.state.currentBook;
+  const abbr = this.bookAbbreviations[book] || book;
 
+  if (this.ui.currentBookSpan) {
     this.ui.currentBookSpan.textContent = abbr;
-    this.ui.currentChapterSpan.textContent = this.state.currentChapter;
-
-    const books = getAllBooks();
-    const currentBookIndex = books.indexOf(book);
-    const isFirst = this.state.currentChapter === 1;
-    const isLast = this.state.currentChapter === getChapterCount(book);
-
-    this.ui.prevChapterBtn.disabled = currentBookIndex === 0 && isFirst;
-    this.ui.nextChapterBtn.disabled =
-      currentBookIndex === books.length - 1 && isLast;
   }
+  if (this.ui.currentChapterSpan) {
+    this.ui.currentChapterSpan.textContent = this.state.currentChapter;
+  }
+
+  const books = getAllBooks();
+  const currentBookIndex = books.indexOf(book);
+  const isFirst = this.state.currentChapter === 1;
+  const isLast = this.state.currentChapter === getChapterCount(book);
+
+  // Previous button: disable only if at Genesis 1
+  if (this.ui.prevChapterBtn) {
+    this.ui.prevChapterBtn.disabled = currentBookIndex === 0 && isFirst;
+  }
+
+  // Next button: disable only if at Revelation last chapter
+  if (this.ui.nextChapterBtn) {
+    this.ui.nextChapterBtn.disabled = currentBookIndex === books.length - 1 && isLast;
+  }
+}
+
 
   navigateChapter(direction) {
     navigateChapter(this, direction);
