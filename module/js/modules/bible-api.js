@@ -111,7 +111,7 @@ export class BibleApi {
     try {
       const response = await this._fetchWithTimeout(
         `${this.baseUrl}/passage/search?${params}`,
-        {
+        {  // ← Opening brace
           method: 'GET',
           headers: {
             Authorization: `Token ${apiKey}`,
@@ -121,6 +121,7 @@ export class BibleApi {
         },
         this.requestTimeout
       );
+
 
       if (!response.ok) {
         throw new Error(
@@ -178,7 +179,7 @@ export class BibleApi {
     try {
       const response = await this._fetchWithTimeout(
         `${this.baseUrl}/passage/html/?q=John%201:1`,
-        {
+        {  // ← Opening brace
           method: 'GET',
           headers: {
             Authorization: `Token ${apiKey}`,
@@ -187,6 +188,7 @@ export class BibleApi {
         },
         5000
       );
+
 
       return response.ok;
     } catch (error) {
