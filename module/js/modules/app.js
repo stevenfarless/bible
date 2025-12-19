@@ -158,6 +158,49 @@ if (this.ui.currentVerseSpan) {
     navigateChapter(this, direction);
   }
 
+navigateToNextVerse() {
+  const currentVerse = this.state.selectedVerse || 1;
+  const maxVerse = this.getCurrentVerseCount();
+
+  if (currentVerse < maxVerse) {
+    // Go to next verse in current chapter
+    this.ui.scrollToVerse(currentVerse + 1);
+  } else {
+    // At last verse, go to next chapter
+    this.navigateChapter(1);
+  }
+}
+
+navigateToPreviousVerse() {
+  const currentVerse = this.state.selectedVerse || 1;
+
+  if (currentVerse > 1) {
+    // Go to previous verse in current chapter
+    this.ui.scrollToVerse(currentVerse - 1);
+  } else {
+    // At first verse, go to previous chapter and its last verse
+    const books = getAllBooks();
+    const currentBookIndex = books.indexOf(this.state.currentBook);
+    const isFirstChapter = this.state.currentChapter === 1;
+
+    if (currentBookIndex === 0 && isFirstChapter) {
+      // Already at Genesis 1:1, can't go back further
+      return;
+    }
+
+    // Navigate to previous chapter
+    this.navigateChapter(-1);
+  }
+}
+
+getCurrentVerseCount() {
+  // Count verse numbers in current passage
+  const verseNums = this.ui.passageText.querySelectorAll('.verse-num');
+  // Add 1 because verse 1 typically doesn't have a .verse-num element
+  return verseNums.length > 0 ? verseNums.length + 1 : 0;
+}
+
+
   // ===============================
   // Settings Logic
   // ===============================
@@ -229,22 +272,45 @@ if (this.ui.currentVerseSpan) {
   }
 
   handleKeyboardShortcuts(e) {
-    // Ctrl/Cmd + K → search
-    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-      e.preventDefault();
-      this.search.toggleSearch();
-      return;
+  // Ctrl/Cmd + K to open search
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    this.search.toggleSearch();
+    return;
+  }
+
+  // Escape to close modals
+  if (e.key === 'Escape') {
+    const activeModal = document.querySelector('.modal.active');
+    if (activeModal) {
+      this.ui.closeModal(activeModal);
     }
+    if (this.ui.searchContainer.classList.contains('active')) {
+      this.search.closeSearch();
+    }
+    return;
+  }
 
-    if (e.key === 'Escape') {
-      const activeModal = document.querySelector('.modal.active');
-      if (activeModal) this.ui.closeModal(activeModal);
-
-      if (this.ui.searchContainer.classList.contains('active')) {
-        this.search.closeSearch();
-      }
+  // Navigation shortcuts - only when no modal is open and search is closed
+  if (!document.querySelector('.modal.active') && !this.ui.searchContainer.classList.contains('active')) {
+    // Chapter navigation: Arrow Left/Right or H/L
+    if (e.key === 'ArrowLeft' || e.key === 'h') {
+      e.preventDefault();
+      this.navigateChapter(-1);
+    } else if (e.key === 'ArrowRight' || e.key === 'l') {
+      e.preventDefault();
+      this.navigateChapter(1);
+    }
+    // Verse navigation: Arrow Up/Down or K/J
+    else if (e.key === 'ArrowUp' || e.key === 'k') {
+      e.preventDefault();
+      this.navigateToPreviousVerse();
+    } else if (e.key === 'ArrowDown' || e.key === 'j') {
+      e.preventDefault();
+      this.navigateToNextVerse();
     }
   }
+}
 }
 
 document.addEventListener('DOMContentLoaded', () => {
