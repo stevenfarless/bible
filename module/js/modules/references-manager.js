@@ -51,45 +51,22 @@ export class ReferencesManager {
 
     const footnoteId = href.startsWith('#') ? href.substring(1) : href;
     
-    console.log('Looking for footnote with ID:', footnoteId);
-    
-    // Strategy 1: Look for a paragraph or div containing the footnote ID
-    let footnoteContent = null;
-    
-    // Try finding parent paragraph/div of the element with this ID
-    const footnoteElement = document.getElementById(footnoteId);
-    if (footnoteElement) {
-      console.log('Found element with ID:', footnoteElement);
-      
-      // Check if parent has the actual content
-      const parent = footnoteElement.parentElement;
-      console.log('Parent element:', parent);
-      
-      if (parent && (parent.tagName === 'P' || parent.tagName === 'DIV')) {
-        footnoteContent = parent.innerHTML;
-        // Remove the back-reference link
-        footnoteContent = footnoteContent.replace(/<a[^>]*href="#fb[^"]*"[^>]*>.*?<\/a>/gi, '');
-      }
+    // Extract the footnote number from the ID (e.g., "f1-1" -> 1, "f2-1" -> 2)
+    const match = footnoteId.match(/^f(\d+)-/);
+    if (!match) {
+      console.warn('Could not parse footnote ID:', footnoteId);
+      return;
     }
     
-    // Strategy 2: Look for footnotes section
-    if (!footnoteContent) {
-      const footnotesSection = this.app.ui.passageText.querySelector('.footnotes, .notes');
-      console.log('Footnotes section:', footnotesSection);
-      
-      if (footnotesSection) {
-        // Look for the specific footnote within the section
-        const footnoteItem = footnotesSection.querySelector(`#${footnoteId}`)?.closest('p, li, div');
-        if (footnoteItem) {
-          footnoteContent = footnoteItem.innerHTML;
-          footnoteContent = footnoteContent.replace(/<a[^>]*href="#fb[^"]*"[^>]*>.*?<\/a>/gi, '');
-        }
-      }
-    }
+    const footnoteNumber = parseInt(match[1], 10);
+    console.log('Looking for footnote number:', footnoteNumber);
     
-    // Strategy 3: Fallback to title attribute
-    if (!footnoteContent) {
-      console.log('Trying title attribute fallback');
+    // Find the footnotes section
+    const footnotesSection = this.app.ui.passageText.querySelector('.footnotes, .notes');
+    
+    if (!footnotesSection) {
+      console.warn('Footnotes section not found');
+      // Fallback to title attribute
       const titleContent = link.getAttribute('title');
       if (titleContent) {
         const decodedContent = this.decodeHTMLEntities(titleContent);
@@ -97,16 +74,54 @@ export class ReferencesManager {
         this.showFootnoteModal(noteContent);
         return;
       }
-    }
-    
-    if (!footnoteContent || footnoteContent.trim() === '') {
-      console.error('Could not find footnote content');
       this.showFootnoteModal('<p>Footnote content not available.</p>');
       return;
     }
     
-    // Wrap in paragraph if needed
-    if (!footnoteContent.trim().startsWith('<p')) {
+    // Split the footnotes section by <br> tags to get individual footnotes
+    const footnotesHTML = footnotesSection.innerHTML;
+    const footnoteEntries = footnotesHTML.split(/<br\s*\/?>/i);
+    
+    console.log('Found', footnoteEntries.length, 'footnote entries');
+    
+    // Get the specific footnote (array is 0-indexed, so subtract 1)
+    const footnoteIndex = footnoteNumber - 1;
+    
+    if (footnoteIndex < 0 || footnoteIndex >= footnoteEntries.length) {
+      console.warn('Footnote index out of range:', footnoteIndex);
+      this.showFootnoteModal('<p>Footnote content not available.</p>');
+      return;
+    }
+    
+    let footnoteContent = footnoteEntries[footnoteIndex].trim();
+    
+    // Remove the back-reference link and empty spans
+    footnoteContent = footnoteContent.replace(/<a[^>]*href="#fb[^"]*"[^>]*>.*?<\/a>/gi, '');
+    footnoteContent = footnoteContent.replace(/<span class="footnote"><\/span>\s*/g, '');
+    
+    // Parse the note to add styling
+    const temp = document.createElement('div');
+    temp.innerHTML = footnoteContent;
+    
+    const noteElement = temp.querySelector('note');
+    if (noteElement) {
+      const noteClass = noteElement.getAttribute('class');
+      const noteText = noteElement.innerHTML;
+      
+      let label = '';
+      if (noteClass === 'translation') {
+        label = '<strong>Translation Note:</strong> ';
+      } else if (noteClass === 'alternative') {
+        label = '<strong>Alternative Reading:</strong> ';
+      } else if (noteClass === 'explanation') {
+        label = '<strong>Explanation:</strong> ';
+      } else if (noteClass === 'variant') {
+        label = '<strong>Manuscript Variant:</strong> ';
+      }
+      
+      footnoteContent = `<p>${label}${noteText}</p>`;
+    } else {
+      // If no note element, wrap the content
       footnoteContent = `<p>${footnoteContent}</p>`;
     }
     
@@ -125,22 +140,35 @@ export class ReferencesManager {
 
     const crossrefId = href.startsWith('#') ? href.substring(1) : href;
     
-    // Try to find parent element
-    const crossrefElement = document.getElementById(crossrefId);
-    let crossrefContent = null;
-    
-    if (crossrefElement) {
-      const parent = crossrefElement.parentElement;
-      if (parent && (parent.tagName === 'P' || parent.tagName === 'DIV')) {
-        crossrefContent = parent.innerHTML;
-        crossrefContent = crossrefContent.replace(/<a[^>]*href="#cb[^"]*"[^>]*>.*?<\/a>/gi, '');
-      }
+    // Similar logic for cross-references
+    const match = crossrefId.match(/^cr(\d+)-/);
+    if (!match) {
+      console.warn('Could not parse cross-ref ID:', crossrefId);
+      return;
     }
     
-    if (!crossrefContent || crossrefContent.trim() === '') {
+    const crossrefNumber = parseInt(match[1], 10);
+    
+    const crossrefsSection = this.app.ui.passageText.querySelector('.crossrefs, .cross-references');
+    
+    if (!crossrefsSection) {
       this.showCrossRefModal('<p>Cross-reference content not available.</p>');
       return;
     }
+    
+    const crossrefsHTML = crossrefsSection.innerHTML;
+    const crossrefEntries = crossrefsHTML.split(/<br\s*\/?>/i);
+    
+    const crossrefIndex = crossrefNumber - 1;
+    
+    if (crossrefIndex < 0 || crossrefIndex >= crossrefEntries.length) {
+      this.showCrossRefModal('<p>Cross-reference content not available.</p>');
+      return;
+    }
+    
+    let crossrefContent = crossrefEntries[crossrefIndex].trim();
+    crossrefContent = crossrefContent.replace(/<a[^>]*href="#cb[^"]*"[^>]*>.*?<\/a>/gi, '');
+    crossrefContent = crossrefContent.replace(/<span class="crossref"><\/span>\s*/g, '');
     
     if (!crossrefContent.trim().startsWith('<p')) {
       crossrefContent = `<p>${crossrefContent}</p>`;
