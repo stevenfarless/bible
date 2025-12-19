@@ -8,324 +8,292 @@ import { SearchManager } from './search-manager.js';
 import { FirebaseManager } from './firebase-manager.js';
 import { ReferencesManager } from './references-manager.js';
 
+// ================================
+// Configuration Constants
+// ================================
+
+const APP_CONFIG = {
+  API_BASE_URL: 'https://api.esv.org/v3',
+  API_TIMEOUT_MS: 10000,
+  SCROLL_SAVE_DEBOUNCE_MS: 500,
+};
+
 class BibleApp {
   constructor() {
-    this.API_BASE_URL = 'https://api.esv.org/v3';
+    this.API_BASE_URL = APP_CONFIG.API_BASE_URL;
     this.API_KEY = '';
 
+    // Initialize state
     this.state = initializeState();
     this.bookAbbreviations = BOOK_ABBREVIATIONS;
 
-    // Managers
+    // Initialize managers
     this.ui = new UIManager(this);
     this.search = new SearchManager(this);
     this.firebase = new FirebaseManager(this);
     this.references = new ReferencesManager(this);
 
+    // Initialize API with dependency injection
     this.bibleApi = new BibleApi(
       this.API_BASE_URL,
       () => this.API_KEY,
       () => this.state
     );
 
+    // State tracking
     this.lastScrollPosition = 0;
     this.originalPassageHtml = null;
+    this.scrollTimeout = null;
 
     this.init();
   }
 
-  init() {
-    this.ui.init();
-    this.firebase.init(); // auth + settings + initial passage
-    this.attachGlobalListeners();
+  async init() {
+    try {
+      this.ui.init();
+      await this.firebase.init();
+      this.attachGlobalListeners();
 
-    // Mark DOM as ready so CSS shows content
-    document.body.classList.add('js-ready');
+      // Mark DOM as ready so CSS shows content
+      document.body.classList.add('js-ready');
+    } catch (error) {
+      console.error('App initialization error:', error);
+      this.ui.showToast('Failed to initialize app. Please refresh.');
+    }
   }
 
   attachGlobalListeners() {
+    // Scroll event listener with debounce
     window.addEventListener(
       'scroll',
       () => {
         this.ui.handleChromeScroll();
-        clearTimeout(this.ui.scrollTimeout);
-        this.ui.scrollTimeout = setTimeout(
-          () => this.firebase.saveReadingPosition(),
-          500
+        clearTimeout(this.scrollTimeout);
+        this.scrollTimeout = setTimeout(
+          () => {
+            if (this.firebase && this.firebase.saveReadingPosition) {
+              this.firebase.saveReadingPosition().catch((err) =>
+                console.error('Error saving position:', err)
+              );
+            }
+          },
+          APP_CONFIG.SCROLL_SAVE_DEBOUNCE_MS
         );
       },
       { passive: true }
     );
 
-    document.addEventListener('keydown', (e) => this.handleKeyboardShortcuts(e));
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) =>
+      this.handleKeyboardShortcuts(e)
+    );
   }
 
-  // ===============================
+  // ==============================
   // Core Logic
-  // ===============================
+  // ==============================
+
+  /**
+   * Load a passage from the ESV API
+   * @param {string} book - Book name (e.g., "John")
+   * @param {number} chapter - Chapter number
+   * @param {boolean} restoreScroll - Whether to restore scroll position
+   */
   async loadPassage(book, chapter, restoreScroll = false) {
-    if (!restoreScroll) {
-      this.firebase.saveReadingPosition();
-    }
-
-    this.state.currentBook = book;
-    this.state.currentChapter = chapter;
-    this.updateNavigationUI();
-
-    const reference = `${book} ${chapter}`;
-    this.ui.passageText.innerHTML = `<div class="loading">Loading passage...</div>`;
-
-    const data = await this.bibleApi.fetchPassage(reference);
-    if (!data) {
-      this.ui.chromeSuspend = false;
-      document.body.classList.remove('chrome-no-transition');
+    // Validate parameters
+    const allBooks = getAllBooks();
+    if (!book || !allBooks.includes(book)) {
+      console.error(`Invalid book: "${book}"`);
+      this.ui.showToast(`Invalid book: ${book}`);
       return;
     }
 
-    this.ui.passageTitle.textContent = reference;
-    this.ui.passageText.innerHTML = data.passages[0];
-
-    // Cache original HTML for verse glow
-    this.originalPassageHtml = this.ui.passageText.innerHTML;
-
-    // Post-load setup
-    this.references.attachHandlers();
-    this.references.makeFootnotesClickable();
-    this.ui.applyRedLetters();
-
-    // Add defensive check for copyright
-    if (this.ui.copyright) {
-      this.ui.copyright.textContent =
-        'Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), ' +
-        'copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. ' +
-        'Used by permission. All rights reserved.';
-    } else {
-      console.warn('⚠️ Copyright element not found');
+    if (!Number.isInteger(chapter) || chapter < 1) {
+      console.error(`Invalid chapter: ${chapter}`);
+      this.ui.showToast('Invalid chapter');
+      return;
     }
 
-    if (this.ui.currentVerseSpan) {
-      this.ui.currentVerseSpan.textContent = '1';
+    const maxChapter = getChapterCount(book);
+    if (chapter > maxChapter) {
+      console.error(`Chapter ${chapter} does not exist in ${book}`);
+      this.ui.showToast(
+        `${book} only has ${maxChapter} chapters`
+      );
+      return;
     }
 
-    // Scroll handling + chrome
-    this.ui.chromeSuspend = true;
-    document.body.classList.add('chrome-no-transition');
-    this.ui.showChrome();
+    try {
+      // Save position before loading new passage
+      if (!restoreScroll && this.firebase) {
+        await this.firebase.saveReadingPosition();
+      }
 
-    if (restoreScroll) {
-      window.scrollTo(0, this.lastScrollPosition || 0);
-    } else {
-      window.scrollTo(0, 0);
-    }
+      // Update state
+      this.state.currentBook = book;
+      this.state.currentChapter = chapter;
+      this.updateNavigationUI();
 
-    requestAnimationFrame(() => {
-      this.ui.chromeScrollLastY = window.scrollY || 0;
-      this.ui.chromeSuspend = false;
-      document.body.classList.remove('chrome-no-transition');
-    });
+      const reference = `${book} ${chapter}`;
 
-    this.firebase.saveReadingPosition();
-  }
+      // Show loading state
+      if (this.ui.passageText) {
+        this.ui.passageText.innerHTML = `<div class="loading">Loading ${reference}...</div>`;
+      }
 
-  updateNavigationUI() {
-    const book = this.state.currentBook;
-    const abbr = this.bookAbbreviations[book] || book;
+      // Fetch passage from API
+      const data = await this.bibleApi.fetchPassage(reference);
 
-    if (this.ui.currentBookSpan) {
-      this.ui.currentBookSpan.textContent = abbr;
-    }
-    if (this.ui.currentChapterSpan) {
-      this.ui.currentChapterSpan.textContent = this.state.currentChapter;
-    }
-
-    const books = getAllBooks();
-    const currentBookIndex = books.indexOf(book);
-    const isFirst = this.state.currentChapter === 1;
-    const isLast = this.state.currentChapter === getChapterCount(book);
-
-    // Previous button: disable only if at Genesis 1
-    if (this.ui.prevChapterBtn) {
-      this.ui.prevChapterBtn.disabled = currentBookIndex === 0 && isFirst;
-    }
-
-    // Next button: disable only if at Revelation last chapter
-    if (this.ui.nextChapterBtn) {
-      this.ui.nextChapterBtn.disabled = currentBookIndex === books.length - 1 && isLast;
-    }
-  }
-
-  navigateChapter(direction) {
-    navigateChapter(this, direction);
-  }
-
-  navigateToNextVerse() {
-    const currentVerse = this.state.selectedVerse || 1;
-    const maxVerse = this.getCurrentVerseCount();
-
-    if (currentVerse < maxVerse) {
-      // Go to next verse in current chapter
-      this.ui.scrollToVerse(currentVerse + 1);
-    } else {
-      // At last verse, go to next chapter
-      this.navigateChapter(1);
-    }
-  }
-
-  navigateToPreviousVerse() {
-    const currentVerse = this.state.selectedVerse || 1;
-
-    if (currentVerse > 1) {
-      // Go to previous verse in current chapter
-      this.ui.scrollToVerse(currentVerse - 1);
-    } else {
-      // At first verse, go to previous chapter and its last verse
-      const books = getAllBooks();
-      const currentBookIndex = books.indexOf(this.state.currentBook);
-      const isFirstChapter = this.state.currentChapter === 1;
-
-      if (currentBookIndex === 0 && isFirstChapter) {
-        // Already at Genesis 1:1, can't go back further
+      if (!data || !data.passages || data.passages.length === 0) {
+        this.ui.passageText.innerHTML = `<div class="error">Passage not found: ${reference}</div>`;
         return;
       }
 
-      // Navigate to previous chapter
-      this.navigateChapter(-1);
-    }
-  }
+      // Store original HTML for verse selection
+      this.originalPassageHtml = data.passages[0];
 
-  getCurrentVerseCount() {
-    // Count verse numbers in current passage
-    const verseNums = this.ui.passageText.querySelectorAll('.verse-num');
-    // Add 1 because verse 1 typically doesn't have a .verse-num element
-    return verseNums.length > 0 ? verseNums.length + 1 : 0;
-  }
+      // Display passage
+      if (this.ui.passageText) {
+        this.ui.passageText.innerHTML = this.originalPassageHtml;
+      }
 
-  // ===============================
-  // Settings Logic
-  // ===============================
-  async toggleSetting(setting) {
-    const toggleMap = {
-      showVerseNumbers: 'verseNumbersToggle',
-      showHeadings: 'headingsToggle',
-      showFootnotes: 'footnotesToggle',
-      showCrossReferences: 'crossReferencesToggle',
-    };
+      // Attach reference handlers (footnotes, cross-refs)
+      if (this.references) {
+        this.references.makeFootnotesClickable();
+      }
 
-    const el = this.ui[toggleMap[setting]];
-    if (!el) return;
-
-    this.state[setting] = el.checked;
-    this.firebase.saveSetting(setting, el.checked);
-
-    if (setting === 'showVerseNumbers') {
-      this.ui.applySettings();
-    } else {
-      this.lastScrollPosition =
-        window.pageYOffset || document.documentElement.scrollTop || 0;
-      await this.loadPassage(
-        this.state.currentBook,
-        this.state.currentChapter,
-        true
+      // Restore scroll position if requested
+      if (restoreScroll) {
+        setTimeout(() => {
+          window.scrollTo(0, this.lastScrollPosition);
+        }, 0);
+      }
+    } catch (error) {
+      console.error('Error loading passage:', error);
+      this.ui.showToast(
+        `Error loading passage: ${error.message || 'Unknown error'}`
       );
+      if (this.ui.passageText) {
+        this.ui.passageText.innerHTML =
+          '<div class="error">Error loading passage. Please try again.</div>';
+      }
     }
   }
 
-  async toggleVerseByVerse() {
-    this.state.verseByVerse = this.ui.verseByVerseToggle.checked;
-    this.firebase.saveSetting('verseByVerse', this.state.verseByVerse);
-
-    if (this.state.verseByVerse) {
-      this.ui.passageText.classList.add('verse-by-verse');
-    } else {
-      this.ui.passageText.classList.remove('verse-by-verse');
+  /**
+   * Update navigation UI to reflect current book/chapter
+   */
+  updateNavigationUI() {
+    if (!this.ui.currentBookSpan || !this.ui.currentChapterSpan) {
+      return;
     }
+
+    this.ui.currentBookSpan.textContent = this.state.currentBook;
+    this.ui.currentChapterSpan.textContent = this.state.currentChapter;
   }
 
-  async updateFontSize(size) {
-    const n = parseInt(size, 10);
-    this.state.fontSize = n;
-    this.ui.fontSizeValue.textContent = `${n}px`;
-    this.ui.passageText.style.fontSize = `${n}px`;
-    this.firebase.saveSetting('fontSize', n);
-  }
-
-  toggleRedLetters() {
-    const el = document.getElementById('redLettersToggle');
-    if (!el) return;
-    this.state.showRedLetters = el.checked;
-    this.firebase.saveSetting('showRedLetters', el.checked);
-    this.ui.applyRedLetters();
-  }
-
-  // ===============================
-  // Shortcuts & User
-  // ===============================
-  handleUserButtonClick() {
-    if (this.firebase.currentUser) {
-      document.getElementById('userEmail').textContent =
-        this.firebase.currentUser.email;
-      this.ui.openModal(this.ui.userMenuModal);
-    } else {
-      this.ui.openModal(this.ui.loginModal);
-    }
-  }
+  // ==============================
+  // Keyboard Shortcuts
+  // ==============================
 
   handleKeyboardShortcuts(e) {
-    // Don't capture keys if user is typing in an input/textarea
-    const activeElement = document.activeElement;
-    const isTyping = activeElement && (
-      activeElement.tagName === 'INPUT' ||
-      activeElement.tagName === 'TEXTAREA' ||
-      activeElement.isContentEditable
-    );
-
-    // Ctrl/Cmd + K to open search (works even when typing)
+    // Ctrl+K or Cmd+K for search
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
       e.preventDefault();
-      this.search.toggleSearch();
+      if (this.search) {
+        this.search.toggleSearch();
+      }
       return;
     }
 
-    // Escape to close modals (works even when typing)
+    // Escape for closing modals
     if (e.key === 'Escape') {
-      const activeModal = document.querySelector('.modal.active');
-      if (activeModal) {
-        this.ui.closeModal(activeModal);
-      }
-      if (this.ui.searchContainer && this.ui.searchContainer.classList.contains('active')) {
+      if (this.search) {
         this.search.closeSearch();
       }
+      if (this.ui) {
+        this.ui.closeAllModals();
+      }
       return;
     }
 
-    // Don't process navigation shortcuts if typing
-    if (isTyping) return;
+    // Arrow up/down for navigation
+    if (e.key === 'ArrowUp' && e.shiftKey) {
+      e.preventDefault();
+      navigateChapter(this, -1);
+      return;
+    }
 
-    // Navigation shortcuts - only when no modal is open and search is closed
-    const modalOpen = document.querySelector('.modal.active');
-    const searchOpen = this.ui.searchContainer && this.ui.searchContainer.classList.contains('active');
+    if (e.key === 'ArrowDown' && e.shiftKey) {
+      e.preventDefault();
+      navigateChapter(this, 1);
+      return;
+    }
 
-    if (!modalOpen && !searchOpen) {
-      // Chapter navigation: Arrow Left/Right or H/L
-      if (e.key === 'ArrowLeft' || e.key === 'h' || e.key === 'H') {
-        e.preventDefault();
-        this.navigateChapter(-1);
-      } else if (e.key === 'ArrowRight' || e.key === 'l' || e.key === 'L') {
-        e.preventDefault();
-        this.navigateChapter(1);
-      }
-      // Verse navigation: Arrow Up/Down or K/J
-      else if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') {
-        e.preventDefault();
-        this.navigateToPreviousVerse();
-      } else if (e.key === 'ArrowDown' || e.key === 'j' || e.key === 'J') {
-        e.preventDefault();
-        this.navigateToNextVerse();
-      }
+    // Search input capture (pass to search manager if open)
+    if (
+      this.search &&
+      this.ui &&
+      this.ui.searchContainer &&
+      this.ui.searchContainer.classList.contains('active')
+    ) {
+      this.search.handleKeydown(e);
+    }
+  }
+
+  // ==============================
+  // Cleanup
+  // ==============================
+
+  destroy() {
+    // Clean up event listeners
+    if (this.scrollTimeout) {
+      clearTimeout(this.scrollTimeout);
+    }
+
+    // Clean up managers
+    if (this.search) {
+      this.search.destroy();
+    }
+
+    if (this.references) {
+      this.references.destroy();
+    }
+
+    if (this.ui) {
+      this.ui.destroy();
     }
   }
 }
 
+// ================================
+// Initialize App on Page Load
+// ================================
+
+let app;
+
 document.addEventListener('DOMContentLoaded', () => {
-  window.bibleApp = new BibleApp();
+  try {
+    app = new BibleApp();
+  } catch (error) {
+    console.error('Failed to initialize app:', error);
+    document.body.innerHTML = `
+      <div style="padding: 20px; text-align: center; color: #ff5555;">
+        <h1>Application Error</h1>
+        <p>Failed to initialize the app. Please refresh the page.</p>
+        <p style="font-size: 0.85rem; color: #888;">${error.message}</p>
+      </div>
+    `;
+  }
 });
+
+// Handle app destruction on page unload
+window.addEventListener('beforeunload', () => {
+  if (app) {
+    app.destroy();
+  }
+});
+
+// Export for module usage
+export { BibleApp };
+export default BibleApp;

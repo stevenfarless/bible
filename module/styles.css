@@ -19,32 +19,8 @@
 
 
 /* ================================
-   1. CSS RESET & BASE
-   ================================ */
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-html,
-body {
-    overflow-y: scroll;
-    scrollbar-width: none;
-}
-
-html::-webkit-scrollbar,
-body::-webkit-scrollbar {
-    display: none;
-}
-
-
-
-
-/* ================================
-   1. CSS RESET & BASE
-   ================================ */
+1. CSS RESET & BASE
+================================ */
 
 * {
     margin: 0;
@@ -64,8 +40,8 @@ body::-webkit-scrollbar {
 }
 
 /* ================================
-   2. CSS CUSTOM PROPERTIES (VARIABLES)
-   ================================ */
+2. CSS CUSTOM PROPERTIES (VARIABLES)
+================================ */
 
 :root {
     /* Dracula palette constants */
@@ -1477,90 +1453,90 @@ body.light-mode .crossref-item {
 
 /* References Modal (Bottom Sheet) */
 #referencesModal {
-  align-items: flex-end !important;
-  justify-content: center !important;
-  background-color: rgba(0, 0, 0, 0.5);
+    align-items: flex-end !important;
+    justify-content: center !important;
+    background-color: rgba(0, 0, 0, 0.5);
 }
 
 #referencesModal .modal-content {
-  margin: 0;
-  width: 100%;
-  max-width: var(--max-width);
-  height: auto;
-  min-height: 200px;
-  max-height: 70vh;
-  border-radius: 16px 16px 0 0;
-  animation: slideUpFromBottom 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
+    margin: 0;
+    width: 100%;
+    max-width: var(--max-width);
+    height: auto;
+    min-height: 200px;
+    max-height: 70vh;
+    border-radius: 16px 16px 0 0;
+    animation: slideUpFromBottom 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
 }
 
 #referencesModal .modal-header {
-  padding: calc(var(--spacing-md) + 12px) var(--spacing-lg) var(--spacing-md);
-  position: relative;
-  cursor: grab;
-  user-select: none;
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--border-color);
+    padding: calc(var(--spacing-md) + 12px) var(--spacing-lg) var(--spacing-md);
+    position: relative;
+    cursor: grab;
+    user-select: none;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border-color);
 }
 
 #referencesModal .modal-header:active {
-  cursor: grabbing;
+    cursor: grabbing;
 }
 
 #referencesModal .modal-header::before {
-  content: '';
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 4px;
-  background-color: var(--text-muted);
-  border-radius: 2px;
-  opacity: 0.5;
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background-color: var(--text-muted);
+    border-radius: 2px;
+    opacity: 0.5;
 }
 
 #referencesModal .modal-body {
-  flex: 1;
-  max-height: calc(70vh - 60px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: var(--spacing-lg);
+    flex: 1;
+    max-height: calc(70vh - 60px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: var(--spacing-lg);
 }
 
 /* Footnote and cross-reference content styling */
 #footnotesSection h4,
 #crossReferencesSection h4 {
-  color: var(--secondary-color);
-  margin-bottom: var(--spacing-md);
-  font-size: 1rem;
-  font-weight: 600;
+    color: var(--secondary-color);
+    margin-bottom: var(--spacing-md);
+    font-size: 1rem;
+    font-weight: 600;
 }
 
 #footnotesContent,
 #crossReferencesContent {
-  color: var(--text-primary);
-  line-height: 1.6;
+    color: var(--text-primary);
+    line-height: 1.6;
 }
 
 #footnotesContent p,
 #crossReferencesContent p {
-  margin: 0;
-  color: var(--text-primary);
+    margin: 0;
+    color: var(--text-primary);
 }
 
 #footnotesContent strong,
 #crossReferencesContent strong {
-  color: var(--secondary-color);
-  margin-right: 0.5rem;
-  font-weight: 600;
+    color: var(--secondary-color);
+    margin-right: 0.5rem;
+    font-weight: 600;
 }
 
 #footnotesContent i,
 #crossReferencesContent i {
-  font-style: italic;
-  color: var(--text-secondary);
+    font-style: italic;
+    color: var(--text-secondary);
 }
 
 

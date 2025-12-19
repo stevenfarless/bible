@@ -1,68 +1,79 @@
 // js/modules/firebase-config.js
-// ================================
-// Firebase Configuration (Compat SDK)
-// ================================
+
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getDatabase } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+/**
+ * Firebase Configuration
+ * 
+ * SECURITY NOTE:
+ * These credentials are visible in client-side code. This is normal for Firebase.
+ * Security is enforced through Firebase Security Rules (set in Firebase Console).
+ * 
+ * RECOMMENDED SECURITY RULES:
+ * {
+ *   "rules": {
+ *     "users": {
+ *       "$uid": {
+ *         ".read": "$uid === auth.uid",
+ *         ".write": "$uid === auth.uid"
+ *       }
+ *     }
+ *   }
+ * }
+ */
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCGVPqbTZCQ3Hrs9sFIJm_PR32FP_CVXSw",
+  projectId: "esv-bible-6dffb",
   authDomain: "esv-bible-6dffb.firebaseapp.com",
   databaseURL: "https://esv-bible-6dffb-default-rtdb.firebaseio.com",
-  projectId: "esv-bible-6dffb",
   storageBucket: "esv-bible-6dffb.firebasestorage.app",
   messagingSenderId: "824462651620",
-  appId: "1:824462651620:web:5f46fe033ac46d2329bcf1",
+  appId: "1:824462651620:web:5f46fe033ac46d2329bcf1"
 };
 
-// Initialize Firebase
-const app = firebase.initializeApp(firebaseConfig);
-export const auth = firebase.auth();
-export const db = firebase.firestore();
-export const database = firebase.database();
+/**
+ * Initialize Firebase
+ */
+let app, auth, database;
 
-// Simple encryption for API keys
-export const EncryptionHelper = {
-  encrypt(text) {
-    return btoa(text);
-  },
-  decrypt(ciphertext) {
-    try {
-      return atob(ciphertext);
-    } catch (e) {
-      console.error('Decryption failed:', e);
-      return "";
-    }
-  },
-};
-
-// Export function to load user data
-export async function loadUserData(userId) {
-  try {
-    const snapshot = await database.ref(`users/${userId}`).once("value");
-    const userData = snapshot.val();
-    if (!userData) return null;
-
-    // Decrypt API key if present
-    let apiKey = "";
-    if (userData.apiKey) {
-      apiKey = EncryptionHelper.decrypt(userData.apiKey);
-    }
-
-    // Extract settings with defaults
-    const settings = {
-      fontSize: userData.settings?.fontSize || 18,
-      showVerseNumbers: userData.settings?.showVerseNumbers !== false,
-      showHeadings: userData.settings?.showHeadings !== false,
-      showFootnotes: userData.settings?.showFootnotes === true,
-      showCrossReferences: userData.settings?.showCrossReferences === true,
-      showRedLetters: userData.settings?.showRedLetters === true,
-      verseByVerse: userData.settings?.verseByVerse === true,
-      colorTheme: userData.settings?.colorTheme || "dracula",
-      lightMode: userData.settings?.lightMode === true,
-    };
-
-    return { apiKey, settings };
-  } catch (error) {
-    console.error("Error loading user data:", error);
-    return null;
-  }
+try {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  database = getDatabase(app);
+  console.log('✅ Firebase initialized successfully');
+} catch (error) {
+  console.error('❌ Firebase initialization error:', error);
+  throw error;
 }
+
+/**
+ * Validate Firebase services are available
+ */
+export function validateFirebaseServices() {
+  if (!app) {
+    throw new Error('Firebase app not initialized');
+  }
+  if (!auth) {
+    throw new Error('Firebase Auth not initialized');
+  }
+  if (!database) {
+    throw new Error('Firebase Database not initialized');
+  }
+  return true;
+}
+
+/**
+ * Get Firebase service status
+ */
+export function getFirebaseStatus() {
+  return {
+    app: !!app,
+    auth: !!auth,
+    database: !!database,
+    ready: !!(app && auth && database),
+  };
+}
+
+export { app, auth, database };

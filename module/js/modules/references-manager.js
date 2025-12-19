@@ -1,12 +1,25 @@
 // js/modules/references-manager.js
 
+/**
+ * References Manager
+ * Handles footnotes and cross-references in Bible passages
+ */
 export class ReferencesManager {
   constructor(app) {
     this.app = app;
+    this.eventHandlers = []; // Track handlers for cleanup
   }
 
+  /**
+   * Attach handlers to footnotes and cross-references
+   */
   attachHandlers() {
-    if (!this.app.ui.passageText) return;
+    if (!this.app.ui || !this.app.ui.passageText) {
+      return;
+    }
+
+    // Clear previous handlers
+    this.clearHandlers();
 
     // Handle all footnote markers
     const footnoteMarkers = this.app.ui.passageText.querySelectorAll(
@@ -15,11 +28,13 @@ export class ReferencesManager {
 
     footnoteMarkers.forEach((link) => {
       link.style.cursor = 'pointer';
-      link.addEventListener('click', (e) => {
+      const handler = (e) => {
         e.preventDefault();
         e.stopPropagation();
         this.openFootnoteFromMarker(link);
-      });
+      };
+      link.addEventListener('click', handler);
+      this.eventHandlers.push({ element: link, event: 'click', handler });
     });
 
     // Handle cross-reference markers
@@ -29,41 +44,53 @@ export class ReferencesManager {
 
     crossrefMarkers.forEach((link) => {
       link.style.cursor = 'pointer';
-      link.addEventListener('click', (e) => {
+      const handler = (e) => {
         e.preventDefault();
         e.stopPropagation();
         this.openCrossRefFromMarker(link);
-      });
+      };
+      link.addEventListener('click', handler);
+      this.eventHandlers.push({ element: link, event: 'click', handler });
     });
   }
 
+  /**
+   * Make footnotes clickable (alias for attachHandlers)
+   */
   makeFootnotesClickable() {
     this.attachHandlers();
   }
 
+  /**
+   * Open footnote from marker link
+   */
   openFootnoteFromMarker(link) {
+    if (!link) {
+      return;
+    }
+
     const href = link.getAttribute('href');
-    
+
     if (!href) {
       console.warn('No href found in footnote link');
       return;
     }
 
     const footnoteId = href.startsWith('#') ? href.substring(1) : href;
-    
+
     // Extract the footnote number from the ID (e.g., "f1-1" -> 1, "f2-1" -> 2)
     const match = footnoteId.match(/^f(\d+)-/);
     if (!match) {
       console.warn('Could not parse footnote ID:', footnoteId);
       return;
     }
-    
+
     const footnoteNumber = parseInt(match[1], 10);
     console.log('Looking for footnote number:', footnoteNumber);
-    
+
     // Find the footnotes section
     const footnotesSection = this.app.ui.passageText.querySelector('.footnotes, .notes');
-    
+
     if (!footnotesSection) {
       console.warn('Footnotes section not found');
       // Fallback to title attribute
@@ -71,43 +98,45 @@ export class ReferencesManager {
       if (titleContent) {
         const decodedContent = this.decodeHTMLEntities(titleContent);
         const noteContent = this.extractNoteContent(decodedContent);
-        this.showFootnoteModal(noteContent);
+        // SECURITY FIX: Sanitize before displaying
+        const sanitizedContent = this._sanitizeHtml(noteContent);
+        this.showFootnoteModal(sanitizedContent);
         return;
       }
       this.showFootnoteModal('<p>Footnote content not available.</p>');
       return;
     }
-    
+
     // Split the footnotes section by <br> tags to get individual footnotes
     const footnotesHTML = footnotesSection.innerHTML;
     const footnoteEntries = footnotesHTML.split(/<br\s*\/?>/i);
-    
+
     console.log('Found', footnoteEntries.length, 'footnote entries');
-    
+
     // Get the specific footnote (array is 0-indexed, so subtract 1)
     const footnoteIndex = footnoteNumber - 1;
-    
+
     if (footnoteIndex < 0 || footnoteIndex >= footnoteEntries.length) {
       console.warn('Footnote index out of range:', footnoteIndex);
       this.showFootnoteModal('<p>Footnote content not available.</p>');
       return;
     }
-    
+
     let footnoteContent = footnoteEntries[footnoteIndex].trim();
-    
+
     // Remove the back-reference link and empty spans
     footnoteContent = footnoteContent.replace(/<a[^>]*href="#fb[^"]*"[^>]*>.*?<\/a>/gi, '');
     footnoteContent = footnoteContent.replace(/<span class="footnote"><\/span>\s*/g, '');
-    
+
     // Parse the note to add styling
     const temp = document.createElement('div');
     temp.innerHTML = footnoteContent;
-    
+
     const noteElement = temp.querySelector('note');
     if (noteElement) {
       const noteClass = noteElement.getAttribute('class');
       const noteText = noteElement.innerHTML;
-      
+
       let label = '';
       if (noteClass === 'translation') {
         label = '<strong>Translation Note:</strong> ';
@@ -118,84 +147,109 @@ export class ReferencesManager {
       } else if (noteClass === 'variant') {
         label = '<strong>Manuscript Variant:</strong> ';
       }
-      
+
       footnoteContent = `<p>${label}${noteText}</p>`;
     } else {
       // If no note element, wrap the content
       footnoteContent = `<p>${footnoteContent}</p>`;
     }
-    
+
     console.log('Final footnote content:', footnoteContent);
-    
-    this.showFootnoteModal(footnoteContent);
+
+    // SECURITY FIX: Sanitize before displaying
+    const sanitizedContent = this._sanitizeHtml(footnoteContent);
+    this.showFootnoteModal(sanitizedContent);
   }
 
+  /**
+   * Open cross-reference from marker link
+   */
   openCrossRefFromMarker(link) {
+    if (!link) {
+      return;
+    }
+
     const href = link.getAttribute('href');
-    
+
     if (!href) {
       console.warn('No href found in cross-ref link');
       return;
     }
 
     const crossrefId = href.startsWith('#') ? href.substring(1) : href;
-    
+
     // Similar logic for cross-references
     const match = crossrefId.match(/^cr(\d+)-/);
     if (!match) {
       console.warn('Could not parse cross-ref ID:', crossrefId);
       return;
     }
-    
+
     const crossrefNumber = parseInt(match[1], 10);
-    
+
     const crossrefsSection = this.app.ui.passageText.querySelector('.crossrefs, .cross-references');
-    
+
     if (!crossrefsSection) {
       this.showCrossRefModal('<p>Cross-reference content not available.</p>');
       return;
     }
-    
+
     const crossrefsHTML = crossrefsSection.innerHTML;
     const crossrefEntries = crossrefsHTML.split(/<br\s*\/?>/i);
-    
+
     const crossrefIndex = crossrefNumber - 1;
-    
+
     if (crossrefIndex < 0 || crossrefIndex >= crossrefEntries.length) {
       this.showCrossRefModal('<p>Cross-reference content not available.</p>');
       return;
     }
-    
+
     let crossrefContent = crossrefEntries[crossrefIndex].trim();
     crossrefContent = crossrefContent.replace(/<a[^>]*href="#cb[^"]*"[^>]*>.*?<\/a>/gi, '');
     crossrefContent = crossrefContent.replace(/<span class="crossref"><\/span>\s*/g, '');
-    
+
     if (!crossrefContent.trim().startsWith('<p')) {
       crossrefContent = `<p>${crossrefContent}</p>`;
     }
-    
-    this.showCrossRefModal(crossrefContent);
+
+    // SECURITY FIX: Sanitize before displaying
+    const sanitizedContent = this._sanitizeHtml(crossrefContent);
+    this.showCrossRefModal(sanitizedContent);
   }
 
+  /**
+   * Decode HTML entities
+   */
   decodeHTMLEntities(text) {
+    if (!text) {
+      return '';
+    }
+
     const textarea = document.createElement('textarea');
     textarea.innerHTML = text;
     return textarea.value;
   }
 
+  /**
+   * Extract note content from HTML string
+   */
   extractNoteContent(htmlString) {
+    if (!htmlString) {
+      return '';
+    }
+
     const temp = document.createElement('div');
     temp.innerHTML = htmlString;
-    
+
     const noteElement = temp.querySelector('note');
-    
+
     if (!noteElement) {
       return temp.textContent || htmlString;
     }
 
     let content = noteElement.innerHTML;
     const noteClass = noteElement.getAttribute('class');
-    
+
     let label = '';
     if (noteClass === 'translation') {
       label = '<strong>Translation Note:</strong> ';
@@ -206,34 +260,39 @@ export class ReferencesManager {
     } else if (noteClass === 'variant') {
       label = '<strong>Manuscript Variant:</strong> ';
     }
-    
+
     return `<p>${label}${content}</p>`;
   }
 
+  /**
+   * Show footnote modal
+   */
   showFootnoteModal(content) {
-  if (!this.app.ui.referencesModal) {
-    console.error('References modal not found');
-    return;
+    if (!this.app.ui || !this.app.ui.referencesModal) {
+      console.error('References modal not found');
+      return;
+    }
+
+    if (this.app.ui.footnotesSection) {
+      this.app.ui.footnotesSection.style.display = 'block';
+    }
+    if (this.app.ui.crossReferencesSection) {
+      this.app.ui.crossReferencesSection.style.display = 'none';
+    }
+
+    if (this.app.ui.footnotesContent) {
+      // Content is already sanitized before calling this method
+      this.app.ui.footnotesContent.innerHTML = content;
+    }
+
+    this.app.ui.openModal(this.app.ui.referencesModal);
   }
 
-  if (this.app.ui.footnotesSection) {
-    this.app.ui.footnotesSection.style.display = 'block';
-  }
-  if (this.app.ui.crossReferencesSection) {
-    this.app.ui.crossReferencesSection.style.display = 'none';
-  }
-
-  if (this.app.ui.footnotesContent) {
-    this.app.ui.footnotesContent.innerHTML = content;
-  }
-
-  this.app.ui.openModal(this.app.ui.referencesModal);
-}
-
-
-
+  /**
+   * Show cross-reference modal
+   */
   showCrossRefModal(content) {
-    if (!this.app.ui.referencesModal) {
+    if (!this.app.ui || !this.app.ui.referencesModal) {
       console.error('References modal not found');
       return;
     }
@@ -246,9 +305,67 @@ export class ReferencesManager {
     }
 
     if (this.app.ui.crossReferencesContent) {
+      // Content is already sanitized before calling this method
       this.app.ui.crossReferencesContent.innerHTML = content;
     }
 
     this.app.ui.openModal(this.app.ui.referencesModal);
+  }
+
+  /**
+   * Sanitize HTML to prevent XSS attacks
+   * @private
+   */
+  _sanitizeHtml(html) {
+    if (!html) {
+      return '';
+    }
+
+    // Use DOMPurify if available (recommended)
+    if (typeof DOMPurify !== 'undefined') {
+      return DOMPurify.sanitize(html, {
+        ALLOWED_TAGS: ['p', 'span', 'br', 'strong', 'em', 'sup', 'sub', 'a', 'div', 'note'],
+        ALLOWED_ATTR: ['class', 'id', 'href'],
+      });
+    }
+
+    // Fallback: Create a DOM element and use textContent for basic sanitization
+    // This will strip all HTML tags - safer but less functional
+    const div = document.createElement('div');
+    div.textContent = html;
+    return div.innerHTML;
+  }
+
+  /**
+   * Escape HTML for text-only display
+   * @private
+   */
+  _escapeHtml(text) {
+    if (!text) {
+      return '';
+    }
+
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  /**
+   * Clear all event handlers
+   */
+  clearHandlers() {
+    this.eventHandlers.forEach(({ element, event, handler }) => {
+      if (element && handler) {
+        element.removeEventListener(event, handler);
+      }
+    });
+    this.eventHandlers = [];
+  }
+
+  /**
+   * Cleanup and destroy
+   */
+  destroy() {
+    this.clearHandlers();
   }
 }

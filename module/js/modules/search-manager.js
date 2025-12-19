@@ -1,6 +1,17 @@
-// js/modules/search-manager.js NEW VERSION
+// js/modules/search-manager.js
 
 import { getAllBooks, getTestament } from './bible-structure.js';
+
+/**
+ * Configuration constants
+ */
+const SEARCH_CONFIG = {
+  DEBOUNCE_MS: 300,
+  MIN_QUERY_LENGTH: 2,
+  RESULTS_PER_PAGE: 100,
+  TIMEOUT_MS: 10000,
+  MAX_PAGES: 10, // Safety cap for "fetch all"
+};
 
 export class SearchManager {
   constructor(app) {
@@ -17,6 +28,9 @@ export class SearchManager {
 
     this.expandedTestaments = new Set(); // e.g., "Old Testament", "New Testament"
     this.expandedBooks = new Set();      // e.g., "Genesis", "Romans"
+
+    // SECURITY FIX: Add abort controller
+    this.abortController = null;
   }
 
   // ===============================
@@ -26,6 +40,11 @@ export class SearchManager {
   toggleSearch() {
     const container = this.app.ui.searchContainer;
     const input = this.app.ui.searchInput;
+
+    if (!container || !input) {
+      console.warn('Search UI elements not found');
+      return;
+    }
 
     container.classList.toggle('active');
     if (container.classList.contains('active')) {
@@ -37,37 +56,76 @@ export class SearchManager {
 
   closeSearch() {
     const ui = this.app.ui;
+
+    if (!ui || !ui.searchContainer) {
+      return;
+    }
+
     ui.searchContainer.classList.remove('active');
-    ui.searchInput.value = '';
-    ui.searchResults.innerHTML = '';
+
+    if (ui.searchInput) {
+      ui.searchInput.value = '';
+    }
+
+    if (ui.searchResults) {
+      ui.searchResults.innerHTML = '';
+    }
+
     this.selectedIndex = -1;
     this.resultItems = null;
+
+    // SECURITY FIX: Cancel pending searches
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
+
+    // Clear timeout
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+      this.timeout = null;
+    }
   }
 
   handleInput(query) {
+    // Cancel previous search
+    if (this.abortController) {
+      this.abortController.abort();
+    }
+
     clearTimeout(this.timeout);
     this.lastQuery = query;
     this.page = 1;
     this.currentResults = [];
 
-    if (!query.trim()) {
-      this.app.ui.searchResults.innerHTML = '';
-      this.selectedIndex = -1;
-      this.resultItems = null;
+    // Validate input
+    if (!query || typeof query !== 'string') {
+      this.clearResults();
+      return;
+    }
+
+    const trimmedQuery = query.trim();
+
+    if (!trimmedQuery || trimmedQuery.length < SEARCH_CONFIG.MIN_QUERY_LENGTH) {
+      this.clearResults();
       return;
     }
 
     this.timeout = setTimeout(async () => {
-      if (this.isPassageReference(query)) {
-        await this.handlePassageReference(query);
+      if (this.isPassageReference(trimmedQuery)) {
+        await this.handlePassageReference(trimmedQuery);
       } else {
         this.page = 1;
-        await this.performKeywordSearch(query, false);
+        await this.performKeywordSearch(trimmedQuery, false);
       }
-    }, 300);
+    }, SEARCH_CONFIG.DEBOUNCE_MS);
   }
 
   handleKeydown(e) {
+    if (!e) {
+      return;
+    }
+
     // Close on ESC
     if (e.key === 'Escape') {
       e.preventDefault();
@@ -95,6 +153,10 @@ export class SearchManager {
   // ===============================
 
   isPassageReference(query) {
+    if (!query || typeof query !== 'string') {
+      return false;
+    }
+
     const patterns = [
       /^[1-3]?\s*[a-z]+\s+\d+/i,      // John 3, 1 John 2
       /^[1-3]?\s*[a-z]+\s+\d+:\d+/i,  // John 3:16
@@ -103,32 +165,60 @@ export class SearchManager {
   }
 
   async handlePassageReference(reference) {
-    const data = await this.app.bibleApi.fetchPassage(reference);
+    if (!reference || typeof reference !== 'string') {
+      return;
+    }
+
     const resultsContainer = this.app.ui.searchResults;
 
-    if (data && data.passages && data.passages.length > 0) {
-      const safeCanonical = String(data.canonical || '').replace(/"/g, '&quot;');
-      const preview = this.app.ui.stripHTML(data.passages[0]).substring(0, 200);
+    if (!resultsContainer) {
+      return;
+    }
 
-      resultsContainer.innerHTML = `
-        <div class="search-result-item" data-reference="${safeCanonical}">
-          <div class="search-result-reference">${safeCanonical}</div>
-          <div class="search-result-content">${preview}...</div>
-        </div>
-      `;
+    // Create new abort controller for this search
+    this.abortController = new AbortController();
 
-      const item = resultsContainer.querySelector('.search-result-item');
-      if (item) {
-        item.addEventListener('click', async () => {
-          await this.loadPassageFromReference(item.dataset.reference);
-          this.closeSearch();
-        });
-        this.refreshResultItems(true);
+    try {
+      const data = await this.app.bibleApi.fetchPassage(reference);
+
+      // Check if aborted
+      if (this.abortController.signal.aborted) {
+        return;
       }
-    } else {
+
+      if (data && data.passages && data.passages.length > 0) {
+        const safeCanonical = this._escapeHtml(data.canonical || reference);
+        const preview = this._stripHTML(data.passages[0]).substring(0, 200);
+
+        resultsContainer.innerHTML = `
+          <div class="search-result-item" data-reference="${safeCanonical}">
+            <div class="search-result-reference">${safeCanonical}</div>
+            <div class="search-result-content">${this._escapeHtml(preview)}...</div>
+          </div>
+        `;
+
+        const item = resultsContainer.querySelector('.search-result-item');
+        if (item) {
+          item.addEventListener('click', async () => {
+            await this.loadPassageFromReference(item.dataset.reference);
+            this.closeSearch();
+          });
+          this.refreshResultItems(true);
+        }
+      } else {
+        resultsContainer.innerHTML =
+          '<div class="search-no-results">No passage found</div>';
+        this.refreshResultItems(false);
+      }
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        console.log('Search aborted');
+        return;
+      }
+
+      console.error('Error handling passage reference:', error);
       resultsContainer.innerHTML =
-        '<div class="search-no-results">No passage found</div>';
-      this.refreshResultItems(false);
+        '<div class="search-no-results">Error loading passage</div>';
     }
   }
 
@@ -137,9 +227,23 @@ export class SearchManager {
   // ===============================
 
   async performKeywordSearch(query, append = false) {
+    if (!query || typeof query !== 'string') {
+      return;
+    }
+
     const resultsContainer = this.app.ui.searchResults;
 
+    if (!resultsContainer) {
+      return;
+    }
+
+    // Create new abort controller if not appending
     if (!append) {
+      if (this.abortController) {
+        this.abortController.abort();
+      }
+      this.abortController = new AbortController();
+
       resultsContainer.innerHTML =
         '<div class="loading" style="min-height: 100px">Searching...</div>';
       this.selectedIndex = -1;
@@ -149,54 +253,83 @@ export class SearchManager {
       if (this.expandedBooks) this.expandedBooks.clear();
     }
 
-    const data = await this.app.bibleApi.searchPassages(query, this.page);
-    if (!data || !data.results || !data.results.length) {
+    try {
+      const data = await this.app.bibleApi.searchPassages(query, this.page);
+
+      // Check if aborted
+      if (this.abortController && this.abortController.signal.aborted) {
+        return;
+      }
+
+      if (!data || !data.results || !data.results.length) {
+        if (!append) {
+          resultsContainer.innerHTML =
+            '<div class="search-no-results">No results found</div>';
+          this.refreshResultItems(false);
+        }
+        this.hasMore = false;
+        return;
+      }
+
+      const total = data.total_results || data.totalresults || data.total || 0;
+      const pageSize = data.page_size || data.pagesize || SEARCH_CONFIG.RESULTS_PER_PAGE;
+      const loadedSoFar = this.page * pageSize;
+      this.hasMore = total && loadedSoFar < total;
+
+      if (append) {
+        this.currentResults = this.currentResults.concat(data.results);
+      } else {
+        this.currentResults = data.results;
+      }
+
+      this.displaySearchResults(this.currentResults, query);
+
+      if (this.hasMore) {
+        this.addLoadMoreButton();
+      }
+
+      this.refreshResultItems(true);
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        console.log('Search aborted');
+        return;
+      }
+
+      console.error('Search error:', error);
+
       if (!append) {
         resultsContainer.innerHTML =
-          '<div class="search-no-results">No results found</div>';
-        this.refreshResultItems(false);
+          '<div class="search-no-results">Search failed. Please try again.</div>';
       }
-      this.hasMore = false;
-      return;
     }
-
-    const total = data.totalresults ?? data.total;
-    const pageSize = data.pagesize ?? 100;
-    const loadedSoFar = this.page * pageSize;
-    this.hasMore = total && loadedSoFar < total;
-
-    if (append) {
-      this.currentResults = this.currentResults.concat(data.results);
-    } else {
-      this.currentResults = data.results;
-    }
-
-    this.displaySearchResults(this.currentResults, query);
-
-    if (this.hasMore) {
-      this.addLoadMoreButton();
-    }
-
-    this.refreshResultItems(true);
   }
 
   async fetchAllSearchResults(query) {
+    if (!query || typeof query !== 'string') {
+      return [];
+    }
+
     this.currentResults = [];
     this.page = 1;
 
     while (true) {
-      const data = await this.app.bibleApi.searchPassages(query, this.page);
-      if (!data || !data.results || !data.results.length) break;
+      try {
+        const data = await this.app.bibleApi.searchPassages(query, this.page);
+        if (!data || !data.results || !data.results.length) break;
 
-      this.currentResults = this.currentResults.concat(data.results);
+        this.currentResults = this.currentResults.concat(data.results);
 
-      const total = data.totalresults ?? data.total;
-      const pageSize = data.pagesize ?? 100;
-      const totalPages = total && pageSize ? Math.ceil(total / pageSize) : 1;
+        const total = data.total_results || data.totalresults || data.total || 0;
+        const pageSize = data.page_size || data.pagesize || SEARCH_CONFIG.RESULTS_PER_PAGE;
+        const totalPages = total && pageSize ? Math.ceil(total / pageSize) : 1;
 
-      if (this.page >= totalPages) break;
-      if (this.page >= 10) break; // safety cap
-      this.page += 1;
+        if (this.page >= totalPages) break;
+        if (this.page >= SEARCH_CONFIG.MAX_PAGES) break; // safety cap
+        this.page += 1;
+      } catch (error) {
+        console.error('Error fetching all results:', error);
+        break;
+      }
     }
 
     this.page = 1;
@@ -205,6 +338,11 @@ export class SearchManager {
 
   addLoadMoreButton() {
     const container = this.app.ui.searchResults;
+
+    if (!container) {
+      return;
+    }
+
     const old = container.querySelector('.search-load-more');
     if (old) old.remove();
 
@@ -226,8 +364,16 @@ export class SearchManager {
   // ===============================
 
   displaySearchResults(results, query) {
+    if (!Array.isArray(results)) {
+      return;
+    }
+
     const groups = this.groupSearchResultsByCanon(results);
     const resultsContainer = this.app.ui.searchResults;
+
+    if (!resultsContainer) {
+      return;
+    }
 
     if (!groups.length) {
       resultsContainer.innerHTML =
@@ -246,14 +392,6 @@ export class SearchManager {
       }
     }
 
-    const escapeHtml = (str) =>
-      String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-
     const parts = [];
 
     for (const group of groups) {
@@ -262,13 +400,9 @@ export class SearchManager {
 
       // Testament heading row
       parts.push(`
-        <div class="search-group-heading" data-testament="${escapeHtml(
-          testName
-        )}">
-          <span class="search-group-title">${escapeHtml(testName)}</span>
-          <span class="search-group-chevron ${
-            testamentExpanded ? 'expanded' : ''
-          }"></span>
+        <div class="search-group-heading" data-testament="${this._escapeHtml(testName)}">
+          <span class="search-group-title">${this._escapeHtml(testName)}</span>
+          <span class="search-group-chevron ${testamentExpanded ? 'expanded' : ''}"></span>
         </div>
       `);
 
@@ -280,11 +414,9 @@ export class SearchManager {
 
         // Book heading row
         parts.push(`
-          <div class="search-book-heading" data-book="${escapeHtml(bookName)}">
-            <span class="search-book-title">${escapeHtml(bookName)}</span>
-            <span class="search-book-chevron ${
-              bookExpanded ? 'expanded' : ''
-            }"></span>
+          <div class="search-book-heading" data-book="${this._escapeHtml(bookName)}">
+            <span class="search-book-title">${this._escapeHtml(bookName)}</span>
+            <span class="search-book-chevron ${bookExpanded ? 'expanded' : ''}"></span>
           </div>
         `);
 
@@ -295,7 +427,7 @@ export class SearchManager {
             result.content,
             query
           );
-          const safeRef = escapeHtml(result.reference);
+          const safeRef = this._escapeHtml(result.reference);
 
           parts.push(`
             <div class="search-result-item" data-reference="${safeRef}">
@@ -313,6 +445,10 @@ export class SearchManager {
 
   attachResultListeners(results, query) {
     const container = this.app.ui.searchResults;
+
+    if (!container) {
+      return;
+    }
 
     // Testament toggles
     container
@@ -357,16 +493,20 @@ export class SearchManager {
 
   highlightSearchTerm(text, term) {
     if (!text) return '';
-    const safeText = String(text);
+
+    const safeText = this._escapeHtml(String(text));
     const rawTerm = term ? String(term).trim() : '';
+
     if (!rawTerm) return safeText;
 
+    // SECURITY FIX: Single backslash for regex escaping
     const escapedTerm = rawTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     try {
       const regex = new RegExp(escapedTerm, 'gi');
-      return safeText.replace(regex, (match) => `<strong>${match}</strong>`);
-    } catch {
+      return safeText.replace(regex, (match) => `<strong>${this._escapeHtml(match)}</strong>`);
+    } catch (error) {
+      console.warn('Regex error in highlightSearchTerm:', error);
       return safeText;
     }
   }
@@ -422,6 +562,7 @@ export class SearchManager {
   parseReference(reference) {
     const cleaned = String(reference || '').trim();
     // Supports: John 3, John 3:16, 1 John 2, 1 John 2:3
+    // SECURITY FIX: Single backslash for regex
     const match = cleaned.match(/^(\d?\s*[A-Za-z ].*?)\s+(\d+)(?::(\d+))?$/);
     if (!match) return null;
 
@@ -436,6 +577,10 @@ export class SearchManager {
   }
 
   async loadPassageFromReference(reference) {
+    if (!reference || typeof reference !== 'string') {
+      return;
+    }
+
     const parsed = this.parseReference(reference);
     if (!parsed) return;
 
@@ -446,7 +591,7 @@ export class SearchManager {
 
     await this.app.loadPassage(book, chapter);
 
-    if (verse) {
+    if (verse && this.app.ui && this.app.ui.scrollToVerse) {
       this.app.ui.scrollToVerse(verse);
     }
   }
@@ -456,6 +601,12 @@ export class SearchManager {
   // ===============================
 
   refreshResultItems(autoSelectFirst) {
+    if (!this.app.ui || !this.app.ui.searchResults) {
+      this.resultItems = null;
+      this.selectedIndex = -1;
+      return;
+    }
+
     this.resultItems = Array.from(
       this.app.ui.searchResults.querySelectorAll('.search-result-item')
     );
@@ -494,5 +645,64 @@ export class SearchManager {
         selectedEl.scrollIntoView({ block: 'nearest' });
       }
     }
+  }
+
+  // ===============================
+  // Helper methods
+  // ===============================
+
+  /**
+   * Clear search results
+   */
+  clearResults() {
+    if (this.app.ui && this.app.ui.searchResults) {
+      this.app.ui.searchResults.innerHTML = '';
+    }
+    this.selectedIndex = -1;
+    this.resultItems = null;
+  }
+
+  /**
+   * Escape HTML to prevent XSS
+   * @private
+   */
+  _escapeHtml(text) {
+    if (!text) return '';
+
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
+  }
+
+  /**
+   * Strip HTML tags from text
+   * @private
+   */
+  _stripHTML(html) {
+    if (!html) return '';
+
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
+  }
+
+  /**
+   * Cleanup and destroy
+   */
+  destroy() {
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+      this.timeout = null;
+    }
+
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
+
+    this.clearResults();
+    this.currentResults = [];
+    this.expandedTestaments.clear();
+    this.expandedBooks.clear();
   }
 }
