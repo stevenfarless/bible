@@ -271,7 +271,7 @@ getCurrentVerseCount() {
     }
   }
 
-  handleKeyboardShortcuts(e) {
+handleKeyboardShortcuts(e) {
   // Don't capture keys if user is typing in an input/textarea
   const activeElement = document.activeElement;
   const isTyping = activeElement && (
@@ -293,7 +293,7 @@ getCurrentVerseCount() {
     if (activeModal) {
       this.ui.closeModal(activeModal);
     }
-    if (this.ui.searchContainer.classList.contains('active')) {
+    if (this.ui.searchContainer && this.ui.searchContainer.classList.contains('active')) {
       this.search.closeSearch();
     }
     return;
@@ -304,7 +304,7 @@ getCurrentVerseCount() {
 
   // Navigation shortcuts - only when no modal is open and search is closed
   const modalOpen = document.querySelector('.modal.active');
-  const searchOpen = this.ui.searchContainer?.classList.contains('active');
+  const searchOpen = this.ui.searchContainer && this.ui.searchContainer.classList.contains('active');
 
   if (!modalOpen && !searchOpen) {
     // Chapter navigation: Arrow Left/Right or H/L
@@ -325,7 +325,6 @@ getCurrentVerseCount() {
     }
   }
 }
-
 
   // Escape to close modals
   if (e.key === 'Escape') {
