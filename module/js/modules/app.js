@@ -48,8 +48,8 @@ class BibleApp {
         this.lastScrollPosition = 0;
         this.originalPassageHtml = null;
         this.scrollTimeout = null;
-        this.isLoading = false; // Prevent race conditions
-        this.currentVerseIndex = 0; // Track current verse for navigation
+        this.isLoading = false;
+        this.currentVerseIndex = 0;
 
         this.init();
     }
@@ -62,7 +62,6 @@ class BibleApp {
 
             // Check authentication first
             if (!this.firebase.currentUser) {
-                // User is not logged in - show login modal
                 if (this.ui.passageText) {
                     this.ui.passageText.innerHTML = `
                         <div class="error" style="text-align: center; padding: 40px;">
@@ -71,12 +70,10 @@ class BibleApp {
                         </div>
                     `;
                 }
-                // Open login modal automatically
                 if (this.ui.loginModal) {
                     this.ui.openModal(this.ui.loginModal);
                 }
             } else if (!this.API_KEY) {
-                // User is logged in but no API key
                 this.ui.showToast('Please add your ESV API key in Settings');
                 if (this.ui.passageText) {
                     this.ui.passageText.innerHTML = `
@@ -91,11 +88,9 @@ class BibleApp {
                     `;
                 }
             } else {
-                // User is logged in and has API key - load initial passage
                 await this.loadPassage(this.state.currentBook, this.state.currentChapter);
             }
 
-            // Mark DOM as ready so CSS shows content
             document.body.classList.add('js-ready');
         } catch (error) {
             console.error('App initialization error:', error);
@@ -106,7 +101,6 @@ class BibleApp {
     }
 
     attachGlobalListeners() {
-        // Scroll event listener with debounce
         window.addEventListener('scroll', () => {
             if (this.ui && this.ui.handleChromeScroll) {
                 this.ui.handleChromeScroll();
@@ -122,30 +116,17 @@ class BibleApp {
             }, APP_CONFIG.SCROLL_SAVE_DEBOUNCE_MS);
         }, { passive: true });
 
-        // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             this.handleKeyboardShortcuts(e);
         });
     }
 
-    // ================================
-    // Core Logic
-    // ================================
-
-    /**
-     * Load a passage from the ESV API
-     * @param {string} book - Book name (e.g., 'John')
-     * @param {number} chapter - Chapter number
-     * @param {boolean} restoreScroll - Whether to restore scroll position
-     */
     async loadPassage(book, chapter, restoreScroll = false) {
-        // Prevent race conditions
         if (this.isLoading) {
             console.warn('Already loading a passage, please wait');
             return;
         }
 
-        // Validate parameters
         const allBooks = getAllBooks();
         if (!book || !allBooks.includes(book)) {
             console.error('Invalid book:', book);
@@ -175,27 +156,22 @@ class BibleApp {
         }
 
         try {
-            // Set loading flag
             this.isLoading = true;
 
-            // Save position before loading new passage
             if (!restoreScroll && this.firebase) {
                 await this.firebase.saveReadingPosition();
             }
 
-            // Update state
             this.state.currentBook = book;
             this.state.currentChapter = chapter;
             this.updateNavigationUI();
 
             const reference = `${book} ${chapter}`;
 
-            // Show loading state
             if (this.ui && this.ui.passageText) {
                 this.ui.passageText.innerHTML = `<div class="loading">Loading ${reference}...</div>`;
             }
 
-            // Fetch passage from API
             const data = await this.bibleApi.fetchPassage(reference);
 
             if (!data || !data.passages || data.passages.length === 0) {
@@ -205,23 +181,18 @@ class BibleApp {
                 return;
             }
 
-            // Store original HTML for verse selection
             this.originalPassageHtml = data.passages[0];
 
-            // Display passage
             if (this.ui && this.ui.passageText) {
                 this.ui.passageText.innerHTML = this.originalPassageHtml;
             }
 
-            // Attach reference handlers (footnotes, cross-refs)
             if (this.references) {
                 this.references.makeFootnotesClickable();
             }
 
-            // Reset verse index when loading new chapter
             this.currentVerseIndex = 0;
 
-            // Restore scroll position if requested
             if (restoreScroll) {
                 setTimeout(() => {
                     window.scrollTo(0, this.lastScrollPosition);
@@ -238,66 +209,46 @@ class BibleApp {
                 this.ui.passageText.innerHTML = `<div class="error">Error loading passage. Please try again.</div>`;
             }
         } finally {
-            // Clear loading flag
             this.isLoading = false;
         }
     }
 
-    /**
-     * Navigate to previous or next chapter
-     * @param {number} direction - -1 for previous, 1 for next
-     */
     navigateChapter(direction) {
         navigateChapter(this, direction);
     }
 
-    /**
-     * Navigate to previous or next verse
-     * @param {number} direction - -1 for previous, 1 for next
-     */
     navigateVerse(direction) {
         if (!this.ui || !this.ui.passageText) {
             return;
         }
 
-        // Get all verse elements
         const verseElements = this.ui.passageText.querySelectorAll('.verse-num, b.verse-num');
         
         if (!verseElements || verseElements.length === 0) {
             return;
         }
 
-        // Update index
         this.currentVerseIndex += direction;
 
-        // Wrap around
         if (this.currentVerseIndex < 0) {
             this.currentVerseIndex = verseElements.length - 1;
         } else if (this.currentVerseIndex >= verseElements.length) {
             this.currentVerseIndex = 0;
         }
 
-        // Get the target verse element
         const targetVerse = verseElements[this.currentVerseIndex];
         
         if (targetVerse) {
-            // Scroll to verse with smooth behavior
             targetVerse.scrollIntoView({ 
                 behavior: 'smooth', 
                 block: 'center' 
             });
 
-            // Highlight the verse briefly
             this.highlightVerse(targetVerse);
         }
     }
 
-    /**
-     * Highlight a verse temporarily
-     * @param {HTMLElement} verseElement - The verse element to highlight
-     */
     highlightVerse(verseElement) {
-        // Find the parent paragraph or verse container
         let container = verseElement.closest('p');
         if (!container) {
             container = verseElement.parentElement;
@@ -307,18 +258,13 @@ class BibleApp {
             return;
         }
 
-        // Add highlight class
         container.classList.add('verse-highlight');
 
-        // Remove highlight after 2 seconds
         setTimeout(() => {
             container.classList.remove('verse-highlight');
         }, 2000);
     }
 
-    /**
-     * Update navigation UI to reflect current book/chapter
-     */
     updateNavigationUI() {
         if (!this.ui || !this.ui.currentBookSpan || !this.ui.currentChapterSpan) {
             return;
@@ -328,26 +274,15 @@ class BibleApp {
         this.ui.currentChapterSpan.textContent = this.state.currentChapter;
     }
 
-    // ================================
-    // Settings Management
-    // ================================
-
-    /**
-     * Set API key
-     */
     setApiKey(key) {
         this.API_KEY = key;
         localStorage.setItem('esvApiKey', key);
 
-        // Reload current passage with new API key
         if (this.state.currentBook && this.state.currentChapter) {
             this.loadPassage(this.state.currentBook, this.state.currentChapter);
         }
     }
 
-    /**
-     * Toggle a setting
-     */
     toggleSetting(setting) {
         if (this.state[setting] !== undefined) {
             this.state[setting] = !this.state[setting];
@@ -360,16 +295,12 @@ class BibleApp {
                 this.firebase.saveSettings();
             }
 
-            // Reload passage if heading or footnote settings changed
             if (['showHeadings', 'showFootnotes', 'showCrossReferences'].includes(setting)) {
                 this.loadPassage(this.state.currentBook, this.state.currentChapter, true);
             }
         }
     }
 
-    /**
-     * Toggle verse-by-verse mode
-     */
     toggleVerseByVerse() {
         this.state.verseByVerse = !this.state.verseByVerse;
 
@@ -382,9 +313,6 @@ class BibleApp {
         }
     }
 
-    /**
-     * Update font size
-     */
     updateFontSize(size) {
         const fontSize = parseInt(size, 10);
         if (fontSize >= 12 && fontSize <= 32) {
@@ -400,38 +328,23 @@ class BibleApp {
         }
     }
 
-    // ================================
-    // User Authentication
-    // ================================
-
-    /**
-     * Handle user button click
-     */
     handleUserButtonClick() {
         if (this.firebase && this.firebase.currentUser) {
-            // User is logged in, show user menu
             if (this.ui && this.ui.userMenuModal) {
                 this.ui.openModal(this.ui.userMenuModal);
             }
         } else {
-            // User is not logged in, show login modal
             if (this.ui && this.ui.loginModal) {
                 this.ui.openModal(this.ui.loginModal);
             }
         }
     }
 
-    // ================================
-    // Keyboard Shortcuts
-    // ================================
-
     handleKeyboardShortcuts(e) {
-        // Don't handle shortcuts when typing in input fields
         const isInputField = e.target.tagName === 'INPUT' || 
                            e.target.tagName === 'TEXTAREA' || 
                            e.target.isContentEditable;
 
-        // Ctrl+K or Cmd+K for search (works everywhere)
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
             e.preventDefault();
             if (this.search) {
@@ -440,7 +353,6 @@ class BibleApp {
             return;
         }
 
-        // Escape for closing modals (works everywhere)
         if (e.key === 'Escape') {
             if (this.search) {
                 this.search.closeSearch();
@@ -451,26 +363,22 @@ class BibleApp {
             return;
         }
 
-        // Search input capture - pass to search manager if open
         if (this.search && this.ui && this.ui.searchContainer) {
             if (this.ui.searchContainer.classList.contains('active')) {
                 this.search.handleKeydown(e);
-                return; // Don't process other shortcuts when search is open
+                return;
             }
         }
 
-        // Don't handle navigation shortcuts in input fields
         if (isInputField) {
             return;
         }
 
-        // Check if any modal is open
         const modalOpen = document.querySelector('.modal.active');
         if (modalOpen) {
-            return; // Don't handle navigation when modal is open
+            return;
         }
 
-        // Left/Right and h/l for chapter navigation
         if (e.key === 'ArrowLeft' || e.key === 'h' || e.key === 'H') {
             e.preventDefault();
             this.navigateChapter(-1);
@@ -483,7 +391,6 @@ class BibleApp {
             return;
         }
 
-        // Up/Down and k/j for verse navigation
         if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') {
             e.preventDefault();
             this.navigateVerse(-1);
@@ -497,17 +404,11 @@ class BibleApp {
         }
     }
 
-    // ================================
-    // Cleanup
-    // ================================
-
     destroy() {
-        // Clean up event listeners
         if (this.scrollTimeout) {
             clearTimeout(this.scrollTimeout);
         }
 
-        // Clean up managers
         if (this.search) {
             this.search.destroy();
         }
@@ -523,9 +424,6 @@ class BibleApp {
     }
 }
 
-// ================================
-// Initialize App on Page Load
-// ================================
 let app;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -543,13 +441,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Handle app destruction on page unload
 window.addEventListener('beforeunload', () => {
     if (app) {
         app.destroy();
     }
 });
 
-// Export for module usage
 export { BibleApp };
 export default BibleApp;

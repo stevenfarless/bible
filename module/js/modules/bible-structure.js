@@ -1,8 +1,84 @@
 // js/modules/bible-structure.js
-// Responsibility: canonical book order, chapter counts, abbreviations, testament
 
-export const BIBLE_STRUCTURE = {
-  'Old Testament': {
+/**
+ * Bible Structure Data
+ * Contains book information, chapter counts, and categorization
+ */
+
+export const BOOK_ABBREVIATIONS = {
+    // Old Testament
+    Genesis: 'Gen',
+    Exodus: 'Exod',
+    Leviticus: 'Lev',
+    Numbers: 'Num',
+    Deuteronomy: 'Deut',
+    Joshua: 'Josh',
+    Judges: 'Judg',
+    Ruth: 'Ruth',
+    '1 Samuel': '1 Sam',
+    '2 Samuel': '2 Sam',
+    '1 Kings': '1 Kgs',
+    '2 Kings': '2 Kgs',
+    '1 Chronicles': '1 Chr',
+    '2 Chronicles': '2 Chr',
+    Ezra: 'Ezra',
+    Nehemiah: 'Neh',
+    Esther: 'Esth',
+    Job: 'Job',
+    Psalms: 'Ps',
+    Proverbs: 'Prov',
+    Ecclesiastes: 'Eccl',
+    'Song of Solomon': 'Song',
+    Isaiah: 'Isa',
+    Jeremiah: 'Jer',
+    Lamentations: 'Lam',
+    Ezekiel: 'Ezek',
+    Daniel: 'Dan',
+    Hosea: 'Hos',
+    Joel: 'Joel',
+    Amos: 'Amos',
+    Obadiah: 'Obad',
+    Jonah: 'Jonah',
+    Micah: 'Mic',
+    Nahum: 'Nah',
+    Habakkuk: 'Hab',
+    Zephaniah: 'Zeph',
+    Haggai: 'Hag',
+    Zechariah: 'Zech',
+    Malachi: 'Mal',
+
+    // New Testament
+    Matthew: 'Matt',
+    Mark: 'Mark',
+    Luke: 'Luke',
+    John: 'John',
+    Acts: 'Acts',
+    Romans: 'Rom',
+    '1 Corinthians': '1 Cor',
+    '2 Corinthians': '2 Cor',
+    Galatians: 'Gal',
+    Ephesians: 'Eph',
+    Philippians: 'Phil',
+    Colossians: 'Col',
+    '1 Thessalonians': '1 Thess',
+    '2 Thessalonians': '2 Thess',
+    '1 Timothy': '1 Tim',
+    '2 Timothy': '2 Tim',
+    Titus: 'Titus',
+    Philemon: 'Phlm',
+    Hebrews: 'Heb',
+    James: 'Jas',
+    '1 Peter': '1 Pet',
+    '2 Peter': '2 Pet',
+    '1 John': '1 John',
+    '2 John': '2 John',
+    '3 John': '3 John',
+    Jude: 'Jude',
+    Revelation: 'Rev',
+};
+
+export const CHAPTER_COUNTS = {
+    // Old Testament
     Genesis: 50,
     Exodus: 40,
     Leviticus: 27,
@@ -42,8 +118,8 @@ export const BIBLE_STRUCTURE = {
     Haggai: 2,
     Zechariah: 14,
     Malachi: 4,
-  },
-  'New Testament': {
+
+    // New Testament
     Matthew: 28,
     Mark: 16,
     Luke: 24,
@@ -71,100 +147,124 @@ export const BIBLE_STRUCTURE = {
     '3 John': 1,
     Jude: 1,
     Revelation: 22,
-  },
 };
 
-export const BOOK_ABBREVIATIONS = {
-  Genesis: 'Gen',
-  Exodus: 'Exod',
-  Leviticus: 'Lev',
-  Numbers: 'Num',
-  Deuteronomy: 'Deut',
-  Joshua: 'Josh',
-  Judges: 'Judg',
-  Ruth: 'Ruth',
-  '1 Samuel': '1Sam',
-  '2 Samuel': '2Sam',
-  '1 Kings': '1Kgs',
-  '2 Kings': '2Kgs',
-  '1 Chronicles': '1Chr',
-  '2 Chronicles': '2Chr',
-  Ezra: 'Ezra',
-  Nehemiah: 'Neh',
-  Esther: 'Esth',
-  Job: 'Job',
-  Psalms: 'Ps',
-  Proverbs: 'Prov',
-  Ecclesiastes: 'Eccl',
-  'Song of Solomon': 'Song',
-  Isaiah: 'Isa',
-  Jeremiah: 'Jer',
-  Lamentations: 'Lam',
-  Ezekiel: 'Ezek',
-  Daniel: 'Dan',
-  Hosea: 'Hos',
-  Joel: 'Joel',
-  Amos: 'Amos',
-  Obadiah: 'Obad',
-  Jonah: 'Jonah',
-  Micah: 'Mic',
-  Nahum: 'Nah',
-  Habakkuk: 'Hab',
-  Zephaniah: 'Zeph',
-  Haggai: 'Hag',
-  Zechariah: 'Zech',
-  Malachi: 'Mal',
-  Matthew: 'Matt',
-  Mark: 'Mark',
-  Luke: 'Luke',
-  John: 'John',
-  Acts: 'Acts',
-  Romans: 'Rom',
-  '1 Corinthians': '1Cor',
-  '2 Corinthians': '2Cor',
-  Galatians: 'Gal',
-  Ephesians: 'Eph',
-  Philippians: 'Phil',
-  Colossians: 'Col',
-  '1 Thessalonians': '1Thes',
-  '2 Thessalonians': '2Thes',
-  '1 Timothy': '1Tim',
-  '2 Timothy': '2Tim',
-  Titus: 'Titus',
-  Philemon: 'Phlm',
-  Hebrews: 'Heb',
-  James: 'Jas',
-  '1 Peter': '1Pet',
-  '2 Peter': '2Pet',
-  '1 John': '1John',
-  '2 John': '2John',
-  '3 John': '3John',
-  Jude: 'Jude',
-  Revelation: 'Rev',
-};
+const OLD_TESTAMENT = [
+    'Genesis',
+    'Exodus',
+    'Leviticus',
+    'Numbers',
+    'Deuteronomy',
+    'Joshua',
+    'Judges',
+    'Ruth',
+    '1 Samuel',
+    '2 Samuel',
+    '1 Kings',
+    '2 Kings',
+    '1 Chronicles',
+    '2 Chronicles',
+    'Ezra',
+    'Nehemiah',
+    'Esther',
+    'Job',
+    'Psalms',
+    'Proverbs',
+    'Ecclesiastes',
+    'Song of Solomon',
+    'Isaiah',
+    'Jeremiah',
+    'Lamentations',
+    'Ezekiel',
+    'Daniel',
+    'Hosea',
+    'Joel',
+    'Amos',
+    'Obadiah',
+    'Jonah',
+    'Micah',
+    'Nahum',
+    'Habakkuk',
+    'Zephaniah',
+    'Haggai',
+    'Zechariah',
+    'Malachi',
+];
 
+const NEW_TESTAMENT = [
+    'Matthew',
+    'Mark',
+    'Luke',
+    'John',
+    'Acts',
+    'Romans',
+    '1 Corinthians',
+    '2 Corinthians',
+    'Galatians',
+    'Ephesians',
+    'Philippians',
+    'Colossians',
+    '1 Thessalonians',
+    '2 Thessalonians',
+    '1 Timothy',
+    '2 Timothy',
+    'Titus',
+    'Philemon',
+    'Hebrews',
+    'James',
+    '1 Peter',
+    '2 Peter',
+    '1 John',
+    '2 John',
+    '3 John',
+    'Jude',
+    'Revelation',
+];
+
+/**
+ * Get all books in canonical order
+ */
 export function getAllBooks() {
-  return [
-    ...Object.keys(BIBLE_STRUCTURE['Old Testament']),
-    ...Object.keys(BIBLE_STRUCTURE['New Testament']),
-  ];
+    return [...OLD_TESTAMENT, ...NEW_TESTAMENT];
 }
 
+/**
+ * Get Old Testament books
+ */
+export function getOldTestamentBooks() {
+    return [...OLD_TESTAMENT];
+}
+
+/**
+ * Get New Testament books
+ */
+export function getNewTestamentBooks() {
+    return [...NEW_TESTAMENT];
+}
+
+/**
+ * Get chapter count for a book
+ */
 export function getChapterCount(book) {
-  for (const testament in BIBLE_STRUCTURE) {
-    if (Object.prototype.hasOwnProperty.call(BIBLE_STRUCTURE[testament], book)) {
-      return BIBLE_STRUCTURE[testament][book];
-    }
-  }
-  return 0;
+    return CHAPTER_COUNTS[book] || 0;
 }
 
+/**
+ * Get testament for a book
+ */
 export function getTestament(book) {
-  if (Object.prototype.hasOwnProperty.call(BIBLE_STRUCTURE['Old Testament'], book)) {
-    return 'Old Testament';
-  }
-  if (Object.prototype.hasOwnProperty.call(BIBLE_STRUCTURE['New Testament'], book)) {
-    return 'New Testament';
-  }
-  return null;
+    if (OLD_TESTAMENT.includes(book)) {
+        return 'Old Testament';
+    }
+    if (NEW_TESTAMENT.includes(book)) {
+        return 'New Testament';
+    }
+    return null;
+}
+
+/**
+ * Get abbreviation for a book
+ */
+export function getAbbreviation(book) {
+    return BOOK_ABBREVIATIONS[book] || book;
 }
