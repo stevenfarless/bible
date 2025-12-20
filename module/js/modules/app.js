@@ -357,7 +357,12 @@ class BibleApp {
     // ================================
 
     handleKeyboardShortcuts(e) {
-        // Ctrl+K or Cmd+K for search
+        // Don't handle shortcuts when typing in input fields
+        const isInputField = e.target.tagName === 'INPUT' || 
+                           e.target.tagName === 'TEXTAREA' || 
+                           e.target.isContentEditable;
+
+        // Ctrl+K or Cmd+K for search (works everywhere)
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
             e.preventDefault();
             if (this.search) {
@@ -366,7 +371,7 @@ class BibleApp {
             return;
         }
 
-        // Escape for closing modals
+        // Escape for closing modals (works everywhere)
         if (e.key === 'Escape') {
             if (this.search) {
                 this.search.closeSearch();
@@ -377,24 +382,61 @@ class BibleApp {
             return;
         }
 
-        // Arrow up/down for navigation
-        if (e.key === 'ArrowUp' && e.shiftKey) {
+        // Search input capture - pass to search manager if open
+        if (this.search && this.ui && this.ui.searchContainer) {
+            if (this.ui.searchContainer.classList.contains('active')) {
+                this.search.handleKeydown(e);
+                return; // Don't process other shortcuts when search is open
+            }
+        }
+
+        // Don't handle navigation shortcuts in input fields
+        if (isInputField) {
+            return;
+        }
+
+        // Check if any modal is open
+        const modalOpen = document.querySelector('.modal.active');
+        if (modalOpen) {
+            return; // Don't handle navigation when modal is open
+        }
+
+        // Arrow keys and vim keys for chapter navigation
+        if (e.key === 'ArrowLeft' || e.key === 'h' || e.key === 'H') {
             e.preventDefault();
             this.navigateChapter(-1);
             return;
         }
 
-        if (e.key === 'ArrowDown' && e.shiftKey) {
+        if (e.key === 'ArrowRight' || e.key === 'l' || e.key === 'L') {
             e.preventDefault();
             this.navigateChapter(1);
             return;
         }
 
-        // Search input capture - pass to search manager if open
-        if (this.search && this.ui && this.ui.searchContainer) {
-            if (this.ui.searchContainer.classList.contains('active')) {
-                this.search.handleKeydown(e);
-            }
+        // Arrow Up/j for previous chapter
+        if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') {
+            e.preventDefault();
+            this.navigateChapter(-1);
+            return;
+        }
+
+        // Arrow Down/j for next chapter
+        if (e.key === 'ArrowDown' || e.key === 'j' || e.key === 'J') {
+            e.preventDefault();
+            this.navigateChapter(1);
+            return;
+        }
+
+        // Page Up/Down for scrolling
+        if (e.key === 'PageUp') {
+            // Let browser handle default scroll
+            return;
+        }
+
+        if (e.key === 'PageDown') {
+            // Let browser handle default scroll
+            return;
         }
     }
 
