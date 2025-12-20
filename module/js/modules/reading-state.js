@@ -34,13 +34,19 @@ export function navigateChapter(app, direction) {
     return;
   }
 
+  // FIXED: Check if already loading to prevent race conditions
+  if (app.isLoading) {
+    console.warn('Navigation in progress, please wait');
+    return;
+  }
+
   const books = getAllBooks();
   const currentBookIndex = books.indexOf(app.state.currentBook);
   const currentChapter = app.state.currentChapter;
   const maxChapter = getChapterCount(app.state.currentBook);
 
-  // Validation
-  if (currentBookIndex < 0) {
+  // Validation - FIXED: Use strict equality
+  if (currentBookIndex === -1) {
     console.error(`Book not found: ${app.state.currentBook}`);
     return;
   }
@@ -57,7 +63,7 @@ export function navigateChapter(app, direction) {
     } else {
       // Already at last chapter of last book
       console.log('Already at the end of the Bible');
-      if (app.ui) {
+      if (app.ui && app.ui.showToast) {
         app.ui.showToast('Already at the end of the Bible');
       }
     }
@@ -74,7 +80,7 @@ export function navigateChapter(app, direction) {
     } else {
       // Already at first chapter of first book
       console.log('Already at the beginning of the Bible');
-      if (app.ui) {
+      if (app.ui && app.ui.showToast) {
         app.ui.showToast('Already at the beginning of the Bible');
       }
     }
@@ -129,11 +135,9 @@ export function applyVerseGlow(app) {
   // Special handling for verse 1
   if (app.state.selectedVerse === 1) {
     const firstParagraph = app.ui.passageText.querySelector('p');
-
     if (firstParagraph) {
       // Find verse 2 to split verse 1 precisely
       const verse2 = firstParagraph.querySelector('.verse-num');
-
       if (verse2) {
         const verse1Block = document.createElement('div');
         verse1Block.classList.add('selected-verse-glow');
@@ -164,9 +168,8 @@ export function applyVerseGlow(app) {
           block: 'center',
         });
       }
-
-      return;
     }
+    return;
   }
 
   // Find the verse number element
@@ -187,7 +190,6 @@ export function applyVerseGlow(app) {
 
   // Check if this is a poetry line-group verse
   const parentParagraph = targetVerseNum.closest('p');
-
   if (!parentParagraph) {
     console.warn('Parent paragraph not found');
     return;
@@ -214,7 +216,6 @@ export function applyVerseGlow(app) {
 function _handlePoetryVerse(app, targetVerseNum, lineSpans) {
   // Find which line contains our verse number
   let verseLineSpan = null;
-
   for (const span of lineSpans) {
     if (span.contains(targetVerseNum)) {
       verseLineSpan = span;
@@ -229,7 +230,6 @@ function _handlePoetryVerse(app, targetVerseNum, lineSpans) {
 
   // Get the id attribute from the verse's line span
   const verseId = verseLineSpan.id;
-
   if (!verseId) {
     console.warn('Verse ID not found');
     return;
@@ -237,7 +237,6 @@ function _handlePoetryVerse(app, targetVerseNum, lineSpans) {
 
   // Collect all line spans with the same id (they belong to this verse)
   const verseLines = [];
-
   for (const span of lineSpans) {
     if (span.id === verseId) {
       verseLines.push(span);
@@ -315,7 +314,6 @@ function _handleProseVerse(app, targetVerseNum, parentParagraph) {
     }
 
     const clonedNode = node.cloneNode(true);
-
     if (mode === 'before') {
       beforeP.appendChild(clonedNode);
     } else if (mode === 'selected') {

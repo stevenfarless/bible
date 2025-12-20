@@ -2,7 +2,11 @@
 
 import { BibleApi } from './bible-api.js';
 import { initializeState, navigateChapter } from './reading-state.js';
-import { BOOK_ABBREVIATIONS, getAllBooks, getChapterCount } from './bible-structure.js';
+import {
+  BOOK_ABBREVIATIONS,
+  getAllBooks,
+  getChapterCount,
+} from './bible-structure.js';
 import { UIManager } from './ui-manager.js';
 import { SearchManager } from './search-manager.js';
 import { FirebaseManager } from './firebase-manager.js';
@@ -11,7 +15,6 @@ import { ReferencesManager } from './references-manager.js';
 // ================================
 // Configuration Constants
 // ================================
-
 const APP_CONFIG = {
   API_BASE_URL: 'https://api.esv.org/v3',
   API_TIMEOUT_MS: 10000,
@@ -44,6 +47,7 @@ class BibleApp {
     this.lastScrollPosition = 0;
     this.originalPassageHtml = null;
     this.scrollTimeout = null;
+    this.isLoading = false; // NEW: Prevent race conditions
 
     this.init();
   }
@@ -58,7 +62,9 @@ class BibleApp {
       document.body.classList.add('js-ready');
     } catch (error) {
       console.error('App initialization error:', error);
-      this.ui.showToast('Failed to initialize app. Please refresh.');
+      if (this.ui && this.ui.showToast) {
+        this.ui.showToast('Failed to initialize app. Please refresh.');
+      }
     }
   }
 
@@ -67,7 +73,10 @@ class BibleApp {
     window.addEventListener(
       'scroll',
       () => {
-        this.ui.handleChromeScroll();
+        if (this.ui && this.ui.handleChromeScroll) {
+          this.ui.handleChromeScroll();
+        }
+
         clearTimeout(this.scrollTimeout);
         this.scrollTimeout = setTimeout(
           () => {
@@ -100,30 +109,48 @@ class BibleApp {
    * @param {boolean} restoreScroll - Whether to restore scroll position
    */
   async loadPassage(book, chapter, restoreScroll = false) {
+    // FIXED: Prevent race conditions
+    if (this.isLoading) {
+      console.warn('Already loading a passage, please wait');
+      return;
+    }
+
     // Validate parameters
     const allBooks = getAllBooks();
     if (!book || !allBooks.includes(book)) {
       console.error(`Invalid book: "${book}"`);
-      this.ui.showToast(`Invalid book: ${book}`);
+      // FIXED: Add null check
+      if (this.ui && this.ui.showToast) {
+        this.ui.showToast(`Invalid book: ${book}`);
+      }
       return;
     }
 
     if (!Number.isInteger(chapter) || chapter < 1) {
       console.error(`Invalid chapter: ${chapter}`);
-      this.ui.showToast('Invalid chapter');
+      // FIXED: Add null check
+      if (this.ui && this.ui.showToast) {
+        this.ui.showToast('Invalid chapter');
+      }
       return;
     }
 
     const maxChapter = getChapterCount(book);
     if (chapter > maxChapter) {
       console.error(`Chapter ${chapter} does not exist in ${book}`);
-      this.ui.showToast(
-        `${book} only has ${maxChapter} chapters`
-      );
+      // FIXED: Add null check
+      if (this.ui && this.ui.showToast) {
+        this.ui.showToast(
+          `${book} only has ${maxChapter} chapter${maxChapter === 1 ? '' : 's'}`
+        );
+      }
       return;
     }
 
     try {
+      // FIXED: Set loading flag
+      this.isLoading = true;
+
       // Save position before loading new passage
       if (!restoreScroll && this.firebase) {
         await this.firebase.saveReadingPosition();
@@ -137,7 +164,7 @@ class BibleApp {
       const reference = `${book} ${chapter}`;
 
       // Show loading state
-      if (this.ui.passageText) {
+      if (this.ui && this.ui.passageText) {
         this.ui.passageText.innerHTML = `<div class="loading">Loading ${reference}...</div>`;
       }
 
@@ -145,7 +172,9 @@ class BibleApp {
       const data = await this.bibleApi.fetchPassage(reference);
 
       if (!data || !data.passages || data.passages.length === 0) {
-        this.ui.passageText.innerHTML = `<div class="error">Passage not found: ${reference}</div>`;
+        if (this.ui && this.ui.passageText) {
+          this.ui.passageText.innerHTML = `<div class="error">Passage not found: ${reference}</div>`;
+        }
         return;
       }
 
@@ -153,7 +182,7 @@ class BibleApp {
       this.originalPassageHtml = data.passages[0];
 
       // Display passage
-      if (this.ui.passageText) {
+      if (this.ui && this.ui.passageText) {
         this.ui.passageText.innerHTML = this.originalPassageHtml;
       }
 
@@ -170,13 +199,18 @@ class BibleApp {
       }
     } catch (error) {
       console.error('Error loading passage:', error);
-      this.ui.showToast(
-        `Error loading passage: ${error.message || 'Unknown error'}`
-      );
-      if (this.ui.passageText) {
-        this.ui.passageText.innerHTML =
-          '<div class="error">Error loading passage. Please try again.</div>';
+      // FIXED: Add null check
+      if (this.ui && this.ui.showToast) {
+        this.ui.showToast(
+          `Error loading passage: ${error.message || 'Unknown error'}`
+        );
       }
+      if (this.ui && this.ui.passageText) {
+        this.ui.passageText.innerHTML = `<div class="error">Error loading passage. Please try again.</div>`;
+      }
+    } finally {
+      // FIXED: Clear loading flag
+      this.isLoading = false;
     }
   }
 
@@ -184,7 +218,7 @@ class BibleApp {
    * Update navigation UI to reflect current book/chapter
    */
   updateNavigationUI() {
-    if (!this.ui.currentBookSpan || !this.ui.currentChapterSpan) {
+    if (!this.ui || !this.ui.currentBookSpan || !this.ui.currentChapterSpan) {
       return;
     }
 
@@ -230,7 +264,7 @@ class BibleApp {
       return;
     }
 
-    // Search input capture (pass to search manager if open)
+    // Search input capture - pass to search manager if open
     if (
       this.search &&
       this.ui &&
@@ -255,11 +289,9 @@ class BibleApp {
     if (this.search) {
       this.search.destroy();
     }
-
     if (this.references) {
       this.references.destroy();
     }
-
     if (this.ui) {
       this.ui.destroy();
     }
@@ -269,9 +301,7 @@ class BibleApp {
 // ================================
 // Initialize App on Page Load
 // ================================
-
 let app;
-
 document.addEventListener('DOMContentLoaded', () => {
   try {
     app = new BibleApp();
