@@ -240,6 +240,14 @@ class BibleApp {
     }
 
     /**
+     * Navigate to previous or next chapter
+     * @param {number} direction - -1 for previous, 1 for next
+     */
+    navigateChapter(direction) {
+        navigateChapter(this, direction);
+    }
+
+    /**
      * Update navigation UI to reflect current book/chapter
      */
     updateNavigationUI() {
@@ -372,13 +380,13 @@ class BibleApp {
         // Arrow up/down for navigation
         if (e.key === 'ArrowUp' && e.shiftKey) {
             e.preventDefault();
-            navigateChapter(this, -1);
+            this.navigateChapter(-1);
             return;
         }
 
         if (e.key === 'ArrowDown' && e.shiftKey) {
             e.preventDefault();
-            navigateChapter(this, 1);
+            this.navigateChapter(1);
             return;
         }
 
