@@ -106,8 +106,13 @@ export class ReferencesManager {
             return;
         }
 
+        // Get the HTML and remove the heading
+        let footnotesHTML = footnotesSection.innerHTML;
+        
+        // Remove the "Footnotes" or "Notes" heading
+        footnotesHTML = footnotesHTML.replace(/<h[1-6][^>]*>\s*(Footnotes?|Notes?)\s*<\/h[1-6]>/gi, '');
+        
         // Split the footnotes section by <p> tags
-        const footnotesHTML = footnotesSection.innerHTML;
         const footnoteEntries = footnotesHTML.split(/<p\s*[^>]*>/i).filter(Boolean);
 
         console.log(`Found ${footnoteEntries.length} footnote entries`);
@@ -195,7 +200,12 @@ export class ReferencesManager {
             return;
         }
 
-        const crossrefsHTML = crossrefsSection.innerHTML;
+        // Get the HTML and remove the heading
+        let crossrefsHTML = crossrefsSection.innerHTML;
+        
+        // Remove the "Cross-References" or similar heading
+        crossrefsHTML = crossrefsHTML.replace(/<h[1-6][^>]*>\s*(Cross[- ]?References?)\s*<\/h[1-6]>/gi, '');
+        
         const crossrefEntries = crossrefsHTML.split(/<p\s*[^>]*>/i).filter(Boolean);
 
         const crossrefIndex = crossrefNumber - 1;
