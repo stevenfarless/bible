@@ -113,28 +113,25 @@ export class ReferencesManager {
         const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6');
         headings.forEach(h => h.remove());
         
-        // Get all paragraph elements (each footnote is in a <p>)
-        const footnoteParagraphs = tempDiv.querySelectorAll('p');
+        // Get all footnote span elements (each footnote is in a span with class "footnote")
+        const footnoteSpans = tempDiv.querySelectorAll('span.footnote');
         
-        console.log(`Found ${footnoteParagraphs.length} footnote paragraphs`);
+        console.log(`Found ${footnoteSpans.length} footnote entries`);
 
         // The footnote number corresponds to the index (1-based)
         const footnoteIndex = footnoteNumber - 1;
-        if (footnoteIndex < 0 || footnoteIndex >= footnoteParagraphs.length) {
+        if (footnoteIndex < 0 || footnoteIndex >= footnoteSpans.length) {
             console.warn('Footnote index out of range:', footnoteIndex);
             this.showFootnoteModal('<p>Footnote content not available.</p>');
             return;
         }
 
-        // Get the specific footnote paragraph
-        const footnoteParagraph = footnoteParagraphs[footnoteIndex];
-        let footnoteContent = footnoteParagraph.innerHTML;
+        // Get the specific footnote span
+        const footnoteSpan = footnoteSpans[footnoteIndex];
+        let footnoteContent = footnoteSpan.innerHTML;
 
         // Remove the back-reference link (the [1], [2], etc. at the beginning)
-        footnoteContent = footnoteContent.replace(/]*href="#fb[^"]*"[^>]*>.*?<\/a><\/span>/gi, '');
-        
-        // Remove the verse reference span (e.g., "3:2")
-        footnoteContent = footnoteContent.replace(/<span[^>]*class="footnote-ref"[^>]*>.*?<\/span>/gi, '');
+        footnoteContent = footnoteContent.replace(/<a[^>]*href="#fb[^"]*"[^>]*>.*?<\/a>/gi, '');
         
         // Clean up extra whitespace
         footnoteContent = footnoteContent.trim();
@@ -212,23 +209,20 @@ export class ReferencesManager {
         const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6');
         headings.forEach(h => h.remove());
         
-        // Get all paragraph elements
-        const crossrefParagraphs = tempDiv.querySelectorAll('p');
+        // Get all cross-reference span elements
+        const crossrefSpans = tempDiv.querySelectorAll('span.footnote');
 
         const crossrefIndex = crossrefNumber - 1;
-        if (crossrefIndex < 0 || crossrefIndex >= crossrefParagraphs.length) {
+        if (crossrefIndex < 0 || crossrefIndex >= crossrefSpans.length) {
             this.showCrossRefModal('<p>Cross-reference content not available.</p>');
             return;
         }
 
-        const crossrefParagraph = crossrefParagraphs[crossrefIndex];
-        let crossrefContent = crossrefParagraph.innerHTML;
+        const crossrefSpan = crossrefSpans[crossrefIndex];
+        let crossrefContent = crossrefSpan.innerHTML;
 
         // Remove back-reference links
-        crossrefContent = crossrefContent.replace(/]*href="#cb[^"]*"[^>]*>.*?<\/a><\/span>/gi, '');
-        
-        // Remove verse reference
-        crossrefContent = crossrefContent.replace(/<span[^>]*class="footnote-ref"[^>]*>.*?<\/span>/gi, '');
+        crossrefContent = crossrefContent.replace(/<a[^>]*href="#cb[^"]*"[^>]*>.*?<\/a>/gi, '');
         
         crossrefContent = crossrefContent.trim();
 
