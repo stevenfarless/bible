@@ -4,7 +4,6 @@ import { cacheElements, loadTheme, toggleTheme, updateThemeIcon, changeColorThem
 import { scrollToVerse, applyVerseGlow } from './reading-state.js';
 import { getAllBooks, getChapterCount, BIBLE_STRUCTURE } from './bible-structure.js';
 
-
 export class UIManager {
   constructor(app) {
     this.app = app;
@@ -17,7 +16,6 @@ export class UIManager {
     this.chromeSuspend = false;
     this.scrollTimeout = null;
 
-
     // Define chrome functions on instance
     this.showChrome = () => {
       if (!this.chromeHidden) return;
@@ -25,18 +23,15 @@ export class UIManager {
       this.chromeHidden = false;
     };
 
-
     this.hideChrome = () => {
       if (this.chromeHidden) return;
       document.body.classList.add('chrome-hidden');
       this.chromeHidden = true;
     };
 
-
     this.handleChromeScroll = () => {
       if (this.chromeScrollTicking) return;
       this.chromeScrollTicking = true;
-
 
       if (this.chromeSuspend) {
         this.chromeScrollLastY = window.scrollY || window.pageYOffset || 0;
@@ -44,15 +39,12 @@ export class UIManager {
         return;
       }
 
-
       window.requestAnimationFrame(() => {
         const y = window.scrollY || window.pageYOffset || 0;
         const delta = y - this.chromeScrollLastY;
 
-
         const modalOpen = !!document.querySelector('.modal.active');
         const searchOpen = !!this.searchContainer?.classList.contains('active');
-
 
         if (y <= 0 || modalOpen || searchOpen) {
           this.showChrome();
@@ -61,7 +53,6 @@ export class UIManager {
           return;
         }
 
-
         if (delta > this.chromeDelta) {
           this.hideChrome();
         }
@@ -69,13 +60,11 @@ export class UIManager {
           this.showChrome();
         }
 
-
         this.chromeScrollLastY = y;
         this.chromeScrollTicking = false;
       });
     };
   }
-
 
   init() {
     cacheElements(this);
@@ -99,7 +88,6 @@ export class UIManager {
     this.initModalDragResize();
   }
 
-
   attachEventListeners() {
     // Header buttons
     if (this.searchToggleBtn) {
@@ -118,7 +106,6 @@ export class UIManager {
       this.themeToggleBtn.addEventListener('click', () => toggleTheme(this.app));
     }
 
-
     // Navigation
     if (this.prevChapterBtn) {
       this.prevChapterBtn.addEventListener('click', () => this.app.navigateChapter(-1));
@@ -136,7 +123,6 @@ export class UIManager {
       this.verseSelector.addEventListener('click', () => this.openVerseModal());
     }
 
-
     // Close modal buttons
     const closeButtons = {
       closeBookModal: this.bookModal,
@@ -150,13 +136,11 @@ export class UIManager {
       closeReferencesModal: this.referencesModal,
     };
 
-
     for (const [btnKey, modal] of Object.entries(closeButtons)) {
       if (this[btnKey] && modal) {
         this[btnKey].addEventListener('click', () => this.closeModal(modal));
       }
     }
-
 
     // Click outside modal to close
     const allModals = [
@@ -164,7 +148,6 @@ export class UIManager {
       this.helpModal, this.settingsModal, this.loginModal,
       this.signupModal, this.userMenuModal, this.referencesModal
     ];
-
 
     allModals.forEach(modal => {
       if (modal) {
@@ -175,7 +158,6 @@ export class UIManager {
         });
       }
     });
-
 
     // Settings
     if (this.verseNumbersToggle) {
@@ -197,7 +179,6 @@ export class UIManager {
       this.fontSizeSlider.addEventListener('input', (e) => this.app.updateFontSize(e.target.value));
     }
 
-
     // Theme selector
     const themeSelector = document.getElementById('themeSelector');
     const lightModeToggle = document.getElementById('lightModeToggle');
@@ -208,7 +189,6 @@ export class UIManager {
     if (lightModeToggle) {
       lightModeToggle.addEventListener('change', () => toggleTheme(this.app));
     }
-
 
     // Auth modal switching
     const showSignupLink = document.getElementById('showSignupLink');
@@ -229,12 +209,10 @@ export class UIManager {
       });
     }
 
-
     // Auth form submissions
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
     const logoutBtn = document.getElementById('logoutBtn');
-
 
     if (loginForm) {
       loginForm.addEventListener('submit', (e) => {
@@ -251,8 +229,32 @@ export class UIManager {
     if (logoutBtn) {
       logoutBtn.addEventListener('click', () => this.app.firebase.handleLogout());
     }
-  }
 
+    // API Key handler
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+
+    if (apiKeyInput && saveApiKeyBtn) {
+      // Load existing key when settings modal opens
+      if (this.settingsBtn) {
+        this.settingsBtn.addEventListener('click', () => {
+          if (apiKeyInput) {
+            apiKeyInput.value = this.app.API_KEY || '';
+          }
+        });
+      }
+
+      saveApiKeyBtn.addEventListener('click', () => {
+        const key = apiKeyInput.value.trim();
+        if (key) {
+          this.app.setApiKey(key);
+          this.showToast('API key saved!');
+        } else {
+          this.showToast('Please enter a valid API key');
+        }
+      });
+    }
+  }
 
   initializeAccordion() {
     const accordionHeaders = document.querySelectorAll('.accordion-header');
@@ -262,7 +264,6 @@ export class UIManager {
         section.classList.toggle('active');
       });
     });
-
 
     // Handle Manage Account button
     const openAccountBtn = document.getElementById('openAccountBtn');
@@ -278,20 +279,17 @@ export class UIManager {
     }
   }
 
-
   initModalDragResize() {
     // Settings Modal drag-to-resize
     const settingsContent = this.settingsModal?.querySelector('.modal-content');
     const settingsHeader = this.settingsModal?.querySelector('.modal-header');
     const settingsBody = this.settingsModal?.querySelector('.modal-body');
 
-
     if (settingsContent && settingsHeader && settingsBody) {
       let isDragging = false;
       let startY = 0;
       let startHeight = 0;
       let startScrollTop = 0;
-
 
       // Touch events (mobile)
       const handleTouchStart = (e) => {
@@ -303,33 +301,27 @@ export class UIManager {
         settingsContent.classList.add('dragging');
       };
 
-
       const handleTouchMove = (e) => {
         if (!isDragging) return;
         const currentY = e.touches[0].clientY;
         const deltaY = startY - currentY;
         let newHeight = startHeight + deltaY;
 
-
         const minHeight = 200;
         const maxHeight = window.innerHeight * 0.9;
         newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
 
-
         settingsContent.style.height = `${newHeight}px`;
         e.preventDefault();
       };
-
 
       const handleTouchEnd = (e) => {
         if (!isDragging) return;
         isDragging = false;
         settingsContent.classList.remove('dragging');
 
-
         const endY = e.changedTouches[0].clientY;
         const totalDragDistance = endY - startY;
-
 
         if (totalDragDistance > 150 && startScrollTop === 0) {
           this.closeModal(this.settingsModal);
@@ -339,17 +331,14 @@ export class UIManager {
         }
       };
 
-
       settingsHeader.addEventListener('touchstart', handleTouchStart, { passive: false });
       document.addEventListener('touchmove', handleTouchMove, { passive: false });
       document.addEventListener('touchend', handleTouchEnd, { passive: true });
-
 
       // Mouse events (desktop)
       let isMouseDragging = false;
       let mouseStartY = 0;
       let mouseStartHeight = 0;
-
 
       settingsHeader.addEventListener('mousedown', (e) => {
         if (e.target.closest('.close-btn')) return;
@@ -360,31 +349,25 @@ export class UIManager {
         e.preventDefault();
       });
 
-
       document.addEventListener('mousemove', (e) => {
         if (!isMouseDragging) return;
         const deltaY = mouseStartY - e.clientY;
         let newHeight = mouseStartHeight + deltaY;
 
-
         const minHeight = 200;
         const maxHeight = window.innerHeight * 0.9;
         newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
 
-
         settingsContent.style.height = `${newHeight}px`;
       });
-
 
       document.addEventListener('mouseup', (e) => {
         if (!isMouseDragging) return;
         isMouseDragging = false;
         settingsContent.classList.remove('dragging');
 
-
         const endY = e.clientY;
         const totalDragDistance = endY - mouseStartY;
-
 
         if (totalDragDistance > 150) {
           this.closeModal(this.settingsModal);
@@ -395,19 +378,16 @@ export class UIManager {
       });
     }
 
-
     // References Modal drag-to-resize
     const referencesContent = this.referencesModal?.querySelector('.modal-content');
     const referencesHeader = this.referencesModal?.querySelector('.modal-header');
     const referencesBody = this.referencesModal?.querySelector('.modal-body');
-
 
     if (referencesContent && referencesHeader && referencesBody) {
       let isRefDragging = false;
       let refStartY = 0;
       let refStartHeight = 0;
       let refStartScrollTop = 0;
-
 
       // Touch events (mobile)
       const handleRefTouchStart = (e) => {
@@ -419,33 +399,27 @@ export class UIManager {
         referencesContent.classList.add('dragging');
       };
 
-
       const handleRefTouchMove = (e) => {
         if (!isRefDragging) return;
         const currentY = e.touches[0].clientY;
         const deltaY = refStartY - currentY;
         let newHeight = refStartHeight + deltaY;
 
-
         const minHeight = 200;
         const maxHeight = window.innerHeight * 0.9;
         newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
 
-
         referencesContent.style.height = `${newHeight}px`;
         e.preventDefault();
       };
-
 
       const handleRefTouchEnd = (e) => {
         if (!isRefDragging) return;
         isRefDragging = false;
         referencesContent.classList.remove('dragging');
 
-
         const endY = e.changedTouches[0].clientY;
         const totalDragDistance = endY - refStartY;
-
 
         if (totalDragDistance > 150 && refStartScrollTop === 0) {
           this.closeModal(this.referencesModal);
@@ -455,17 +429,14 @@ export class UIManager {
         }
       };
 
-
       referencesHeader.addEventListener('touchstart', handleRefTouchStart, { passive: false });
       document.addEventListener('touchmove', handleRefTouchMove, { passive: false });
       document.addEventListener('touchend', handleRefTouchEnd, { passive: true });
-
 
       // Mouse events (desktop)
       let isRefMouseDragging = false;
       let refMouseStartY = 0;
       let refMouseStartHeight = 0;
-
 
       referencesHeader.addEventListener('mousedown', (e) => {
         if (e.target.closest('.close-btn')) return;
@@ -476,31 +447,25 @@ export class UIManager {
         e.preventDefault();
       });
 
-
       document.addEventListener('mousemove', (e) => {
         if (!isRefMouseDragging) return;
         const deltaY = refMouseStartY - e.clientY;
         let newHeight = refMouseStartHeight + deltaY;
 
-
         const minHeight = 200;
         const maxHeight = window.innerHeight * 0.9;
         newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
 
-
         referencesContent.style.height = `${newHeight}px`;
       });
-
 
       document.addEventListener('mouseup', (e) => {
         if (!isRefMouseDragging) return;
         isRefMouseDragging = false;
         referencesContent.classList.remove('dragging');
 
-
         const endY = e.clientY;
         const totalDragDistance = endY - refMouseStartY;
-
 
         if (totalDragDistance > 150) {
           this.closeModal(this.referencesModal);
@@ -512,7 +477,6 @@ export class UIManager {
     }
   }
 
-
   // Modal Management
   openModal(modal) {
     if (!modal) return;
@@ -520,10 +484,8 @@ export class UIManager {
     document.body.style.overflow = 'hidden';
   }
 
-
   closeModal(modal) {
     if (!modal) return;
-
 
     // Add closing animation for settings and references
     if (modal === this.settingsModal || modal === this.referencesModal) {
@@ -539,18 +501,29 @@ export class UIManager {
       }
     }
 
-
     modal.classList.remove('active');
     document.body.style.overflow = '';
   }
 
+  closeAllModals() {
+    const allModals = [
+      this.bookModal, this.chapterModal, this.verseModal,
+      this.helpModal, this.settingsModal, this.loginModal,
+      this.signupModal, this.userMenuModal, this.referencesModal
+    ];
+
+    allModals.forEach(modal => {
+      if (modal && modal.classList.contains('active')) {
+        this.closeModal(modal);
+      }
+    });
+  }
 
   // Book Modal
   openBookModal() {
     this.populateBookModal();
     this.openModal(this.bookModal);
   }
-
 
   populateBookModal() {
     const createBookButton = (book) => {
@@ -565,14 +538,12 @@ export class UIManager {
       return btn;
     };
 
-
     if (this.oldTestamentBooks) {
       this.oldTestamentBooks.innerHTML = '';
       Object.keys(BIBLE_STRUCTURE['Old Testament']).forEach(book => {
         this.oldTestamentBooks.appendChild(createBookButton(book));
       });
     }
-
 
     if (this.newTestamentBooks) {
       this.newTestamentBooks.innerHTML = '';
@@ -582,24 +553,20 @@ export class UIManager {
     }
   }
 
-
   // Chapter Modal
   openChapterModal() {
     this.populateChapterModal();
     this.openModal(this.chapterModal);
   }
 
-
   populateChapterModal() {
     if (this.chapterModalBook) {
       this.chapterModalBook.textContent = this.app.state.currentBook;
     }
 
-
     if (this.chapterGrid) {
       this.chapterGrid.innerHTML = '';
       const chapterCount = getChapterCount(this.app.state.currentBook);
-
 
       for (let i = 1; i <= chapterCount; i++) {
         const btn = document.createElement('button');
@@ -615,30 +582,25 @@ export class UIManager {
     }
   }
 
-
   // Verse Modal
   openVerseModal() {
     this.populateVerseModal();
     this.openModal(this.verseModal);
   }
 
-
   populateVerseModal() {
     if (this.verseModalBook) {
       this.verseModalBook.textContent = `${this.app.state.currentBook} ${this.app.state.currentChapter}`;
     }
 
-
     if (this.verseGrid) {
       this.verseGrid.innerHTML = '';
       const verseCount = this.getCurrentVerseCount();
-
 
       if (verseCount === 0) {
         this.verseGrid.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-secondary)">No verses found in current passage</p>';
         return;
       }
-
 
       for (let i = 1; i <= verseCount; i++) {
         const btn = document.createElement('button');
@@ -653,18 +615,15 @@ export class UIManager {
     }
   }
 
-
   getCurrentVerseCount() {
     const verseNums = this.passageText?.querySelectorAll('.verse-num');
     return verseNums && verseNums.length > 0 ? verseNums.length + 1 : 0;
   }
 
-
   // Verse Navigation
   scrollToVerse(verseNumber) {
     scrollToVerse(this.app, verseNumber);
   }
-
 
   // Settings UI
   applySettings() {
@@ -675,14 +634,12 @@ export class UIManager {
       this.passageText?.classList.add('hide-verse-numbers');
     }
 
-
     // Apply verse-by-verse mode
     if (this.app.state.verseByVerse) {
       this.passageText?.classList.add('verse-by-verse');
     } else {
       this.passageText?.classList.remove('verse-by-verse');
     }
-
 
     // Apply font size
     if (this.passageText) {
@@ -693,14 +650,11 @@ export class UIManager {
     }
   }
 
-
   applyRedLetters() {
     if (!this.passageText) return;
 
-
     const { showRedLetters } = this.app.state;
     const wordsOfJesus = this.passageText.querySelectorAll('.woj');
-
 
     wordsOfJesus.forEach(element => {
       if (showRedLetters) {
@@ -711,7 +665,6 @@ export class UIManager {
     });
   }
 
-
   // Toast Notifications
   showToast(message) {
     if (!this.toast) return;
@@ -721,7 +674,6 @@ export class UIManager {
       this.toast.classList.remove('show');
     }, 3000);
   }
-
 
   /**
    * Update auth UI based on user state
@@ -738,6 +690,15 @@ export class UIManager {
     } else {
       this.userBtn.classList.remove('logged-in');
       this.userBtn.setAttribute('aria-label', 'Sign In');
+    }
+  }
+
+  /**
+   * Cleanup
+   */
+  destroy() {
+    if (this.scrollTimeout) {
+      clearTimeout(this.scrollTimeout);
     }
   }
 }

@@ -24,7 +24,8 @@ const APP_CONFIG = {
 class BibleApp {
   constructor() {
     this.API_BASE_URL = APP_CONFIG.API_BASE_URL;
-    this.API_KEY = '';
+    // Load API key from localStorage
+    this.API_KEY = localStorage.getItem('esvApiKey') || '';
 
     // Initialize state
     this.state = initializeState();
@@ -47,7 +48,7 @@ class BibleApp {
     this.lastScrollPosition = 0;
     this.originalPassageHtml = null;
     this.scrollTimeout = null;
-    this.isLoading = false; // NEW: Prevent race conditions
+    this.isLoading = false; // Prevent race conditions
 
     this.init();
   }
@@ -57,6 +58,25 @@ class BibleApp {
       this.ui.init();
       await this.firebase.init();
       this.attachGlobalListeners();
+
+      // Check for API key
+      if (!this.API_KEY) {
+        this.ui.showToast('Please add your ESV API key in Settings');
+        if (this.ui.passageText) {
+          this.ui.passageText.innerHTML = `
+            <div class="error" style="text-align: center; padding: 40px;">
+              <h2>ESV API Key Required</h2>
+              <p>Please add your API key in Settings to load passages.</p>
+              <p style="font-size: 0.9rem; margin-top: 20px;">
+                Get a free key at <a href="https://api.esv.org" target="_blank" style="color: var(--accent);">api.esv.org</a>
+              </p>
+            </div>
+          `;
+        }
+      } else {
+        // Load initial passage if API key exists
+        await this.loadPassage(this.state.currentBook, this.state.currentChapter);
+      }
 
       // Mark DOM as ready so CSS shows content
       document.body.classList.add('js-ready');
@@ -109,7 +129,7 @@ class BibleApp {
    * @param {boolean} restoreScroll - Whether to restore scroll position
    */
   async loadPassage(book, chapter, restoreScroll = false) {
-    // FIXED: Prevent race conditions
+    // Prevent race conditions
     if (this.isLoading) {
       console.warn('Already loading a passage, please wait');
       return;
@@ -119,7 +139,6 @@ class BibleApp {
     const allBooks = getAllBooks();
     if (!book || !allBooks.includes(book)) {
       console.error(`Invalid book: "${book}"`);
-      // FIXED: Add null check
       if (this.ui && this.ui.showToast) {
         this.ui.showToast(`Invalid book: ${book}`);
       }
@@ -128,7 +147,6 @@ class BibleApp {
 
     if (!Number.isInteger(chapter) || chapter < 1) {
       console.error(`Invalid chapter: ${chapter}`);
-      // FIXED: Add null check
       if (this.ui && this.ui.showToast) {
         this.ui.showToast('Invalid chapter');
       }
@@ -138,7 +156,6 @@ class BibleApp {
     const maxChapter = getChapterCount(book);
     if (chapter > maxChapter) {
       console.error(`Chapter ${chapter} does not exist in ${book}`);
-      // FIXED: Add null check
       if (this.ui && this.ui.showToast) {
         this.ui.showToast(
           `${book} only has ${maxChapter} chapter${maxChapter === 1 ? '' : 's'}`
@@ -148,7 +165,7 @@ class BibleApp {
     }
 
     try {
-      // FIXED: Set loading flag
+      // Set loading flag
       this.isLoading = true;
 
       // Save position before loading new passage
@@ -199,7 +216,6 @@ class BibleApp {
       }
     } catch (error) {
       console.error('Error loading passage:', error);
-      // FIXED: Add null check
       if (this.ui && this.ui.showToast) {
         this.ui.showToast(
           `Error loading passage: ${error.message || 'Unknown error'}`
@@ -209,7 +225,7 @@ class BibleApp {
         this.ui.passageText.innerHTML = `<div class="error">Error loading passage. Please try again.</div>`;
       }
     } finally {
-      // FIXED: Clear loading flag
+      // Clear loading flag
       this.isLoading = false;
     }
   }
@@ -224,6 +240,99 @@ class BibleApp {
 
     this.ui.currentBookSpan.textContent = this.state.currentBook;
     this.ui.currentChapterSpan.textContent = this.state.currentChapter;
+  }
+
+  // ==============================
+  // Settings Management
+  // ==============================
+
+  /**
+   * Set API key
+   */
+  setApiKey(key) {
+    this.API_KEY = key;
+    localStorage.setItem('esvApiKey', key);
+    
+    // Reload current passage with new API key
+    if (this.state.currentBook && this.state.currentChapter) {
+      this.loadPassage(this.state.currentBook, this.state.currentChapter);
+    }
+  }
+
+  /**
+   * Toggle a setting
+   */
+  toggleSetting(setting) {
+    if (this.state[setting] !== undefined) {
+      this.state[setting] = !this.state[setting];
+
+      if (this.ui) {
+        this.ui.applySettings();
+      }
+
+      if (this.firebase) {
+        this.firebase.saveSettings();
+      }
+
+      // Reload passage if heading or footnote settings changed
+      if (['showHeadings', 'showFootnotes', 'showCrossReferences'].includes(setting)) {
+        this.loadPassage(this.state.currentBook, this.state.currentChapter, true);
+      }
+    }
+  }
+
+  /**
+   * Toggle verse-by-verse mode
+   */
+  toggleVerseByVerse() {
+    this.state.verseByVerse = !this.state.verseByVerse;
+
+    if (this.ui) {
+      this.ui.applySettings();
+    }
+
+    if (this.firebase) {
+      this.firebase.saveSettings();
+    }
+  }
+
+  /**
+   * Update font size
+   */
+  updateFontSize(size) {
+    const fontSize = parseInt(size, 10);
+    if (fontSize >= 12 && fontSize <= 32) {
+      this.state.fontSize = fontSize;
+
+      if (this.ui) {
+        this.ui.applySettings();
+      }
+
+      if (this.firebase) {
+        this.firebase.saveSettings();
+      }
+    }
+  }
+
+  // ==============================
+  // User Authentication
+  // ==============================
+
+  /**
+   * Handle user button click
+   */
+  handleUserButtonClick() {
+    if (this.firebase && this.firebase.currentUser) {
+      // User is logged in, show user menu
+      if (this.ui && this.ui.userMenuModal) {
+        this.ui.openModal(this.ui.userMenuModal);
+      }
+    } else {
+      // User is not logged in, show login modal
+      if (this.ui && this.ui.loginModal) {
+        this.ui.openModal(this.ui.loginModal);
+      }
+    }
   }
 
   // ==============================
@@ -294,6 +403,9 @@ class BibleApp {
     }
     if (this.ui) {
       this.ui.destroy();
+    }
+    if (this.firebase) {
+      this.firebase.destroy();
     }
   }
 }

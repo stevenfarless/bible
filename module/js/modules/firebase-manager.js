@@ -58,6 +58,7 @@ export class FirebaseManager {
           console.log('User signed in:', user.email);
           await this.loadSettings();
           this.setupSettingsSync();
+
           if (this.app.ui) {
             this.app.ui.updateAuthUI(true);
           }
@@ -65,6 +66,7 @@ export class FirebaseManager {
           console.log('User signed out');
           this.loadLocalSettings();
           this.removeSettingsSync();
+
           if (this.app.ui) {
             this.app.ui.updateAuthUI(false);
           }
@@ -77,6 +79,10 @@ export class FirebaseManager {
       });
     });
   }
+
+  // ================================
+  // Authentication Methods
+  // ================================
 
   /**
    * Sign in with email and password
@@ -140,6 +146,163 @@ export class FirebaseManager {
       throw new Error('Failed to sign out. Please try again.');
     }
   }
+
+  // ================================
+  // Form Handler Methods
+  // ================================
+
+  /**
+   * Handle login form submission
+   */
+  async handleLogin() {
+    const emailInput = document.getElementById('loginEmail');
+    const passwordInput = document.getElementById('loginPassword');
+
+    if (!emailInput || !passwordInput) {
+      console.error('Login form inputs not found');
+      if (this.app.ui) {
+        this.app.ui.showToast('Login form error');
+      }
+      return;
+    }
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!email || !password) {
+      if (this.app.ui) {
+        this.app.ui.showToast('Please enter email and password');
+      }
+      return;
+    }
+
+    try {
+      if (this.app.ui) {
+        this.app.ui.showToast('Signing in...');
+      }
+
+      await this.signIn(email, password);
+
+      if (this.app.ui) {
+        this.app.ui.showToast('Signed in successfully!');
+        this.app.ui.closeModal(this.app.ui.loginModal);
+      }
+
+      // Clear form
+      emailInput.value = '';
+      passwordInput.value = '';
+
+      // Reload passage to apply settings from Firebase
+      if (this.app.state.currentBook && this.app.state.currentChapter) {
+        await this.app.loadPassage(
+          this.app.state.currentBook,
+          this.app.state.currentChapter
+        );
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+      if (this.app.ui) {
+        this.app.ui.showToast(error.message || 'Login failed');
+      }
+    }
+  }
+
+  /**
+   * Handle signup form submission
+   */
+  async handleSignup() {
+    const emailInput = document.getElementById('signupEmail');
+    const passwordInput = document.getElementById('signupPassword');
+    const confirmInput = document.getElementById('signupConfirm');
+
+    if (!emailInput || !passwordInput || !confirmInput) {
+      console.error('Signup form inputs not found');
+      if (this.app.ui) {
+        this.app.ui.showToast('Signup form error');
+      }
+      return;
+    }
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    const confirm = confirmInput.value;
+
+    if (!email || !password || !confirm) {
+      if (this.app.ui) {
+        this.app.ui.showToast('Please fill in all fields');
+      }
+      return;
+    }
+
+    // Validate password match
+    if (password !== confirm) {
+      if (this.app.ui) {
+        this.app.ui.showToast('Passwords do not match');
+      }
+      return;
+    }
+
+    try {
+      if (this.app.ui) {
+        this.app.ui.showToast('Creating account...');
+      }
+
+      await this.signUp(email, password);
+
+      if (this.app.ui) {
+        this.app.ui.showToast('Account created successfully!');
+        this.app.ui.closeModal(this.app.ui.signupModal);
+      }
+
+      // Clear form
+      emailInput.value = '';
+      passwordInput.value = '';
+      confirmInput.value = '';
+
+      // Save initial settings to Firebase
+      await this.saveSettings();
+
+      // Reload passage
+      if (this.app.state.currentBook && this.app.state.currentChapter) {
+        await this.app.loadPassage(
+          this.app.state.currentBook,
+          this.app.state.currentChapter
+        );
+      }
+    } catch (error) {
+      console.error('Signup failed:', error);
+      if (this.app.ui) {
+        this.app.ui.showToast(error.message || 'Signup failed');
+      }
+    }
+  }
+
+  /**
+   * Handle logout
+   */
+  async handleLogout() {
+    try {
+      if (this.app.ui) {
+        this.app.ui.showToast('Signing out...');
+      }
+
+      await this.signOut();
+
+      if (this.app.ui) {
+        this.app.ui.showToast('Signed out successfully');
+        this.app.ui.closeModal(this.app.ui.userMenuModal);
+      }
+    } catch (error) {
+      console.error('Logout failed:', error);
+      if (this.app.ui) {
+        this.app.ui.showToast(error.message || 'Logout failed');
+      }
+    }
+  }
+
+  // ================================
+  // Settings Management
+  // ================================
 
   /**
    * Load settings from Firebase
@@ -257,6 +420,10 @@ export class FirebaseManager {
     }
   }
 
+  // ================================
+  // Local Storage Methods
+  // ================================
+
   /**
    * Load settings from localStorage
    */
@@ -283,6 +450,10 @@ export class FirebaseManager {
       console.error('Error saving local settings:', error);
     }
   }
+
+  // ================================
+  // Private Helper Methods
+  // ================================
 
   /**
    * Gather current settings from app state
@@ -316,27 +487,35 @@ export class FirebaseManager {
     if (typeof settings.fontSize === 'number') {
       this.app.state.fontSize = settings.fontSize;
     }
+
     if (typeof settings.showVerseNumbers === 'boolean') {
       this.app.state.showVerseNumbers = settings.showVerseNumbers;
     }
+
     if (typeof settings.showHeadings === 'boolean') {
       this.app.state.showHeadings = settings.showHeadings;
     }
+
     if (typeof settings.showFootnotes === 'boolean') {
       this.app.state.showFootnotes = settings.showFootnotes;
     }
+
     if (typeof settings.showCrossReferences === 'boolean') {
       this.app.state.showCrossReferences = settings.showCrossReferences;
     }
+
     if (typeof settings.showRedLetters === 'boolean') {
       this.app.state.showRedLetters = settings.showRedLetters;
     }
+
     if (typeof settings.verseByVerse === 'boolean') {
       this.app.state.verseByVerse = settings.verseByVerse;
     }
+
     if (typeof settings.colorTheme === 'string') {
       this.app.state.colorTheme = settings.colorTheme;
     }
+
     if (typeof settings.lightMode === 'boolean') {
       this.app.state.lightMode = settings.lightMode;
     }
@@ -385,6 +564,7 @@ export class FirebaseManager {
     if (this.unsubscribeAuth) {
       this.unsubscribeAuth();
     }
+
     this.removeSettingsSync();
   }
 }

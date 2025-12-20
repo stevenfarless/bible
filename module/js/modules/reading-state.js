@@ -34,7 +34,7 @@ export function navigateChapter(app, direction) {
     return;
   }
 
-  // FIXED: Check if already loading to prevent race conditions
+  // Check if already loading to prevent race conditions
   if (app.isLoading) {
     console.warn('Navigation in progress, please wait');
     return;
@@ -45,7 +45,7 @@ export function navigateChapter(app, direction) {
   const currentChapter = app.state.currentChapter;
   const maxChapter = getChapterCount(app.state.currentBook);
 
-  // Validation - FIXED: Use strict equality
+  // Validation - strict equality
   if (currentBookIndex === -1) {
     console.error(`Book not found: ${app.state.currentBook}`);
     return;
