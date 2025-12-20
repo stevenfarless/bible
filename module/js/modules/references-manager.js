@@ -113,25 +113,36 @@ export class ReferencesManager {
         const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6');
         headings.forEach(h => h.remove());
         
-        // Get all footnote span elements (each footnote is in a span with class "footnote")
-        const footnoteSpans = tempDiv.querySelectorAll('span.footnote');
+        // Get the paragraph content and split by <br> tags
+        const paragraph = tempDiv.querySelector('p');
+        if (!paragraph) {
+            console.warn('No paragraph found in footnotes section');
+            this.showFootnoteModal('<p>Footnote content not available.</p>');
+            return;
+        }
+
+        // Split by <br> tags to get individual footnotes
+        const htmlContent = paragraph.innerHTML;
+        const footnoteEntries = htmlContent.split(/<br\s*\/?>/i).filter(entry => entry.trim());
         
-        console.log(`Found ${footnoteSpans.length} footnote entries`);
+        console.log(`Found ${footnoteEntries.length} footnote entries`);
 
         // The footnote number corresponds to the index (1-based)
         const footnoteIndex = footnoteNumber - 1;
-        if (footnoteIndex < 0 || footnoteIndex >= footnoteSpans.length) {
+        if (footnoteIndex < 0 || footnoteIndex >= footnoteEntries.length) {
             console.warn('Footnote index out of range:', footnoteIndex);
             this.showFootnoteModal('<p>Footnote content not available.</p>');
             return;
         }
 
-        // Get the specific footnote span
-        const footnoteSpan = footnoteSpans[footnoteIndex];
-        let footnoteContent = footnoteSpan.innerHTML;
+        // Get the specific footnote entry
+        let footnoteContent = footnoteEntries[footnoteIndex].trim();
 
-        // Remove the back-reference link (the [1], [2], etc. at the beginning)
-        footnoteContent = footnoteContent.replace(/<a[^>]*href="#fb[^"]*"[^>]*>.*?<\/a>/gi, '');
+        // Remove the back-reference link and footnote number span
+        footnoteContent = footnoteContent.replace(/<span[^>]*class="footnote"[^>]*>.*?<\/span>/gi, '');
+        
+        // Remove the verse reference span (e.g., "3:2")
+        footnoteContent = footnoteContent.replace(/<span[^>]*class="footnote-ref"[^>]*>.*?<\/span>/gi, '');
         
         // Clean up extra whitespace
         footnoteContent = footnoteContent.trim();
@@ -209,20 +220,27 @@ export class ReferencesManager {
         const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6');
         headings.forEach(h => h.remove());
         
-        // Get all cross-reference span elements
-        const crossrefSpans = tempDiv.querySelectorAll('span.footnote');
-
-        const crossrefIndex = crossrefNumber - 1;
-        if (crossrefIndex < 0 || crossrefIndex >= crossrefSpans.length) {
+        // Get the paragraph content and split by <br> tags
+        const paragraph = tempDiv.querySelector('p');
+        if (!paragraph) {
             this.showCrossRefModal('<p>Cross-reference content not available.</p>');
             return;
         }
 
-        const crossrefSpan = crossrefSpans[crossrefIndex];
-        let crossrefContent = crossrefSpan.innerHTML;
+        const htmlContent = paragraph.innerHTML;
+        const crossrefEntries = htmlContent.split(/<br\s*\/?>/i).filter(entry => entry.trim());
 
-        // Remove back-reference links
-        crossrefContent = crossrefContent.replace(/<a[^>]*href="#cb[^"]*"[^>]*>.*?<\/a>/gi, '');
+        const crossrefIndex = crossrefNumber - 1;
+        if (crossrefIndex < 0 || crossrefIndex >= crossrefEntries.length) {
+            this.showCrossRefModal('<p>Cross-reference content not available.</p>');
+            return;
+        }
+
+        let crossrefContent = crossrefEntries[crossrefIndex].trim();
+
+        // Remove back-reference links and verse references
+        crossrefContent = crossrefContent.replace(/<span[^>]*class="footnote"[^>]*>.*?<\/span>/gi, '');
+        crossrefContent = crossrefContent.replace(/<span[^>]*class="footnote-ref"[^>]*>.*?<\/span>/gi, '');
         
         crossrefContent = crossrefContent.trim();
 
