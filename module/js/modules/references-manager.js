@@ -146,8 +146,14 @@ export class ReferencesManager {
 
             footnoteContent = `<p>${label}${noteText}</p>`;
         } else {
-            // If no note element, wrap the content
-            footnoteContent = `<p>${footnoteContent}</p>`;
+            // Check if content already has block-level elements
+            const hasBlockElements = /<(p|div|h[1-6]|ul|ol|blockquote)\s*[^>]*>/i.test(footnoteContent);
+            
+            if (!hasBlockElements && footnoteContent.trim()) {
+                // Only wrap in <p> if there are no block-level elements
+                footnoteContent = `<p>${footnoteContent}</p>`;
+            }
+            // Otherwise, use the content as-is (it already has proper structure)
         }
 
         console.log('Final footnote content:', footnoteContent);
@@ -202,7 +208,10 @@ export class ReferencesManager {
         crossrefContent = crossrefContent.replace(/]*href="#cb[^"]*"[^>]*>.*?<\/a>/gi, '');
         crossrefContent = crossrefContent.replace(/<\/span>\s*/g, '');
 
-        if (!crossrefContent.trim().startsWith('<p')) {
+        // Check if content already has block-level elements
+        const hasBlockElements = /<(p|div|h[1-6]|ul|ol|blockquote)\s*[^>]*>/i.test(crossrefContent);
+        
+        if (!hasBlockElements && crossrefContent.trim()) {
             crossrefContent = `<p>${crossrefContent}</p>`;
         }
 
@@ -316,7 +325,7 @@ export class ReferencesManager {
         // Use DOMPurify if available (recommended)
         if (typeof DOMPurify !== 'undefined') {
             return DOMPurify.sanitize(html, {
-                ALLOWED_TAGS: ['p', 'span', 'br', 'strong', 'em', 'sup', 'sub', 'a', 'div', 'note', 'i', 'b'],
+                ALLOWED_TAGS: ['p', 'span', 'br', 'strong', 'em', 'sup', 'sub', 'a', 'div', 'note', 'i', 'b', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
                 ALLOWED_ATTR: ['class', 'id', 'href', 'title'],
             });
         }
