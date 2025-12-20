@@ -49,6 +49,7 @@ class BibleApp {
         this.originalPassageHtml = null;
         this.scrollTimeout = null;
         this.isLoading = false; // Prevent race conditions
+        this.currentVerseIndex = 0; // Track current verse for navigation
 
         this.init();
     }
@@ -217,6 +218,9 @@ class BibleApp {
                 this.references.makeFootnotesClickable();
             }
 
+            // Reset verse index when loading new chapter
+            this.currentVerseIndex = 0;
+
             // Restore scroll position if requested
             if (restoreScroll) {
                 setTimeout(() => {
@@ -245,6 +249,71 @@ class BibleApp {
      */
     navigateChapter(direction) {
         navigateChapter(this, direction);
+    }
+
+    /**
+     * Navigate to previous or next verse
+     * @param {number} direction - -1 for previous, 1 for next
+     */
+    navigateVerse(direction) {
+        if (!this.ui || !this.ui.passageText) {
+            return;
+        }
+
+        // Get all verse elements
+        const verseElements = this.ui.passageText.querySelectorAll('.verse-num, b.verse-num');
+        
+        if (!verseElements || verseElements.length === 0) {
+            return;
+        }
+
+        // Update index
+        this.currentVerseIndex += direction;
+
+        // Wrap around
+        if (this.currentVerseIndex < 0) {
+            this.currentVerseIndex = verseElements.length - 1;
+        } else if (this.currentVerseIndex >= verseElements.length) {
+            this.currentVerseIndex = 0;
+        }
+
+        // Get the target verse element
+        const targetVerse = verseElements[this.currentVerseIndex];
+        
+        if (targetVerse) {
+            // Scroll to verse with smooth behavior
+            targetVerse.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+
+            // Highlight the verse briefly
+            this.highlightVerse(targetVerse);
+        }
+    }
+
+    /**
+     * Highlight a verse temporarily
+     * @param {HTMLElement} verseElement - The verse element to highlight
+     */
+    highlightVerse(verseElement) {
+        // Find the parent paragraph or verse container
+        let container = verseElement.closest('p');
+        if (!container) {
+            container = verseElement.parentElement;
+        }
+
+        if (!container) {
+            return;
+        }
+
+        // Add highlight class
+        container.classList.add('verse-highlight');
+
+        // Remove highlight after 2 seconds
+        setTimeout(() => {
+            container.classList.remove('verse-highlight');
+        }, 2000);
     }
 
     /**
@@ -401,7 +470,7 @@ class BibleApp {
             return; // Don't handle navigation when modal is open
         }
 
-        // Arrow keys and vim keys for chapter navigation
+        // Left/Right and h/l for chapter navigation
         if (e.key === 'ArrowLeft' || e.key === 'h' || e.key === 'H') {
             e.preventDefault();
             this.navigateChapter(-1);
@@ -414,28 +483,16 @@ class BibleApp {
             return;
         }
 
-        // Arrow Up/j for previous chapter
+        // Up/Down and k/j for verse navigation
         if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') {
             e.preventDefault();
-            this.navigateChapter(-1);
+            this.navigateVerse(-1);
             return;
         }
 
-        // Arrow Down/j for next chapter
         if (e.key === 'ArrowDown' || e.key === 'j' || e.key === 'J') {
             e.preventDefault();
-            this.navigateChapter(1);
-            return;
-        }
-
-        // Page Up/Down for scrolling
-        if (e.key === 'PageUp') {
-            // Let browser handle default scroll
-            return;
-        }
-
-        if (e.key === 'PageDown') {
-            // Let browser handle default scroll
+            this.navigateVerse(1);
             return;
         }
     }
