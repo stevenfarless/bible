@@ -97,7 +97,6 @@ export class ReferencesManager {
             if (titleContent) {
                 const decodedContent = this.decodeHTMLEntities(titleContent);
                 const noteContent = this.extractNoteContent(decodedContent);
-                // SECURITY FIX: Sanitize before displaying
                 const sanitizedContent = this._sanitizeHtml(noteContent);
                 this.showFootnoteModal(sanitizedContent);
                 return;
@@ -106,30 +105,39 @@ export class ReferencesManager {
             return;
         }
 
-        // Get the HTML and remove the heading
-        let footnotesHTML = footnotesSection.innerHTML;
+        // Clone the section to avoid modifying the DOM
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = footnotesSection.innerHTML;
         
-        // Remove the "Footnotes" or "Notes" heading
-        footnotesHTML = footnotesHTML.replace(/<h[1-6][^>]*>\s*(Footnotes?|Notes?)\s*<\/h[1-6]>/gi, '');
+        // Remove all headings (h1-h6)
+        const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        headings.forEach(h => h.remove());
         
-        // Split the footnotes section by <p> tags
-        const footnoteEntries = footnotesHTML.split(/<p\s*[^>]*>/i).filter(Boolean);
-
-        console.log(`Found ${footnoteEntries.length} footnote entries`);
+        // Get all paragraph elements (each footnote is in a <p>)
+        const footnoteParagraphs = tempDiv.querySelectorAll('p');
+        
+        console.log(`Found ${footnoteParagraphs.length} footnote paragraphs`);
 
         // The footnote number corresponds to the index (1-based)
         const footnoteIndex = footnoteNumber - 1;
-        if (footnoteIndex < 0 || footnoteIndex >= footnoteEntries.length) {
+        if (footnoteIndex < 0 || footnoteIndex >= footnoteParagraphs.length) {
             console.warn('Footnote index out of range:', footnoteIndex);
             this.showFootnoteModal('<p>Footnote content not available.</p>');
             return;
         }
 
-        let footnoteContent = footnoteEntries[footnoteIndex].trim();
+        // Get the specific footnote paragraph
+        const footnoteParagraph = footnoteParagraphs[footnoteIndex];
+        let footnoteContent = footnoteParagraph.innerHTML;
 
-        // Remove the back-reference link and empty spans
-        footnoteContent = footnoteContent.replace(/]*href="#fb[^"]*"[^>]*>.*?<\/a>/gi, '');
-        footnoteContent = footnoteContent.replace(/<\/span>\s*/g, '');
+        // Remove the back-reference link (the [1], [2], etc. at the beginning)
+        footnoteContent = footnoteContent.replace(/]*href="#fb[^"]*"[^>]*>.*?<\/a><\/span>/gi, '');
+        
+        // Remove the verse reference span (e.g., "3:2")
+        footnoteContent = footnoteContent.replace(/<span[^>]*class="footnote-ref"[^>]*>.*?<\/span>/gi, '');
+        
+        // Clean up extra whitespace
+        footnoteContent = footnoteContent.trim();
 
         // Parse the note to add styling
         const temp = document.createElement('div');
@@ -147,23 +155,19 @@ export class ReferencesManager {
                 label = '<strong>Alternative Reading:</strong> ';
             } else if (noteClass === 'explanation') {
                 label = '<strong>Explanation:</strong> ';
+            } else if (noteClass === 'variant') {
+                label = '<strong>Textual Variant:</strong> ';
             }
 
             footnoteContent = `<p>${label}${noteText}</p>`;
-        } else {
-            // Check if content already has block-level elements
-            const hasBlockElements = /<(p|div|h[1-6]|ul|ol|blockquote)\s*[^>]*>/i.test(footnoteContent);
-            
-            if (!hasBlockElements && footnoteContent.trim()) {
-                // Only wrap in <p> if there are no block-level elements
-                footnoteContent = `<p>${footnoteContent}</p>`;
-            }
-            // Otherwise, use the content as-is (it already has proper structure)
+        } else if (footnoteContent.trim()) {
+            // Wrap in paragraph if not empty
+            footnoteContent = `<p>${footnoteContent}</p>`;
         }
 
         console.log('Final footnote content:', footnoteContent);
 
-        // SECURITY FIX: Sanitize before displaying
+        // Sanitize before displaying
         const sanitizedContent = this._sanitizeHtml(footnoteContent);
         this.showFootnoteModal(sanitizedContent);
     }
@@ -200,32 +204,39 @@ export class ReferencesManager {
             return;
         }
 
-        // Get the HTML and remove the heading
-        let crossrefsHTML = crossrefsSection.innerHTML;
+        // Clone the section to avoid modifying the DOM
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = crossrefsSection.innerHTML;
         
-        // Remove the "Cross-References" or similar heading
-        crossrefsHTML = crossrefsHTML.replace(/<h[1-6][^>]*>\s*(Cross[- ]?References?)\s*<\/h[1-6]>/gi, '');
+        // Remove all headings
+        const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        headings.forEach(h => h.remove());
         
-        const crossrefEntries = crossrefsHTML.split(/<p\s*[^>]*>/i).filter(Boolean);
+        // Get all paragraph elements
+        const crossrefParagraphs = tempDiv.querySelectorAll('p');
 
         const crossrefIndex = crossrefNumber - 1;
-        if (crossrefIndex < 0 || crossrefIndex >= crossrefEntries.length) {
+        if (crossrefIndex < 0 || crossrefIndex >= crossrefParagraphs.length) {
             this.showCrossRefModal('<p>Cross-reference content not available.</p>');
             return;
         }
 
-        let crossrefContent = crossrefEntries[crossrefIndex].trim();
-        crossrefContent = crossrefContent.replace(/]*href="#cb[^"]*"[^>]*>.*?<\/a>/gi, '');
-        crossrefContent = crossrefContent.replace(/<\/span>\s*/g, '');
+        const crossrefParagraph = crossrefParagraphs[crossrefIndex];
+        let crossrefContent = crossrefParagraph.innerHTML;
 
-        // Check if content already has block-level elements
-        const hasBlockElements = /<(p|div|h[1-6]|ul|ol|blockquote)\s*[^>]*>/i.test(crossrefContent);
+        // Remove back-reference links
+        crossrefContent = crossrefContent.replace(/]*href="#cb[^"]*"[^>]*>.*?<\/a><\/span>/gi, '');
         
-        if (!hasBlockElements && crossrefContent.trim()) {
+        // Remove verse reference
+        crossrefContent = crossrefContent.replace(/<span[^>]*class="footnote-ref"[^>]*>.*?<\/span>/gi, '');
+        
+        crossrefContent = crossrefContent.trim();
+
+        if (crossrefContent.trim()) {
             crossrefContent = `<p>${crossrefContent}</p>`;
         }
 
-        // SECURITY FIX: Sanitize before displaying
+        // Sanitize before displaying
         const sanitizedContent = this._sanitizeHtml(crossrefContent);
         this.showCrossRefModal(sanitizedContent);
     }
@@ -335,8 +346,8 @@ export class ReferencesManager {
         // Use DOMPurify if available (recommended)
         if (typeof DOMPurify !== 'undefined') {
             return DOMPurify.sanitize(html, {
-                ALLOWED_TAGS: ['p', 'span', 'br', 'strong', 'em', 'sup', 'sub', 'a', 'div', 'note', 'i', 'b', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
-                ALLOWED_ATTR: ['class', 'id', 'href', 'title'],
+                ALLOWED_TAGS: ['p', 'span', 'br', 'strong', 'em', 'sup', 'sub', 'a', 'div', 'note', 'i', 'b'],
+                ALLOWED_ATTR: ['class', 'id', 'href', 'title', 'sub-class'],
             });
         }
 
