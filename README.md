@@ -123,6 +123,3 @@ No authentication or user data is currently stored server-side. Future steps to 
 - Add a SECURITY policy (responsible disclosure instructions)
 - Enable Dependabot and basic code scanning
 
-## License
-
-License information is not yet defined. Adding a clear open-source license (such as MIT) is recommended so others know how they can use and contribute to the project.
