@@ -1,1 +1,627 @@
-[]
+[
+  {
+    "ch": 1,
+    "v": 1,
+    "type": "heading",
+    "text": "Paul Greets the Corinthians"
+  },
+  {
+    "ch": 1,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 3,
+    "type": "heading",
+    "text": "The God of All Comfort"
+  },
+  {
+    "ch": 1,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 12,
+    "type": "heading",
+    "text": "Paul’s Change of Plans"
+  },
+  {
+    "ch": 1,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 21,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 1,
+    "type": "heading",
+    "text": "Reaffirm Your Love"
+  },
+  {
+    "ch": 2,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 12,
+    "type": "heading",
+    "text": "Triumph in Christ"
+  },
+  {
+    "ch": 2,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 1,
+    "type": "heading",
+    "text": "Ministers of a New Covenant"
+  },
+  {
+    "ch": 3,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 7,
+    "type": "heading",
+    "text": "The Glory of the New Covenant"
+  },
+  {
+    "ch": 3,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 1,
+    "type": "heading",
+    "text": "The Light of the Gospel"
+  },
+  {
+    "ch": 4,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 7,
+    "type": "heading",
+    "text": "Treasure in Jars of Clay"
+  },
+  {
+    "ch": 4,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 1,
+    "type": "heading",
+    "text": "Our Eternal Dwelling"
+  },
+  {
+    "ch": 5,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 11,
+    "type": "heading",
+    "text": "Ambassadors for Christ"
+  },
+  {
+    "ch": 5,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 20,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 1,
+    "type": "heading",
+    "text": "Paul’s Hardships and God’s Grace"
+  },
+  {
+    "ch": 6,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 14,
+    "type": "heading",
+    "text": "Do Not Be Unequally Yoked"
+  },
+  {
+    "ch": 6,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 1,
+    "type": "heading",
+    "text": "Paul’s Joy in the Corinthians"
+  },
+  {
+    "ch": 7,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 1,
+    "type": "heading",
+    "text": "Generosity Commended"
+  },
+  {
+    "ch": 8,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 16,
+    "type": "heading",
+    "text": "Titus Commended"
+  },
+  {
+    "ch": 8,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 20,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 22,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 1,
+    "type": "heading",
+    "text": "God Loves a Cheerful Giver"
+  },
+  {
+    "ch": 9,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 1,
+    "type": "heading",
+    "text": "Paul’s Apostolic Authority"
+  },
+  {
+    "ch": 10,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 1,
+    "type": "heading",
+    "text": "Paul and the False Apostles"
+  },
+  {
+    "ch": 11,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 16,
+    "type": "heading",
+    "text": "Paul’s Suffering and Service"
+  },
+  {
+    "ch": 11,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 22,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 26,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 28,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 30,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 1,
+    "type": "heading",
+    "text": "Paul’s Revelation"
+  },
+  {
+    "ch": 12,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 5,
+    "type": "heading",
+    "text": "Paul’s Thorn and God’s Grace"
+  },
+  {
+    "ch": 12,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 11,
+    "type": "heading",
+    "text": "Paul’s Concern for the Corinthians"
+  },
+  {
+    "ch": 12,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 19,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 1,
+    "type": "heading",
+    "text": "Examine Yourselves"
+  },
+  {
+    "ch": 13,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 11,
+    "type": "heading",
+    "text": "Benediction and Farewell"
+  },
+  {
+    "ch": 13,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 14,
+    "type": "para_break"
+  }
+]

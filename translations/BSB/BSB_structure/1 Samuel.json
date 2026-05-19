@@ -1,1 +1,3092 @@
-[]
+[
+  {
+    "ch": 1,
+    "v": 1,
+    "type": "heading",
+    "text": "Elkanah and His Wives"
+  },
+  {
+    "ch": 1,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 9,
+    "type": "heading",
+    "text": "Hannah Prays for a Son"
+  },
+  {
+    "ch": 1,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 19,
+    "type": "heading",
+    "text": "The Birth of Samuel"
+  },
+  {
+    "ch": 1,
+    "v": 19,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 20,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 21,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 23,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 24,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 26,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 1,
+    "type": "heading",
+    "text": "Hannah’s Prayer of Thanksgiving"
+  },
+  {
+    "ch": 2,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 12,
+    "type": "heading",
+    "text": "Eli’s Wicked Sons"
+  },
+  {
+    "ch": 2,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 21,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 22,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 23,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 26,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 27,
+    "type": "heading",
+    "text": "A Prophecy against the House of Eli"
+  },
+  {
+    "ch": 2,
+    "v": 27,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 29,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 30,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 31,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 34,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 35,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 36,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 1,
+    "type": "heading",
+    "text": "The LORD Calls Samuel"
+  },
+  {
+    "ch": 3,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 15,
+    "type": "heading",
+    "text": "Samuel Shares the Vision"
+  },
+  {
+    "ch": 3,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 19,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 20,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 1,
+    "type": "heading",
+    "text": "The Philistines Capture the Ark"
+  },
+  {
+    "ch": 4,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 12,
+    "type": "heading",
+    "text": "The Death of Eli"
+  },
+  {
+    "ch": 4,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 19,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 20,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 21,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 22,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 1,
+    "type": "heading",
+    "text": "The Ark Afflicts the Philistines"
+  },
+  {
+    "ch": 5,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 1,
+    "type": "heading",
+    "text": "The Ark Returned to Israel"
+  },
+  {
+    "ch": 6,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 19,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 20,
+    "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 21,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 1,
+    "type": "heading",
+    "text": "Samuel Subdues the Philistines"
+  },
+  {
+    "ch": 7,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 1,
+    "type": "heading",
+    "text": "Israel Demands a King"
+  },
+  {
+    "ch": 8,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 10,
+    "type": "heading",
+    "text": "Samuel’s Warning"
+  },
+  {
+    "ch": 8,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 19,
+    "type": "heading",
+    "text": "God Grants the Request"
+  },
+  {
+    "ch": 8,
+    "v": 19,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 21,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 22,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 1,
+    "type": "heading",
+    "text": "Saul Chosen as King"
+  },
+  {
+    "ch": 9,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 19,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 21,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 22,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 24,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 25,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 26,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 27,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 1,
+    "type": "heading",
+    "text": "Samuel Anoints Saul"
+  },
+  {
+    "ch": 10,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 9,
+    "type": "heading",
+    "text": "Samuel’s Signs Fulfilled"
+  },
+  {
+    "ch": 10,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 17,
+    "type": "heading",
+    "text": "Saul Proclaimed King"
+  },
+  {
+    "ch": 10,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 19,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 20,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 23,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 25,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 26,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 27,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 1,
+    "type": "heading",
+    "text": "Saul Defeats the Ammonites"
+  },
+  {
+    "ch": 11,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 12,
+    "type": "heading",
+    "text": "Saul Confirmed as King"
+  },
+  {
+    "ch": 11,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 1,
+    "type": "heading",
+    "text": "Samuel’s Farewell Address"
+  },
+  {
+    "ch": 12,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 19,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 20,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 23,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 24,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 1,
+    "type": "heading",
+    "text": "War with the Philistines"
+  },
+  {
+    "ch": 13,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 8,
+    "type": "heading",
+    "text": "Saul’s Unlawful Sacrifice"
+  },
+  {
+    "ch": 13,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 16,
+    "type": "heading",
+    "text": "Israel without Weapons"
+  },
+  {
+    "ch": 13,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 19,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 22,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 23,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 1,
+    "type": "heading",
+    "text": "Jonathan’s Victory over the Philistines"
+  },
+  {
+    "ch": 14,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 20,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 23,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 24,
+    "type": "heading",
+    "text": "Jonathan Eats the Honey"
+  },
+  {
+    "ch": 14,
+    "v": 24,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 25,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 27,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 29,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 31,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 33,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 34,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 35,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 36,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 37,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 37,
+    "type": "heading",
+    "text": "The People Save Jonathan"
+  },
+  {
+    "ch": 14,
+    "v": 37,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 38,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 40,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 41,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 42,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 43,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 44,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 45,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 46,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 47,
+    "type": "heading",
+    "text": "Saul’s Victories"
+  },
+  {
+    "ch": 14,
+    "v": 47,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 49,
+    "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 52,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 1,
+    "type": "heading",
+    "text": "Saul’s Disobedience"
+  },
+  {
+    "ch": 15,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 10,
+    "type": "heading",
+    "text": "Samuel Denounces Saul"
+  },
+  {
+    "ch": 15,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 20,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 22,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 23,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 24,
+    "type": "heading",
+    "text": "Saul’s Confession"
+  },
+  {
+    "ch": 15,
+    "v": 24,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 26,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 27,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 30,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 31,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 32,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 33,
+    "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 34,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 1,
+    "type": "heading",
+    "text": "Samuel Anoints David"
+  },
+  {
+    "ch": 16,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 14,
+    "type": "heading",
+    "text": "David Serves Saul"
+  },
+  {
+    "ch": 16,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 19,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 20,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 22,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 1,
+    "type": "heading",
+    "text": "Goliath’s Challenge"
+  },
+  {
+    "ch": 17,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 12,
+    "type": "heading",
+    "text": "David Accepts the Challenge"
+  },
+  {
+    "ch": 17,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 20,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 22,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 24,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 25,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 26,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 27,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 28,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 29,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 31,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 32,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 33,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 34,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 37,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 38,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 38,
+    "type": "heading",
+    "text": "David Slays Goliath"
+  },
+  {
+    "ch": 17,
+    "v": 38,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 40,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 41,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 45,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 48,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 50,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 52,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 53,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 55,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 56,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 57,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 58,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 1,
+    "type": "heading",
+    "text": "Jonathan Befriends David"
+  },
+  {
+    "ch": 18,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 5,
+    "type": "heading",
+    "text": "Saul Envies David"
+  },
+  {
+    "ch": 18,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 17,
+    "type": "heading",
+    "text": "David Marries Michal"
+  },
+  {
+    "ch": 18,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 20,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 22,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 23,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 24,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 25,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 26,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 28,
+    "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 30,
+    "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 1,
+    "type": "heading",
+    "text": "Saul Tries to Kill David"
+  },
+  {
+    "ch": 19,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 19,
+    "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 21,
+    "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 22,
+    "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 23,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 1,
+    "type": "heading",
+    "text": "Jonathan Helps David"
+  },
+  {
+    "ch": 20,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 10,
+    "type": "heading",
+    "text": "Jonathan and David Renew Their Covenant"
+  },
+  {
+    "ch": 20,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 24,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 27,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 28,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 30,
+    "type": "heading",
+    "text": "Saul Seeks to Kill Jonathan"
+  },
+  {
+    "ch": 20,
+    "v": 30,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 32,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 33,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 35,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 37,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 39,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 41,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 42,
+    "type": "para_break"
+  },
+  {
+    "ch": 21,
+    "v": 1,
+    "type": "heading",
+    "text": "David Takes the Consecrated Bread"
+  },
+  {
+    "ch": 21,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 21,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 21,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 21,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 21,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 21,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 21,
+    "v": 8,
+    "type": "heading",
+    "text": "David Flees to Gath"
+  },
+  {
+    "ch": 21,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 21,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 21,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 21,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 21,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 22,
+    "v": 1,
+    "type": "heading",
+    "text": "David Flees to Adullam and Mizpeh"
+  },
+  {
+    "ch": 22,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 22,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 22,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 22,
+    "v": 6,
+    "type": "heading",
+    "text": "Saul Slays the Priests of Nob"
+  },
+  {
+    "ch": 22,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 22,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 22,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 22,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 22,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 22,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 22,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 22,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 22,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 22,
+    "v": 19,
+    "type": "para_break"
+  },
+  {
+    "ch": 22,
+    "v": 20,
+    "type": "para_break"
+  },
+  {
+    "ch": 22,
+    "v": 22,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 1,
+    "type": "heading",
+    "text": "David Delivers Keilah"
+  },
+  {
+    "ch": 23,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 7,
+    "type": "heading",
+    "text": "Saul Pursues David"
+  },
+  {
+    "ch": 23,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 19,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 21,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 24,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 26,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 27,
+    "type": "para_break"
+  },
+  {
+    "ch": 24,
+    "v": 1,
+    "type": "heading",
+    "text": "David Spares Saul"
+  },
+  {
+    "ch": 24,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 24,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 24,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 24,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 24,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 24,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 24,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 24,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 24,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 24,
+    "v": 16,
+    "type": "heading",
+    "text": "David’s Oath to Saul"
+  },
+  {
+    "ch": 24,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 24,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 24,
+    "v": 20,
+    "type": "para_break"
+  },
+  {
+    "ch": 24,
+    "v": 22,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 1,
+    "type": "heading",
+    "text": "The Death of Samuel"
+  },
+  {
+    "ch": 25,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 2,
+    "type": "heading",
+    "text": "David, Nabal, and Abigail"
+  },
+  {
+    "ch": 25,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 18,
+    "type": "heading",
+    "text": "Abigail Intercedes for Nabal"
+  },
+  {
+    "ch": 25,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 20,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 21,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 23,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 26,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 27,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 29,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 30,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 32,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 35,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 36,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 37,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 39,
+    "type": "heading",
+    "text": "David Marries Abigail"
+  },
+  {
+    "ch": 25,
+    "v": 39,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 40,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 41,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 42,
+    "type": "para_break"
+  },
+  {
+    "ch": 25,
+    "v": 43,
+    "type": "para_break"
+  },
+  {
+    "ch": 26,
+    "v": 1,
+    "type": "heading",
+    "text": "David Again Spares Saul"
+  },
+  {
+    "ch": 26,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 26,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 26,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 26,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 26,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 26,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 26,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 26,
+    "v": 13,
+    "type": "heading",
+    "text": "David Reproves Abner"
+  },
+  {
+    "ch": 26,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 26,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 26,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 26,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 26,
+    "v": 21,
+    "type": "heading",
+    "text": "Saul Acknowledges His Sin"
+  },
+  {
+    "ch": 26,
+    "v": 21,
+    "type": "para_break"
+  },
+  {
+    "ch": 26,
+    "v": 22,
+    "type": "para_break"
+  },
+  {
+    "ch": 26,
+    "v": 25,
+    "type": "para_break"
+  },
+  {
+    "ch": 27,
+    "v": 1,
+    "type": "heading",
+    "text": "David and the Philistines"
+  },
+  {
+    "ch": 27,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 27,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 27,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 27,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 27,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 27,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 27,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 27,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 1,
+    "type": "heading",
+    "text": "The Philistines Gather against Israel"
+  },
+  {
+    "ch": 28,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 7,
+    "type": "heading",
+    "text": "Saul and the Medium of Endor"
+  },
+  {
+    "ch": 28,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 20,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 21,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 23,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 24,
+    "type": "para_break"
+  },
+  {
+    "ch": 29,
+    "v": 1,
+    "type": "heading",
+    "text": "The Philistines Reject David"
+  },
+  {
+    "ch": 29,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 29,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 29,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 29,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 29,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 29,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 29,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 30,
+    "v": 1,
+    "type": "heading",
+    "text": "The Amalekites Raid Ziklag"
+  },
+  {
+    "ch": 30,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 30,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 30,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 30,
+    "v": 7,
+    "type": "heading",
+    "text": "David Destroys the Amalekites"
+  },
+  {
+    "ch": 30,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 30,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 30,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 30,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 30,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 30,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 30,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 30,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 30,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 30,
+    "v": 21,
+    "type": "heading",
+    "text": "The Spoils Are Divided"
+  },
+  {
+    "ch": 30,
+    "v": 21,
+    "type": "para_break"
+  },
+  {
+    "ch": 30,
+    "v": 23,
+    "type": "para_break"
+  },
+  {
+    "ch": 30,
+    "v": 25,
+    "type": "para_break"
+  },
+  {
+    "ch": 30,
+    "v": 26,
+    "type": "para_break"
+  },
+  {
+    "ch": 31,
+    "v": 1,
+    "type": "heading",
+    "text": "Saul’s Overthrow and Death"
+  },
+  {
+    "ch": 31,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 31,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 31,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 31,
+    "v": 5,
+    "type": "para_break"
+  },
+  {
+    "ch": 31,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 31,
+    "v": 7,
+    "type": "heading",
+    "text": "The Philistines Possess the Towns"
+  },
+  {
+    "ch": 31,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 31,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 31,
+    "v": 11,
+    "type": "heading",
+    "text": "Jabesh-gilead’s Tribute to Saul"
+  },
+  {
+    "ch": 31,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 31,
+    "v": 13,
+    "type": "para_break"
+  }
+]
