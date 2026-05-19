@@ -3,6 +3,7 @@
 // ====================
 
 import { BibleApi, loadTranslationIndex } from './bible-api.js';
+import { loadStructure, eventsForChapter } from './bsb-structure.js';
 import {
     initializeState,
     navigateChapter as navChapter,
@@ -189,8 +190,6 @@ class BibleApp {
     // ================================
 
     async init() {
-        // Load the translation index before anything else so the selector
-        // is populated and the copyright map is ready when applySettings() runs.
         await this._loadTranslationRegistry();
 
         cacheElements(this);
@@ -238,9 +237,6 @@ class BibleApp {
         });
     }
 
-    // Fetches translations/index.json, builds the copyright map, and populates
-    // the translation <select>. Safe to call before cacheElements() because it
-    // queries the DOM directly rather than relying on cached references.
     async _loadTranslationRegistry() {
         const translations = await loadTranslationIndex();
 
@@ -592,7 +588,23 @@ class BibleApp {
         const reference = `${book} ${chapter}`;
         this.passageText.innerHTML = '<p class="loading">Loading passage...</p>';
 
-        const data = await this.bibleApi.fetchPassage(reference);
+        // Load BSB structure scaffold when the active translation is BSB.
+        // For all other translations scaffoldEvents stays empty and nothing changes.
+        let scaffoldEvents = [];
+        if (this.state.translation === 'BSB') {
+            try {
+                const allEvents = await loadStructure(book);
+                scaffoldEvents = eventsForChapter(allEvents, chapter);
+            } catch (err) {
+                console.warn('loadPassage: BSB structure scaffold unavailable', err);
+            }
+        }
+
+        const data = await this.bibleApi.fetchPassage(
+            reference,
+            scaffoldEvents,
+            this.state.showHeadings !== false
+        );
 
         if (!data) {
             this.chromeSuspend = false;
@@ -1280,6 +1292,12 @@ class BibleApp {
             await this.database.ref(`users/${this.currentUser.uid}/settings/${setting}`).set(toggleElement.checked);
         } else {
             localStorage.setItem(setting, String(toggleElement.checked));
+        }
+
+        // Re-render the current passage so heading visibility updates immediately.
+        if (setting === 'showHeadings') {
+            await this.loadPassage(this.state.currentBook, this.state.currentChapter);
+            return;
         }
 
         this.applySettings();
