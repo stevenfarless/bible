@@ -28,9 +28,9 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Download BSB USFM zip from berean.bible
+      - name: Download BSB USFM zip
         run: |
-          curl -L "https://berean.bible/downloads/BSB-USFM.zip" -o /tmp/BSB-USFM.zip
+          curl -L "https://bereanbible.com/bsb_usfm.zip" -o /tmp/BSB-USFM.zip
           echo "Downloaded $(wc -c < /tmp/BSB-USFM.zip) bytes"
           unzip -q /tmp/BSB-USFM.zip -d /tmp/BSB-USFM
           echo "Extracted contents:"
@@ -38,9 +38,6 @@ jobs:
 
       - name: Run build-structure.js
         run: |
-          USFM_DIR=$(find /tmp/BSB-USFM -maxdepth 2 -type d | head -5)
-          echo "Candidate dirs: $USFM_DIR"
-          # Use the directory that actually contains .usfm files
           USFM_DIR=$(find /tmp/BSB-USFM -maxdepth 2 -name '*.usfm' | head -1 | xargs dirname)
           echo "Using USFM dir: $USFM_DIR"
           node scripts/build-structure.js --usfm-dir "$USFM_DIR"
