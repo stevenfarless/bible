@@ -29,26 +29,20 @@ jobs:
         run: |
           RAW_INPUT="${{ github.event.inputs.source_path }}"
 
-          # Normalize: strip full GitHub URL prefix so all formats become a bare path
-          # https://github.com/owner/repo/blob/branch/path  ->  owner/repo/blob/branch/path
-          # https://github.com/owner/repo/path              ->  owner/repo/path
           INPUT=$(echo "$RAW_INPUT" | sed 's|https\?://github\.com/||')
 
           if echo "$INPUT" | grep -q ' at .* · '; then
-            # Browser UI format: "path/to/file.json at main · owner/repo"
             FILE_PATH=$(echo "$INPUT" | sed 's/ at .*//')
             OWNER_REPO=$(echo "$INPUT" | sed 's/.* · //')
             BRANCH=$(echo "$INPUT" | sed 's/.* at //;s/ · .*//')
             RAW_URL="https://raw.githubusercontent.com/${OWNER_REPO}/${BRANCH}/${FILE_PATH}"
           elif echo "$INPUT" | grep -q '^[^/]*/[^/]*/blob/'; then
-            # owner/repo/blob/branch/path format
             OWNER=$(echo "$INPUT" | cut -d/ -f1)
             REPO=$(echo "$INPUT"   | cut -d/ -f2)
             BRANCH=$(echo "$INPUT" | cut -d/ -f4)
             FILE_PATH=$(echo "$INPUT" | cut -d/ -f5-)
             RAW_URL="https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${FILE_PATH}"
           else
-            # Plain owner/repo/path — assume main branch
             OWNER=$(echo "$INPUT"    | cut -d/ -f1)
             REPO=$(echo "$INPUT"     | cut -d/ -f2)
             FILE_PATH=$(echo "$INPUT" | cut -d/ -f3-)
@@ -81,22 +75,82 @@ jobs:
           abbrev = os.environ["ABBREV"]
 
           with open("/tmp/source_bible.json", encoding="utf-8") as f:
-              data = json.load(f)
+              raw = json.load(f)
 
-          def looks_like_bible(d):
-              return all(isinstance(v, dict) for v in d.values())
+          def normalize_chapters(chapters):
+              """
+              Convert chapters to {"1": {"1": verse, ...}, ...} regardless of source format.
+              Handles:
+                - dict of dicts:  {"1": {"1": "..."}}
+                - dict of lists:  {"1": ["verse1", "verse2"]}
+                - list of dicts:  [{"verses": [...]}] or [{"1": "..."}]
+                - list of lists:  [["verse1", "verse2"]]
+              """
+              if isinstance(chapters, dict):
+                  normalized = {}
+                  for ch_num, verses in chapters.items():
+                      if isinstance(verses, dict):
+                          normalized[str(ch_num)] = {str(k): v for k, v in verses.items()}
+                      elif isinstance(verses, list):
+                          normalized[str(ch_num)] = {str(i + 1): v for i, v in enumerate(verses)}
+                      else:
+                          normalized[str(ch_num)] = {"1": verses}
+                  return normalized
+              elif isinstance(chapters, list):
+                  normalized = {}
+                  for ch_idx, verses in enumerate(chapters):
+                      ch_num = str(ch_idx + 1)
+                      if isinstance(verses, dict):
+                          if "verses" in verses:
+                              verse_list = verses["verses"]
+                              normalized[ch_num] = {str(i + 1): v for i, v in enumerate(verse_list)}
+                          else:
+                              normalized[ch_num] = {str(k): v for k, v in verses.items() if k not in ("chapter", "name")}
+                      elif isinstance(verses, list):
+                          normalized[ch_num] = {str(i + 1): v for i, v in enumerate(verses)}
+                      else:
+                          normalized[ch_num] = {"1": verses}
+                  return normalized
+              return {}
 
-          if not looks_like_bible(data):
-              for key, val in data.items():
-                  if isinstance(val, dict) and looks_like_bible(val):
-                      data = val
-                      break
+          def extract_bible(data):
+              """
+              Return a dict of {BookName: normalized_chapters}.
+              Handles top-level dict, list of books, or single-key wrapper.
+              """
+              if isinstance(data, list):
+                  result = {}
+                  for book in data:
+                      if isinstance(book, dict):
+                          name = book.get("name") or book.get("book") or book.get("title") or f"Book{len(result)+1}"
+                          chapters = book.get("chapters") or book.get("verses") or {}
+                          result[name] = normalize_chapters(chapters)
+                  return result
+
+              if isinstance(data, dict):
+                  if len(data) == 1:
+                      val = next(iter(data.values()))
+                      if isinstance(val, (list, dict)):
+                          return extract_bible(val)
+
+                  result = {}
+                  for key, val in data.items():
+                      if isinstance(val, (dict, list)):
+                          result[key] = normalize_chapters(val)
+                  return result
+
+              return {}
+
+          bible = extract_bible(raw)
+
+          if not bible:
+              raise ValueError(f"Could not parse bible structure. Top-level type: {type(raw)}, preview: {str(raw)[:300]}")
 
           base = pathlib.Path(f"translations/{abbrev}")
           books_dir = base / f"{abbrev}_books"
           books_dir.mkdir(parents=True, exist_ok=True)
 
-          for book_name, chapters in data.items():
+          for book_name, chapters in bible.items():
               book_file = books_dir / f"{book_name}.json"
               with open(book_file, "w", encoding="utf-8") as f:
                   json.dump({book_name: chapters}, f, ensure_ascii=False, indent=2)
@@ -104,10 +158,10 @@ jobs:
 
           bible_file = base / f"{abbrev}_bible.json"
           with open(bible_file, "w", encoding="utf-8") as f:
-              json.dump(data, f, ensure_ascii=False, indent=2)
+              json.dump(bible, f, ensure_ascii=False, indent=2)
           print(f"  wrote {bible_file}")
 
-          print(f"Done. {len(data)} books written for {abbrev}.")
+          print(f"Done. {len(bible)} books written for {abbrev}.")
           PYEOF
 
       - name: Commit and push
