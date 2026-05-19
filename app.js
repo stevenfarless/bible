@@ -1356,6 +1356,10 @@ class BibleApp {
             } else if (e.key === 'ArrowDown' || e.key === 'j') {
                 e.preventDefault();
                 this.navigateToNextVerse();
+            } else if (e.key === 'v') {
+                e.preventDefault();
+                this.verseByVerseToggle.checked = !this.verseByVerseToggle.checked;
+                this.toggleVerseByVerse();
             }
         }
     }
