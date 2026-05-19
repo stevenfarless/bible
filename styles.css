@@ -1114,6 +1114,56 @@ body.light-mode .crossref-item {
     font-style: italic;
 }
 
+/* ================================
+   Local JSON passage renderer
+   Styles for HTML built by _buildPassageHtml() in bible-api.js.
+   .passage wraps the whole unit; .passage-title is the h2 reference label;
+   .verse-block is the paragraph container; .verse is each inline verse span.
+   ================================ */
+
+.passage {
+    font-family: var(--font-serif);
+    font-size: var(--font-size-base);
+    line-height: 1.8;
+    color: var(--text-primary);
+}
+
+/* h2.passage-title rendered by the local renderer */
+.passage .passage-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    letter-spacing: -0.025em;
+    margin-bottom: var(--spacing-lg);
+    font-family: var(--font-sans);
+}
+
+.verse-block {
+    margin-bottom: var(--spacing-md);
+}
+
+/* Each verse is inline so text flows naturally across lines */
+.verse {
+    display: inline;
+}
+
+/* sup.verse-num inside .verse (mirrors .passage-text .verse-num) */
+.verse .verse-num {
+    font-size: 0.75em;
+    font-weight: 600;
+    color: var(--text-muted);
+    vertical-align: super;
+    margin-right: 0.25em;
+    transition: color var(--transition-fast);
+}
+
+/* Hide verse numbers when the setting is toggled off */
+body.hide-verse-numbers .verse .verse-num {
+    display: none !important;
+}
+
+/* Search
+
 /* Search */
 .search-container {
     background-color: var(--bg-secondary);
