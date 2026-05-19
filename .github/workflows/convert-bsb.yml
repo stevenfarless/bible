@@ -1,0 +1,29 @@
+name: Convert BSB to JSON
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Download BSB text
+        run: curl -L "https://bereanbible.com/bsb.txt" -o bsb.txt
+
+      - name: Convert to JSON
+        run: python scripts/convert_bsb.py bsb.txt translations/BSB/BSB_books
+
+      - name: Commit generated files
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: regenerate BSB JSON"
+          file_pattern: translations/BSB/**
