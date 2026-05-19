@@ -56,144 +56,18 @@ export function scrollToVerse(app, verseNumber) {
 }
 
 export function applyVerseGlow(app) {
-    if (!app.originalPassageHtml) return;
-    app.passageText.innerHTML = app.originalPassageHtml;
+    // Remove any existing glow without resetting innerHTML.
+    app.passageText.querySelectorAll('.selected-verse-glow').forEach(el => {
+        el.classList.remove('selected-verse-glow');
+    });
 
     if (app.state.selectedVerse === null) return;
 
-    if (app.state.selectedVerse === 1) {
-        const firstParagraph = app.passageText.querySelector('p');
-        if (firstParagraph) {
-            const verse2 = firstParagraph.querySelector('.verse-num');
-            if (verse2) {
-                const verse1Block = document.createElement('div');
-                verse1Block.classList.add('selected-verse-glow');
-                let foundVerse2 = false;
-                const nodes = Array.from(firstParagraph.childNodes);
-                nodes.forEach(node => {
-                    if (node === verse2) {
-                        foundVerse2 = true;
-                        return;
-                    }
-                    if (!foundVerse2) {
-                        verse1Block.appendChild(node.cloneNode(true));
-                    }
-                });
-                firstParagraph.parentNode.insertBefore(verse1Block, firstParagraph);
-                firstParagraph.style.display = 'none';
-            } else {
-                firstParagraph.classList.add('selected-verse-glow');
-            }
-            firstParagraph.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        return;
-    }
+    const target = app.passageText.querySelector(
+        `.verse[data-verse="${app.state.selectedVerse}"]`
+    );
+    if (!target) return;
 
-    const verseNums = app.passageText.querySelectorAll('.verse-num');
-    let targetVerseNum = null;
-    for (const vn of verseNums) {
-        if (vn.textContent.trim() === app.state.selectedVerse.toString()) {
-            targetVerseNum = vn;
-            break;
-        }
-    }
-
-    if (!targetVerseNum) return;
-
-    const parentParagraph = targetVerseNum.closest('p');
-    if (!parentParagraph) return;
-
-    const lineSpans = parentParagraph.querySelectorAll('span.line, span.indent.line');
-
-    if (lineSpans.length > 0) {
-        let verseLineSpan = null;
-        for (const span of lineSpans) {
-            if (span.contains(targetVerseNum)) {
-                verseLineSpan = span;
-                break;
-            }
-        }
-
-        if (!verseLineSpan) return;
-
-        const verseId = verseLineSpan.id;
-        if (!verseId) return;
-
-        const verseLines = [];
-        for (const span of lineSpans) {
-            if (span.id === verseId) {
-                verseLines.push(span);
-            }
-        }
-
-        if (verseLines.length === 0) return;
-
-        const glowWrapper = document.createElement('div');
-        glowWrapper.classList.add('selected-verse-glow');
-
-        verseLines.forEach((line, index) => {
-            const clonedLine = line.cloneNode(true);
-            glowWrapper.appendChild(clonedLine);
-            if (index < verseLines.length - 1) {
-                glowWrapper.appendChild(document.createElement('br'));
-            }
-        });
-
-        verseLines[0].parentNode.insertBefore(glowWrapper, verseLines[0]);
-
-        verseLines.forEach(line => {
-            line.style.display = 'none';
-            const nextSibling = line.nextSibling;
-            if (nextSibling && nextSibling.nodeName === 'BR') {
-                nextSibling.style.display = 'none';
-            }
-        });
-
-        glowWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return;
-    }
-
-    const beforeP = document.createElement('p');
-    const selectedBlock = document.createElement('div');
-    const afterP = document.createElement('p');
-    selectedBlock.classList.add('selected-verse-glow');
-
-    let mode = 'before';
-    const nodes = Array.from(parentParagraph.childNodes);
-
-    nodes.forEach(node => {
-        if (node === targetVerseNum) {
-            mode = 'selected';
-            selectedBlock.appendChild(node);
-            return;
-        }
-
-        if (mode === 'selected') {
-            if (node.nodeType === 1 && node.classList.contains('verse-num')) {
-                mode = 'after';
-                afterP.appendChild(node);
-                return;
-            }
-        }
-
-        if (mode === 'before') {
-            beforeP.appendChild(node);
-        } else if (mode === 'selected') {
-            selectedBlock.appendChild(node);
-        } else {
-            afterP.appendChild(node);
-        }
-    });
-
-    const parent = parentParagraph.parentNode;
-    if (beforeP.childNodes.length > 0) {
-        parent.insertBefore(beforeP, parentParagraph);
-    }
-    parent.insertBefore(selectedBlock, parentParagraph);
-    if (afterP.childNodes.length > 0) {
-        parent.insertBefore(afterP, parentParagraph);
-    }
-    parent.removeChild(parentParagraph);
-
-    selectedBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target.classList.add('selected-verse-glow');
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
