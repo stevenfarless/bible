@@ -18,6 +18,19 @@ import {
     changeColorTheme,
 } from './ui.js';
 
+// Reads a boolean from localStorage.
+// Returns defaultValue when the key is absent (null).
+// Returns true only when the stored string is exactly "true".
+// Returns false only when the stored string is exactly "false".
+// Any other stored value falls back to defaultValue.
+function readBool(key, defaultValue) {
+    const v = localStorage.getItem(key);
+    if (v === null) return defaultValue;
+    if (v === 'true') return true;
+    if (v === 'false') return false;
+    return defaultValue;
+}
+
 class BibleApp {
     constructor() {
         this.auth = window.firebaseAuth;
@@ -310,13 +323,16 @@ class BibleApp {
 
     loadLocalSettings() {
         this.state.fontSize = parseInt(localStorage.getItem('fontSize') || '18', 10);
-        this.state.showVerseNumbers = localStorage.getItem('showVerseNumbers') !== 'false';
-        this.state.showHeadings = localStorage.getItem('showHeadings') !== 'false';
-        this.state.showFootnotes = localStorage.getItem('showFootnotes') === 'true';
-        this.state.showCrossReferences = localStorage.getItem('showCrossReferences') === 'true';
-        this.state.verseByVerse = localStorage.getItem('verseByVerse') === 'true';
-        this.state.colorTheme = localStorage.getItem('colorTheme') || 'dracula';
-        this.state.lightMode = localStorage.getItem('lightMode') === 'true';
+        // Default true: verse numbers and headings are on unless the user turned them off.
+        // Default false: footnotes, cross-references, verse-by-verse, and light mode are off
+        // unless the user explicitly turned them on.
+        this.state.showVerseNumbers   = readBool('showVerseNumbers',   true);
+        this.state.showHeadings       = readBool('showHeadings',       true);
+        this.state.showFootnotes      = readBool('showFootnotes',      false);
+        this.state.showCrossReferences = readBool('showCrossReferences', false);
+        this.state.verseByVerse       = readBool('verseByVerse',       false);
+        this.state.lightMode          = readBool('lightMode',          false);
+        this.state.colorTheme  = localStorage.getItem('colorTheme')  || 'dracula';
         this.state.translation = localStorage.getItem('translation') || 'ESV';
     }
 
@@ -343,9 +359,9 @@ class BibleApp {
 
     async toggleSetting(setting) {
         const toggleMap = {
-            showVerseNumbers: 'verseNumbersToggle',
-            showHeadings: 'headingsToggle',
-            showFootnotes: 'footnotesToggle',
+            showVerseNumbers:    'verseNumbersToggle',
+            showHeadings:        'headingsToggle',
+            showFootnotes:       'footnotesToggle',
             showCrossReferences: 'crossReferencesToggle',
         };
         const toggleElement = this[toggleMap[setting]];
@@ -354,7 +370,8 @@ class BibleApp {
         if (this.currentUser) {
             await this.database.ref(`users/${this.currentUser.uid}/settings/${setting}`).set(toggleElement.checked);
         } else {
-            localStorage.setItem(setting, toggleElement.checked);
+            // Write the string form explicitly so readBool() reads it back correctly.
+            localStorage.setItem(setting, String(toggleElement.checked));
         }
         // showFootnotes and showCrossReferences are persisted but do not trigger a
         // re-render — local JSON has no footnote or cross-reference data to display.
@@ -372,7 +389,7 @@ class BibleApp {
         if (this.currentUser) {
             await this.database.ref(`users/${this.currentUser.uid}/settings/verseByVerse`).set(this.state.verseByVerse);
         } else {
-            localStorage.setItem('verseByVerse', this.state.verseByVerse);
+            localStorage.setItem('verseByVerse', String(this.state.verseByVerse));
         }
         if (this.state.verseByVerse) {
             this.passageText.classList.add('verse-by-verse');
@@ -408,7 +425,7 @@ class BibleApp {
 
     updateCopyright() {
         const copyrights = {
-            ESV: 'Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.',
+            ESV: 'Scripture quotations are from the ESV\u00ae Bible (The Holy Bible, English Standard Version\u00ae), copyright \u00a9 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.',
             KJV: 'King James Version (KJV). Public domain.',
         };
         this.copyright.textContent = copyrights[this.state.translation] || '';
