@@ -1,4 +1,5 @@
 # ESV Bible Web App
+(Uses ESV API)
 
 A single-page ESV Bible reader focused on speed, readability, and a distraction-free experience. Built with vanilla JavaScript, HTML, and CSS, and deployed via GitHub Pages.
 
