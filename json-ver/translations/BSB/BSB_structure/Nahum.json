@@ -1,1 +1,65 @@
-[]
+[
+  {
+    "ch": 1,
+    "v": 1,
+    "type": "heading",
+    "text": "God\u2019s Wrath against Nineveh"
+  },
+  {
+    "ch": 1,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 1,
+    "type": "heading",
+    "text": "The Fall of Nineveh"
+  },
+  {
+    "ch": 2,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 1,
+    "type": "heading",
+    "text": "Woe to the Bloody City"
+  },
+  {
+    "ch": 3,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 8,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 18,
+    "type": "para_break"
+  }
+]

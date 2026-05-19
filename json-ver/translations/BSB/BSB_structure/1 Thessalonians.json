@@ -1,1 +1,232 @@
-[]
+[
+  {
+    "ch": 1,
+    "v": 1,
+    "type": "heading",
+    "text": "Greetings to the Thessalonians"
+  },
+  {
+    "ch": 1,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 2,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 1,
+    "type": "heading",
+    "text": "Paul’s Ministry"
+  },
+  {
+    "ch": 2,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 17,
+    "type": "heading",
+    "text": "Paul’s Longing to Visit"
+  },
+  {
+    "ch": 2,
+    "v": 17,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 1,
+    "type": "heading",
+    "text": "Timothy’s Visit"
+  },
+  {
+    "ch": 3,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 6,
+    "type": "heading",
+    "text": "Timothy’s Encouraging Report"
+  },
+  {
+    "ch": 3,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 1,
+    "type": "heading",
+    "text": "Living to Please God"
+  },
+  {
+    "ch": 4,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 13,
+    "type": "heading",
+    "text": "The Return of the Lord"
+  },
+  {
+    "ch": 4,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 18,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 1,
+    "type": "heading",
+    "text": "The Day of the Lord"
+  },
+  {
+    "ch": 5,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 4,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 12,
+    "type": "heading",
+    "text": "Christian Living"
+  },
+  {
+    "ch": 5,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 14,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 15,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 16,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 19,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 23,
+    "type": "heading",
+    "text": "Final Blessings and Instructions"
+  },
+  {
+    "ch": 5,
+    "v": 23,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 25,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 26,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 27,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 28,
+    "type": "para_break"
+  }
+]

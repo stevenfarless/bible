@@ -1,1 +1,56 @@
-[]
+[
+  {
+    "ch": 1,
+    "v": 1,
+    "type": "heading",
+    "text": "A Call to Build the Temple"
+  },
+  {
+    "ch": 1,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 12,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 1,
+    "type": "heading",
+    "text": "The Glory of the New Temple"
+  },
+  {
+    "ch": 2,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 10,
+    "type": "heading",
+    "text": "Blessings for a Defiled People"
+  },
+  {
+    "ch": 2,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 20,
+    "type": "heading",
+    "text": "Zerubbabel the LORD\u2019s Signet Ring"
+  },
+  {
+    "ch": 2,
+    "v": 20,
+    "type": "para_break"
+  }
+]
