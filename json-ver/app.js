@@ -588,16 +588,15 @@ class BibleApp {
         const reference = `${book} ${chapter}`;
         this.passageText.innerHTML = '<p class="loading">Loading passage...</p>';
 
-        // Load BSB structure scaffold when the active translation is BSB.
-        // For all other translations scaffoldEvents stays empty and nothing changes.
+        // Load BSB structure scaffold for all translations.
+        // The scaffold is keyed by chapter/verse and applies regardless of translation
+        // since all supported translations share the same versification.
         let scaffoldEvents = [];
-        if (this.state.translation === 'BSB') {
-            try {
-                const allEvents = await loadStructure(book);
-                scaffoldEvents = eventsForChapter(allEvents, chapter);
-            } catch (err) {
-                console.warn('loadPassage: BSB structure scaffold unavailable', err);
-            }
+        try {
+            const allEvents = await loadStructure(book);
+            scaffoldEvents = eventsForChapter(allEvents, chapter);
+        } catch (err) {
+            console.warn('loadPassage: BSB structure scaffold unavailable', err);
         }
 
         const data = await this.bibleApi.fetchPassage(
