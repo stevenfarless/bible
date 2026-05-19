@@ -30,13 +30,18 @@ jobs:
 
       - name: Download HelloAOLab USFM source
         run: |
-          curl -L https://github.com/BereanBible/HelloAOLab/archive/refs/heads/master.zip -o /tmp/HelloAOLab.zip
-          unzip -q /tmp/HelloAOLab.zip -d /tmp/
-          # The zip extracts to HelloAOLab-master/
-          echo "USFM_DIR=/tmp/HelloAOLab-master/BSB_USFM" >> $GITHUB_ENV
+          curl -L https://api.github.com/repos/BereanBible/HelloAOLab/tarball -o /tmp/HelloAOLab.tar.gz
+          mkdir -p /tmp/HelloAOLab
+          tar -xzf /tmp/HelloAOLab.tar.gz --strip-components=1 -C /tmp/HelloAOLab
+          # Show what's inside so we can confirm the USFM folder name
+          ls /tmp/HelloAOLab/
 
       - name: Run build-structure.js
-        run: node scripts/build-structure.js --usfm-dir ${{ env.USFM_DIR }}
+        run: |
+          # Find the USFM directory — handles BSB_USFM or any variant
+          USFM_DIR=$(find /tmp/HelloAOLab -maxdepth 2 -type d -iname '*usfm*' | head -1)
+          echo "Using USFM dir: $USFM_DIR"
+          node scripts/build-structure.js --usfm-dir "$USFM_DIR"
 
       - name: Commit and push scaffold JSONs
         run: |
