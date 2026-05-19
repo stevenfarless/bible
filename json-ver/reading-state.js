@@ -69,5 +69,14 @@ export function applyVerseGlow(app) {
     if (!target) return;
 
     target.classList.add('selected-verse-glow');
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // scrollIntoView on an inline <span> is unreliable across browsers —
+    // the browser uses line-box geometry which can produce no scroll at all
+    // when the span starts mid-line. Insert a zero-height block anchor
+    // immediately before the target, scroll to that, then remove it.
+    const anchor = document.createElement('span');
+    anchor.style.cssText = 'display:block;height:0;overflow:hidden;';
+    target.parentNode.insertBefore(anchor, target);
+    anchor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => anchor.remove(), 800);
 }
