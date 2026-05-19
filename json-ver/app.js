@@ -192,13 +192,6 @@ class BibleApp {
         this.verseSelector.addEventListener('click', () => this.openVerseModal());
         this.closeVerseModal.addEventListener('click', () => this.closeModal(this.verseModal));
 
-        this.referencesModal = document.getElementById('referencesModal');
-        this.closeReferencesModal = document.getElementById('closeReferencesModal');
-        this.footnotesSection = document.getElementById('footnotesSection');
-        this.footnotesContent = document.getElementById('footnotesContent');
-        this.crossReferencesSection = document.getElementById('crossReferencesSection');
-        this.crossReferencesContent = document.getElementById('crossReferencesContent');
-
         [
             this.bookModal,
             this.chapterModal,
@@ -280,8 +273,6 @@ class BibleApp {
         this.passageText.innerHTML = data.passages[0];
         this.originalPassageHtml = this.passageText.innerHTML;
 
-        this.attachFootnoteHandlers?.();
-        this.makeFootnotesClickable?.();
         this.updateCopyright();
 
         this.currentVerseSpan.textContent = '1';
@@ -365,11 +356,14 @@ class BibleApp {
         } else {
             localStorage.setItem(setting, toggleElement.checked);
         }
-        if (setting === 'showVerseNumbers') {
-            this.applySettings();
-        } else {
+        // showFootnotes and showCrossReferences are persisted but do not trigger a
+        // re-render — local JSON has no footnote or cross-reference data to display.
+        const settingsRequiringRerender = ['showHeadings'];
+        if (settingsRequiringRerender.includes(setting)) {
             this.lastScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
             await this.loadPassage(this.state.currentBook, this.state.currentChapter, true);
+        } else {
+            this.applySettings();
         }
     }
 
