@@ -262,6 +262,45 @@ class BibleApp {
         }
     }
 
+    async loadSavedReadingPosition() {
+        if (!this.currentUser || !this.database) {
+            await this.loadPassage(this.state.currentBook, this.state.currentChapter);
+            return;
+        }
+
+        try {
+            const snapshot = await this.database
+                .ref(`users/${this.currentUser.uid}/readingPosition`)
+                .once('value');
+            const pos = snapshot.val();
+
+            if (pos && pos.book && pos.chapter) {
+                this.state.currentBook = pos.book;
+                this.state.currentChapter = pos.chapter;
+                this.lastScrollPosition = pos.scrollY || 0;
+            }
+        } catch (err) {
+            console.error('loadSavedReadingPosition: failed to read Firebase', err);
+        }
+
+        await this.loadPassage(this.state.currentBook, this.state.currentChapter, true);
+    }
+
+    saveReadingPosition() {
+        if (!this.currentUser || !this.database) return;
+
+        const pos = {
+            book: this.state.currentBook,
+            chapter: this.state.currentChapter,
+            scrollY: window.scrollY || 0,
+        };
+
+        this.database
+            .ref(`users/${this.currentUser.uid}/readingPosition`)
+            .set(pos)
+            .catch((err) => console.error('saveReadingPosition: Firebase write failed', err));
+    }
+
     async loadPassage(book, chapter, restoreScroll = false) {
         if (!restoreScroll) {
             this.saveReadingPosition?.();
