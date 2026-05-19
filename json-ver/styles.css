@@ -1579,8 +1579,19 @@ body.hide-verse-numbers .verse .verse-num {
    8. INTERACTIVE STATES & EFFECTS
    ================================ */
 
-/* Verse Selection Glow */
+/* Verse Selection Glow
+   Block-box properties (border-left, padding, margin, transform,
+   box-shadow) are ignored on display:inline elements — the browser
+   either discards them or resolves them immediately, which produced
+   the flash-and-snap-back behaviour in prose mode.
+
+   Switching to display:inline-block gives the span a real box model
+   so all glow properties render and persist. The verse stays in the
+   prose line flow (unlike display:block which would force a line break
+   before and after it). verse-by-verse mode overrides to display:block
+   with higher specificity further down in Section 11. */
 .selected-verse-glow {
+    display: inline-block;
     background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05));
     border-left: 4px solid rgba(255, 215, 0, 0.6);
     border-radius: 8px;
@@ -1825,7 +1836,9 @@ body.hide-verse-numbers .passage-text .verse-num {
 /* Verse-by-Verse Display
    The .verse-by-verse class is toggled on .passage-text by app.js.
    Verses from the local JSON renderer are <span class="verse">, not <p>,
-   so we force display:block here so each verse starts on its own line. */
+   so we force display:block here so each verse starts on its own line.
+   This rule also overrides .selected-verse-glow's display:inline-block
+   when both classes are present, keeping verse-by-verse layout intact. */
 .verse-by-verse .verse {
     display: block;
     margin-bottom: 0.75rem;
