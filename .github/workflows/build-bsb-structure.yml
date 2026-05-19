@@ -32,7 +32,7 @@ jobs:
 
       - name: Clone HelloAOLab USFM source
         run: |
-          git clone --depth 1 https://github.com/BereanBible/HelloAOLab /tmp/HelloAOLab
+          git clone --depth 1 https://${{ secrets.GITHUB_TOKEN }}@github.com/BereanBible/HelloAOLab /tmp/HelloAOLab
 
       - name: Run build-structure.js
         run: node scripts/build-structure.js --usfm-dir /tmp/HelloAOLab/BSB_USFM
