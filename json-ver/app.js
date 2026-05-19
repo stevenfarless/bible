@@ -562,6 +562,9 @@ class BibleApp {
         this.passageText.innerHTML = data.passages[0];
         this.originalPassageHtml = this.passageText.innerHTML;
 
+        // Re-apply verse-by-verse class after every passage load.
+        this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
+
         this.updateCopyright();
         this.currentVerseSpan.textContent = '1';
         this.chromeSuspend = true;
@@ -1107,9 +1110,9 @@ class BibleApp {
         }
     }
 
+    // Fix: was returning verseNums.length + 1, overcounting by one.
     getCurrentVerseCount() {
-        const verseNums = this.passageText.querySelectorAll('.verse-num');
-        return verseNums.length > 0 ? verseNums.length + 1 : 0;
+        return this.passageText.querySelectorAll('.verse-num').length;
     }
 
     scrollToVerse(verseNumber) {
@@ -1179,23 +1182,49 @@ class BibleApp {
     }
 
     applySettings() {
+        // Sync color theme selector and apply theme classes.
         const themeSelector = document.getElementById('themeSelector');
         if (themeSelector && this.state.colorTheme) {
             themeSelector.value = this.state.colorTheme;
         }
+        changeColorTheme(this, this.state.colorTheme || 'dracula');
+
+        // Sync translation selector and update the API instance.
         if (this.translationSelector && this.state.translation) {
             this.translationSelector.value = this.state.translation;
         }
         this.bibleApi.setTranslation(this.state.translation || 'ESV');
 
-        changeColorTheme(this, this.state.colorTheme || 'dracula');
-
-        if (this.state.lightMode) {
-            document.body.classList.add('light-mode');
-        } else {
-            document.body.classList.remove('light-mode');
-        }
+        // Light mode.
+        document.body.classList.toggle('light-mode', !!this.state.lightMode);
+        const lightModeToggle = document.getElementById('lightModeToggle');
+        if (lightModeToggle) lightModeToggle.checked = !!this.state.lightMode;
         updateThemeIcon(this.state.lightMode);
+
+        // Verse numbers: toggle body class (CSS hides .verse-num when present).
+        document.body.classList.toggle('hide-verse-numbers', !this.state.showVerseNumbers);
+        if (this.verseNumbersToggle) this.verseNumbersToggle.checked = !!this.state.showVerseNumbers;
+
+        // Headings toggle: no heading data in local JSON yet — keep checkbox synced
+        // so persisted state round-trips correctly. Functional effect pending #<issue>.
+        if (this.headingsToggle) this.headingsToggle.checked = !!this.state.showHeadings;
+
+        // Footnotes / cross-references: no data in local JSON; sync checkboxes only.
+        if (this.footnotesToggle) this.footnotesToggle.checked = !!this.state.showFootnotes;
+        if (this.crossReferencesToggle) this.crossReferencesToggle.checked = !!this.state.showCrossReferences;
+
+        // Verse-by-verse display class.
+        if (this.passageText) {
+            this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
+        }
+        if (this.verseByVerseToggle) this.verseByVerseToggle.checked = !!this.state.verseByVerse;
+
+        // Font size.
+        const fontSize = this.state.fontSize || 18;
+        if (this.fontSizeSlider) this.fontSizeSlider.value = fontSize;
+        if (this.fontSizeValue) this.fontSizeValue.textContent = `${fontSize}px`;
+        if (this.passageText) this.passageText.style.fontSize = `${fontSize}px`;
+
         this.updateCopyright();
     }
 
@@ -1216,15 +1245,10 @@ class BibleApp {
             localStorage.setItem(setting, String(toggleElement.checked));
         }
 
-        // showFootnotes and showCrossReferences are persisted but not re-rendered —
-        // local JSON has no footnote or cross-reference data.
-        const settingsRequiringRerender = ['showHeadings'];
-        if (settingsRequiringRerender.includes(setting)) {
-            this.lastScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-            await this.loadPassage(this.state.currentBook, this.state.currentChapter, true);
-        } else {
-            this.applySettings();
-        }
+        // showHeadings has no effect until pericope heading data is added to the
+        // local JSON files — see the open issue for implementation options.
+        // All other display toggles are applied immediately via applySettings().
+        this.applySettings();
     }
 
     async toggleVerseByVerse() {
