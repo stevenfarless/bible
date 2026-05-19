@@ -29,6 +29,21 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
+// Loads translations/index.json and returns the array of translation objects.
+// Each object has { id, label, copyright }.
+// Returns an empty array on failure so the app degrades gracefully.
+export async function loadTranslationIndex() {
+    try {
+        const res = await fetch('./translations/index.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        return Array.isArray(data.translations) ? data.translations : [];
+    } catch (err) {
+        console.error('BibleApi: failed to load translations/index.json', err);
+        return [];
+    }
+}
+
 export class BibleApi {
     constructor(translation = 'ESV') {
         this._translation = translation;
