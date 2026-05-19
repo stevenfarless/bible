@@ -1,0 +1,48 @@
+name: Build BSB Structure Scaffold
+
+# Runs on demand from the Actions tab.
+# Also runs automatically whenever build-structure.js or this workflow file changes on json-ver.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - json-ver
+    paths:
+      - 'scripts/build-structure.js'
+      - '.github/workflows/build-bsb-structure.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout json-ver
+        uses: actions/checkout@v4
+        with:
+          ref: json-ver
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Clone HelloAOLab USFM source
+        run: |
+          git clone --depth 1 https://github.com/BereanBible/HelloAOLab /tmp/HelloAOLab
+
+      - name: Run build-structure.js
+        run: node scripts/build-structure.js --usfm-dir /tmp/HelloAOLab/BSB_USFM
+
+      - name: Commit and push scaffold JSONs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git add translations/BSB/BSB_structure/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: regenerate BSB structure scaffold JSONs"
+          git push origin json-ver
