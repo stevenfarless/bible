@@ -1481,8 +1481,7 @@ class BibleApp {
     async handleSignup() {
         const email = document.getElementById('signupEmail').value;
         const password = document.getElementById('signupPassword').value;
-        const apiKey = document.getElementById('signupApiKey').value;
-        if (!email || !password || !apiKey) {
+        if (!email || !password) {
             this.showToast('Please fill in all fields');
             return;
         }
@@ -1493,9 +1492,7 @@ class BibleApp {
         try {
             const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
             const user = userCredential.user;
-            const encrypted = window.encryptionHelper.encrypt(apiKey);
             await this.database.ref(`users/${user.uid}`).set({
-                apiKey: encrypted,
                 settings: {
                     fontSize: 18,
                     showVerseNumbers: true,
@@ -1510,7 +1507,6 @@ class BibleApp {
             this.closeModal(this.signupModal);
             document.getElementById('signupEmail').value = '';
             document.getElementById('signupPassword').value = '';
-            document.getElementById('signupApiKey').value = '';
         } catch (error) {
             console.error('Signup error:', error);
             if (error.code === 'auth/email-already-in-use') {
@@ -1688,139 +1684,24 @@ class BibleApp {
                 return `${this.state.currentBook} ${this.state.currentChapter}:${verseNumber}`;
             }
             currentElement = currentElement.previousElementSibling;
-            if (!currentElement || currentElement.tagName === 'H2' || currentElement.tagName === 'H3') break;
-        }
-        const parent = element.closest('p, div');
-        if (parent) {
-            const verses = parent.querySelectorAll('.verse-num');
-            if (verses.length > 0) {
-                for (let i = verses.length - 1; i >= 0; i--) {
-                    if (parent.contains(verses[i]) && verses[i].compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING) {
-                        const verseNumber = verses[i].textContent.trim();
-                        return `${this.state.currentBook} ${this.state.currentChapter}:${verseNumber}`;
-                    }
-                }
-            }
+            if (!currentElement) break;
         }
         return `${this.state.currentBook} ${this.state.currentChapter}`;
     }
 
     showFootnoteModal(footnoteNumber, verseRef) {
-        const allSups = this.passageText.querySelectorAll('sup.footnote');
-        let footnoteText = '';
-        allSups.forEach((sup) => {
-            const link = sup.querySelector('a.fn');
-            if (!link) return;
-            if (link.textContent.trim() === footnoteNumber) {
-                const title = link.getAttribute('title');
-                if (title) {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = title;
-                    const decoded = tempDiv.textContent || tempDiv.innerText || '';
-                    const noteMatch = decoded.match(/<note[^>]*>(.*?)<\/note>/s);
-                    if (noteMatch) {
-                        tempDiv.innerHTML = noteMatch[1];
-                        footnoteText = tempDiv.innerHTML;
-                    } else {
-                        footnoteText = decoded;
-                    }
-                }
-            }
-        });
-        if (!footnoteText) {
-            footnoteText = 'Footnote content not available with current settings. Enable "Show footnotes" in Settings to view full footnote text.';
-        }
+        this.footnotesContent.innerHTML = `
+            <div class="footnote-item">
+                <div class="footnote-ref-display" style="color: var(--secondary-color); font-size: 0.9em; margin-bottom: 0.5rem; font-weight: 600;">${verseRef}</div>
+                <div class="footnote-text">Footnote ${footnoteNumber}: Footnote content not available in local JSON translation.</div>
+            </div>`;
         this.footnotesSection.style.display = 'block';
         this.crossReferencesSection.style.display = 'none';
-        this.footnotesContent.innerHTML = `
-    <div class="footnote-item">
-      <div class="footnote-ref-display" style="color: var(--secondary-color); font-size: 0.9em; margin-bottom: 0.5rem; font-weight: 600;">${verseRef} [${footnoteNumber}]</div>
-      <div class="footnote-text">${footnoteText}</div>
-    </div>`;
-        this.referencesModal.classList.add('active');
-    }
-
-    // ==========================================
-    // CROSS-REFERENCE HELPERS
-    // ==========================================
-
-    loadCrossReferencesFromLink(link) {
-        const crossRefs = link.getAttribute('title') || link.getAttribute('data-cross-refs') || '';
-        const linkText = link.textContent.trim();
-        const references = [];
-        if (crossRefs) {
-            references.push(...crossRefs.split(/[;,]/).map(r => r.trim()).filter(r => r));
-        }
-        if (linkText && /[A-Z][a-z]*\.?\s*\d+:\d+/.test(linkText)) {
-            references.push(linkText);
-        }
-        const parent = link.closest('.crossrefs, .cross-references, [class*="cross"]');
-        if (parent) {
-            parent.querySelectorAll('a').forEach(l => {
-                const ref = l.textContent.trim();
-                if (ref && !references.includes(ref)) references.push(ref);
-            });
-        }
-        if (references.length > 0) this.displayCrossReferences(references);
-    }
-
-    displayCrossReferences(references) {
-        let content = '';
-        references.forEach((ref, index) => {
-            const safeId = `crossref-${index}-${Date.now()}`;
-            content += `
-      <div class="crossref-item" data-reference="${ref}" data-id="${safeId}">
-        <div class="crossref-header" onclick="window.bibleApp.toggleCrossReference('${safeId}')">
-          <span>${ref}</span>
-        </div>
-        <div class="crossref-verse-text" id="${safeId}">
-          <div class="crossref-loading">Click to load verse...</div>
-        </div>
-      </div>`;
-        });
-        this.crossReferencesContent.innerHTML = content;
-        this.crossReferencesSection.style.display = 'block';
-    }
-
-    async toggleCrossReference(elementId) {
-        const verseTextElement = document.getElementById(elementId);
-        if (!verseTextElement) return;
-        const crossrefItem = verseTextElement.closest('.crossref-item');
-        if (!crossrefItem) return;
-        const reference = crossrefItem.getAttribute('data-reference');
-        const header = crossrefItem.querySelector('.crossref-header');
-
-        if (verseTextElement.classList.contains('visible')) {
-            verseTextElement.classList.remove('visible');
-            header?.classList.remove('expanded');
-            return;
-        }
-
-        if (verseTextElement.innerHTML.includes('Click to load')) {
-            verseTextElement.innerHTML = '<div class="crossref-loading">Loading...</div>';
-            try {
-                const data = await this.bibleApi.fetchPassage(reference);
-                if (data && data.passages && data.passages[0]) {
-                    const verseText = this.stripHTML(data.passages[0]);
-                    verseTextElement.innerHTML = `<div class="crossref-reference">${reference}</div><div>${verseText}</div>`;
-                } else {
-                    verseTextElement.innerHTML = '<div class="crossref-loading">Verse not found.</div>';
-                }
-            } catch (error) {
-                console.error('Error loading cross-reference:', error);
-                verseTextElement.innerHTML = '<div class="crossref-loading">Error loading verse.</div>';
-            }
-        }
-
-        verseTextElement.classList.add('visible');
-        header?.classList.add('expanded');
+        this.openModal(this.referencesModal);
     }
 }
 
-// ==========================================
-// INITIALIZE APP
-// ==========================================
+// Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
-    const app = new BibleApp();
-    window.bibleApp = app;
+    new BibleApp();
 });
