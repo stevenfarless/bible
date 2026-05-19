@@ -16,7 +16,6 @@ jobs:
         with:
           ref: json-ver
           token: ${{ secrets.GITHUB_TOKEN }}
-          persist-credentials: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -29,9 +28,12 @@ jobs:
       - name: Convert to JSON
         run: python scripts/convert_bsb.py bsb.txt translations/BSB/BSB_books
 
-      - name: Commit generated files
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore: regenerate BSB JSON"
-          branch: json-ver
-          file_pattern: translations/BSB/**
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git add translations/BSB/**
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "chore: regenerate BSB JSON"
+          git push origin json-ver
