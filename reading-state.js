@@ -56,9 +56,15 @@ export function scrollToVerse(app, verseNumber) {
 }
 
 export function applyVerseGlow(app) {
-    // Remove any existing glow without resetting innerHTML.
-    app.passageText.querySelectorAll('.selected-verse-glow').forEach(el => {
-        el.classList.remove('selected-verse-glow');
+    // Remove any existing glow wrapper without resetting innerHTML.
+    // The wrapper is a <div data-verse-glow> inserted around the target .verse span.
+    app.passageText.querySelectorAll('[data-verse-glow]').forEach(wrapper => {
+        // Unwrap: move the verse span back to where the wrapper was, then remove wrapper.
+        const parent = wrapper.parentNode;
+        while (wrapper.firstChild) {
+            parent.insertBefore(wrapper.firstChild, wrapper);
+        }
+        parent.removeChild(wrapper);
     });
 
     if (app.state.selectedVerse === null) return;
@@ -68,15 +74,16 @@ export function applyVerseGlow(app) {
     );
     if (!target) return;
 
-    target.classList.add('selected-verse-glow');
+    // Wrap the target verse in a block-level div that carries the glow styling.
+    // Using a wrapper div means the glow is *always* a block element from the
+    // very first paint — there is no inline-to-block reflow, so no position jump.
+    const wrapper = document.createElement('div');
+    wrapper.className = 'selected-verse-glow';
+    wrapper.setAttribute('data-verse-glow', '');
+    target.parentNode.insertBefore(wrapper, target);
+    wrapper.appendChild(target);
 
     // scrollIntoView on an inline <span> is unreliable across browsers —
-    // the browser uses line-box geometry which can produce no scroll at all
-    // when the span starts mid-line. Insert a zero-height block anchor
-    // immediately before the target, scroll to that, then remove it.
-    const anchor = document.createElement('span');
-    anchor.style.cssText = 'display:block;height:0;overflow:hidden;';
-    target.parentNode.insertBefore(anchor, target);
-    anchor.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => anchor.remove(), 800);
+    // scroll to the block wrapper instead, which has stable geometry.
+    wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
