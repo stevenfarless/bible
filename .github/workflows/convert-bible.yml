@@ -1,0 +1,52 @@
+name: Convert Bible Translation
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_url:
+        description: 'raw.githubusercontent.com URL to a bible-database flat-array JSON file (e.g. https://raw.githubusercontent.com/stevenfarless/bible-database/refs/heads/main/data/json/en/NRSVUE.json)'
+        required: true
+        type: string
+      translation_abbrev:
+        description: 'Abbreviation to use as the folder name and prefix (e.g. NRSVUE). Leave blank to auto-detect from the filename.'
+        required: false
+        type: string
+      copyright_url:
+        description: 'Copyright / license URL to embed in the Info block'
+        required: false
+        default: 'https://www.biblegateway.com'
+        type: string
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout json-ver
+        uses: actions/checkout@v4
+        with:
+          ref: json-ver
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run converter
+        env:
+          SOURCE_URL: ${{ github.event.inputs.source_url }}
+          TRANSLATION_ABBREV: ${{ github.event.inputs.translation_abbrev }}
+          COPYRIGHT_URL: ${{ github.event.inputs.copyright_url }}
+        run: python .github/scripts/convert_bible.py
+
+      - name: Commit and push converted files
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add translations/
+          git diff --cached --quiet && echo "Nothing to commit" || git commit -m "chore: add $(basename $SOURCE_URL .json) translation"
+          git push
+        env:
+          SOURCE_URL: ${{ github.event.inputs.source_url }}
