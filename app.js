@@ -2,7 +2,7 @@
 // ESV Bible Reader App
 // ====================
 
-import { BibleApi } from './bible-api.js';
+import { BibleApi, loadTranslationIndex } from './bible-api.js';
 import {
     initializeState,
     navigateChapter as navChapter,
@@ -18,11 +18,6 @@ import {
     changeColorTheme,
 } from './ui.js';
 
-// Reads a boolean from localStorage.
-// Returns defaultValue when the key is absent (null).
-// Returns true only when the stored string is exactly "true".
-// Returns false only when the stored string is exactly "false".
-// Any other stored value falls back to defaultValue.
 function readBool(key, defaultValue) {
     const v = localStorage.getItem(key);
     if (v === null) return defaultValue;
@@ -31,9 +26,6 @@ function readBool(key, defaultValue) {
     return defaultValue;
 }
 
-// Normalizes translation IDs that were stored under old casing to their
-// canonical (folder-matching) form. Add entries here whenever a translation
-// folder is renamed.
 const TRANSLATION_ALIASES = {
     NRSVue: 'NRSVUE',
 };
@@ -47,6 +39,10 @@ class BibleApp {
         this.auth = window.firebaseAuth;
         this.database = window.firebaseDatabase;
         this.currentUser = null;
+
+        // Populated from translations/index.json.
+        // Keys are translation IDs (e.g. 'ESV'), values are copyright strings.
+        this._copyrightMap = {};
 
         this.bibleBooks = this.initializeBibleStructure();
 
@@ -66,9 +62,6 @@ class BibleApp {
             '1 John': '1John', '2 John': '2John', '3 John': '3John', Jude: 'Jude', Revelation: 'Rev',
         };
 
-        // Books whose UI display name differs from their internal lookup key.
-        // The lookup key (used in bibleBooks, BOOK_LOAD_ORDER, and JSON) is the
-        // source of truth; this map provides overrides for display only.
         this.bookDisplayNames = {
             Psalm: 'Psalms',
         };
@@ -187,7 +180,6 @@ class BibleApp {
         return null;
     }
 
-    // Returns the display name for a book (e.g. "Psalms" for the "Psalm" key).
     getDisplayName(book) {
         return this.bookDisplayNames[book] || book;
     }
@@ -196,7 +188,11 @@ class BibleApp {
     // Initialization
     // ================================
 
-    init() {
+    async init() {
+        // Load the translation index before anything else so the selector
+        // is populated and the copyright map is ready when applySettings() runs.
+        await this._loadTranslationRegistry();
+
         cacheElements(this);
         loadTheme(this);
 
@@ -240,6 +236,29 @@ class BibleApp {
                 this.checkApiKey();
             }
         });
+    }
+
+    // Fetches translations/index.json, builds the copyright map, and populates
+    // the translation <select>. Safe to call before cacheElements() because it
+    // queries the DOM directly rather than relying on cached references.
+    async _loadTranslationRegistry() {
+        const translations = await loadTranslationIndex();
+
+        const select = document.getElementById('translationSelector');
+        if (select && translations.length > 0) {
+            select.innerHTML = '';
+            for (const t of translations) {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.label;
+                select.appendChild(opt);
+            }
+        }
+
+        this._copyrightMap = {};
+        for (const t of translations) {
+            this._copyrightMap[t.id] = t.copyright || '';
+        }
     }
 
     initializeAccordion() {
@@ -581,8 +600,6 @@ class BibleApp {
             return;
         }
 
-        // Individual Psalm chapters display as "Psalm N" (singular).
-        // The book collection is "Psalms" but each chapter is a single psalm.
         const displayTitle = book === 'Psalm'
             ? `Psalm ${chapter}`
             : `${this.getDisplayName(book)} ${chapter}`;
@@ -590,7 +607,6 @@ class BibleApp {
         this.passageText.innerHTML = data.passages[0];
         this.originalPassageHtml = this.passageText.innerHTML;
 
-        // Re-apply verse-by-verse class after every passage load.
         this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
 
         this.updateCopyright();
@@ -1142,7 +1158,6 @@ class BibleApp {
         }
     }
 
-    // Fix: was returning verseNums.length + 1, overcounting by one.
     getCurrentVerseCount() {
         return this.passageText.querySelectorAll('.verse-num').length;
     }
@@ -1214,44 +1229,34 @@ class BibleApp {
     }
 
     applySettings() {
-        // Sync color theme selector and apply theme classes.
         const themeSelector = document.getElementById('themeSelector');
         if (themeSelector && this.state.colorTheme) {
             themeSelector.value = this.state.colorTheme;
         }
         changeColorTheme(this, this.state.colorTheme || 'dracula');
 
-        // Sync translation selector and update the API instance.
         if (this.translationSelector && this.state.translation) {
             this.translationSelector.value = this.state.translation;
         }
         this.bibleApi.setTranslation(this.state.translation || 'ESV');
 
-        // Light mode.
         document.body.classList.toggle('light-mode', !!this.state.lightMode);
         const lightModeToggle = document.getElementById('lightModeToggle');
         if (lightModeToggle) lightModeToggle.checked = !!this.state.lightMode;
         updateThemeIcon(this.state.lightMode);
 
-        // Verse numbers: toggle body class (CSS hides .verse-num when present).
         document.body.classList.toggle('hide-verse-numbers', !this.state.showVerseNumbers);
         if (this.verseNumbersToggle) this.verseNumbersToggle.checked = !!this.state.showVerseNumbers;
 
-        // Headings toggle: no heading data in local JSON yet — keep checkbox synced
-        // so persisted state round-trips correctly. Functional effect pending #<issue>.
         if (this.headingsToggle) this.headingsToggle.checked = !!this.state.showHeadings;
-
-        // Footnotes / cross-references: no data in local JSON; sync checkboxes only.
         if (this.footnotesToggle) this.footnotesToggle.checked = !!this.state.showFootnotes;
         if (this.crossReferencesToggle) this.crossReferencesToggle.checked = !!this.state.showCrossReferences;
 
-        // Verse-by-verse display class.
         if (this.passageText) {
             this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
         }
         if (this.verseByVerseToggle) this.verseByVerseToggle.checked = !!this.state.verseByVerse;
 
-        // Font size.
         const fontSize = this.state.fontSize || 18;
         if (this.fontSizeSlider) this.fontSizeSlider.value = fontSize;
         if (this.fontSizeValue) this.fontSizeValue.textContent = `${fontSize}px`;
@@ -1277,9 +1282,6 @@ class BibleApp {
             localStorage.setItem(setting, String(toggleElement.checked));
         }
 
-        // showHeadings has no effect until pericope heading data is added to the
-        // local JSON files — see the open issue for implementation options.
-        // All other display toggles are applied immediately via applySettings().
         this.applySettings();
     }
 
@@ -1319,13 +1321,8 @@ class BibleApp {
     }
 
     updateCopyright() {
-        const copyrights = {
-            ESV: 'Scripture quotations are from the ESV\u00ae Bible (The Holy Bible, English Standard Version\u00ae), copyright \u00a9 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.',
-            KJV: 'King James Version (KJV). Public domain.',
-            NRSVUE: 'Scripture quotations are from the New Revised Standard Version, Updated Edition (NRSVue), copyright \u00a9 2021 National Council of Churches of Christ in the United States of America. Used by permission. All rights reserved worldwide.',
-        };
         if (this.copyright) {
-            this.copyright.textContent = copyrights[this.state.translation] || '';
+            this.copyright.textContent = this._copyrightMap[this.state.translation] || '';
         }
     }
 
@@ -1469,7 +1466,6 @@ class BibleApp {
             const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
             const user = userCredential.user;
 
-            // Save initial settings to Firebase
             await this.database.ref(`users/${user.uid}/settings`).set({
                 fontSize: this.state.fontSize,
                 showVerseNumbers: this.state.showVerseNumbers,
