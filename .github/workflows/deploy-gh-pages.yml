@@ -1,4 +1,4 @@
-name: Deploy Main to GitHub Pages
+name: Deploy Json-Ver to GitHub Pages
 
 permissions:
   contents: read
@@ -8,7 +8,7 @@ permissions:
 on:
   push:
     branches:
-      - main
+      - json-ver
 
 jobs:
   build-and-deploy:
@@ -20,11 +20,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Deploy to GitHub Pages (main)
+      - name: Deploy to GitHub Pages (json-ver)
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.ACTIONS }}
           publish_branch: gh-pages
           publish_dir: ./
-          destination_dir: .
+          destination_dir: json-ver
           keep_files: true
