@@ -1,6 +1,9 @@
 // bible-api.js
-// Serves Bible text from local JSON files: translations/{T}/{T}_bible.json
-// Shape: { BookName: { "chapter": { "verse": "text" } } }
+// Serves Bible text from local JSON files.
+//
+// For BSB the optional `scaffold` parameter (from bsb-structure.js) inserts
+// section headings and paragraph breaks into the rendered HTML without any
+// external network requests.
 
 const PAGE_SIZE = 100;
 
@@ -31,7 +34,6 @@ function escapeHtml(value) {
 
 // Loads translations/index.json and returns the array of translation objects.
 // Each object has { id, label, copyright }.
-// Returns an empty array on failure so the app degrades gracefully.
 export async function loadTranslationIndex() {
     try {
         const res = await fetch('./translations/index.json');
@@ -47,7 +49,6 @@ export async function loadTranslationIndex() {
 export class BibleApi {
     constructor(translation = 'ESV') {
         this._translation = translation;
-        // Keyed by translation string, value is the full bible object or null.
         this._bibleCache = new Map();
     }
 
@@ -63,7 +64,6 @@ export class BibleApi {
         return `./translations/${translation}/${translation}_bible.json`;
     }
 
-    // Loads and caches the full bible JSON for a given translation.
     async _loadBible(translation) {
         if (this._bibleCache.has(translation)) {
             return this._bibleCache.get(translation);
@@ -108,7 +108,20 @@ export class BibleApi {
         };
     }
 
-    _buildPassageHtml(chapter, chapterData, verseStart, verseEnd) {
+    /**
+     * Builds passage HTML, optionally weaving in structure scaffold events.
+     *
+     * @param {number} chapter
+     * @param {Object} chapterData  - { "1": "verse text", ... }
+     * @param {number|null} verseStart
+     * @param {number|null} verseEnd
+     * @param {Array} scaffoldEvents - Chapter-filtered events from bsb-structure.js,
+     *   each: { ch, v, type: 'heading'|'para_break', text? }
+     *   Pass [] or omit for translations without scaffold data.
+     * @param {boolean} showHeadings - Whether to render heading events.
+     * @returns {string|null}
+     */
+    _buildPassageHtml(chapter, chapterData, verseStart, verseEnd, scaffoldEvents = [], showHeadings = true) {
         const verseNums = Object.keys(chapterData)
             .map(Number)
             .filter(Number.isFinite)
@@ -121,15 +134,79 @@ export class BibleApi {
 
         if (!verseNums.length) return null;
 
-        const versesHtml = verseNums.map((v) => {
-            const text = escapeHtml(chapterData[String(v)] || '');
-            return `<span class="verse" data-verse="${v}" id="v${chapter}-${v}"><sup class="verse-num">${v}</sup>${text} </span>`;
-        }).join('');
+        // Build a map: verse number → array of events (already sorted heading-first by build-structure.js)
+        const eventMap = new Map();
+        for (const evt of scaffoldEvents) {
+            if (!eventMap.has(evt.v)) eventMap.set(evt.v, []);
+            eventMap.get(evt.v).push(evt);
+        }
 
-        return `<div class="passage"><div class="passage-text">${versesHtml}</div></div>`;
+        const parts = [];
+        let inParagraph = false;
+
+        const openP = () => {
+            parts.push('<p class="passage-para">');
+            inParagraph = true;
+        };
+
+        const closeP = () => {
+            if (inParagraph) {
+                parts.push('</p>');
+                inParagraph = false;
+            }
+        };
+
+        const hasScaffold = scaffoldEvents.length > 0;
+
+        for (const v of verseNums) {
+            const eventsHere = eventMap.get(v) || [];
+
+            for (const evt of eventsHere) {
+                if (evt.type === 'heading') {
+                    if (showHeadings) {
+                        closeP();
+                        parts.push(`<h3 class="pericope-heading">${escapeHtml(evt.text)}</h3>`);
+                    }
+                } else if (evt.type === 'para_break') {
+                    closeP();
+                }
+            }
+
+            // Open a paragraph if we don't have one yet.
+            if (!inParagraph) openP();
+
+            const text = chapterData[String(v)] || '';
+            // Skip genuinely empty verses (e.g. John 5:4 in BSB) but preserve
+            // their verse number so navigation stays accurate.
+            const renderedText = escapeHtml(text);
+            parts.push(
+                `<span class="verse" data-verse="${v}" id="v${chapter}-${v}">` +
+                `<sup class="verse-num">${v}</sup>${renderedText} ` +
+                `</span>`
+            );
+        }
+
+        closeP();
+
+        // If no scaffold was provided, fall back to a single wrapper div so
+        // non-BSB translations render identically to before this change.
+        const inner = parts.join('');
+        if (!hasScaffold) {
+            return `<div class="passage"><div class="passage-text">${inner}</div></div>`;
+        }
+        return `<div class="passage"><div class="passage-text">${inner}</div></div>`;
     }
 
-    async fetchPassage(reference) {
+    /**
+     * Fetches and renders a passage.
+     *
+     * @param {string} reference  - e.g. 'John 3' or 'Romans 8:1-17'
+     * @param {Array}  scaffoldEvents - Optional pre-filtered chapter scaffold
+     *   events from bsb-structure.js eventsForChapter(). Pass [] for non-BSB.
+     * @param {boolean} showHeadings
+     * @returns {Promise<{passages: string[], canonical: string}|null>}
+     */
+    async fetchPassage(reference, scaffoldEvents = [], showHeadings = true) {
         const parsed = this._parseReference(reference);
         if (!parsed) {
             console.error(`BibleApi: cannot parse reference "${reference}"`);
@@ -153,7 +230,14 @@ export class BibleApi {
         }
 
         const normalizedVerseEnd = verseStart !== null ? (verseEnd ?? verseStart) : null;
-        const html = this._buildPassageHtml(chapter, chapterData, verseStart, normalizedVerseEnd);
+        const html = this._buildPassageHtml(
+            chapter,
+            chapterData,
+            verseStart,
+            normalizedVerseEnd,
+            scaffoldEvents,
+            showHeadings
+        );
         if (!html) return null;
 
         const canonical = verseStart !== null
