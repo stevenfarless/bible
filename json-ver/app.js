@@ -31,6 +31,17 @@ function readBool(key, defaultValue) {
     return defaultValue;
 }
 
+// Normalizes translation IDs that were stored under old casing to their
+// canonical (folder-matching) form. Add entries here whenever a translation
+// folder is renamed.
+const TRANSLATION_ALIASES = {
+    NRSVue: 'NRSVUE',
+};
+
+function normalizeTranslation(t) {
+    return TRANSLATION_ALIASES[t] || t;
+}
+
 class BibleApp {
     constructor() {
         this.auth = window.firebaseAuth;
@@ -894,7 +905,7 @@ class BibleApp {
             parts.push(`
       <div class="search-group-heading" data-testament="${esc(testName)}">
         <span class="search-group-title">${esc(testName)}</span>
-        <span class="search-group-chevron ${testamentExpanded ? 'expanded' : ''}">▾</span>
+        <span class="search-group-chevron ${testamentExpanded ? 'expanded' : ''}">&#9662;</span>
       </div>
     `);
 
@@ -907,7 +918,7 @@ class BibleApp {
                 parts.push(`
         <div class="search-book-heading" data-book="${esc(bookName)}">
           <span class="search-book-title">${esc(this.getDisplayName(bookName))}</span>
-          <span class="search-book-chevron ${bookExpanded ? 'expanded' : ''}">▾</span>
+          <span class="search-book-chevron ${bookExpanded ? 'expanded' : ''}">&#9662;</span>
         </div>
       `);
 
@@ -1199,7 +1210,7 @@ class BibleApp {
         this.state.verseByVerse         = readBool('verseByVerse',       false);
         this.state.lightMode            = readBool('lightMode',          false);
         this.state.colorTheme  = localStorage.getItem('colorTheme')  || 'dracula';
-        this.state.translation = localStorage.getItem('translation') || 'ESV';
+        this.state.translation = normalizeTranslation(localStorage.getItem('translation') || 'ESV');
     }
 
     applySettings() {
@@ -1309,9 +1320,9 @@ class BibleApp {
 
     updateCopyright() {
         const copyrights = {
-            ESV: 'Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.',
+            ESV: 'Scripture quotations are from the ESV\u00ae Bible (The Holy Bible, English Standard Version\u00ae), copyright \u00a9 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.',
             KJV: 'King James Version (KJV). Public domain.',
-            NRSVue: 'Scripture quotations are from the New Revised Standard Version, Updated Edition (NRSVue), copyright © 2021 National Council of Churches of Christ in the United States of America. Used by permission. All rights reserved worldwide.',
+            NRSVUE: 'Scripture quotations are from the New Revised Standard Version, Updated Edition (NRSVue), copyright \u00a9 2021 National Council of Churches of Christ in the United States of America. Used by permission. All rights reserved worldwide.',
         };
         if (this.copyright) {
             this.copyright.textContent = copyrights[this.state.translation] || '';
@@ -1507,7 +1518,7 @@ class BibleApp {
         this.state.verseByVerse         = s.verseByVerse;
         this.state.colorTheme           = s.colorTheme;
         this.state.lightMode            = s.lightMode;
-        this.state.translation          = s.translation || 'ESV';
+        this.state.translation          = normalizeTranslation(s.translation || 'ESV');
     }
 }
 
