@@ -17,33 +17,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout json-ver
+      - name: Checkout esv-bible (json-ver)
         uses: actions/checkout@v4
         with:
           ref: json-ver
           token: ${{ secrets.GITHUB_TOKEN }}
+          path: esv-bible
+
+      - name: Checkout HelloAOLab (USFM source)
+        uses: actions/checkout@v4
+        with:
+          repository: BereanBible/HelloAOLab
+          path: HelloAOLab
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Download HelloAOLab USFM source
-        run: |
-          curl -L https://api.github.com/repos/BereanBible/HelloAOLab/tarball -o /tmp/HelloAOLab.tar.gz
-          mkdir -p /tmp/HelloAOLab
-          tar -xzf /tmp/HelloAOLab.tar.gz --strip-components=1 -C /tmp/HelloAOLab
-          # Show what's inside so we can confirm the USFM folder name
-          ls /tmp/HelloAOLab/
+      - name: Show USFM directory contents
+        run: ls HelloAOLab/
 
       - name: Run build-structure.js
         run: |
-          # Find the USFM directory — handles BSB_USFM or any variant
-          USFM_DIR=$(find /tmp/HelloAOLab -maxdepth 2 -type d -iname '*usfm*' | head -1)
+          USFM_DIR=$(find HelloAOLab -maxdepth 2 -type d -iname '*usfm*' | head -1)
           echo "Using USFM dir: $USFM_DIR"
-          node scripts/build-structure.js --usfm-dir "$USFM_DIR"
+          node esv-bible/scripts/build-structure.js --usfm-dir "$USFM_DIR"
+        working-directory: ${{ github.workspace }}
 
       - name: Commit and push scaffold JSONs
+        working-directory: esv-bible
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
