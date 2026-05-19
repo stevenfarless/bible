@@ -63,8 +63,6 @@ export function cacheElements(app) {
 	app.verseGrid = document.getElementById('verseGrid');
 
 	// Settings
-	app.apiKeyInput = document.getElementById('apiKeyInput');
-	app.saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
 	app.verseNumbersToggle = document.getElementById('verseNumbersToggle');
 	app.headingsToggle = document.getElementById('headingsToggle');
 	app.footnotesToggle = document.getElementById('footnotesToggle');
