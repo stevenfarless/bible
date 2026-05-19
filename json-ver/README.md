@@ -1,6 +1,6 @@
 # Bible Web App
 
-A single-page Bible reader focused on speed, readability, and a distraction-free experience. Built with vanilla JavaScript, HTML, and CSS, deployed via GitHub Pages. Bible text is served entirely from local JSON files — no external API required.
+A single-page Bible reader focused on speed, readability, and a distraction-free experience. Built with vanilla JavaScript, HTML, and CSS, deployed via GitHub Pages. Bible text is served entirely from local JSON files:  no external API required.
 
 ## Live Site
 
@@ -18,7 +18,7 @@ https://stevenfarless.github.io/esv-bible/
 
 ## How Bible Text Works
 
-All verse content lives in `translations/` and is loaded at runtime via `fetch()` — no API key, no network dependency beyond the initial page load.
+All verse content lives in `translations/` and is loaded at runtime via `fetch()`:  no API key, no network dependency beyond the initial page load.
 
 ### File structure
 
@@ -52,15 +52,15 @@ Search runs entirely in the browser. On first search, all 66 book files are fetc
 
 - **Language:** Vanilla JavaScript (ES modules), HTML5, CSS3
 - **Data:** Local JSON translation files (`translations/`)
-- **Auth/Sync:** Firebase Authentication + Realtime Database (optional — app works without sign-in)
+- **Auth/Sync:** Firebase Authentication + Realtime Database (optional:  app works without sign-in)
 - **Hosting:** GitHub Pages
 - **CI/CD:** GitHub Actions (auto-deploy from `main`)
 
 ## Branch Strategy
 
-- `main` — stable, production-ready
-- `dev` — active development
-- `json-ver` — local JSON translation source (replaces ESV API)
+- `main`:  stable, production-ready
+- `dev`:  active development
+- `json-ver`:  local JSON translation source (replaces ESV API)
 
 Work branches off `dev`, merged via PR, promoted to `main` when stable.
 
@@ -69,7 +69,7 @@ Work branches off `dev`, merged via PR, promoted to `main` when stable.
 ### Prerequisites
 
 - A modern browser (Chrome, Firefox, Safari, Edge)
-- A static file server for local development (the app uses ES modules, which require HTTP — opening `index.html` directly from the filesystem won't work)
+- A static file server for local development (the app uses ES modules, which require HTTP:  opening `index.html` directly from the filesystem won't work)
 
 ### Clone & Run Locally
 
@@ -93,7 +93,7 @@ Then open `http://localhost:8000` in your browser. No API key or environment set
    ```
 2. Commit with conventional-style messages.
 3. Open a PR into `dev`.
-4. Merge `dev` into `main` when ready to ship — GitHub Actions deploys automatically.
+4. Merge `dev` into `main` when ready to ship:  GitHub Actions deploys automatically.
 
 ## Adding a Translation
 
@@ -147,4 +147,4 @@ Future improvements:
 
 ## Security
 
-No user data is stored server-side beyond Firebase Auth (email/password) and Realtime Database (settings, reading position). The app works fully without signing in — Firebase is opt-in for sync only.
+No user data is stored server-side beyond Firebase Auth (email/password) and Realtime Database (settings, reading position). The app works fully without signing in:  Firebase is opt-in for sync only.
