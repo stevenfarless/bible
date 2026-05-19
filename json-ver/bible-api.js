@@ -1,12 +1,8 @@
 // bible-api.js
-// Serves Bible text from local JSON files in translations/{TRANSLATION}/{TRANSLATION}_books/
+// Serves Bible text from local JSON files: translations/{T}/{T}_bible.json
+// Shape: { BookName: { "chapter": { "verse": "text" } } }
 
 const PAGE_SIZE = 100;
-
-const FILE_NAME_OVERRIDES = {
-    Psalms: 'Psalm',
-    'Song of Solomon': 'Song Of Solomon',
-};
 
 const BOOK_LOAD_ORDER = [
     'Genesis','Exodus','Leviticus','Numbers','Deuteronomy',
@@ -24,10 +20,6 @@ const BOOK_LOAD_ORDER = [
     '1 John','2 John','3 John','Jude','Revelation',
 ];
 
-function toFileName(book) {
-    return FILE_NAME_OVERRIDES[book] ?? book;
-}
-
 function escapeHtml(value) {
     return String(value)
         .replace(/&/g, '&amp;')
@@ -40,44 +32,37 @@ function escapeHtml(value) {
 export class BibleApi {
     constructor(translation = 'ESV') {
         this._translation = translation;
-        this._cache = new Map();
-        this._preloaded = false;
+        // Keyed by translation string, value is the full bible object or null.
+        this._bibleCache = new Map();
     }
 
     setTranslation(translation) {
-        if (this._translation === translation) return;
         this._translation = translation;
-        this._preloaded = false;
-        this._cache.clear();
     }
 
     get translation() {
         return this._translation;
     }
 
-    _cacheKey(book) {
-        return `${this._translation}:${book}`;
+    _biblePath(translation) {
+        return `./translations/${translation}/${translation}_bible.json`;
     }
 
-    _basePath() {
-        return `./translations/${this._translation}/${this._translation}_books/`;
-    }
+    // Loads and caches the full bible JSON for a given translation.
+    async _loadBible(translation) {
+        if (this._bibleCache.has(translation)) {
+            return this._bibleCache.get(translation);
+        }
 
-    async _loadBook(book) {
-        const key = this._cacheKey(book);
-        if (this._cache.has(key)) return this._cache.get(key);
-
-        const fileName = toFileName(book);
         try {
-            const res = await fetch(`${this._basePath()}${fileName}.json`);
+            const res = await fetch(this._biblePath(translation));
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const json = await res.json();
-            const data = json[fileName] ?? json[book] ?? null;
-            this._cache.set(key, data);
+            const data = await res.json();
+            this._bibleCache.set(translation, data);
             return data;
         } catch (err) {
-            console.error(`BibleApi [${this._translation}]: failed to load "${book}"`, err);
-            this._cache.set(key, null);
+            console.error(`BibleApi: failed to load translation "${translation}"`, err);
+            this._bibleCache.set(translation, null);
             return null;
         }
     }
@@ -95,7 +80,7 @@ export class BibleApi {
         };
     }
 
-    _buildPassageHtml(book, chapter, chapterData, verseStart, verseEnd) {
+    _buildPassageHtml(chapter, chapterData, verseStart, verseEnd) {
         const verseNums = Object.keys(chapterData)
             .map(Number)
             .filter(Number.isFinite)
@@ -124,8 +109,14 @@ export class BibleApi {
         }
 
         const { book, chapter, verseStart, verseEnd } = parsed;
-        const bookData = await this._loadBook(book);
-        if (!bookData) return null;
+        const bible = await this._loadBible(this._translation);
+        if (!bible) return null;
+
+        const bookData = bible[book];
+        if (!bookData) {
+            console.error(`BibleApi: book "${book}" not found in ${this._translation}`);
+            return null;
+        }
 
         const chapterData = bookData[String(chapter)];
         if (!chapterData) {
@@ -134,7 +125,7 @@ export class BibleApi {
         }
 
         const normalizedVerseEnd = verseStart !== null ? (verseEnd ?? verseStart) : null;
-        const html = this._buildPassageHtml(book, chapter, chapterData, verseStart, normalizedVerseEnd);
+        const html = this._buildPassageHtml(chapter, chapterData, verseStart, normalizedVerseEnd);
         if (!html) return null;
 
         const canonical = verseStart !== null
@@ -146,15 +137,15 @@ export class BibleApi {
 
     async searchPassages(query, page = 1) {
         const q = String(query || '').toLowerCase().trim();
-        if (!q) {
-            return { results: [], total_results: 0, page_size: PAGE_SIZE };
-        }
+        if (!q) return { results: [], total_results: 0, page_size: PAGE_SIZE };
 
-        await this._preloadAllBooks();
+        const bible = await this._loadBible(this._translation);
+        if (!bible) return { results: [], total_results: 0, page_size: PAGE_SIZE };
 
         const results = [];
+
         for (const book of BOOK_LOAD_ORDER) {
-            const bookData = this._cache.get(this._cacheKey(book));
+            const bookData = bible[book];
             if (!bookData) continue;
 
             const chapterEntries = Object.entries(bookData)
@@ -167,7 +158,6 @@ export class BibleApi {
                 for (const [verseStr, text] of verseEntries) {
                     const verseText = String(text || '');
                     if (!verseText.toLowerCase().includes(q)) continue;
-
                     results.push({
                         reference: `${book} ${chapterStr}:${verseStr}`,
                         content: verseText,
@@ -176,20 +166,12 @@ export class BibleApi {
             }
         }
 
-        const totalResults = results.length;
-        const startIndex = Math.max(0, (page - 1) * PAGE_SIZE);
-        const pagedResults = results.slice(startIndex, startIndex + PAGE_SIZE);
-
+        const total = results.length;
+        const start = Math.max(0, (page - 1) * PAGE_SIZE);
         return {
-            results: pagedResults,
-            total_results: totalResults,
+            results: results.slice(start, start + PAGE_SIZE),
+            total_results: total,
             page_size: PAGE_SIZE,
         };
-    }
-
-    async _preloadAllBooks() {
-        if (this._preloaded) return;
-        this._preloaded = true;
-        await Promise.all(BOOK_LOAD_ORDER.map((book) => this._loadBook(book)));
     }
 }
