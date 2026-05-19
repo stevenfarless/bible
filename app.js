@@ -1311,11 +1311,6 @@ class BibleApp {
         const copyrights = {
             ESV: 'Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.',
             KJV: 'King James Version (KJV). Public domain.',
-            NKJV: 'Scripture taken from the New King James Version®. Copyright © 1982 by Thomas Nelson. Used by permission. All rights reserved.',
-            NIV: 'Scripture quotations taken from The Holy Bible, New International Version® NIV®. Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.™ Used by permission. All rights reserved worldwide.',
-            CSB: 'Scripture quotations marked CSB have been taken from the Christian Standard Bible®, Copyright © 2017 by Holman Bible Publishers. Used by permission.',
-            ISV: 'Scripture taken from the Holy Bible: International Standard Version®. Copyright © 1996-2012 by The ISV Foundation. Used by permission of Davidson Press, LLC. ALL RIGHTS RESERVED INTERNATIONALLY.',
-            LEB: 'Scripture quotations marked LEB are from the Lexham English Bible. Copyright 2012 Logos Bible Software. Lexham is a registered trademark of Logos Bible Software.',
         };
         if (this.copyright) {
             this.copyright.textContent = copyrights[this.state.translation] || '';
@@ -1482,4 +1477,66 @@ class BibleApp {
             if (error.code === 'auth/email-already-in-use') {
                 this.showToast('An account with this email already exists');
             } else {
-                this.showToast(`Signu
+                this.showToast(`Signup failed: ${error.message}`);
+            }
+        }
+    }
+
+    async handleLogout() {
+        try {
+            await this.auth.signOut();
+            this.showToast('Signed out successfully');
+            this.closeModal(this.userMenuModal);
+        } catch (error) {
+            console.error('Logout error:', error);
+            this.showToast('Failed to sign out');
+        }
+    }
+
+    async loadUserData() {
+        if (!this.currentUser) return;
+        const data = await loadUserDataFromFirebase(this.currentUser.uid);
+        if (!data) return;
+        const s = data.settings;
+        this.state.fontSize             = s.fontSize;
+        this.state.showVerseNumbers     = s.showVerseNumbers;
+        this.state.showHeadings         = s.showHeadings;
+        this.state.showFootnotes        = s.showFootnotes;
+        this.state.showCrossReferences  = s.showCrossReferences;
+        this.state.verseByVerse         = s.verseByVerse;
+        this.state.colorTheme           = s.colorTheme;
+        this.state.lightMode            = s.lightMode;
+        this.state.translation          = s.translation || 'ESV';
+    }
+}
+
+function initializeBibleApp() {
+    if (window.firebaseAuth && window.firebaseDatabase) {
+        new BibleApp();
+        return;
+    }
+
+    let attempts = 0;
+    const maxAttempts = 50;
+    const retryDelayMs = 100;
+
+    const waitForFirebase = () => {
+        if (window.firebaseAuth && window.firebaseDatabase) {
+            new BibleApp();
+            return;
+        }
+
+        attempts += 1;
+        if (attempts >= maxAttempts) {
+            console.error('Firebase failed to initialize before app startup timeout.');
+            new BibleApp();
+            return;
+        }
+
+        window.setTimeout(waitForFirebase, retryDelayMs);
+    };
+
+    waitForFirebase();
+}
+
+document.addEventListener('DOMContentLoaded', initializeBibleApp);
