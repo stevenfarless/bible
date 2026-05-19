@@ -43,7 +43,7 @@ class BibleApp {
             Genesis: 'Gen', Exodus: 'Exod', Leviticus: 'Lev', Numbers: 'Num', Deuteronomy: 'Deut',
             Joshua: 'Josh', Judges: 'Judg', Ruth: 'Ruth', '1 Samuel': '1Sam', '2 Samuel': '2Sam',
             '1 Kings': '1Kgs', '2 Kings': '2Kgs', '1 Chronicles': '1Chr', '2 Chronicles': '2Chr',
-            Ezra: 'Ezra', Nehemiah: 'Neh', Esther: 'Esth', Job: 'Job', Psalms: 'Ps', Proverbs: 'Prov',
+            Ezra: 'Ezra', Nehemiah: 'Neh', Esther: 'Esth', Job: 'Job', Psalm: 'Ps', Proverbs: 'Prov',
             Ecclesiastes: 'Eccl', 'Song of Solomon': 'Song', Isaiah: 'Isa', Jeremiah: 'Jer',
             Lamentations: 'Lam', Ezekiel: 'Ezek', Daniel: 'Dan', Hosea: 'Hos', Joel: 'Joel', Amos: 'Amos',
             Obadiah: 'Obad', Jonah: 'Jonah', Micah: 'Mic', Nahum: 'Nah', Habakkuk: 'Hab', Zephaniah: 'Zeph',
@@ -53,6 +53,13 @@ class BibleApp {
             '1 Thessalonians': '1Thes', '2 Thessalonians': '2Thes', '1 Timothy': '1Tim', '2 Timothy': '2Tim',
             Titus: 'Titus', Philemon: 'Phlm', Hebrews: 'Heb', James: 'Jas', '1 Peter': '1Pet', '2 Peter': '2Pet',
             '1 John': '1John', '2 John': '2John', '3 John': '3John', Jude: 'Jude', Revelation: 'Rev',
+        };
+
+        // Books whose UI display name differs from their internal lookup key.
+        // The lookup key (used in bibleBooks, BOOK_LOAD_ORDER, and JSON) is the
+        // source of truth; this map provides overrides for display only.
+        this.bookDisplayNames = {
+            Psalm: 'Psalms',
         };
 
         this.state = initializeState();
@@ -130,7 +137,7 @@ class BibleApp {
                 Genesis: 50, Exodus: 40, Leviticus: 27, Numbers: 36, Deuteronomy: 34,
                 Joshua: 24, Judges: 21, Ruth: 4, '1 Samuel': 31, '2 Samuel': 24,
                 '1 Kings': 22, '2 Kings': 25, '1 Chronicles': 29, '2 Chronicles': 36,
-                Ezra: 10, Nehemiah: 13, Esther: 10, Job: 42, Psalms: 150, Proverbs: 31,
+                Ezra: 10, Nehemiah: 13, Esther: 10, Job: 42, Psalm: 150, Proverbs: 31,
                 Ecclesiastes: 12, 'Song of Solomon': 8, Isaiah: 66, Jeremiah: 52,
                 Lamentations: 5, Ezekiel: 48, Daniel: 12, Hosea: 14, Joel: 3, Amos: 9,
                 Obadiah: 1, Jonah: 4, Micah: 7, Nahum: 3, Habakkuk: 3, Zephaniah: 3,
@@ -167,6 +174,11 @@ class BibleApp {
         if (this.bibleBooks['Old Testament'][book]) return 'Old Testament';
         if (this.bibleBooks['New Testament'][book]) return 'New Testament';
         return null;
+    }
+
+    // Returns the display name for a book (e.g. "Psalms" for the "Psalm" key).
+    getDisplayName(book) {
+        return this.bookDisplayNames[book] || book;
     }
 
     // ================================
@@ -558,7 +570,12 @@ class BibleApp {
             return;
         }
 
-        this.passageTitle.textContent = reference;
+        // Individual Psalm chapters display as "Psalm N" (singular).
+        // The book collection is "Psalms" but each chapter is a single psalm.
+        const displayTitle = book === 'Psalm'
+            ? `Psalm ${chapter}`
+            : `${this.getDisplayName(book)} ${chapter}`;
+        this.passageTitle.textContent = displayTitle;
         this.passageText.innerHTML = data.passages[0];
         this.originalPassageHtml = this.passageText.innerHTML;
 
@@ -889,7 +906,7 @@ class BibleApp {
 
                 parts.push(`
         <div class="search-book-heading" data-book="${esc(bookName)}">
-          <span class="search-book-title">${esc(bookName)}</span>
+          <span class="search-book-title">${esc(this.getDisplayName(bookName))}</span>
           <span class="search-book-chevron ${bookExpanded ? 'expanded' : ''}">▾</span>
         </div>
       `);
@@ -1064,7 +1081,7 @@ class BibleApp {
     }
 
     populateChapterModal() {
-        this.chapterModalBook.textContent = this.state.currentBook;
+        this.chapterModalBook.textContent = this.getDisplayName(this.state.currentBook);
         this.chapterGrid.innerHTML = '';
 
         const chapterCount = this.getChapterCount(this.state.currentBook);
@@ -1088,7 +1105,11 @@ class BibleApp {
     }
 
     populateVerseModal() {
-        this.verseModalBook.textContent = `${this.state.currentBook} ${this.state.currentChapter}`;
+        const book = this.state.currentBook;
+        const displayBook = book === 'Psalm'
+            ? `Psalm ${this.state.currentChapter}`
+            : `${this.getDisplayName(book)} ${this.state.currentChapter}`;
+        this.verseModalBook.textContent = displayBook;
         this.verseGrid.innerHTML = '';
 
         const verseCount = this.getCurrentVerseCount();
@@ -1288,7 +1309,7 @@ class BibleApp {
 
     updateCopyright() {
         const copyrights = {
-            ESV: 'Scripture quotations are from the ESV\u00ae Bible (The Holy Bible, English Standard Version\u00ae), copyright \u00a9 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.',
+            ESV: 'Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.',
             KJV: 'King James Version (KJV). Public domain.',
         };
         if (this.copyright) {
