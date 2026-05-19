@@ -1,11 +1,9 @@
 // bible-api.js
-// Serves Bible text from local JSON files in translations/ESV/ESV_books/
-// Replaces all ESV API (api.esv.org) network calls.
+// Serves Bible text from local JSON files in translations/{TRANSLATION}/{TRANSLATION}_books/
 
-const BASE_PATH = './translations/ESV/ESV_books/';
 const PAGE_SIZE = 100;
 
-const FILE_NAME_MAP = {
+const FILE_NAME_OVERRIDES = {
     Psalms: 'Psalm',
     'Song of Solomon': 'Song Of Solomon',
 };
@@ -27,7 +25,7 @@ const BOOK_LOAD_ORDER = [
 ];
 
 function toFileName(book) {
-    return FILE_NAME_MAP[book] ?? book;
+    return FILE_NAME_OVERRIDES[book] ?? book;
 }
 
 function escapeHtml(value) {
@@ -40,25 +38,45 @@ function escapeHtml(value) {
 }
 
 export class BibleApi {
-    constructor() {
+    constructor(translation = 'ESV') {
+        this._translation = translation;
         this._cache = new Map();
         this._preloaded = false;
     }
 
+    setTranslation(translation) {
+        if (this._translation === translation) return;
+        this._translation = translation;
+        this._preloaded = false;
+    }
+
+    get translation() {
+        return this._translation;
+    }
+
+    _cacheKey(book) {
+        return `${this._translation}:${book}`;
+    }
+
+    _basePath() {
+        return `./translations/${this._translation}/${this._translation}_books/`;
+    }
+
     async _loadBook(book) {
-        if (this._cache.has(book)) return this._cache.get(book);
+        const key = this._cacheKey(book);
+        if (this._cache.has(key)) return this._cache.get(key);
 
         const fileName = toFileName(book);
         try {
-            const res = await fetch(`${BASE_PATH}${fileName}.json`);
+            const res = await fetch(`${this._basePath()}${fileName}.json`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             const data = json[fileName] ?? json[book] ?? null;
-            this._cache.set(book, data);
+            this._cache.set(key, data);
             return data;
         } catch (err) {
-            console.error(`BibleApi: failed to load "${book}"`, err);
-            this._cache.set(book, null);
+            console.error(`BibleApi [${this._translation}]: failed to load "${book}"`, err);
+            this._cache.set(key, null);
             return null;
         }
     }
@@ -135,7 +153,7 @@ export class BibleApi {
 
         const results = [];
         for (const book of BOOK_LOAD_ORDER) {
-            const bookData = this._cache.get(book);
+            const bookData = this._cache.get(this._cacheKey(book));
             if (!bookData) continue;
 
             const chapterEntries = Object.entries(bookData)

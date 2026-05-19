@@ -10,10 +10,11 @@ export function initializeState() {
         showVerseNumbers: true,
         showHeadings: true,
         showFootnotes: false,
-        showCrossReferences: false,  // ← ADD THIS
+        showCrossReferences: false,
         verseByVerse: false,
         colorTheme: 'dracula',
-        lightMode: false
+        lightMode: false,
+        translation: 'ESV'
     };
 }
 
@@ -54,19 +55,15 @@ export function scrollToVerse(app, verseNumber) {
     app.applyVerseGlow();
 }
 
-// 12/09/25 fixed glow for poetry format verses
 export function applyVerseGlow(app) {
-    // Restore original HTML first
     if (!app.originalPassageHtml) return;
     app.passageText.innerHTML = app.originalPassageHtml;
 
     if (app.state.selectedVerse === null) return;
 
-    // Special handling for verse 1
     if (app.state.selectedVerse === 1) {
         const firstParagraph = app.passageText.querySelector('p');
         if (firstParagraph) {
-            // Find verse 2 to split verse 1 precisely
             const verse2 = firstParagraph.querySelector('.verse-num');
             if (verse2) {
                 const verse1Block = document.createElement('div');
@@ -83,7 +80,7 @@ export function applyVerseGlow(app) {
                     }
                 });
                 firstParagraph.parentNode.insertBefore(verse1Block, firstParagraph);
-                firstParagraph.style.display = 'none'; // Hide original temporarily
+                firstParagraph.style.display = 'none';
             } else {
                 firstParagraph.classList.add('selected-verse-glow');
             }
@@ -92,7 +89,6 @@ export function applyVerseGlow(app) {
         return;
     }
 
-    // Find the verse number element
     const verseNums = app.passageText.querySelectorAll('.verse-num');
     let targetVerseNum = null;
     for (const vn of verseNums) {
@@ -104,15 +100,12 @@ export function applyVerseGlow(app) {
 
     if (!targetVerseNum) return;
 
-    // Check if this is a poetry/line-group verse
     const parentParagraph = targetVerseNum.closest('p');
     if (!parentParagraph) return;
 
     const lineSpans = parentParagraph.querySelectorAll('span.line, span.indent.line');
 
-    // POETRY MODE: If we have line spans, this is poetry
     if (lineSpans.length > 0) {
-        // Find which line contains our verse number
         let verseLineSpan = null;
         for (const span of lineSpans) {
             if (span.contains(targetVerseNum)) {
@@ -123,11 +116,9 @@ export function applyVerseGlow(app) {
 
         if (!verseLineSpan) return;
 
-        // Get the id attribute from the verse's line span
         const verseId = verseLineSpan.id;
         if (!verseId) return;
 
-        // Collect all line spans with the same id (they belong to this verse)
         const verseLines = [];
         for (const span of lineSpans) {
             if (span.id === verseId) {
@@ -137,11 +128,9 @@ export function applyVerseGlow(app) {
 
         if (verseLines.length === 0) return;
 
-        // Create a wrapper div for the glow
         const glowWrapper = document.createElement('div');
         glowWrapper.classList.add('selected-verse-glow');
 
-        // Clone all verse lines into the glow wrapper
         verseLines.forEach((line, index) => {
             const clonedLine = line.cloneNode(true);
             glowWrapper.appendChild(clonedLine);
@@ -150,14 +139,10 @@ export function applyVerseGlow(app) {
             }
         });
 
-        // Insert the glow wrapper before the first line
         verseLines[0].parentNode.insertBefore(glowWrapper, verseLines[0]);
 
-        // Hide the original lines AND their <br> tags
         verseLines.forEach(line => {
             line.style.display = 'none';
-
-            // Also hide the <br> tag that follows this span
             const nextSibling = line.nextSibling;
             if (nextSibling && nextSibling.nodeName === 'BR') {
                 nextSibling.style.display = 'none';
@@ -168,7 +153,6 @@ export function applyVerseGlow(app) {
         return;
     }
 
-    // PROSE MODE: Use the original paragraph splitting logic
     const beforeP = document.createElement('p');
     const selectedBlock = document.createElement('div');
     const afterP = document.createElement('p');
