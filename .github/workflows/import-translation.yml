@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       source_path:
-        description: 'GitHub file path (e.g. Holy-Bible-JSON/bibles/english_nrsv.json at main · emilsharkov/Holy-Bible-JSON)'
+        description: 'Paste anything: full GitHub URL, owner/repo/blob/branch/path, or "path at branch · owner/repo"'
         required: true
         type: string
       abbreviation:
@@ -29,41 +29,38 @@ jobs:
         run: |
           RAW_INPUT="${{ github.event.inputs.source_path }}"
 
-          # Strip GitHub UI suffix like " at main · owner/repo" if pasted from browser
-          # Accepted formats:
-          #   owner/repo/path/to/file.json
-          #   owner/repo/blob/branch/path/to/file.json
-          #   path/to/file.json at branch · owner/repo
+          # Normalize: strip full GitHub URL prefix so all formats become a bare path
+          # https://github.com/owner/repo/blob/branch/path  ->  owner/repo/blob/branch/path
+          # https://github.com/owner/repo/path              ->  owner/repo/path
+          INPUT=$(echo "$RAW_INPUT" | sed 's|https\?://github\.com/||')
 
-          if echo "$RAW_INPUT" | grep -q ' at .* · '; then
-            # Browser-copied format: "path/to/file.json at main · owner/repo"
-            FILE_PATH=$(echo "$RAW_INPUT" | sed 's/ at .*//')
-            OWNER_REPO=$(echo "$RAW_INPUT" | sed 's/.* · //')
-            BRANCH=$(echo "$RAW_INPUT" | sed 's/.* at //;s/ · .*//')
+          if echo "$INPUT" | grep -q ' at .* · '; then
+            # Browser UI format: "path/to/file.json at main · owner/repo"
+            FILE_PATH=$(echo "$INPUT" | sed 's/ at .*//')
+            OWNER_REPO=$(echo "$INPUT" | sed 's/.* · //')
+            BRANCH=$(echo "$INPUT" | sed 's/.* at //;s/ · .*//')
             RAW_URL="https://raw.githubusercontent.com/${OWNER_REPO}/${BRANCH}/${FILE_PATH}"
-          elif echo "$RAW_INPUT" | grep -qP '^[^/]+/[^/]+/blob/[^/]+/'; then
+          elif echo "$INPUT" | grep -q '^[^/]*/[^/]*/blob/'; then
             # owner/repo/blob/branch/path format
-            OWNER=$(echo "$RAW_INPUT" | cut -d/ -f1)
-            REPO=$(echo "$RAW_INPUT" | cut -d/ -f2)
-            BRANCH=$(echo "$RAW_INPUT" | cut -d/ -f4)
-            FILE_PATH=$(echo "$RAW_INPUT" | cut -d/ -f5-)
+            OWNER=$(echo "$INPUT" | cut -d/ -f1)
+            REPO=$(echo "$INPUT"   | cut -d/ -f2)
+            BRANCH=$(echo "$INPUT" | cut -d/ -f4)
+            FILE_PATH=$(echo "$INPUT" | cut -d/ -f5-)
             RAW_URL="https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${FILE_PATH}"
           else
-            # Assume plain owner/repo/path (no blob/branch segment) — default branch main
-            OWNER=$(echo "$RAW_INPUT" | cut -d/ -f1)
-            REPO=$(echo "$RAW_INPUT" | cut -d/ -f2)
-            FILE_PATH=$(echo "$RAW_INPUT" | cut -d/ -f3-)
+            # Plain owner/repo/path — assume main branch
+            OWNER=$(echo "$INPUT"    | cut -d/ -f1)
+            REPO=$(echo "$INPUT"     | cut -d/ -f2)
+            FILE_PATH=$(echo "$INPUT" | cut -d/ -f3-)
             RAW_URL="https://raw.githubusercontent.com/${OWNER}/${REPO}/main/${FILE_PATH}"
           fi
 
           echo "Fetching: $RAW_URL"
           curl -fsSL "$RAW_URL" -o /tmp/source_bible.json
 
-          # Derive abbreviation from filename if not provided
           ABBREV="${{ github.event.inputs.abbreviation }}"
           if [ -z "$ABBREV" ]; then
             BASENAME=$(basename "$FILE_PATH" .json)
-            # Strip leading language prefix: english_nrsv -> NRSV, nrsv -> NRSV
             ABBREV=$(echo "$BASENAME" | sed 's/^[a-z]*_//' | tr '[:lower:]' '[:upper:]')
           fi
 
@@ -86,17 +83,10 @@ jobs:
           with open("/tmp/source_bible.json", encoding="utf-8") as f:
               data = json.load(f)
 
-          # Root may be the bible dict directly, or wrapped in a single key
-          # Detect: if all values are dicts-of-dicts (chapter->verse), it's the bible.
-          # Otherwise unwrap one level.
           def looks_like_bible(d):
-              for v in d.values():
-                  if not isinstance(v, dict):
-                      return False
-              return True
+              return all(isinstance(v, dict) for v in d.values())
 
           if not looks_like_bible(data):
-              # Try unwrapping one level
               for key, val in data.items():
                   if isinstance(val, dict) and looks_like_bible(val):
                       data = val
@@ -106,14 +96,12 @@ jobs:
           books_dir = base / f"{abbrev}_books"
           books_dir.mkdir(parents=True, exist_ok=True)
 
-          # Write per-book files
           for book_name, chapters in data.items():
               book_file = books_dir / f"{book_name}.json"
               with open(book_file, "w", encoding="utf-8") as f:
                   json.dump({book_name: chapters}, f, ensure_ascii=False, indent=2)
               print(f"  wrote {book_file}")
 
-          # Write monolithic file
           bible_file = base / f"{abbrev}_bible.json"
           with open(bible_file, "w", encoding="utf-8") as f:
               json.dump(data, f, ensure_ascii=False, indent=2)
