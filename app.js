@@ -1311,6 +1311,7 @@ class BibleApp {
         const copyrights = {
             ESV: 'Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.',
             KJV: 'King James Version (KJV). Public domain.',
+            NRSVue: 'Scripture quotations are from the New Revised Standard Version, Updated Edition (NRSVue), copyright © 2021 National Council of Churches of Christ in the United States of America. Used by permission. All rights reserved worldwide.',
         };
         if (this.copyright) {
             this.copyright.textContent = copyrights[this.state.translation] || '';
