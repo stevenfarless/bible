@@ -1,7 +1,5 @@
 name: Build BSB Structure Scaffold
 
-# Runs on demand from the Actions tab.
-# Also runs automatically whenever build-structure.js or this workflow file changes on json-ver.
 on:
   workflow_dispatch:
   push:
@@ -30,12 +28,15 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Clone HelloAOLab USFM source
+      - name: Download HelloAOLab USFM source
         run: |
-          git clone --depth 1 https://${{ secrets.GITHUB_TOKEN }}@github.com/BereanBible/HelloAOLab /tmp/HelloAOLab
+          curl -L https://github.com/BereanBible/HelloAOLab/archive/refs/heads/master.zip -o /tmp/HelloAOLab.zip
+          unzip -q /tmp/HelloAOLab.zip -d /tmp/
+          # The zip extracts to HelloAOLab-master/
+          echo "USFM_DIR=/tmp/HelloAOLab-master/BSB_USFM" >> $GITHUB_ENV
 
       - name: Run build-structure.js
-        run: node scripts/build-structure.js --usfm-dir /tmp/HelloAOLab/BSB_USFM
+        run: node scripts/build-structure.js --usfm-dir ${{ env.USFM_DIR }}
 
       - name: Commit and push scaffold JSONs
         run: |
