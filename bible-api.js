@@ -56,8 +56,21 @@ export class BibleApi {
 
         try {
             const res = await fetch(this._biblePath(translation));
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
+            if (!res.ok) throw new Error(`HTTP ${res.status} for ${res.url}`);
+
+            const text = await res.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (parseErr) {
+                console.error(
+                    `BibleApi: JSON parse failed for "${translation}". ` +
+                    `Received ${text.length} bytes. Last 200 chars: ` +
+                    text.slice(-200)
+                );
+                throw parseErr;
+            }
+
             this._bibleCache.set(translation, data);
             return data;
         } catch (err) {
