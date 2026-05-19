@@ -1,0 +1,26 @@
+[
+  {
+    "ch": 1,
+    "v": 1,
+    "type": "heading",
+    "text": "Greeting to Gaius"
+  },
+  {
+    "ch": 1,
+    "v": 5,
+    "type": "heading",
+    "text": "Walking in Truth"
+  },
+  {
+    "ch": 1,
+    "v": 9,
+    "type": "heading",
+    "text": "Diotrephes and Demetrius"
+  },
+  {
+    "ch": 1,
+    "v": 13,
+    "type": "heading",
+    "text": "Final Greetings"
+  }
+]
