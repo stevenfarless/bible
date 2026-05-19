@@ -12,67 +12,34 @@ const firebaseConfig = {
   appId: "1:824462651620:web:5f46fe033ac46d2329bcf1",
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Firebase services (using Realtime Database, not Firestore)
 const auth = firebase.auth();
 const database = firebase.database();
 
-// Simple encryption for API keys
-const EncryptionHelper = {
-  encrypt(text) {
-    return btoa(text);
-  },
-  decrypt(ciphertext) {
-    try {
-      return atob(ciphertext);
-    } catch (e) {
-      return "";
-    }
-  },
-};
-
-// Export for use in app (globals)
 window.firebaseAuth = auth;
 window.firebaseDatabase = database;
-window.encryptionHelper = EncryptionHelper;
 
-// Exported function for ES module imports
 export async function loadUserData(userId) {
   try {
     const snapshot = await database.ref(`users/${userId}`).once("value");
     const userData = snapshot.val();
     if (!userData) return null;
 
-    // Decrypt API key if present
-    let apiKey = "";
-    if (userData.apiKey) {
-      apiKey = window.encryptionHelper.decrypt(userData.apiKey);
-    }
-
-    // Extract settings or default values
+    const s = userData.settings || {};
     const settings = {
-      fontSize: (userData.settings && userData.settings.fontSize) || 18,
-      showVerseNumbers:
-        userData.settings ? userData.settings.showVerseNumbers !== false : true,
-      showHeadings:
-        userData.settings ? userData.settings.showHeadings !== false : true,
-      showFootnotes:
-        userData.settings ? userData.settings.showFootnotes === true : false,
-      verseByVerse:
-        userData.settings ? userData.settings.verseByVerse === true : false,
-      colorTheme:
-        userData.settings && userData.settings.colorTheme
-          ? userData.settings.colorTheme
-          : "dracula",
-      lightMode:
-        userData.settings && typeof userData.settings.lightMode === "boolean"
-          ? userData.settings.lightMode
-          : false,
-    };;
+      fontSize: s.fontSize || 18,
+      showVerseNumbers: s.showVerseNumbers !== false,
+      showHeadings: s.showHeadings !== false,
+      showFootnotes: s.showFootnotes === true,
+      showCrossReferences: s.showCrossReferences === true,
+      verseByVerse: s.verseByVerse === true,
+      colorTheme: s.colorTheme || "dracula",
+      lightMode: typeof s.lightMode === "boolean" ? s.lightMode : false,
+      translation: s.translation || "ESV",
+    };
 
-    return { apiKey, settings };
+    return { settings };
   } catch (error) {
     console.error("Error loading user data:", error);
     return null;
