@@ -1241,7 +1241,7 @@ class BibleApp {
 
     getCurrentVerseCount() {
         const verseNums = this.passageText.querySelectorAll('.verse-num');
-        return verseNums.length > 0 ? verseNums.length + 1 : 0;
+        return verseNums.length;
     }
 
     scrollToVerse(verseNumber) {
@@ -1689,15 +1689,10 @@ class BibleApp {
     }
 
     getVerseReferenceForElement(element) {
-        let currentElement = element;
-        while (currentElement) {
-            const verseNum = currentElement.querySelector?.('.verse-num');
-            if (verseNum) {
-                const verseNumber = verseNum.textContent.trim();
-                return `${this.state.currentBook} ${this.state.currentChapter}:${verseNumber}`;
-            }
-            currentElement = currentElement.previousElementSibling;
-            if (!currentElement) break;
+        const verseContainer = element.closest?.('.verse');
+        const verseNumber = verseContainer?.dataset?.verse;
+        if (verseNumber) {
+            return `${this.state.currentBook} ${this.state.currentChapter}:${verseNumber}`;
         }
         return `${this.state.currentBook} ${this.state.currentChapter}`;
     }
