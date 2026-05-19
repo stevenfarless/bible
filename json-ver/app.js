@@ -208,6 +208,17 @@ class BibleApp {
         this.attachEventListeners();
         this.initializeAccordion();
 
+        if (!this.auth || !this.database) {
+            console.error('Firebase auth/database not ready when app initialized.');
+            this.loadLocalSettings();
+            this.applySettings();
+            this.loadPassage(this.state.currentBook, this.state.currentChapter);
+            setTimeout(() => {
+                this.showToast('Sign in is temporarily unavailable. Please refresh the page.');
+            }, 500);
+            return;
+        }
+
         // Wait for Firebase auth state
         this.auth.onAuthStateChanged(async (user) => {
             if (user) {
@@ -485,7 +496,7 @@ class BibleApp {
         });
 
         // Settings
-        this.saveApiKeyBtn.addEventListener('click', () => this.saveApiKey());
+        this.saveApiKeyBtn?.addEventListener('click', () => this.saveApiKey());
         this.verseNumbersToggle.addEventListener('change', () =>
             this.toggleSetting('showVerseNumbers')
         );
@@ -1131,11 +1142,13 @@ class BibleApp {
     // ================================
 
     openModal(modal) {
+        if (!modal) return;
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
 
     closeModal(modal) {
+        if (!modal) return;
         if (modal === this.settingsModal || modal === this.referencesModal) {
             const content = modal.querySelector('.modal-content');
             content.style.animation = 'slideDownToBottom 250ms ease';
@@ -1701,7 +1714,34 @@ class BibleApp {
     }
 }
 
+function initializeBibleApp() {
+    if (window.firebaseAuth && window.firebaseDatabase) {
+        new BibleApp();
+        return;
+    }
+
+    let attempts = 0;
+    const maxAttempts = 50;
+    const retryDelayMs = 100;
+
+    const waitForFirebase = () => {
+        if (window.firebaseAuth && window.firebaseDatabase) {
+            new BibleApp();
+            return;
+        }
+
+        attempts += 1;
+        if (attempts >= maxAttempts) {
+            console.error('Firebase failed to initialize before app startup timeout.');
+            new BibleApp();
+            return;
+        }
+
+        window.setTimeout(waitForFirebase, retryDelayMs);
+    };
+
+    waitForFirebase();
+}
+
 // Initialize the app
-document.addEventListener('DOMContentLoaded', () => {
-    new BibleApp();
-});
+document.addEventListener('DOMContentLoaded', initializeBibleApp);
