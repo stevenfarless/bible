@@ -1,0 +1,91 @@
+name: Setup Milestones
+
+on:
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create milestones and assign issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: stevenfarless/esv-bible
+        run: |
+          set -e
+
+          create_milestone() {
+            local title="$1"
+            local desc="$2"
+            # Returns milestone number, or existing number if already present
+            gh api repos/$REPO/milestones \
+              --method POST \
+              -f title="$title" \
+              -f description="$desc" \
+              --jq '.number' 2>/dev/null || \
+            gh api repos/$REPO/milestones \
+              --jq ".[] | select(.title == \"$title\") | .number"
+          }
+
+          echo "Creating milestones..."
+
+          M1=$(create_milestone "v1.0 – json-ver Stability" "Bug fixes and correctness issues from the local-JSON refactor on json-ver.")
+          echo "v1.0 Stability: $M1"
+
+          M2=$(create_milestone "v1.0 – UI & Responsive" "UI bugs, modal chrome, responsive layout, and UX polish on json-ver.")
+          echo "v1.0 UI: $M2"
+
+          M3=$(create_milestone "v1.1 – Repo Hygiene" "Dead files, missing .gitignore, orphaned directories, and CI action version pins.")
+          echo "v1.1 Hygiene: $M3"
+
+          M4=$(create_milestone "v1.1 – Text Layout & Display" "BSB scaffold, layout presets, and asset cache-busting.")
+          echo "v1.1 Layout: $M4"
+
+          M5=$(create_milestone "v1.2 – Greek & Hebrew Texts" "SBLGNT, TR Scrivener 1894, and WLC Hebrew OT integration.")
+          echo "v1.2 Greek/Hebrew: $M5"
+
+          M6=$(create_milestone "v1.3 – Translation Expansion" "Translation category framework, NLT/OSB addition, and UI grouping for the selector.")
+          echo "v1.3 Translations: $M6"
+
+          M7=$(create_milestone "v2.0 – User Features" "Firebase-backed user features: bookmarks, notes/highlights, tags, settings profiles.")
+          echo "v2.0 User Features: $M7"
+
+          M8=$(create_milestone "Backlog" "Deprioritized or undated items: red letters, search RegExp hardening, auto-hide header.")
+          echo "Backlog: $M8"
+
+          echo "Assigning issues..."
+
+          assign() {
+            local issue=$1
+            local milestone=$2
+            gh api repos/$REPO/issues/$issue --method PATCH -F milestone=$milestone --jq '.number'
+          }
+
+          # v1.0 – json-ver Stability
+          for i in 40 36 52 53 51 54 61 60 66 55; do assign $i $M1; done
+
+          # v1.0 – UI & Responsive
+          for i in 72 56 57 58 59 64 65 67 62 63; do assign $i $M2; done
+
+          # v1.1 – Repo Hygiene
+          for i in 49 48 47; do assign $i $M3; done
+
+          # v1.1 – Text Layout & Display
+          for i in 46 68 33; do assign $i $M4; done
+
+          # v1.2 – Greek & Hebrew Texts
+          for i in 69 70 71; do assign $i $M5; done
+
+          # v1.3 – Translation Expansion
+          assign 73 $M6
+
+          # v2.0 – User Features
+          for i in 10 9 8 7 3; do assign $i $M7; done
+
+          # Backlog
+          for i in 4 22 30; do assign $i $M8; done
+
+          echo "Done."
