@@ -20,6 +20,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Inject BUILD_ID
+        run: |
+          echo "Injecting BUILD_ID: $GITHUB_SHA"
+          sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" sw.js
+          sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" index.html
+
       - name: Deploy to GitHub Pages (json-ver)
         uses: peaceiris/actions-gh-pages@v4
         with:
