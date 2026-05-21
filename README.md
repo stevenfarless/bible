@@ -148,3 +148,10 @@ Future improvements:
 ## Security
 
 No user data is stored server-side beyond Firebase Auth (email/password) and Realtime Database (settings, reading position). The app works fully without signing in:  Firebase is opt-in for sync only.
+
+
+## Cache invalidation & service worker
+
+Every deploy injects the commit SHA as `BUILD_ID` into `sw.js` and `index.html` via a `sed` step in `deploy-gh-pages.yml`. The service worker uses `BUILD_ID` as its cache-partition key (`esv-bible-<sha>`). On activation it deletes every cache whose key does not match the current `BUILD_ID`, then calls `self.clients.claim()` and posts a `NEW_VERSION` message to every open tab. The app receives that message and shows a non-blocking **A new version is available — Refresh** toast (bottom-center, auto-dismisses after 30 s). When a tab is backgrounded and brought back into focus, `visibilitychange` triggers `reg.update()` so long-lived tabs check for new deploys without a full reload.
+
+Do not introduce manual version-bump strings or query-string cache busting — the service worker handles this automatically for every push to `json-ver`.
