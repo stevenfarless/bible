@@ -191,6 +191,7 @@ class BibleApp {
 
     async init() {
         await this._loadTranslationRegistry();
+        await registerServiceWorker(this);
 
         cacheElements(this);
         loadTheme(this);
@@ -1533,6 +1534,56 @@ class BibleApp {
         this.state.lightMode            = s.lightMode;
         this.state.translation          = normalizeTranslation(s.translation || 'ESV');
     }
+}
+
+
+/* ─── Service Worker & Update Toast ─── */
+async function registerServiceWorker(appInstance) {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+
+    const buildMeta = document.querySelector('meta[name="build-id"]')?.content || '__BUILD_ID__';
+    console.info('[BUILD_ID]', buildMeta);
+
+    navigator.serviceWorker.addEventListener('message', (e) => {
+      if (e.data?.type === 'NEW_VERSION') showUpdateToast(appInstance);
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        reg.update().catch((err) => console.warn('SW update check failed', err));
+      }
+    });
+  } catch (err) {
+    console.warn('SW registration failed', err);
+  }
+}
+
+function showUpdateToast(appInstance) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.innerHTML = '';
+
+  const text = document.createElement('span');
+  text.textContent = 'A new version is available.';
+  text.style.flex = '1';
+
+  const action = document.createElement('button');
+  action.textContent = 'Refresh';
+  action.className = 'toast-action';
+  action.addEventListener('click', () => location.reload());
+
+  const dismiss = document.createElement('button');
+  dismiss.textContent = '\u00d7';
+  dismiss.className = 'toast-dismiss';
+  dismiss.addEventListener('click', () => toast.classList.remove('show'));
+
+  toast.appendChild(text);
+  toast.appendChild(action);
+  toast.appendChild(dismiss);
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 30000);
 }
 
 function initializeBibleApp() {
