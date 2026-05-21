@@ -1,0 +1,55 @@
+name: Cleanup Old Milestones
+
+on:
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove old milestones and reassign issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: stevenfarless/esv-bible
+        run: |
+          set -e
+
+          # Get milestone numbers by title
+          get_milestone_number() {
+            gh api repos/$REPO/milestones --paginate \
+              --jq ".[] | select(.title == \"$1\") | .number"
+          }
+
+          OLD1=$(get_milestone_number "json-ver: Bug Fixes")
+          OLD2=$(get_milestone_number "json-ver: UI & Responsive Polish")
+          NEW1=$(get_milestone_number "v1.0 – json-ver Stability")
+          NEW2=$(get_milestone_number "v1.0 – UI & Responsive")
+
+          echo "Old Bug Fixes milestone: $OLD1 -> reassign to $NEW1"
+          echo "Old UI milestone: $OLD2 -> reassign to $NEW2"
+
+          # Reassign any issues still on old milestones
+          if [ -n "$OLD1" ]; then
+            ISSUES=$(gh api repos/$REPO/issues?milestone=$OLD1\&state=open\&per_page=100 --jq '.[].number')
+            for i in $ISSUES; do
+              echo "Reassigning issue #$i from old Bug Fixes to v1.0 Stability"
+              gh api repos/$REPO/issues/$i --method PATCH -F milestone=$NEW1 --jq '.number'
+            done
+            gh api repos/$REPO/milestones/$OLD1 --method DELETE
+            echo "Deleted old milestone: json-ver: Bug Fixes ($OLD1)"
+          fi
+
+          if [ -n "$OLD2" ]; then
+            ISSUES=$(gh api repos/$REPO/issues?milestone=$OLD2\&state=open\&per_page=100 --jq '.[].number')
+            for i in $ISSUES; do
+              echo "Reassigning issue #$i from old UI to v1.0 UI & Responsive"
+              gh api repos/$REPO/issues/$i --method PATCH -F milestone=$NEW2 --jq '.number'
+            done
+            gh api repos/$REPO/milestones/$OLD2 --method DELETE
+            echo "Deleted old milestone: json-ver: UI & Responsive Polish ($OLD2)"
+          fi
+
+          echo "Done."
