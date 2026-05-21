@@ -240,6 +240,8 @@ jobs:
 
       # ─────────────────────────────────────────────
       # 5. Update deploy-gh-pages.yml on json-ver
+      # $GITHUB_SHA is a built-in runner env var —
+      # no env: block needed, avoids secret-scan FP
       # ─────────────────────────────────────────────
       - name: Update deploy-gh-pages.yml
         run: |
@@ -268,11 +270,9 @@ jobs:
 
                 - name: Inject BUILD_ID
                   run: |
-                    echo "Injecting BUILD_ID: ${GITHUB_SHA}"
-                    sed -i "s/__BUILD_ID__/${GITHUB_SHA}/g" sw.js
-                    sed -i "s/__BUILD_ID__/${GITHUB_SHA}/g" index.html
-                  env:
-                    GITHUB_SHA: ${{ github.sha }}
+                    echo "Injecting BUILD_ID: $GITHUB_SHA"
+                    sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" sw.js
+                    sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" index.html
 
                 - name: Deploy to GitHub Pages (json-ver)
                   uses: peaceiris/actions-gh-pages@v4
