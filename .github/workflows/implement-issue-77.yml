@@ -78,7 +78,7 @@ jobs:
           SWEOF
 
       # ─────────────────────────────────────────────
-      # 2. Patch app.js — add SW registration block
+      # 2. Patch app.js
       # ─────────────────────────────────────────────
       - name: Patch app.js
         run: |
@@ -158,7 +158,7 @@ jobs:
           PYEOF
 
       # ─────────────────────────────────────────────
-      # 3. Patch index.html — add build-id meta tag
+      # 3. Patch index.html
       # ─────────────────────────────────────────────
       - name: Patch index.html
         run: |
@@ -180,7 +180,7 @@ jobs:
           PYEOF
 
       # ─────────────────────────────────────────────
-      # 4. Patch styles.css — add toast-action/dismiss
+      # 4. Patch styles.css
       # ─────────────────────────────────────────────
       - name: Patch styles.css
         run: |
@@ -239,53 +239,7 @@ jobs:
           PYEOF
 
       # ─────────────────────────────────────────────
-      # 5. Update deploy-gh-pages.yml on json-ver
-      # $GITHUB_SHA is a built-in runner env var —
-      # no env: block needed, avoids secret-scan FP
-      # ─────────────────────────────────────────────
-      - name: Update deploy-gh-pages.yml
-        run: |
-          cat > .github/workflows/deploy-gh-pages.yml << 'WFEOF'
-          name: Deploy Json-Ver to GitHub Pages
-
-          permissions:
-            contents: write
-            pages: write
-            id-token: write
-
-          on:
-            push:
-              branches:
-                - json-ver
-
-          jobs:
-            build-and-deploy:
-              runs-on: ubuntu-latest
-
-              steps:
-                - name: Checkout code
-                  uses: actions/checkout@v4
-                  with:
-                    fetch-depth: 0
-
-                - name: Inject BUILD_ID
-                  run: |
-                    echo "Injecting BUILD_ID: $GITHUB_SHA"
-                    sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" sw.js
-                    sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" index.html
-
-                - name: Deploy to GitHub Pages (json-ver)
-                  uses: peaceiris/actions-gh-pages@v4
-                  with:
-                    github_token: ${{ secrets.GITHUB_TOKEN }}
-                    publish_branch: gh-pages
-                    publish_dir: ./
-                    destination_dir: json-ver
-                    keep_files: true
-          WFEOF
-
-      # ─────────────────────────────────────────────
-      # 6. Patch README.md
+      # 5. Patch README.md
       # ─────────────────────────────────────────────
       - name: Patch README.md
         run: |
@@ -311,15 +265,13 @@ jobs:
           PYEOF
 
       # ─────────────────────────────────────────────
-      # 7. Commit & push all changes to json-ver
+      # 6. Commit & push all changes to json-ver
       # ─────────────────────────────────────────────
       - name: Commit and push
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add sw.js app.js index.html styles.css \
-                  .github/workflows/deploy-gh-pages.yml \
-                  README.md
+          git add sw.js app.js index.html styles.css README.md
           git diff --cached --quiet \
             && echo "Nothing to commit — all files already up to date" \
             || git commit -m "feat: add service worker, update toast, and BUILD_ID injection (issue #77)"
