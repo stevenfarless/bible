@@ -1,0 +1,331 @@
+name: Implement Issue 77 - Service Worker & Update Toast
+
+on:
+  workflow_dispatch:
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout json-ver
+        uses: actions/checkout@v4
+        with:
+          ref: json-ver
+          fetch-depth: 0
+
+      # ─────────────────────────────────────────────
+      # 1. Write sw.js
+      # ─────────────────────────────────────────────
+      - name: Write sw.js
+        run: |
+          cat > sw.js << 'SWEOF'
+          const BUILD_ID = "__BUILD_ID__";
+          const CACHE_NAME = `esv-bible-${BUILD_ID}`;
+
+          self.addEventListener('install', () => {
+            self.skipWaiting();
+          });
+
+          self.addEventListener('activate', (event) => {
+            event.waitUntil((async () => {
+              const keys = await caches.keys();
+              await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
+              await self.clients.claim();
+              const clients = await self.clients.matchAll({ type: 'window' });
+              for (const client of clients) {
+                client.postMessage({ type: 'NEW_VERSION', buildId: BUILD_ID });
+              }
+            })());
+          });
+
+          self.addEventListener('fetch', (event) => {
+            const url = new URL(event.request.url);
+            const isRoot = url.pathname === '/' || url.pathname.endsWith('/index.html');
+
+            if (isRoot) {
+              event.respondWith((async () => {
+                try {
+                  const resp = await fetch(event.request);
+                  const cache = await caches.open(CACHE_NAME);
+                  cache.put(event.request, resp.clone());
+                  return resp;
+                } catch {
+                  const cached = await caches.match(event.request);
+                  return cached || new Response('Offline', { status: 503 });
+                }
+              })());
+              return;
+            }
+
+            event.respondWith((async () => {
+              const cache = await caches.open(CACHE_NAME);
+              const cached = await cache.match(event.request);
+              if (cached) return cached;
+              try {
+                const resp = await fetch(event.request);
+                if (event.request.method === 'GET' && resp && resp.status === 200) {
+                  cache.put(event.request, resp.clone());
+                }
+                return resp;
+              } catch {
+                return new Response('Offline', { status: 503 });
+              }
+            })());
+          });
+          SWEOF
+
+      # ─────────────────────────────────────────────
+      # 2. Patch app.js — add SW registration block
+      # before the closing initializeBibleApp function
+      # ─────────────────────────────────────────────
+      - name: Patch app.js
+        run: |
+          # Write the SW helper block to a temp file
+          cat > /tmp/sw_block.js << 'JSEOF'
+
+          /* ─── Service Worker & Update Toast ─── */
+          async function registerServiceWorker(appInstance) {
+            if (!('serviceWorker' in navigator)) return;
+            try {
+              const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+
+              const buildMeta = document.querySelector('meta[name="build-id"]')?.content || '__BUILD_ID__';
+              console.info('[BUILD_ID]', buildMeta);
+
+              navigator.serviceWorker.addEventListener('message', (e) => {
+                if (e.data?.type === 'NEW_VERSION') showUpdateToast(appInstance);
+              });
+
+              document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                  reg.update().catch((err) => console.warn('SW update check failed', err));
+                }
+              });
+            } catch (err) {
+              console.warn('SW registration failed', err);
+            }
+          }
+
+          function showUpdateToast(appInstance) {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            toast.innerHTML = '';
+
+            const text = document.createElement('span');
+            text.textContent = 'A new version is available.';
+            text.style.flex = '1';
+
+            const action = document.createElement('button');
+            action.textContent = 'Refresh';
+            action.className = 'toast-action';
+            action.addEventListener('click', () => location.reload());
+
+            const dismiss = document.createElement('button');
+            dismiss.textContent = '\u00d7';
+            dismiss.className = 'toast-dismiss';
+            dismiss.addEventListener('click', () => toast.classList.remove('show'));
+
+            toast.appendChild(text);
+            toast.appendChild(action);
+            toast.appendChild(dismiss);
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 30000);
+          }
+
+          JSEOF
+
+          # Insert the block just before the line "function initializeBibleApp()"
+          python3 - << 'PYEOF'
+          import re, pathlib
+
+          path = pathlib.Path('app.js')
+          src  = path.read_text()
+          block = pathlib.Path('/tmp/sw_block.js').read_text()
+
+          # Guard: skip if already patched
+          if 'registerServiceWorker' in src:
+              print('app.js already patched — skipping')
+          else:
+              patched = src.replace(
+                  'function initializeBibleApp()',
+                  block + 'function initializeBibleApp()'
+              )
+              # Wire call inside async init() — insert after _loadTranslationRegistry call
+              patched = patched.replace(
+                  'await this._loadTranslationRegistry();',
+                  'await this._loadTranslationRegistry();\n        await registerServiceWorker(this);'
+              )
+              path.write_text(patched)
+              print('app.js patched successfully')
+          PYEOF
+
+      # ─────────────────────────────────────────────
+      # 3. Patch index.html — add build-id meta tag
+      # ─────────────────────────────────────────────
+      - name: Patch index.html
+        run: |
+          python3 - << 'PYEOF'
+          import pathlib
+
+          path = pathlib.Path('index.html')
+          src  = path.read_text()
+
+          if 'name="build-id"' in src:
+              print('index.html already patched — skipping')
+          else:
+              patched = src.replace(
+                  '<title>Bible Reader</title>',
+                  '<title>Bible Reader</title>\n\t<meta name="build-id" content="__BUILD_ID__" />'
+              )
+              path.write_text(patched)
+              print('index.html patched successfully')
+          PYEOF
+
+      # ─────────────────────────────────────────────
+      # 4. Patch styles.css — add toast-action/dismiss
+      # ─────────────────────────────────────────────
+      - name: Patch styles.css
+        run: |
+          python3 - << 'PYEOF'
+          import pathlib
+
+          path = pathlib.Path('styles.css')
+          src  = path.read_text()
+
+          if '.toast-action' in src:
+              print('styles.css already patched — skipping')
+          else:
+              addition = """
+          /* Update-toast action buttons */
+          .toast {
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+          }
+
+          .toast-action {
+              background: var(--primary-color);
+              color: var(--bg-primary);
+              border: none;
+              padding: 0.25rem 0.6rem;
+              border-radius: 4px;
+              font-family: var(--font-sans);
+              font-size: 0.85rem;
+              font-weight: 600;
+              cursor: pointer;
+              white-space: nowrap;
+              flex-shrink: 0;
+          }
+
+          .toast-action:hover {
+              background: var(--primary-dark);
+          }
+
+          .toast-dismiss {
+              background: transparent;
+              border: none;
+              color: var(--text-muted);
+              font-size: 1.1rem;
+              line-height: 1;
+              cursor: pointer;
+              padding: 0 0.25rem;
+              flex-shrink: 0;
+          }
+
+          .toast-dismiss:hover {
+              color: var(--text-primary);
+          }
+          """
+              path.write_text(src + addition)
+              print('styles.css patched successfully')
+          PYEOF
+
+      # ─────────────────────────────────────────────
+      # 5. Update deploy workflow — inject BUILD_ID
+      # ─────────────────────────────────────────────
+      - name: Update deploy-gh-pages.yml
+        run: |
+          cat > .github/workflows/deploy-gh-pages.yml << 'WFEOF'
+          name: Deploy Json-Ver to GitHub Pages
+
+          permissions:
+            contents: write
+            pages: write
+            id-token: write
+
+          on:
+            push:
+              branches:
+                - json-ver
+
+          jobs:
+            build-and-deploy:
+              runs-on: ubuntu-latest
+
+              steps:
+                - name: Checkout code
+                  uses: actions/checkout@v4
+                  with:
+                    fetch-depth: 0
+
+                - name: Inject BUILD_ID
+                  run: |
+                    echo "Injecting BUILD_ID: ${GITHUB_SHA}"
+                    sed -i "s/__BUILD_ID__/${GITHUB_SHA}/g" sw.js
+                    sed -i "s/__BUILD_ID__/${GITHUB_SHA}/g" index.html
+                  env:
+                    GITHUB_SHA: ${{ github.sha }}
+
+                - name: Deploy to GitHub Pages (json-ver)
+                  uses: peaceiris/actions-gh-pages@v4
+                  with:
+                    github_token: ${{ secrets.GITHUB_TOKEN }}
+                    publish_branch: gh-pages
+                    publish_dir: ./
+                    destination_dir: json-ver
+                    keep_files: true
+          WFEOF
+
+      # ─────────────────────────────────────────────
+      # 6. Patch README.md — add cache invalidation doc
+      # ─────────────────────────────────────────────
+      - name: Patch README.md
+        run: |
+          python3 - << 'PYEOF'
+          import pathlib
+
+          path = pathlib.Path('README.md')
+          src  = path.read_text()
+
+          if 'Cache invalidation' in src:
+              print('README.md already patched — skipping')
+          else:
+              section = """
+
+          ## Cache invalidation & service worker
+
+          Every deploy injects the commit SHA as `BUILD_ID` into `sw.js` and `index.html` via a `sed` step in `deploy-gh-pages.yml`. The service worker uses `BUILD_ID` as its cache-partition key (`esv-bible-<sha>`). On activation it deletes every cache whose key does not match the current `BUILD_ID`, then calls `self.clients.claim()` and posts a `NEW_VERSION` message to every open tab. The app receives that message and shows a non-blocking **A new version is available — Refresh** toast (bottom-center, auto-dismisses after 30 s). When a tab is backgrounded and brought back into focus, `visibilitychange` triggers `reg.update()` so long-lived tabs (PWA, pinned) check for new deploys without a full reload.
+
+          Do not introduce manual version-bump strings or query-string cache busting — the service worker handles this automatically for every push to `json-ver`.
+          """
+              path.write_text(src + section)
+              print('README.md patched successfully')
+          PYEOF
+
+      # ─────────────────────────────────────────────
+      # 7. Commit & push all changes
+      # ─────────────────────────────────────────────
+      - name: Commit and push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add sw.js app.js index.html styles.css \
+                  .github/workflows/deploy-gh-pages.yml \
+                  README.md
+          git diff --cached --quiet \
+            && echo "Nothing to commit — all files already up to date" \
+            || git commit -m "feat: add service worker, update toast, and BUILD_ID injection (issue #77)"
+          git push origin json-ver
