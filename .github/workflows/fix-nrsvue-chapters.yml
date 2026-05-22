@@ -1,13 +1,42 @@
-name: Fix NRSVUE Missing Chapters
+name: Fix Bible Translation Chapters
 
 on:
   workflow_dispatch:
+    inputs:
+      translation:
+        description: 'Translation ID (e.g. NRSVUE, BSB, ESV)'
+        required: true
+        default: 'NRSVUE'
+      book:
+        description: 'Book display name (e.g. Matthew, Mark, Luke) — leave blank to use chapters_list'
+        required: false
+        default: ''
+      osis:
+        description: 'Book OSIS abbreviation (e.g. Matt, Mark, Luke) — required if book is set'
+        required: false
+        default: ''
+      chapters:
+        description: 'Comma-separated chapter numbers for the book above (e.g. 17,18,23) — required if book is set'
+        required: false
+        default: ''
+      chapters_list:
+        description: |-
+          Full chapter list as JSON array of [book, osis, chapter] triples.
+          Used when book/chapters inputs are blank.
+          Example: [["Matthew","Matt",17],["Mark","Mark",9]]
+        required: false
+        default: ''
 
 jobs:
-  fix-nrsvue:
+  fix-chapters:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      INPUT_TRANSLATION: ${{ github.event.inputs.translation }}
+      INPUT_BOOK: ${{ github.event.inputs.book }}
+      INPUT_OSIS: ${{ github.event.inputs.osis }}
+      INPUT_CHAPTERS: ${{ github.event.inputs.chapters }}
+      INPUT_CHAPTERS_LIST: ${{ github.event.inputs.chapters_list }}
     steps:
       - name: Checkout json-ver
         uses: actions/checkout@v4.2.2
@@ -25,102 +54,36 @@ jobs:
           pip install playwright beautifulsoup4 lxml
           python -m playwright install chromium --with-deps
 
-      - name: Inspect JSON structure
+      - name: Fetch and overwrite chapters
         run: |
           python - <<'EOF'
-          import json
-          from pathlib import Path
-
-          json_path = Path("translations/NRSVUE/NRSVUE_bible.json")
-          bible = json.loads(json_path.read_text(encoding="utf-8"))
-
-          print("Top-level type:", type(bible).__name__)
-          if isinstance(bible, list):
-              print("List length:", len(bible))
-              first = bible[0]
-              print("First item keys:", list(first.keys()) if isinstance(first, dict) else type(first).__name__)
-              for b in bible:
-                  if isinstance(b, dict):
-                      name = b.get("name") or b.get("book") or b.get("title") or ""
-                      if "matthew" in str(name).lower() or "matt" in str(name).lower():
-                          print("Matthew keys:", list(b.keys()))
-                          chaps = b.get("chapters") or b.get("chapter")
-                          print("chapters type:", type(chaps).__name__)
-                          if isinstance(chaps, list):
-                              print("chapters list length:", len(chaps))
-                              c = chaps[0]
-                              print("chapter[0] type:", type(c).__name__)
-                              if isinstance(c, dict):
-                                  print("chapter[0] keys:", list(c.keys()))
-                                  vv = c.get("verses") or c.get("verse")
-                                  print("verses type:", type(vv).__name__ if vv is not None else "None")
-                                  if isinstance(vv, list) and vv:
-                                      print("verse[0]:", vv[0])
-                              elif isinstance(c, list):
-                                  print("chapter[0][0]:", c[0] if c else "empty")
-                          elif isinstance(chaps, dict):
-                              keys = list(chaps.keys())[:3]
-                              print("chapter dict sample keys:", keys)
-                          break
-          elif isinstance(bible, dict):
-              print("Dict keys (first 5):", list(bible.keys())[:5])
-              for k in ["Matthew", "matthew", "Matt"]:
-                  if k in bible:
-                      b = bible[k]
-                      print(f"bible[{k!r}] type:", type(b).__name__)
-                      if isinstance(b, dict):
-                          sample_keys = list(b.keys())[:5]
-                          print("keys:", sample_keys)
-                          # Peek at chapter 1 structure
-                          chap1 = b.get("1") or b.get(1)
-                          if chap1 is not None:
-                              print("chapter '1' type:", type(chap1).__name__)
-                              if isinstance(chap1, dict):
-                                  print("chapter '1' keys (first 5):", list(chap1.keys())[:5])
-                                  verse1 = chap1.get("1") or chap1.get(1)
-                                  print("verse '1':", str(verse1)[:120])
-                              elif isinstance(chap1, list) and chap1:
-                                  print("chapter '1'[0]:", chap1[0])
-                      elif isinstance(b, list):
-                          print("list length:", len(b))
-                          print("[0] keys:", list(b[0].keys()) if isinstance(b[0], dict) else type(b[0]).__name__)
-                      break
-          EOF
-
-      - name: Fetch and overwrite NRSVUE chapters
-        run: |
-          python - <<'EOF'
-          import json, re, time, traceback
+          import json, os, re, time, traceback
           from pathlib import Path
           from bs4 import BeautifulSoup
           from playwright.sync_api import sync_playwright
 
-          TRANSLATION = "NRSVUE"
+          # --- resolve inputs ---
+          TRANSLATION   = os.environ.get("INPUT_TRANSLATION", "NRSVUE").strip()
+          book_input    = os.environ.get("INPUT_BOOK", "").strip()
+          osis_input    = os.environ.get("INPUT_OSIS", "").strip()
+          chapters_raw  = os.environ.get("INPUT_CHAPTERS", "").strip()
+          chapters_list_raw = os.environ.get("INPUT_CHAPTERS_LIST", "").strip()
 
-          TARGET_CHAPTERS = [
-              ("Matthew", "Matt", 17),
-              ("Matthew", "Matt", 18),
-              ("Matthew", "Matt", 23),
-              ("Mark",    "Mark", 7),
-              ("Mark",    "Mark", 9),
-              ("Mark",    "Mark", 11),
-              ("Mark",    "Mark", 15),
-              ("Luke",    "Luke", 17),
-              ("Luke",    "Luke", 23),
-              ("John",    "John", 5),
-              ("Acts",    "Acts", 8),
-              ("Acts",    "Acts", 15),
-          ]
+          if book_input and chapters_raw:
+              chapter_nums = [int(c.strip()) for c in chapters_raw.split(",") if c.strip().isdigit()]
+              TARGET_CHAPTERS = [(book_input, osis_input or book_input, ch) for ch in chapter_nums]
+          elif chapters_list_raw:
+              raw = json.loads(chapters_list_raw)
+              TARGET_CHAPTERS = [(r[0], r[1], int(r[2])) for r in raw]
+          else:
+              raise ValueError(
+                  "Provide either (book + osis + chapters) or chapters_list input."
+              )
+
+          print(f"Translation : {TRANSLATION}")
+          print(f"Chapters    : {TARGET_CHAPTERS}")
 
           def clean_verse_text(span_el):
-              """
-              Strip inline noise inside a verse span:
-                - <sup>       footnote markers [a], [b]
-                - .crossreference / .crossrefs   (A), (B) markers
-                - .versenum / .chapternum
-              Heading spans are removed from the soup entirely before this
-              function is ever called, so no heading class handling needed here.
-              """
               for tag in span_el.find_all("sup"):
                   tag.decompose()
               for tag in span_el.find_all(
@@ -142,11 +105,6 @@ jobs:
               html = page.content()
               soup = BeautifulSoup(html, "lxml")
 
-              # Remove ALL heading elements (h1-h4) from the soup before walking spans.
-              # BG places section headings in <h3><span class="text Book-CH-VS">...</span></h3>.
-              # Those heading spans share the same ref class as verse spans, so they must be
-              # destroyed at the DOM level before we iterate — class-based filtering inside
-              # the span is too late because get_text() already returns the heading text.
               for heading_tag in soup.find_all(["h1", "h2", "h3", "h4"]):
                   heading_tag.decompose()
 
@@ -164,23 +122,17 @@ jobs:
                   v_num = int(parts[2])
                   text = clean_verse_text(span)
                   if text:
-                      if v_num in verses:
-                          verses[v_num] = verses[v_num] + " " + text
-                      else:
-                          verses[v_num] = text
+                      verses[v_num] = (verses[v_num] + " " + text) if v_num in verses else text
 
               cleaned = {}
               for v_num, text in verses.items():
-                  text = re.sub(r'  +', ' ', text).strip()
-                  cleaned[v_num] = text
-
+                  cleaned[v_num] = re.sub(r'  +', ' ', text).strip()
               return cleaned
 
           def find_book(bible, book_display, osis):
               if isinstance(bible, list):
                   for b in bible:
-                      if not isinstance(b, dict):
-                          continue
+                      if not isinstance(b, dict): continue
                       for field in ["name", "book", "title"]:
                           val = str(b.get(field, "")).lower()
                           if val == book_display.lower() or val == osis.lower():
@@ -192,79 +144,42 @@ jobs:
               return None
 
           def find_chapter(book_obj, chapter):
-              """
-              Locate the chapter object inside book_obj.
-
-              Handles three layouts:
-                1. book_obj has a 'chapters' or 'chapter' key -> list or dict of chapter objects
-                2. book_obj IS the chapter mapping: {"1": {...}, "2": {...}, ...}
-                   (no 'chapters' key; the book dict's string keys ARE chapter numbers)
-              """
-              if not isinstance(book_obj, dict):
-                  return None
-
-              # Layout 1: explicit chapters container
+              if not isinstance(book_obj, dict): return None
               for field in ["chapters", "chapter"]:
                   chaps = book_obj.get(field)
-                  if chaps is None:
-                      continue
+                  if chaps is None: continue
                   if isinstance(chaps, list):
-                      # Try explicit chapter-number key inside each item
                       for c in chaps:
                           if isinstance(c, dict):
                               cnum = c.get("chapter") or c.get("chapterNumber") or c.get("number")
                               try:
-                                  if int(cnum) == chapter:
-                                      return c
-                              except (TypeError, ValueError):
-                                  pass
-                      # Fall back to 0-indexed position
-                      if len(chaps) >= chapter:
-                          return chaps[chapter - 1]
+                                  if int(cnum) == chapter: return c
+                              except (TypeError, ValueError): pass
+                      if len(chaps) >= chapter: return chaps[chapter - 1]
                   elif isinstance(chaps, dict):
                       for key in [str(chapter), chapter]:
-                          if key in chaps:
-                              return chaps[key]
+                          if key in chaps: return chaps[key]
                   return None
-
-              # Layout 2: book_obj itself is {"1": ..., "2": ...}
-              # Confirm it looks like chapter-keyed data (keys are digit strings)
               digit_keys = [k for k in book_obj if str(k).isdigit()]
               if digit_keys:
                   for key in [str(chapter), chapter]:
-                      if key in book_obj:
-                          return book_obj[key]
-
+                      if key in book_obj: return book_obj[key]
               return None
 
           def get_verses_container(chap_obj):
-              """
-              Return (field_name, container) where container is the list or dict
-              holding individual verse data.
-
-              Handles:
-                - chap_obj = {"verses": [...]} or {"verse": [...]}
-                - chap_obj = {"1": "text", "2": "text", ...}  (verse-keyed dict)
-                - chap_obj = [{"verse": 1, "text": "..."}, ...]  (verse list directly)
-              """
               if isinstance(chap_obj, dict):
                   for field in ["verses", "verse"]:
                       v = chap_obj.get(field)
-                      if v is not None:
-                          return field, v
-                  # Chapter IS the verse mapping: {"1": "text", ...}
+                      if v is not None: return field, v
                   digit_keys = [k for k in chap_obj if str(k).isdigit()]
-                  if digit_keys:
-                      return None, chap_obj
+                  if digit_keys: return None, chap_obj
               return None, chap_obj
 
           def detect_verse_key(bible):
               try:
                   books = bible if isinstance(bible, list) else list(bible.values())
                   for bk in books:
-                      if not isinstance(bk, dict):
-                          continue
-                      # Try explicit chapters container
+                      if not isinstance(bk, dict): continue
                       chaps = bk.get("chapters") or bk.get("chapter")
                       if chaps:
                           for c in (chaps if isinstance(chaps, list) else chaps.values()):
@@ -272,30 +187,26 @@ jobs:
                               if isinstance(vv, list) and vv and isinstance(vv[0], dict):
                                   return next((k for k in ["verse", "number", "verseNumber"] if k in vv[0]), "verse")
                       else:
-                          # Layout 2: book is chapter dict
                           digit_keys = [k for k in bk if str(k).isdigit()]
                           if digit_keys:
                               chap = bk[digit_keys[0]]
                               if isinstance(chap, dict):
-                                  # Chapter might itself be verse-keyed
                                   inner_digits = [k for k in chap if str(k).isdigit()]
                                   if inner_digits:
                                       val = chap[inner_digits[0]]
-                                      # If values are plain strings, no verse-key needed
-                                      if isinstance(val, str):
-                                          return None  # signal: verse dict is {str_num: text}
+                                      if isinstance(val, str): return None
                                   for field in ["verses", "verse"]:
                                       vv = chap.get(field)
                                       if isinstance(vv, list) and vv and isinstance(vv[0], dict):
                                           return next((k for k in ["verse", "number", "verseNumber"] if k in vv[0]), "verse")
-              except Exception:
-                  pass
+              except Exception: pass
               return "verse"
 
           # ---- load JSON ----
-          json_path = Path("translations/NRSVUE/NRSVUE_bible.json")
+          json_path = Path(f"translations/{TRANSLATION}/{TRANSLATION}_bible.json")
+          if not json_path.exists():
+              raise FileNotFoundError(f"JSON not found: {json_path}")
           bible = json.loads(json_path.read_text(encoding="utf-8"))
-
           VERSE_KEY = detect_verse_key(bible)
           print(f"Detected verse key: {VERSE_KEY!r}", flush=True)
 
@@ -329,8 +240,7 @@ jobs:
                       chap_obj = find_chapter(book_obj, chapter)
                       if chap_obj is None:
                           print(f"  ERROR: chapter {chapter} not found for {book_display}")
-                          sample_keys = list(book_obj.keys())[:10]
-                          print(f"    book_obj keys sample: {sample_keys}")
+                          print(f"    book_obj keys sample: {list(book_obj.keys())[:10]}")
                           continue
 
                       verses_field, verses_data = get_verses_container(chap_obj)
@@ -346,11 +256,8 @@ jobs:
                               verses_data.clear()
                               verses_data.extend(new_verses)
                       elif isinstance(verses_data, dict):
-                          # Verse-keyed dict: {"1": "text", "2": "text", ...}
-                          # Check whether values are plain strings or dicts
                           sample_vals = [v for v in verses_data.values() if v is not None]
                           if sample_vals and isinstance(sample_vals[0], str):
-                              # Plain string values — write str(v_num): text
                               verses_data.clear()
                               for v_num, text in sorted(scraped.items()):
                                   verses_data[str(v_num)] = text
@@ -379,5 +286,5 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
-          git diff --cached --quiet || git commit -m "fix(nrsvue): overwrite corrupt chapters with heading-free clean verse text"
+          git diff --cached --quiet || git commit -m "fix(${{ github.event.inputs.translation }}): overwrite chapters with clean scraped verse text"
           git push
