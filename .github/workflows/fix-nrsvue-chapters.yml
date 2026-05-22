@@ -8,13 +8,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout json-ver
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           ref: json-ver
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5.6.0
         with:
           python-version: "3.12"
 
@@ -65,11 +65,9 @@ jobs:
                   if not m:
                       continue
                   v_num = m.group(1)
-                  # skip chapter headings and footnote containers
                   if any(c in classes for c in ["chapternum", "footnote", "crossreference"]):
                       continue
                   text = span.get_text(" ", strip=True)
-                  # strip leading verse number (superscript digits BG injects)
                   text = re.sub(r"^\d+\s*", "", text).strip()
                   if not text:
                       continue
@@ -96,7 +94,6 @@ jobs:
 
               if len(fetched) < 5:
                   print(f"  WARNING: only {len(fetched)} verses parsed — skipping")
-                  # Print first 800 chars of passage container for debug
                   soup = BeautifulSoup(html, "lxml")
                   p = soup.find(class_="passage-text")
                   print(f"  HTML preview: {str(p)[:800] if p else 'no .passage-text found'}")
@@ -107,7 +104,7 @@ jobs:
 
               bible[book][ch_str] = fetched
               print(f"  Stored {len(fetched)} verses (absent: {absent})")
-              time.sleep(1)  # be polite
+              time.sleep(1)
 
           with open(bible_path, "w", encoding="utf-8") as f:
               json.dump(bible, f, ensure_ascii=False, indent=2)
