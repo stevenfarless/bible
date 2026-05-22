@@ -11,8 +11,7 @@
 //
 // Canon source: standard Protestant versification (KJV/ESV/NIV/NASB all agree on
 // chapter/verse structure for the 66-book canon).
-// Verse counts verified against: https://www.biblememorygoal.com/how-many-chapters-verses-in-the-bible/
-// Psalm per-chapter counts verified: sum = 2461 (standard Protestant total).
+// All per-chapter verse counts verified: grand total = 31,102 (standard KJV count).
 
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
@@ -25,7 +24,7 @@ const TRANSLATIONS_DIR = join(__dirname, '..', 'translations');
 const CANON = {
     'Genesis':         [31,25,24,26,32,22,24,22,29,32,32,20,18,24,21,16,27,33,38,18,34,24,20,67,34,35,46,22,35,43,55,32,20,31,29,43,36,30,23,23,57,38,34,34,28,34,31,22,33,26],
     'Exodus':          [22,25,22,31,23,30,25,32,35,29,10,51,22,31,27,36,16,27,25,26,36,31,33,18,40,37,21,43,46,38,18,35,23,35,35,38,29,31,43,38],
-    'Leviticus':       [17,16,17,35,19,30,38,36,24,20,47,8,59,57,33,34,16,30,24,16,15,18,21,20,15,20,15],
+    'Leviticus':       [17,16,17,35,19,30,38,36,24,20,47,8,59,57,33,34,16,30,37,27,24,33,44,23,55,46,34],
     'Numbers':         [54,34,51,49,31,27,89,26,23,36,35,16,33,45,41,50,13,32,22,29,35,41,30,25,18,65,23,31,40,16,54,42,56,29,34,13],
     'Deuteronomy':     [46,37,29,49,33,25,26,20,29,22,32,32,18,29,23,22,20,22,21,20,23,30,25,22,19,19,26,68,29,20,30,52,29,12],
     'Joshua':          [18,24,17,24,15,27,26,35,27,43,23,24,33,15,63,10,18,28,51,9,45,34,16,33],
@@ -39,10 +38,9 @@ const CANON = {
     '2 Chronicles':    [17,18,17,22,14,42,22,18,31,19,23,16,22,15,19,14,19,34,11,37,20,12,21,27,28,23,9,27,36,27,21,33,25,33,27,23],
     'Ezra':            [11,70,13,24,17,22,28,36,15,44],
     'Nehemiah':        [11,20,32,23,19,19,73,18,38,39,36,47,31],
-    'Esther':          [22,28,23,31,29,41,26,26,20,13],
+    'Esther':          [22,23,15,17,14,14,10,17,32,3],
     'Job':             [22,13,26,21,27,30,21,22,35,22,20,25,28,22,35,22,16,21,29,29,34,30,17,25,6,14,23,28,25,31,40,22,33,37,16,33,24,41,30,24,34,17],
-    // Psalm: 150 chapters, verified sum = 2461 (standard Protestant/KJV total)
-    // Per-chapter counts verified against KJV versification
+    // Psalm: 150 chapters, sum = 2461 (standard Protestant/KJV total)
     'Psalm':           [
         // 1-10
         6,12,8,8,12,10,17,9,20,18,
@@ -75,7 +73,7 @@ const CANON = {
         // 141-150
         10,7,12,15,21,10,20,14,9,6,
     ],
-    'Proverbs':        [33,22,35,27,23,35,27,36,18,32,31,28,25,35,33,33,28,24,29,30,31,29,35,34,28,28,27,28,62,44,39],
+    'Proverbs':        [33,22,35,27,23,35,27,36,18,32,31,28,25,35,33,33,28,24,29,30,31,29,35,34,28,28,27,28,27,33,31],
     'Ecclesiastes':    [18,26,22,16,20,12,29,17,18,20,10,14],
     'Song of Solomon': [17,17,11,16,16,13,13,14],
     'Isaiah':          [31,22,26,6,30,13,25,22,21,34,16,6,22,32,9,14,14,7,25,6,17,25,18,23,12,21,13,29,24,33,9,20,24,17,10,22,38,22,8,31,29,25,28,28,25,13,15,22,26,11,23,15,12,17,13,12,21,14,21,22,11,12,19,12,25,24],
@@ -104,8 +102,8 @@ const CANON = {
     '1 Corinthians':   [31,16,23,21,13,20,40,13,27,33,34,31,13,40,58,24],
     '2 Corinthians':   [24,17,18,18,21,18,16,24,15,18,33,21,14],
     'Galatians':       [24,21,29,31,26,18],
-    'Ephesians':       [23,22,21,28,20,12],
-    'Philippians':     [30,18,19,16],
+    'Ephesians':       [23,22,21,32,33,24],
+    'Philippians':     [30,30,21,23],
     'Colossians':      [29,23,25,18],
     '1 Thessalonians': [10,20,13,18,28],
     '2 Thessalonians': [12,17,18],
@@ -124,7 +122,8 @@ const CANON = {
     'Revelation':      [20,29,22,11,14,17,17,13,21,11,19,17,18,20,8,21,18,24,21,15,27,21],
 };
 
-// Startup sanity check: verify chapter counts and known verse totals
+// Startup sanity check: chapter counts and verse totals for all 66 books.
+// Any corrupted per-chapter array exits immediately with a named error.
 const EXPECTED_CHAPTERS = {
     'Genesis':50,'Exodus':40,'Leviticus':27,'Numbers':36,'Deuteronomy':34,
     'Joshua':24,'Judges':21,'Ruth':4,'1 Samuel':31,'2 Samuel':24,
@@ -140,11 +139,22 @@ const EXPECTED_CHAPTERS = {
     'Titus':3,'Philemon':1,'Hebrews':13,'James':5,'1 Peter':5,'2 Peter':3,
     '1 John':5,'2 John':1,'3 John':1,'Jude':1,'Revelation':22,
 };
-// Spot-check known verse totals to catch corrupted per-chapter arrays
 const EXPECTED_VERSE_TOTALS = {
     'Genesis':1533,'Exodus':1213,'Leviticus':859,'Numbers':1288,'Deuteronomy':959,
-    'Psalm':2461,'Proverbs':915,'Isaiah':1292,'Matthew':1071,'Mark':678,
-    'Luke':1151,'John':879,'Acts':1007,'Revelation':404,
+    'Joshua':658,'Judges':618,'Ruth':85,'1 Samuel':810,'2 Samuel':695,
+    '1 Kings':816,'2 Kings':719,'1 Chronicles':942,'2 Chronicles':822,
+    'Ezra':280,'Nehemiah':406,'Esther':167,'Job':1070,
+    'Psalm':2461,'Proverbs':915,'Ecclesiastes':222,'Song of Solomon':117,
+    'Isaiah':1292,'Jeremiah':1364,'Lamentations':154,'Ezekiel':1273,
+    'Daniel':357,'Hosea':197,'Joel':73,'Amos':146,'Obadiah':21,
+    'Jonah':48,'Micah':105,'Nahum':47,'Habakkuk':56,'Zephaniah':53,
+    'Haggai':38,'Zechariah':211,'Malachi':55,
+    'Matthew':1071,'Mark':678,'Luke':1151,'John':879,'Acts':1007,
+    'Romans':433,'1 Corinthians':437,'2 Corinthians':257,'Galatians':149,
+    'Ephesians':155,'Philippians':104,'Colossians':95,'1 Thessalonians':89,
+    '2 Thessalonians':47,'1 Timothy':113,'2 Timothy':83,'Titus':46,
+    'Philemon':25,'Hebrews':303,'James':108,'1 Peter':105,'2 Peter':61,
+    '1 John':105,'2 John':13,'3 John':14,'Jude':25,'Revelation':404,
 };
 for (const [book, expected] of Object.entries(EXPECTED_CHAPTERS)) {
     const arr = CANON[book];
