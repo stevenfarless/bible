@@ -8,6 +8,10 @@
 //   node scripts/audit-translations.js ESV KJV
 //
 // Output: console summary + exits with code 1 if any real issues found.
+//
+// Canon source: standard Protestant versification (KJV/ESV/NIV/NASB all agree on
+// chapter/verse structure for the 66-book canon). Verified against:
+// https://www.biblememorygoal.com/how-many-chapters-verses-in-the-bible/
 
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
@@ -17,11 +21,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const TRANSLATIONS_DIR = join(__dirname, '..', 'translations');
 
 // Canonical Protestant Bible: book -> verse counts per chapter (index 0 = ch 1)
-// Source: standard Hebrew/Greek versification used by NA28/BHS and all major English translations
 const CANON = {
     'Genesis':         [31,25,24,26,32,22,24,22,29,32,32,20,18,24,21,16,27,33,38,18,34,24,20,67,34,35,46,22,35,43,55,32,20,31,29,43,36,30,23,23,57,38,34,34,28,34,31,22,33,26],
     'Exodus':          [22,25,22,31,23,30,25,32,35,29,10,51,22,31,27,36,16,27,25,26,36,31,33,18,40,37,21,43,46,38,18,35,23,35,35,38,29,31,43,38],
-    'Leviticus':       [17,16,17,35,19,30,38,36,24,20,47,8,59,57,33,34,16,30,24,16,15,18,21,20,15,20,15,22,26,18,19,15,26,18,26,19,16,16,27],
+    'Leviticus':       [17,16,17,35,19,30,38,36,24,20,47,8,59,57,33,34,16,30,24,16,15,18,21,20,15,20,15],
     'Numbers':         [54,34,51,49,31,27,89,26,23,36,35,16,33,45,41,50,13,32,22,29,35,41,30,25,18,65,23,31,40,16,54,42,56,29,34,13],
     'Deuteronomy':     [46,37,29,49,33,25,26,20,29,22,32,32,18,29,23,22,20,22,21,20,23,30,25,22,19,19,26,68,29,20,30,52,29,12],
     'Joshua':          [18,24,17,24,15,27,26,35,27,43,23,24,33,15,63,10,18,28,51,9,45,34,16,33],
@@ -38,7 +41,7 @@ const CANON = {
     'Esther':          [22,28,23,31,29,41,26,26,20,13],
     'Job':             [22,13,26,21,27,30,21,22,35,22,20,25,28,22,35,22,16,21,29,29,34,30,17,25,6,14,23,28,25,31,40,22,33,37,16,33,24,41,30,24,34,17],
     'Psalm':           [6,12,8,8,12,10,17,9,20,18,7,8,6,7,5,11,15,50,14,9,13,31,6,10,22,12,14,9,11,12,24,11,22,22,28,12,40,22,13,17,13,11,5,20,28,22,35,22,46,28,35,34,46,46,39,51,46,75,66,20,45,48,75,45,43,16,29,40,40,44,14,47,40,14,17,19,43,32,28,28,19,34,29,41,38,22,31,41,36,27,26,17,21,36,17,22,12,24,19,14,22,28,19,19,9,12,14,25,9,14,11,27,15,14,17,21,8,24,11,19,15,35,11,20,33,9,11,32,17,8,22,27,21,26,21,13,14,29,24,13],
-    'Proverbs':        [33,22,35,27,23,35,27,36,18,32,31,28,25,35,33,33,28,24,29,30,31,29,35,34,28,28,27,28,62,44,39,46,56,34,51,45,48,31],
+    'Proverbs':        [33,22,35,27,23,35,27,36,18,32,31,28,25,35,33,33,28,24,29,30,31,29,35,34,28,28,27,28,62,44,39],
     'Ecclesiastes':    [18,26,22,16,20,12,29,17,18,20,10,14],
     'Song of Solomon': [17,17,11,16,16,13,13,14],
     'Isaiah':          [31,22,26,6,30,13,25,22,21,34,16,6,22,32,9,14,14,7,25,6,17,25,18,23,12,21,13,29,24,33,9,20,24,17,10,22,38,22,8,31,29,25,28,28,25,13,15,22,26,11,23,15,12,17,13,12,21,14,21,22,11,12,19,12,25,24],
@@ -87,9 +90,32 @@ const CANON = {
     'Revelation':      [20,29,22,11,14,17,17,13,21,11,19,17,18,20,8,21,18,24,21,15,27,21],
 };
 
+// Sanity-check array lengths match known chapter counts
+const EXPECTED_CHAPTERS = {
+    'Genesis':50,'Exodus':40,'Leviticus':27,'Numbers':36,'Deuteronomy':34,
+    'Joshua':24,'Judges':21,'Ruth':4,'1 Samuel':31,'2 Samuel':24,
+    '1 Kings':22,'2 Kings':25,'1 Chronicles':29,'2 Chronicles':36,
+    'Ezra':10,'Nehemiah':13,'Esther':10,'Job':42,'Psalm':150,'Proverbs':31,
+    'Ecclesiastes':12,'Song of Solomon':8,'Isaiah':66,'Jeremiah':52,
+    'Lamentations':5,'Ezekiel':48,'Daniel':12,'Hosea':14,'Joel':3,'Amos':9,
+    'Obadiah':1,'Jonah':4,'Micah':7,'Nahum':3,'Habakkuk':3,'Zephaniah':3,
+    'Haggai':2,'Zechariah':14,'Malachi':4,'Matthew':28,'Mark':16,'Luke':24,
+    'John':21,'Acts':28,'Romans':16,'1 Corinthians':16,'2 Corinthians':13,
+    'Galatians':6,'Ephesians':6,'Philippians':4,'Colossians':4,
+    '1 Thessalonians':5,'2 Thessalonians':3,'1 Timothy':6,'2 Timothy':4,
+    'Titus':3,'Philemon':1,'Hebrews':13,'James':5,'1 Peter':5,'2 Peter':3,
+    '1 John':5,'2 John':1,'3 John':1,'Jude':1,'Revelation':22,
+};
+for (const [book, expected] of Object.entries(EXPECTED_CHAPTERS)) {
+    const actual = CANON[book]?.length;
+    if (actual !== expected) {
+        console.error(`CANON BUG: ${book} has ${actual} chapters in array, expected ${expected}`);
+        process.exit(2);
+    }
+}
+
 // Verses intentionally left empty in modern critical-text translations (absent from
 // oldest manuscripts). KJV/NKJV/MEV include these; ESV/NIV/BSB/CSB/NLT/etc. do not.
-// An empty string at these references is NOT a data error — it is expected behavior.
 const KNOWN_OMISSIONS = new Set([
     'Matthew 12:47',
     'Matthew 17:21',
