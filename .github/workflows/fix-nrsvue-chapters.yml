@@ -6,6 +6,8 @@ on:
 jobs:
   fix-nrsvue:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout json-ver
         uses: actions/checkout@v4.2.2
@@ -26,64 +28,92 @@ jobs:
       - name: Fetch and patch NRSVUE chapters
         run: |
           python - <<'EOF'
-          import json, re, time
+          import json, re, time, sys, traceback
           from bs4 import BeautifulSoup
           from playwright.sync_api import sync_playwright
 
           TRANSLATION = "NRSVUE"
-          CHAPTERS_TO_FIX = [
-              ("Matthew", "Matt", 17, [21]),
-          ]
 
-          with sync_playwright() as p:
-              browser = p.chromium.launch(headless=True)
-              context = browser.new_context(
-                  user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                             "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-                  locale="en-US",
-              )
-              page = context.new_page()
+          try:
+              with sync_playwright() as p:
+                  browser = p.chromium.launch(headless=True)
+                  context = browser.new_context(
+                      user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                                 "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                      locale="en-US",
+                  )
+                  page = context.new_page()
 
-              print("Loading BibleGateway homepage...", flush=True)
-              page.goto("https://www.biblegateway.com", wait_until="networkidle", timeout=30000)
-              time.sleep(3)
-              page.screenshot(path="homepage.png")
-              print(f"  Title: {page.title()}")
-              print(f"  URL: {page.url}")
+                  print("Loading BibleGateway homepage...", flush=True)
+                  try:
+                      page.goto("https://www.biblegateway.com", wait_until="domcontentloaded", timeout=30000)
+                      time.sleep(3)
+                  except Exception as e:
+                      print(f"  Homepage load error: {e}")
 
-              book, osis, chapter, absent = CHAPTERS_TO_FIX[0]
-              url = f"https://www.biblegateway.com/passage/?search={osis}+{chapter}&version={TRANSLATION}"
-              print(f"\nNavigating to {url}", flush=True)
-              page.goto(url, wait_until="networkidle", timeout=30000)
-              time.sleep(3)
-              page.screenshot(path="passage.png")
-              print(f"  Title: {page.title()}")
-              print(f"  URL: {page.url}")
+                  try:
+                      page.screenshot(path="homepage.png", full_page=False)
+                      print(f"  Homepage title: {page.title()}")
+                      print(f"  Homepage URL: {page.url}")
+                  except Exception as e:
+                      print(f"  Screenshot error: {e}")
+                      with open("homepage.png", "wb") as f:
+                          f.write(b"")
 
-              html = page.content()
-              with open("passage.html", "w", encoding="utf-8") as f:
-                  f.write(html)
+                  url = "https://www.biblegateway.com/passage/?search=Matt+17&version=NRSVUE"
+                  print(f"\nNavigating to passage...", flush=True)
+                  try:
+                      page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                      time.sleep(5)
+                  except Exception as e:
+                      print(f"  Passage load error: {e}")
 
-              # Check what's in the page
-              soup = BeautifulSoup(html, "lxml")
-              first_usfm = soup.find(attrs={"data-usfm": True})
-              print(f"  data-usfm found: {first_usfm.get('data-usfm') if first_usfm else 'NONE'}")
-              print(f"  passage-text div: {'FOUND' if soup.find(class_='passage-text') else 'NOT FOUND'}")
-              print(f"  HTML length: {len(html)}")
-              # Print first 2000 chars of body text for inspection
-              body = soup.find('body')
-              print(f"  Body preview:\n{body.get_text(' ', strip=True)[:2000] if body else 'no body'}")
+                  try:
+                      page.screenshot(path="passage.png", full_page=True)
+                      print(f"  Passage title: {page.title()}")
+                      print(f"  Passage URL: {page.url}")
+                  except Exception as e:
+                      print(f"  Passage screenshot error: {e}")
+                      with open("passage.png", "wb") as f:
+                          f.write(b"")
 
-              browser.close()
+                  html = page.content()
+                  with open("passage.html", "w", encoding="utf-8") as f:
+                      f.write(html)
+
+                  soup = BeautifulSoup(html, "lxml")
+                  first_usfm = soup.find(attrs={"data-usfm": True})
+                  print(f"  data-usfm found: {first_usfm.get('data-usfm') if first_usfm else 'NONE'}")
+                  print(f"  passage-text div: {'FOUND' if soup.find(class_='passage-text') else 'NOT FOUND'}")
+                  print(f"  HTML length: {len(html)}")
+                  body = soup.find('body')
+                  print(f"  Body preview:\n{body.get_text(' ', strip=True)[:2000] if body else 'no body'}")
+
+                  browser.close()
+
+          except Exception:
+              traceback.print_exc()
+              # Ensure artifact files exist even on hard crash
+              for fname in ["homepage.png", "passage.png"]:
+                  try:
+                      open(fname, "ab").close()
+                  except Exception:
+                      pass
+              if not __import__('os').path.exists("passage.html"):
+                  with open("passage.html", "w") as f:
+                      f.write("<error>script crashed before HTML was captured</error>")
+              sys.exit(1)
+
           print("Done.")
           EOF
 
       - name: Upload debug artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: bg-debug
           path: |
             homepage.png
             passage.png
             passage.html
+          if-no-files-found: warn
