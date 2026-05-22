@@ -1,4 +1,4 @@
-# ESV Bible Reader
+# Bible Reader
 
 A fast, offline-capable Bible reading app built with vanilla JavaScript, served via GitHub Pages.
 
