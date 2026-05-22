@@ -32,55 +32,8 @@ jobs:
 
           TRANSLATION = "NRSVUE"
           CHAPTERS_TO_FIX = [
-              ("Matthew", "Matt",    17, [21]),
-              ("Matthew", "Matt",    18, [11]),
-              ("Matthew", "Matt",    23, [14]),
-              ("Mark",    "Mark",    7,  [16]),
-              ("Mark",    "Mark",    9,  [44, 46]),
-              ("Mark",    "Mark",    11, [26]),
-              ("Mark",    "Mark",    15, [28]),
-              ("Luke",    "Luke",    17, [36]),
-              ("Luke",    "Luke",    23, [17]),
-              ("John",    "John",    5,  [4]),
-              ("Acts",    "Acts",    8,  [37]),
-              ("Acts",    "Acts",    15, [34]),
-              ("Acts",    "Acts",    24, [7]),
-              ("Acts",    "Acts",    28, [29]),
-              ("Romans",  "Rom",     16, [24]),
+              ("Matthew", "Matt", 17, [21]),
           ]
-
-          def parse_verses(html, osis, chapter):
-              soup = BeautifulSoup(html, "lxml")
-
-              # Remove all non-verse nodes before extraction
-              for tag in soup.find_all(class_=re.compile(
-                  r"footnote|crossreference|chapternum|versenum|"
-                  r"heading|std-text-header|passage-display-bcv|full-chap-link"
-              )):
-                  tag.decompose()
-              for tag in soup.find_all(["sup", "h1", "h2", "h3", "h4"]):
-                  tag.decompose()
-
-              verses = {}
-              usfm_pattern = re.compile(rf"{osis}\.{chapter}\.(\d+)", re.IGNORECASE)
-              for span in soup.find_all("span", attrs={"data-usfm": usfm_pattern}):
-                  usfm = span.get("data-usfm", "")
-                  m = usfm_pattern.search(usfm)
-                  if not m:
-                      continue
-                  v_num = m.group(1)
-                  text = re.sub(r"\s+", " ", span.get_text(" ", strip=True)).strip()
-                  if not text:
-                      continue
-                  if v_num in verses:
-                      verses[v_num] += " " + text
-                  else:
-                      verses[v_num] = text
-              return verses
-
-          bible_path = "translations/NRSVUE/NRSVUE_bible.json"
-          with open(bible_path, "r", encoding="utf-8") as f:
-              bible = json.load(f)
 
           with sync_playwright() as p:
               browser = p.chromium.launch(headless=True)
@@ -91,63 +44,46 @@ jobs:
               )
               page = context.new_page()
 
-              # Accept cookies on first load so the session cookie persists
-              print("Loading BibleGateway to accept cookies...", flush=True)
-              page.goto("https://www.biblegateway.com", wait_until="domcontentloaded", timeout=30000)
-              time.sleep(2)
-              # Dismiss cookie banner if present
-              try:
-                  page.click("button:has-text('Accept')", timeout=5000)
-                  print("  Accepted cookie banner")
-              except Exception:
-                  print("  No cookie banner found")
-              time.sleep(1)
+              print("Loading BibleGateway homepage...", flush=True)
+              page.goto("https://www.biblegateway.com", wait_until="networkidle", timeout=30000)
+              time.sleep(3)
+              page.screenshot(path="homepage.png")
+              print(f"  Title: {page.title()}")
+              print(f"  URL: {page.url}")
 
-              for book, osis, chapter, absent in CHAPTERS_TO_FIX:
-                  ch_str = str(chapter)
-                  url = (
-                      f"https://www.biblegateway.com/passage/"
-                      f"?search={osis}+{chapter}&version={TRANSLATION}"
-                  )
-                  print(f"Fetching {book} {chapter}...", flush=True)
-                  try:
-                      page.goto(url, wait_until="domcontentloaded", timeout=30000)
-                      # Wait for verse content to appear
-                      page.wait_for_selector("[data-usfm]", timeout=10000)
-                      html = page.content()
-                  except Exception as e:
-                      print(f"  ERROR: {e}")
-                      continue
+              book, osis, chapter, absent = CHAPTERS_TO_FIX[0]
+              url = f"https://www.biblegateway.com/passage/?search={osis}+{chapter}&version={TRANSLATION}"
+              print(f"\nNavigating to {url}", flush=True)
+              page.goto(url, wait_until="networkidle", timeout=30000)
+              time.sleep(3)
+              page.screenshot(path="passage.png")
+              print(f"  Title: {page.title()}")
+              print(f"  URL: {page.url}")
 
-                  fetched = parse_verses(html, osis, chapter)
+              html = page.content()
+              with open("passage.html", "w", encoding="utf-8") as f:
+                  f.write(html)
 
-                  if len(fetched) < 5:
-                      print(f"  WARNING: only {len(fetched)} verses — skipping")
-                      # Print first data-usfm found for debugging
-                      soup = BeautifulSoup(html, "lxml")
-                      first = soup.find(attrs={"data-usfm": True})
-                      print(f"  First data-usfm: {first.get('data-usfm') if first else 'none'}")
-                      continue
-
-                  for v in absent:
-                      fetched.pop(str(v), None)
-
-                  bible[book][ch_str] = fetched
-                  print(f"  Stored {len(fetched)} verses (absent: {absent})")
-                  time.sleep(0.5)
+              # Check what's in the page
+              soup = BeautifulSoup(html, "lxml")
+              first_usfm = soup.find(attrs={"data-usfm": True})
+              print(f"  data-usfm found: {first_usfm.get('data-usfm') if first_usfm else 'NONE'}")
+              print(f"  passage-text div: {'FOUND' if soup.find(class_='passage-text') else 'NOT FOUND'}")
+              print(f"  HTML length: {len(html)}")
+              # Print first 2000 chars of body text for inspection
+              body = soup.find('body')
+              print(f"  Body preview:\n{body.get_text(' ', strip=True)[:2000] if body else 'no body'}")
 
               browser.close()
-
-          with open(bible_path, "w", encoding="utf-8") as f:
-              json.dump(bible, f, ensure_ascii=False, indent=2)
-
           print("Done.")
           EOF
 
-      - name: Commit patched bible
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add translations/NRSVUE/NRSVUE_bible.json
-          git diff --cached --quiet || git commit -m "fix(nrsvue): re-patch NT chapters via Playwright scrape"
-          git push
+      - name: Upload debug artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bg-debug
+          path: |
+            homepage.png
+            passage.png
+            passage.html
