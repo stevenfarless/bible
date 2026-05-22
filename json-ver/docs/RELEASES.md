@@ -1,3 +1,5 @@
-# Releases
+# Release Notes
 
-> Moved from root to `docs/RELEASES.md`.
+> This file was moved from the root to `docs/RELEASES.md`. Update any bookmarks.
+
+See GitHub Releases for versioned release notes: https://github.com/stevenfarless/esv-bible/releases
