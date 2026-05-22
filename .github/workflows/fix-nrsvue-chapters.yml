@@ -25,16 +25,11 @@ jobs:
         run: |
           python - <<'EOF'
           import json, re, time, requests
-          from bs4 import BeautifulSoup
+          from bs4 import BeautifulSoup, NavigableString
 
           TRANSLATION = "NRSVUE"
           BASE = "https://www.biblegateway.com/passage/"
           HEADERS = {"User-Agent": "Mozilla/5.0"}
-          PARAMS_EXTRA = {
-              "interface": "print",
-              "showfootnotes": "no",
-              "showxrefs": "no",
-          }
 
           CHAPTERS_TO_FIX = [
               ("Matthew", "Matt",    17, [21]),
@@ -54,29 +49,48 @@ jobs:
               ("Romans",  "Rom",     16, [24]),
           ]
 
+          # Tags to remove before any text extraction
+          STRIP_CLASSES = re.compile(
+              r"footnote|crossreference|chapternum|versenum|"
+              r"heading|std-text-header|passage-display-bcv|full-chap-link"
+          )
+
           def fetch_chapter(osis, chapter):
-              params = {"search": f"{osis} {chapter}", "version": TRANSLATION, **PARAMS_EXTRA}
+              params = {"search": f"{osis} {chapter}", "version": TRANSLATION}
               r = requests.get(BASE, params=params, headers=HEADERS, timeout=15)
               r.raise_for_status()
               return r.text
 
           def parse_verses(html, osis, chapter):
               soup = BeautifulSoup(html, "lxml")
-              # Remove footnote and cross-reference nodes entirely before text extraction
-              for tag in soup.find_all(class_=re.compile(r"footnote|crossreference|chapternum|versenum")):
+
+              # Remove all non-verse nodes
+              for tag in soup.find_all(class_=STRIP_CLASSES):
                   tag.decompose()
+              for tag in soup.find_all("sup"):
+                  tag.decompose()
+              for tag in soup.find_all("h1"):
+                  tag.decompose()
+              for tag in soup.find_all("h2"):
+                  tag.decompose()
+              for tag in soup.find_all("h3"):
+                  tag.decompose()
+              for tag in soup.find_all("h4"):
+                  tag.decompose()
+
               verses = {}
-              pattern = re.compile(rf"{osis}-{chapter}-(\d+)")
-              for span in soup.find_all("span", class_=True):
-                  classes = " ".join(span.get("class", []))
-                  m = pattern.search(classes)
+              # BibleGateway marks every verse span with data-usfm="Book.Chapter.Verse"
+              usfm_pattern = re.compile(rf"{osis}\.{chapter}\.(\d+)", re.IGNORECASE)
+              for span in soup.find_all("span", attrs={"data-usfm": usfm_pattern}):
+                  usfm = span.get("data-usfm", "")
+                  m = usfm_pattern.search(usfm)
                   if not m:
                       continue
+                  v_num = m.group(1)
                   text = span.get_text(" ", strip=True)
                   text = re.sub(r"\s+", " ", text).strip()
                   if not text:
                       continue
-                  v_num = m.group(1)
                   if v_num in verses:
                       verses[v_num] += " " + text
                   else:
@@ -101,8 +115,8 @@ jobs:
               if len(fetched) < 5:
                   print(f"  WARNING: only {len(fetched)} verses parsed — skipping")
                   soup = BeautifulSoup(html, "lxml")
-                  p = soup.find(class_="passage-text")
-                  print(f"  HTML preview: {str(p)[:800] if p else 'no .passage-text found'}")
+                  p = soup.find(attrs={"data-usfm": True})
+                  print(f"  First data-usfm found: {p}" if p else "  No data-usfm attrs found in page")
                   continue
 
               for v in absent:
@@ -123,5 +137,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add translations/NRSVUE/NRSVUE_bible.json
-          git diff --cached --quiet || git commit -m "fix(nrsvue): re-patch NT chapters with footnotes and cross-refs stripped"
+          git diff --cached --quiet || git commit -m "fix(nrsvue): re-patch NT chapters clean via data-usfm verse targeting"
           git push
