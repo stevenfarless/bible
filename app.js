@@ -10,7 +10,7 @@ import {
     scrollToVerse as scrollVerse,
     applyVerseGlow as glowVerse,
 } from './reading-state.js';
-import { loadUserData as loadUserDataFromFirebase } from './firebase-config.js';
+import { loadUserData as loadUserDataFromFirebase } from './config/firebase-config.js';
 import {
     cacheElements,
     loadTheme,
