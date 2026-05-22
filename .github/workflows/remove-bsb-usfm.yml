@@ -1,0 +1,21 @@
+name: Remove bsb usfm files
+
+on:
+  workflow_dispatch:
+
+jobs:
+  remove-dir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: json-ver
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Remove bsb usfm files directory
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git rm -r --ignore-unmatch 'bsb usfm files/'
+          git diff --cached --quiet || git commit -m "chore: remove bsb usfm files/ from version control"
+          git push
