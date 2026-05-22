@@ -39,7 +39,6 @@ jobs:
               print("List length:", len(bible))
               first = bible[0]
               print("First item keys:", list(first.keys()) if isinstance(first, dict) else type(first).__name__)
-              # find Matthew
               for b in bible:
                   if isinstance(b, dict):
                       name = b.get("name") or b.get("book") or b.get("title") or ""
@@ -62,12 +61,9 @@ jobs:
                           elif isinstance(chaps, dict):
                               keys = list(chaps.keys())[:3]
                               print("chapter dict sample keys:", keys)
-                              sample = chaps[keys[0]]
-                              print("chapter value type:", type(sample).__name__)
                           break
           elif isinstance(bible, dict):
               print("Dict keys (first 5):", list(bible.keys())[:5])
-              # Try to get Matthew
               for k in ["Matthew", "matthew", "Matt"]:
                   if k in bible:
                       b = bible[k]
@@ -80,7 +76,7 @@ jobs:
                       break
           EOF
 
-      - name: Fetch and patch NRSVUE chapters
+      - name: Fetch and overwrite NRSVUE chapters
         run: |
           python - <<'EOF'
           import json, re, time, sys, traceback
@@ -90,7 +86,9 @@ jobs:
 
           TRANSLATION = "NRSVUE"
 
-          MISSING_CHAPTERS = [
+          # Chapters to fully overwrite with clean scraped text.
+          # Add any chapter that has corrupt/dirty verse text, not just ones with missing verses.
+          TARGET_CHAPTERS = [
               ("Matthew", "Matt", 17),
               ("Matthew", "Matt", 18),
               ("Matthew", "Matt", 23),
@@ -106,9 +104,27 @@ jobs:
           ]
 
           def clean_verse_text(span_el):
-              for sup in span_el.find_all("sup"):
-                  sup.decompose()
-              return span_el.get_text(" ", strip=True)
+              """
+              Strip everything that isn't plain verse text:
+                - <sup>          footnote markers like [a], [b]
+                - .crossreference cross-ref markers like (A), (B)
+                - .heading       section heading text that leaks into verse spans
+                - .versenum      verse number element inside the span
+                - .chapternum    chapter drop-cap number
+              Then collapse whitespace.
+              """
+              for tag in span_el.find_all(["sup"]):
+                  tag.decompose()
+              for tag in span_el.find_all(class_=["crossreference", "crossrefs",
+                                                   "heading", "versenum", "chapternum"]):
+                  tag.decompose()
+              text = span_el.get_text(" ", strip=True)
+              # Remove any stray ( X ) or [ x ] patterns that survived
+              text = re.sub(r'\(\s*[A-Z]\s*\)', '', text)
+              text = re.sub(r'\[\s*[a-z]\s*\]', '', text)
+              # Collapse multiple spaces
+              text = re.sub(r'  +', ' ', text).strip()
+              return text
 
           def scrape_chapter(page, book_display, osis, chapter):
               url = (f"https://www.biblegateway.com/passage/"
@@ -118,6 +134,7 @@ jobs:
               time.sleep(4)
               html = page.content()
               soup = BeautifulSoup(html, "lxml")
+
               verses = {}
               for span in soup.select("span.text"):
                   cls_list = span.get("class", [])
@@ -132,12 +149,23 @@ jobs:
                   v_num = int(parts[2])
                   text = clean_verse_text(span)
                   if text:
-                      if v_num not in verses or len(text) > len(verses[v_num]):
+                      # Accumulate text across multiple spans for the same verse,
+                      # since BG sometimes splits a verse across several span.text elements
+                      if v_num in verses:
+                          verses[v_num] = verses[v_num] + " " + text
+                      else:
                           verses[v_num] = text
-              return verses
+
+              # Final cleanup pass — deduplicate repeated text fragments within a verse
+              cleaned = {}
+              for v_num, text in verses.items():
+                  # Collapse runs of spaces again after concatenation
+                  text = re.sub(r'  +', ' ', text).strip()
+                  cleaned[v_num] = text
+
+              return cleaned
 
           def find_book(bible, book_display, osis):
-              """Return the book object regardless of JSON structure."""
               if isinstance(bible, list):
                   for b in bible:
                       if not isinstance(b, dict):
@@ -153,15 +181,11 @@ jobs:
               return None
 
           def find_chapter(book_obj, chapter):
-              """Return the chapter container regardless of JSON structure."""
-              # Chapters could be stored as a list of dicts with a 'chapter' key,
-              # a plain list (index = chapter-1), a list of lists, or a dict.
               for field in ["chapters", "chapter"]:
                   chaps = book_obj.get(field) if isinstance(book_obj, dict) else None
                   if chaps is None:
                       continue
                   if isinstance(chaps, list):
-                      # Try dict-per-chapter with explicit 'chapter' key
                       for c in chaps:
                           if isinstance(c, dict):
                               cnum = c.get("chapter") or c.get("chapterNumber") or c.get("number")
@@ -170,7 +194,6 @@ jobs:
                                       return c
                               except (TypeError, ValueError):
                                   pass
-                      # Fall back to 0-indexed position
                       if len(chaps) >= chapter:
                           return chaps[chapter - 1]
                   elif isinstance(chaps, dict):
@@ -180,39 +203,14 @@ jobs:
               return None
 
           def get_verses_container(chap_obj):
-              """Return the list or dict that holds individual verses."""
               if isinstance(chap_obj, dict):
                   for field in ["verses", "verse"]:
                       v = chap_obj.get(field)
                       if v is not None:
-                          return v
-                  # chap_obj itself might just be a list
-                  return chap_obj
-              return chap_obj  # already a list
+                          return field, v
+              return None, chap_obj
 
-          def existing_verse_keys(verses_data):
-              if isinstance(verses_data, list):
-                  keys = set()
-                  for v in verses_data:
-                      if isinstance(v, dict):
-                          k = v.get("verse") or v.get("number") or v.get("verseNumber")
-                          if k is not None:
-                              try:
-                                  keys.add(int(k))
-                              except (ValueError, TypeError):
-                                  pass
-                  return keys
-              elif isinstance(verses_data, dict):
-                  return {int(k) for k in verses_data if str(k).isdigit()}
-              return set()
-
-          # ---- load JSON ----
-          json_path = Path("translations/NRSVUE/NRSVUE_bible.json")
-          bible = json.loads(json_path.read_text(encoding="utf-8"))
-
-          # Detect verse key name from first available verse
           def detect_verse_key(bible):
-              """Return the dict key used for verse numbers in this JSON ('verse', 'number', etc)"""
               try:
                   books = bible if isinstance(bible, list) else list(bible.values())
                   for bk in books:
@@ -227,10 +225,14 @@ jobs:
                   pass
               return "verse"
 
+          # ---- load JSON ----
+          json_path = Path("translations/NRSVUE/NRSVUE_bible.json")
+          bible = json.loads(json_path.read_text(encoding="utf-8"))
+
           VERSE_KEY = detect_verse_key(bible)
           print(f"Detected verse key: {VERSE_KEY!r}", flush=True)
 
-          # ---- scrape ----
+          # ---- scrape and overwrite ----
           with sync_playwright() as p:
               browser = p.chromium.launch(headless=True)
               context = browser.new_context(
@@ -242,13 +244,16 @@ jobs:
               page.goto("https://www.biblegateway.com", wait_until="domcontentloaded", timeout=30000)
               time.sleep(2)
 
-              for book_display, osis, chapter in MISSING_CHAPTERS:
+              for book_display, osis, chapter in TARGET_CHAPTERS:
                   try:
                       scraped = scrape_chapter(page, book_display, osis, chapter)
                       if not scraped:
                           print(f"  WARNING: no verses scraped for {book_display} {chapter}")
                           continue
                       print(f"  Got {len(scraped)} verses", flush=True)
+                      # Print first verse as a sanity check
+                      first_v = min(scraped)
+                      print(f"  v{first_v}: {scraped[first_v][:80]}", flush=True)
 
                       book_obj = find_book(bible, book_display, osis)
                       if book_obj is None:
@@ -258,34 +263,34 @@ jobs:
                       chap_obj = find_chapter(book_obj, chapter)
                       if chap_obj is None:
                           print(f"  ERROR: chapter {chapter} not found for {book_display}")
-                          # Debug: print chapter list structure
                           chaps = book_obj.get("chapters") or book_obj.get("chapter")
                           if isinstance(chaps, list):
-                              sample = chaps[:2]
-                              print(f"    chapters sample: {json.dumps(sample)[:300]}")
+                              print(f"    chapters sample: {json.dumps(chaps[:2])[:400]}")
                           continue
 
-                      verses_data = get_verses_container(chap_obj)
-                      existing = existing_verse_keys(verses_data)
-                      print(f"  Existing verses: {sorted(existing)[:5]}...", flush=True)
+                      verses_field, verses_data = get_verses_container(chap_obj)
 
-                      added = 0
+                      # Build a completely fresh list/dict from scraped data — full overwrite
                       if isinstance(verses_data, list):
-                          for v_num, text in sorted(scraped.items()):
-                              if v_num not in existing:
-                                  verses_data.append({VERSE_KEY: v_num, "text": text})
-                                  added += 1
-                          verses_data.sort(key=lambda v: int(v.get(VERSE_KEY) or 0))
+                          new_verses = [
+                              {VERSE_KEY: v_num, "text": text}
+                              for v_num, text in sorted(scraped.items())
+                          ]
+                          if verses_field and isinstance(chap_obj, dict):
+                              chap_obj[verses_field] = new_verses
+                          else:
+                              # chap_obj is itself the list — replace in place
+                              verses_data.clear()
+                              verses_data.extend(new_verses)
                       elif isinstance(verses_data, dict):
+                          verses_data.clear()
                           for v_num, text in scraped.items():
-                              if v_num not in existing:
-                                  verses_data[str(v_num)] = text
-                                  added += 1
+                              verses_data[str(v_num)] = text
 
-                      print(f"  Added {added} verses to {book_display} {chapter}", flush=True)
+                      print(f"  Overwrote {book_display} {chapter} with {len(scraped)} clean verses", flush=True)
 
                   except Exception:
-                      print(f"  ERROR scraping {book_display} {chapter}:")
+                      print(f"  ERROR on {book_display} {chapter}:")
                       traceback.print_exc()
 
               browser.close()
@@ -302,5 +307,5 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
-          git diff --cached --quiet || git commit -m "fix(nrsvue): add missing verses to Matthew, Mark, Luke, John, Acts chapters"
+          git diff --cached --quiet || git commit -m "fix(nrsvue): overwrite corrupt chapters with clean verse text (headings, crossrefs, footnotes stripped)"
           git push
