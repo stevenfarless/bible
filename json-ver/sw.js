@@ -1,4 +1,4 @@
-const BUILD_ID = "4baa481563145358f80b3f6359f24143192f9236";
+const BUILD_ID = "b8ca79d5dba0e3e0eb72b878fbf430ad103c463e";
 const CACHE_NAME = `esv-bible-${BUILD_ID}`;
 
 self.addEventListener('install', () => {
@@ -8,11 +8,14 @@ self.addEventListener('install', () => {
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
+    const hadPreviousCache = keys.some(k => k !== CACHE_NAME && k.startsWith('esv-bible-'));
     await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
     await self.clients.claim();
-    const clients = await self.clients.matchAll({ type: 'window' });
-    for (const client of clients) {
-      client.postMessage({ type: 'NEW_VERSION', buildId: BUILD_ID });
+    if (hadPreviousCache) {
+      const clients = await self.clients.matchAll({ type: 'window' });
+      for (const client of clients) {
+        client.postMessage({ type: 'NEW_VERSION', buildId: BUILD_ID });
+      }
     }
   })());
 });
