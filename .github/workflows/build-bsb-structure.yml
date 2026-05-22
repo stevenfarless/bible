@@ -8,7 +8,7 @@ on:
     paths:
       - 'scripts/build-structure.js'
       - '.github/workflows/build-bsb-structure.yml'
-      - 'bsb usfm files/**'
+      - 'data/bsb-usfm/**'
 
 permissions:
   contents: write
@@ -31,7 +31,7 @@ jobs:
 
       - name: Run build-structure.js
         run: |
-          USFM_DIR="bsb usfm files"
+          USFM_DIR="data/bsb-usfm"
           echo "Using USFM dir: $USFM_DIR"
           echo "Files found:"
           ls "$USFM_DIR"/*.usfm | head -5
