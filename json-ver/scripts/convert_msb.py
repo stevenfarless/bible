@@ -30,7 +30,8 @@ BOOK_ORDER = [
 ]
 
 books = {}
-with src.open("r", encoding="utf-8-sig", newline="") as f:
+# msb.txt is Windows-1252 encoded (curly quotes, em-dashes, etc.)
+with src.open("r", encoding="cp1252", newline="") as f:
     reader = csv.reader(f, delimiter="\t")
     for row in reader:
         if not row or row[0].strip() in ("Verse", ""):
