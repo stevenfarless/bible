@@ -3,6 +3,9 @@ name: Remove bsb usfm files
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   remove-dir:
     runs-on: ubuntu-latest
