@@ -187,11 +187,28 @@ function parseUsfm(content) {
     return events;
 }
 
+/**
+ * Extracts the book abbreviation from a USFM filename.
+ *
+ * Supported patterns (in order):
+ *   1. BSB_Bible_JHN.usfm  or  BSBBibleJHN.usfm  → JHN
+ *   2. 44JHNBSB.usfm  (repo format: NN + Abbrev + BSB)  → JHN
+ *   3. JHN.usfm  (plain abbreviation)  → JHN
+ */
 function extractAbbrevFromFilename(filename) {
+    // Pattern 1: BSB_Bible_ or BSBBible prefix
     let m = filename.match(/(?:BSB_Bible_|BSBBible)([A-Za-z0-9]+)\.usfm$/i);
     if (m) return m[1];
+
+    // Pattern 2: numeric prefix + abbreviation + BSB suffix (e.g. 44JHNBSB.usfm)
+    // Strips leading digits and trailing "BSB" to isolate the 3-letter abbreviation.
+    m = filename.match(/^\d+([A-Za-z0-9]+?)BSB\.usfm$/i);
+    if (m) return m[1];
+
+    // Pattern 3: plain abbreviation filename (e.g. JHN.usfm, GEN.usfm)
     m = filename.match(/^([A-Za-z0-9]+)\.usfm$/i);
     if (m) return m[1];
+
     return null;
 }
 
