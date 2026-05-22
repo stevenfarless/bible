@@ -108,6 +108,10 @@ export class BibleApi {
         };
     }
 
+    _sanitizeForLog(value) {
+        return String(value ?? '').replace(/[\r\n]/g, '');
+    }
+
     /**
      * Builds passage HTML, optionally weaving in structure scaffold events.
      *
@@ -209,7 +213,7 @@ export class BibleApi {
     async fetchPassage(reference, scaffoldEvents = [], showHeadings = true) {
         const parsed = this._parseReference(reference);
         if (!parsed) {
-            console.error(`BibleApi: cannot parse reference "${reference}"`);
+            console.error(`BibleApi: cannot parse reference "${this._sanitizeForLog(reference)}"`);
             return null;
         }
 
@@ -219,13 +223,13 @@ export class BibleApi {
 
         const bookData = bible[book];
         if (!bookData) {
-            console.error(`BibleApi: book "${book}" not found in ${this._translation}`);
+            console.error(`BibleApi: book "${this._sanitizeForLog(book)}" not found in ${this._translation}`);
             return null;
         }
 
         const chapterData = bookData[String(chapter)];
         if (!chapterData) {
-            console.error(`BibleApi: chapter ${chapter} not found in "${book}"`);
+            console.error(`BibleApi: chapter ${chapter} not found in "${this._sanitizeForLog(book)}"`);
             return null;
         }
 
