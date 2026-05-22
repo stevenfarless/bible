@@ -10,8 +10,9 @@
 // Output: console summary + exits with code 1 if any real issues found.
 //
 // Canon source: standard Protestant versification (KJV/ESV/NIV/NASB all agree on
-// chapter/verse structure for the 66-book canon). Verified against:
-// https://www.biblememorygoal.com/how-many-chapters-verses-in-the-bible/
+// chapter/verse structure for the 66-book canon).
+// Verse counts verified against: https://www.biblememorygoal.com/how-many-chapters-verses-in-the-bible/
+// Psalm per-chapter counts verified: sum = 2461 (standard Protestant total).
 
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
@@ -40,7 +41,40 @@ const CANON = {
     'Nehemiah':        [11,20,32,23,19,19,73,18,38,39,36,47,31],
     'Esther':          [22,28,23,31,29,41,26,26,20,13],
     'Job':             [22,13,26,21,27,30,21,22,35,22,20,25,28,22,35,22,16,21,29,29,34,30,17,25,6,14,23,28,25,31,40,22,33,37,16,33,24,41,30,24,34,17],
-    'Psalm':           [6,12,8,8,12,10,17,9,20,18,7,8,6,7,5,11,15,50,14,9,13,31,6,10,22,12,14,9,11,12,24,11,22,22,28,12,40,22,13,17,13,11,5,20,28,22,35,22,46,28,35,34,46,46,39,51,46,75,66,20,45,48,75,45,43,16,29,40,40,44,14,47,40,14,17,19,43,32,28,28,19,34,29,41,38,22,31,41,36,27,26,17,21,36,17,22,12,24,19,14,22,28,19,19,9,12,14,25,9,14,11,27,15,14,17,21,8,24,11,19,15,35,11,20,33,9,11,32,17,8,22,27,21,26,21,13,14,29,24,13],
+    // Psalm: 150 chapters, verified sum = 2461 (standard Protestant/KJV total)
+    // Per-chapter counts verified against KJV versification
+    'Psalm':           [
+        // 1-10
+        6,12,8,8,12,10,17,9,20,18,
+        // 11-20
+        7,8,6,7,5,11,15,50,14,9,
+        // 21-30
+        13,31,6,10,22,12,14,9,11,12,
+        // 31-40
+        24,11,22,22,28,12,40,22,13,17,
+        // 41-50
+        13,11,5,26,17,11,9,14,20,23,
+        // 51-60
+        19,9,6,7,23,13,11,11,17,12,
+        // 61-70
+        8,12,11,10,13,20,7,35,36,5,
+        // 71-80
+        24,20,28,23,10,12,20,72,13,19,
+        // 81-90
+        16,8,18,12,13,17,7,18,52,17,
+        // 91-100
+        16,15,5,23,11,13,12,9,9,5,
+        // 101-110
+        8,28,22,35,45,48,43,13,31,7,
+        // 111-120
+        10,10,9,8,18,19,2,29,176,7,
+        // 121-130
+        8,9,4,8,5,6,5,6,8,8,
+        // 131-140
+        3,18,3,3,21,26,9,8,24,13,
+        // 141-150
+        10,7,12,15,21,10,20,14,9,6,
+    ],
     'Proverbs':        [33,22,35,27,23,35,27,36,18,32,31,28,25,35,33,33,28,24,29,30,31,29,35,34,28,28,27,28,62,44,39],
     'Ecclesiastes':    [18,26,22,16,20,12,29,17,18,20,10,14],
     'Song of Solomon': [17,17,11,16,16,13,13,14],
@@ -90,7 +124,7 @@ const CANON = {
     'Revelation':      [20,29,22,11,14,17,17,13,21,11,19,17,18,20,8,21,18,24,21,15,27,21],
 };
 
-// Sanity-check array lengths match known chapter counts
+// Startup sanity check: verify chapter counts and known verse totals
 const EXPECTED_CHAPTERS = {
     'Genesis':50,'Exodus':40,'Leviticus':27,'Numbers':36,'Deuteronomy':34,
     'Joshua':24,'Judges':21,'Ruth':4,'1 Samuel':31,'2 Samuel':24,
@@ -106,10 +140,23 @@ const EXPECTED_CHAPTERS = {
     'Titus':3,'Philemon':1,'Hebrews':13,'James':5,'1 Peter':5,'2 Peter':3,
     '1 John':5,'2 John':1,'3 John':1,'Jude':1,'Revelation':22,
 };
+// Spot-check known verse totals to catch corrupted per-chapter arrays
+const EXPECTED_VERSE_TOTALS = {
+    'Genesis':1533,'Exodus':1213,'Leviticus':859,'Numbers':1288,'Deuteronomy':959,
+    'Psalm':2461,'Proverbs':915,'Isaiah':1292,'Matthew':1071,'Mark':678,
+    'Luke':1151,'John':879,'Acts':1007,'Revelation':404,
+};
 for (const [book, expected] of Object.entries(EXPECTED_CHAPTERS)) {
-    const actual = CANON[book]?.length;
+    const arr = CANON[book];
+    if (!arr || arr.length !== expected) {
+        console.error(`CANON BUG: ${book} has ${arr?.length} chapters in array, expected ${expected}`);
+        process.exit(2);
+    }
+}
+for (const [book, expected] of Object.entries(EXPECTED_VERSE_TOTALS)) {
+    const actual = CANON[book].reduce((a, b) => a + b, 0);
     if (actual !== expected) {
-        console.error(`CANON BUG: ${book} has ${actual} chapters in array, expected ${expected}`);
+        console.error(`CANON BUG: ${book} verse total is ${actual}, expected ${expected}`);
         process.exit(2);
     }
 }
