@@ -8,6 +8,7 @@ on:
     paths:
       - 'scripts/build-structure.js'
       - '.github/workflows/build-bsb-structure.yml'
+      - 'bsb usfm files/**'
 
 permissions:
   contents: write
@@ -28,18 +29,12 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Download BSB USFM zip
-        run: |
-          curl -L "https://bereanbible.com/bsb_usfm.zip" -o /tmp/BSB-USFM.zip
-          echo "Downloaded $(wc -c < /tmp/BSB-USFM.zip) bytes"
-          unzip -q /tmp/BSB-USFM.zip -d /tmp/BSB-USFM
-          echo "Extracted contents:"
-          ls /tmp/BSB-USFM/
-
       - name: Run build-structure.js
         run: |
-          USFM_DIR=$(find /tmp/BSB-USFM -maxdepth 2 -name '*.usfm' | head -1 | xargs dirname)
+          USFM_DIR="bsb usfm files"
           echo "Using USFM dir: $USFM_DIR"
+          echo "Files found:"
+          ls "$USFM_DIR"/*.usfm | head -5
           node scripts/build-structure.js --usfm-dir "$USFM_DIR"
 
       - name: Commit and push scaffold JSONs
