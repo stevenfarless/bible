@@ -19,17 +19,33 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install requests beautifulsoup4 lxml
+        run: pip install requests
 
       - name: Fetch and patch NRSVUE chapters
+        env:
+          BG_USERNAME: ${{ secrets.BG_USERNAME }}
+          BG_PASSWORD: ${{ secrets.BG_PASSWORD }}
         run: |
           python - <<'EOF'
-          import json, re, time, requests
-          from bs4 import BeautifulSoup, NavigableString
+          import json, re, time, requests, os, sys
 
+          BG_API = "https://api.biblegateway.com/2"
           TRANSLATION = "NRSVUE"
-          BASE = "https://www.biblegateway.com/passage/"
-          HEADERS = {"User-Agent": "Mozilla/5.0"}
+
+          # Get access token
+          username = os.environ["BG_USERNAME"]
+          password = os.environ["BG_PASSWORD"]
+          token_resp = requests.get(
+              f"{BG_API}/request_access_token",
+              params={"username": username, "password": password},
+              timeout=15,
+          )
+          token_data = token_resp.json()
+          if "error" in token_data:
+              print(f"Auth error: {token_data['error']}")
+              sys.exit(1)
+          access_token = token_data["access_token"]
+          print(f"Got access token (expires {token_data.get('expires')})")
 
           CHAPTERS_TO_FIX = [
               ("Matthew", "Matt",    17, [21]),
@@ -49,51 +65,28 @@ jobs:
               ("Romans",  "Rom",     16, [24]),
           ]
 
-          # Tags to remove before any text extraction
-          STRIP_CLASSES = re.compile(
-              r"footnote|crossreference|chapternum|versenum|"
-              r"heading|std-text-header|passage-display-bcv|full-chap-link"
-          )
-
           def fetch_chapter(osis, chapter):
-              params = {"search": f"{osis} {chapter}", "version": TRANSLATION}
-              r = requests.get(BASE, params=params, headers=HEADERS, timeout=15)
+              url = f"{BG_API}/bible/{osis}.{chapter}/{TRANSLATION}"
+              r = requests.get(url, params={"access_token": access_token}, timeout=15)
               r.raise_for_status()
-              return r.text
+              return r.json()
 
-          def parse_verses(html, osis, chapter):
-              soup = BeautifulSoup(html, "lxml")
-
-              # Remove all non-verse nodes
-              for tag in soup.find_all(class_=STRIP_CLASSES):
-                  tag.decompose()
-              for tag in soup.find_all("sup"):
-                  tag.decompose()
-              for tag in soup.find_all("h1"):
-                  tag.decompose()
-              for tag in soup.find_all("h2"):
-                  tag.decompose()
-              for tag in soup.find_all("h3"):
-                  tag.decompose()
-              for tag in soup.find_all("h4"):
-                  tag.decompose()
-
+          def parse_verses(data):
+              """
+              BG v2 returns: {"data": [{"verse_id": "Matt.17.1", "verse": [{"text": "..."}]}]}
+              """
               verses = {}
-              # BibleGateway marks every verse span with data-usfm="Book.Chapter.Verse"
-              usfm_pattern = re.compile(rf"{osis}\.{chapter}\.(\d+)", re.IGNORECASE)
-              for span in soup.find_all("span", attrs={"data-usfm": usfm_pattern}):
-                  usfm = span.get("data-usfm", "")
-                  m = usfm_pattern.search(usfm)
-                  if not m:
+              for item in data.get("data", []):
+                  verse_id = item.get("verse_id", "")  # e.g. "Matt.17.1"
+                  parts = verse_id.rsplit(".", 1)
+                  if len(parts) != 2:
                       continue
-                  v_num = m.group(1)
-                  text = span.get_text(" ", strip=True)
+                  v_num = parts[1]
+                  # verse text is a list of text segments
+                  segments = item.get("verse", [])
+                  text = " ".join(s.get("text", "") for s in segments if isinstance(s, dict))
                   text = re.sub(r"\s+", " ", text).strip()
-                  if not text:
-                      continue
-                  if v_num in verses:
-                      verses[v_num] += " " + text
-                  else:
+                  if text:
                       verses[v_num] = text
               return verses
 
@@ -105,18 +98,21 @@ jobs:
               ch_str = str(chapter)
               print(f"Fetching {book} {chapter}...", flush=True)
               try:
-                  html = fetch_chapter(osis, chapter)
+                  data = fetch_chapter(osis, chapter)
               except Exception as e:
                   print(f"  ERROR: {e}")
                   continue
 
-              fetched = parse_verses(html, osis, chapter)
+              if "error" in data:
+                  print(f"  API error: {data['error']}")
+                  continue
+
+              fetched = parse_verses(data)
 
               if len(fetched) < 5:
                   print(f"  WARNING: only {len(fetched)} verses parsed — skipping")
-                  soup = BeautifulSoup(html, "lxml")
-                  p = soup.find(attrs={"data-usfm": True})
-                  print(f"  First data-usfm found: {p}" if p else "  No data-usfm attrs found in page")
+                  print(f"  Raw response keys: {list(data.keys())}")
+                  print(f"  First item: {data.get('data', [{}])[0] if data.get('data') else 'empty'}")
                   continue
 
               for v in absent:
@@ -124,7 +120,7 @@ jobs:
 
               bible[book][ch_str] = fetched
               print(f"  Stored {len(fetched)} verses (absent: {absent})")
-              time.sleep(1)
+              time.sleep(0.3)
 
           with open(bible_path, "w", encoding="utf-8") as f:
               json.dump(bible, f, ensure_ascii=False, indent=2)
@@ -137,5 +133,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add translations/NRSVUE/NRSVUE_bible.json
-          git diff --cached --quiet || git commit -m "fix(nrsvue): re-patch NT chapters clean via data-usfm verse targeting"
+          git diff --cached --quiet || git commit -m "fix(nrsvue): re-patch NT chapters via BibleGateway v2 API"
           git push
