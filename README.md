@@ -54,15 +54,18 @@ Search runs entirely in the browser. On first search, all 66 book files are fetc
 - **Data:** Local JSON translation files (`translations/`)
 - **Auth/Sync:** Firebase Authentication + Realtime Database (optional:  app works without sign-in)
 - **Hosting:** GitHub Pages
-- **CI/CD:** GitHub Actions (auto-deploy from `main`)
+- **CI/CD:** GitHub Actions (auto-deploy from `json-ver`)
 
 ## Branch Strategy
 
-- `main`:  stable, production-ready
-- `dev`:  active development
-- `json-ver`:  local JSON translation source (replaces ESV API)
+| Branch | Role | Deployed at |
+|---|---|---|
+| `json-ver` | **Default branch.** Active development. All PRs target here. | Root site + auto-deployed on every push |
+| `main` | Stable release snapshots. Promoted from `json-ver` when ready to tag a release. | Reflects last promoted release |
 
-Work branches off `dev`, merged via PR, promoted to `main` when stable.
+`json-ver` replaced the original ESV API version of the app with local JSON translation files. It is now the canonical codebase. The old `dev` branch is retired — do not branch from `dev`.
+
+GitHub Actions deploys automatically from `json-ver` on every push via `deploy-gh-pages.yml`.
 
 ## Getting Started
 
@@ -85,15 +88,16 @@ Then open `http://localhost:8000` in your browser. No API key or environment set
 
 ## Development Workflow
 
-1. Branch from `dev`:
+1. Branch from `json-ver`:
    ```bash
-   git checkout dev
+   git checkout json-ver
    git pull
    git checkout -b feature/your-feature-name
    ```
 2. Commit with conventional-style messages.
-3. Open a PR into `dev`.
-4. Merge `dev` into `main` when ready to ship:  GitHub Actions deploys automatically.
+3. Open a PR into `json-ver`.
+4. GitHub Actions deploys automatically on merge.
+5. When ready to cut a release, merge `json-ver` into `main` and tag it.
 
 ## Adding a Translation
 
