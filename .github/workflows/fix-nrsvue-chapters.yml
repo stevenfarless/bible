@@ -1,0 +1,137 @@
+name: Fix NRSVUE Missing Chapters
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix-nrsvue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout json-ver
+        uses: actions/checkout@v4
+        with:
+          ref: json-ver
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 lxml
+
+      - name: Fetch and patch NRSVUE chapters
+        env:
+          BG_USERNAME: ${{ secrets.BG_USERNAME }}
+          BG_PASSWORD: ${{ secrets.BG_PASSWORD }}
+        run: |
+          python - <<'EOF'
+          import os, json, re, requests
+          from bs4 import BeautifulSoup
+
+          username = os.environ["BG_USERNAME"]
+          password = os.environ["BG_PASSWORD"]
+
+          # Authenticate
+          r = requests.post(
+              "https://api.biblegateway.com/3/user/authenticate",
+              data={"username": username, "password": password}
+          )
+          r.raise_for_status()
+          token = r.json()["response"]["user"]["token"]
+          print("Authenticated.")
+
+          TRANSLATION = "NRSVUE"
+
+          # Chapters with known truncation issues in the JSON file
+          # Format: (Book, chapter_int, [absent_verses])
+          CHAPTERS_TO_FIX = [
+              ("Matthew", 17, [21]),
+              ("Matthew", 18, [11]),
+              ("Matthew", 23, [14]),
+              ("Mark",    7,  [16]),
+              ("Mark",    9,  [44, 46]),
+              ("Mark",    11, [26]),
+              ("Mark",    15, [28]),
+              ("Luke",    17, [36]),
+              ("Luke",    23, [17]),
+              ("John",    5,  [4]),
+              ("Acts",    8,  [37]),
+              ("Acts",    15, [34]),
+              ("Acts",    24, [7]),
+              ("Acts",    28, [29]),
+              ("Romans",  16, [24]),
+          ]
+
+          # Bible Gateway OSIS book name map
+          BG_BOOK = {
+              "Matthew": "Matt", "Mark": "Mark", "Luke": "Luke",
+              "John": "John", "Acts": "Acts", "Romans": "Rom",
+          }
+
+          def fetch_chapter(book, chapter):
+              ref = f"{BG_BOOK[book]}.{chapter}"
+              url = f"https://api.biblegateway.com/3/bible/{ref}/{TRANSLATION}"
+              r = requests.get(url, params={"access_token": token})
+              r.raise_for_status()
+              data = r.json()
+              passages = data["response"]["search"]["result"]["passages"]
+              html = passages[0]["content"]
+              return html
+
+          def parse_verses(html):
+              soup = BeautifulSoup(html, "lxml")
+              verses = {}
+              for span in soup.find_all("span", class_=re.compile(r"text\s")):
+                  # class like "text Matt-1-1"
+                  classes = span.get("class", [])
+                  ref_class = next((c for c in classes if re.match(r"[A-Z].+-\d+-\d+", c)), None)
+                  if not ref_class:
+                      continue
+                  parts = ref_class.rsplit("-", 2)
+                  if len(parts) < 3:
+                      continue
+                  v_num = parts[-1]
+                  text = span.get_text(" ", strip=True)
+                  if v_num in verses:
+                      verses[v_num] += " " + text
+                  else:
+                      verses[v_num] = text
+              return verses
+
+          # Load current bible JSON
+          bible_path = "translations/NRSVUE/NRSVUE_bible.json"
+          with open(bible_path, "r", encoding="utf-8") as f:
+              bible = json.load(f)
+
+          for book, chapter, absent in CHAPTERS_TO_FIX:
+              ch_str = str(chapter)
+              print(f"Fetching {book} {chapter}...")
+              html = fetch_chapter(book, chapter)
+              fetched = parse_verses(html)
+
+              if not fetched:
+                  print(f"  WARNING: no verses parsed for {book} {chapter}")
+                  continue
+
+              # Remove absent verses
+              for v in absent:
+                  fetched.pop(str(v), None)
+
+              bible[book][ch_str] = fetched
+              print(f"  Stored {len(fetched)} verses (absent: {absent})")
+
+          with open(bible_path, "w", encoding="utf-8") as f:
+              json.dump(bible, f, ensure_ascii=False, indent=2)
+
+          print("Done. File written.")
+          EOF
+
+      - name: Commit patched bible
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add translations/NRSVUE/NRSVUE_bible.json
+          git diff --cached --quiet || git commit -m "fix(nrsvue): patch all truncated NT chapters via Bible Gateway API"
+          git push
