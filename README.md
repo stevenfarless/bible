@@ -136,10 +136,9 @@ Future improvements:
 
 ## Contributing
 
-1. Check open issues: https://github.com/stevenfarless/esv-bible/issues
-2. Comment on an issue or open a new one.
-3. Follow the Development Workflow above.
-4. Keep PRs focused on a single concern.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, branch workflow, PR standards, and commit conventions.
+
+See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards.
 
 ## Roadmap
 
