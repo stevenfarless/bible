@@ -25,6 +25,61 @@ jobs:
           pip install playwright beautifulsoup4 lxml
           python -m playwright install chromium --with-deps
 
+      - name: Inspect JSON structure
+        run: |
+          python - <<'EOF'
+          import json
+          from pathlib import Path
+
+          json_path = Path("translations/NRSVUE/NRSVUE_bible.json")
+          bible = json.loads(json_path.read_text(encoding="utf-8"))
+
+          print("Top-level type:", type(bible).__name__)
+          if isinstance(bible, list):
+              print("List length:", len(bible))
+              first = bible[0]
+              print("First item keys:", list(first.keys()) if isinstance(first, dict) else type(first).__name__)
+              # find Matthew
+              for b in bible:
+                  if isinstance(b, dict):
+                      name = b.get("name") or b.get("book") or b.get("title") or ""
+                      if "matthew" in str(name).lower() or "matt" in str(name).lower():
+                          print("Matthew keys:", list(b.keys()))
+                          chaps = b.get("chapters") or b.get("chapter")
+                          print("chapters type:", type(chaps).__name__)
+                          if isinstance(chaps, list):
+                              print("chapters list length:", len(chaps))
+                              c = chaps[0]
+                              print("chapter[0] type:", type(c).__name__)
+                              if isinstance(c, dict):
+                                  print("chapter[0] keys:", list(c.keys()))
+                                  vv = c.get("verses") or c.get("verse")
+                                  print("verses type:", type(vv).__name__ if vv is not None else "None")
+                                  if isinstance(vv, list) and vv:
+                                      print("verse[0]:", vv[0])
+                              elif isinstance(c, list):
+                                  print("chapter[0][0]:", c[0] if c else "empty")
+                          elif isinstance(chaps, dict):
+                              keys = list(chaps.keys())[:3]
+                              print("chapter dict sample keys:", keys)
+                              sample = chaps[keys[0]]
+                              print("chapter value type:", type(sample).__name__)
+                          break
+          elif isinstance(bible, dict):
+              print("Dict keys (first 5):", list(bible.keys())[:5])
+              # Try to get Matthew
+              for k in ["Matthew", "matthew", "Matt"]:
+                  if k in bible:
+                      b = bible[k]
+                      print(f"bible[{k!r}] type:", type(b).__name__)
+                      if isinstance(b, dict):
+                          print("keys:", list(b.keys())[:5])
+                      elif isinstance(b, list):
+                          print("list length:", len(b))
+                          print("[0] keys:", list(b[0].keys()) if isinstance(b[0], dict) else type(b[0]).__name__)
+                      break
+          EOF
+
       - name: Fetch and patch NRSVUE chapters
         run: |
           python - <<'EOF'
@@ -35,8 +90,6 @@ jobs:
 
           TRANSLATION = "NRSVUE"
 
-          # Chapters where verses are missing in the JSON.
-          # Each entry: (book display name, OSIS abbrev for URL, chapter number)
           MISSING_CHAPTERS = [
               ("Matthew", "Matt", 17),
               ("Matthew", "Matt", 18),
@@ -53,7 +106,6 @@ jobs:
           ]
 
           def clean_verse_text(span_el):
-              """Return plain verse text with footnote/crossref markers stripped."""
               for sup in span_el.find_all("sup"):
                   sup.decompose()
               return span_el.get_text(" ", strip=True)
@@ -66,11 +118,9 @@ jobs:
               time.sleep(4)
               html = page.content()
               soup = BeautifulSoup(html, "lxml")
-
               verses = {}
               for span in soup.select("span.text"):
                   cls_list = span.get("class", [])
-                  # class includes e.g. "Matt-17-4"
                   ref_cls = next(
                       (c for c in cls_list if re.match(r".+-\d+-\d+$", c)), None
                   )
@@ -82,22 +132,105 @@ jobs:
                   v_num = int(parts[2])
                   text = clean_verse_text(span)
                   if text:
-                      # Keep longest version if span appears multiple times
                       if v_num not in verses or len(text) > len(verses[v_num]):
                           verses[v_num] = text
               return verses
 
-          # ---- locate NRSVUE JSON file ----
-          # Typical path: data/NRSVUE.json  or  translations/NRSVUE.json
-          candidates = sorted(Path(".").rglob("*NRSVUE*.json"))
-          if not candidates:
-              print("ERROR: No NRSVUE JSON file found", flush=True)
-              sys.exit(1)
-          json_path = candidates[0]
-          print(f"Using JSON file: {json_path}", flush=True)
+          def find_book(bible, book_display, osis):
+              """Return the book object regardless of JSON structure."""
+              if isinstance(bible, list):
+                  for b in bible:
+                      if not isinstance(b, dict):
+                          continue
+                      for field in ["name", "book", "title"]:
+                          val = str(b.get(field, "")).lower()
+                          if val == book_display.lower() or val == osis.lower():
+                              return b
+              elif isinstance(bible, dict):
+                  for key in [book_display, book_display.lower(), osis, osis.lower()]:
+                      if key in bible:
+                          return bible[key]
+              return None
+
+          def find_chapter(book_obj, chapter):
+              """Return the chapter container regardless of JSON structure."""
+              # Chapters could be stored as a list of dicts with a 'chapter' key,
+              # a plain list (index = chapter-1), a list of lists, or a dict.
+              for field in ["chapters", "chapter"]:
+                  chaps = book_obj.get(field) if isinstance(book_obj, dict) else None
+                  if chaps is None:
+                      continue
+                  if isinstance(chaps, list):
+                      # Try dict-per-chapter with explicit 'chapter' key
+                      for c in chaps:
+                          if isinstance(c, dict):
+                              cnum = c.get("chapter") or c.get("chapterNumber") or c.get("number")
+                              try:
+                                  if int(cnum) == chapter:
+                                      return c
+                              except (TypeError, ValueError):
+                                  pass
+                      # Fall back to 0-indexed position
+                      if len(chaps) >= chapter:
+                          return chaps[chapter - 1]
+                  elif isinstance(chaps, dict):
+                      for key in [str(chapter), chapter]:
+                          if key in chaps:
+                              return chaps[key]
+              return None
+
+          def get_verses_container(chap_obj):
+              """Return the list or dict that holds individual verses."""
+              if isinstance(chap_obj, dict):
+                  for field in ["verses", "verse"]:
+                      v = chap_obj.get(field)
+                      if v is not None:
+                          return v
+                  # chap_obj itself might just be a list
+                  return chap_obj
+              return chap_obj  # already a list
+
+          def existing_verse_keys(verses_data):
+              if isinstance(verses_data, list):
+                  keys = set()
+                  for v in verses_data:
+                      if isinstance(v, dict):
+                          k = v.get("verse") or v.get("number") or v.get("verseNumber")
+                          if k is not None:
+                              try:
+                                  keys.add(int(k))
+                              except (ValueError, TypeError):
+                                  pass
+                  return keys
+              elif isinstance(verses_data, dict):
+                  return {int(k) for k in verses_data if str(k).isdigit()}
+              return set()
+
+          # ---- load JSON ----
+          json_path = Path("translations/NRSVUE/NRSVUE_bible.json")
           bible = json.loads(json_path.read_text(encoding="utf-8"))
 
-          # ---- scrape and patch ----
+          # Detect verse key name from first available verse
+          def detect_verse_key(bible):
+              """Return the dict key used for verse numbers in this JSON ('verse', 'number', etc)"""
+              try:
+                  books = bible if isinstance(bible, list) else list(bible.values())
+                  for bk in books:
+                      chaps = bk.get("chapters") or bk.get("chapter") if isinstance(bk, dict) else None
+                      if not chaps:
+                          continue
+                      for c in (chaps if isinstance(chaps, list) else chaps.values()):
+                          vv = (c.get("verses") or c.get("verse") if isinstance(c, dict) else c)
+                          if isinstance(vv, list) and vv and isinstance(vv[0], dict):
+                              return next((k for k in ["verse", "number", "verseNumber"] if k in vv[0]), "verse")
+              except Exception:
+                  pass
+              return "verse"
+
+          VERSE_KEY = detect_verse_key(bible)
+          print(f"Detected verse key: {VERSE_KEY!r}", flush=True)
+
+          # ---- scrape ----
           with sync_playwright() as p:
               browser = p.chromium.launch(headless=True)
               context = browser.new_context(
@@ -106,8 +239,6 @@ jobs:
                   locale="en-US",
               )
               page = context.new_page()
-
-              # Warm up cookie session
               page.goto("https://www.biblegateway.com", wait_until="domcontentloaded", timeout=30000)
               time.sleep(2)
 
@@ -115,66 +246,43 @@ jobs:
                   try:
                       scraped = scrape_chapter(page, book_display, osis, chapter)
                       if not scraped:
-                          print(f"  WARNING: no verses found for {book_display} {chapter}")
+                          print(f"  WARNING: no verses scraped for {book_display} {chapter}")
                           continue
-                      print(f"  Got {len(scraped)} verses")
+                      print(f"  Got {len(scraped)} verses", flush=True)
 
-                      # Navigate the JSON structure to the right chapter.
-                      # Try common structures: list-of-books or dict keyed by book name.
-                      book_obj = None
-                      if isinstance(bible, list):
-                          for b in bible:
-                              if b.get("name", "").lower() == book_display.lower() or \
-                                 b.get("book", "").lower() == book_display.lower():
-                                  book_obj = b
-                                  break
-                      elif isinstance(bible, dict):
-                          for key in [book_display, book_display.lower(), osis]:
-                              if key in bible:
-                                  book_obj = bible[key]
-                                  break
-
+                      book_obj = find_book(bible, book_display, osis)
                       if book_obj is None:
-                          print(f"  WARNING: book {book_display!r} not found in JSON, skipping")
+                          print(f"  ERROR: book {book_display!r} not found in JSON")
                           continue
 
-                      # Find chapter — could be list (1-indexed) or dict
-                      chapters_data = book_obj.get("chapters") or book_obj.get("chapter")
-                      chap_obj = None
-                      if isinstance(chapters_data, list):
-                          # Usually index = chapter-1
-                          for c in chapters_data:
-                              if isinstance(c, dict) and c.get("chapter") == chapter:
-                                  chap_obj = c
-                                  break
-                          if chap_obj is None and len(chapters_data) >= chapter:
-                              chap_obj = chapters_data[chapter - 1]
-                      elif isinstance(chapters_data, dict):
-                          chap_obj = chapters_data.get(str(chapter)) or chapters_data.get(chapter)
-
+                      chap_obj = find_chapter(book_obj, chapter)
                       if chap_obj is None:
-                          print(f"  WARNING: chapter {chapter} not found for {book_display}")
+                          print(f"  ERROR: chapter {chapter} not found for {book_display}")
+                          # Debug: print chapter list structure
+                          chaps = book_obj.get("chapters") or book_obj.get("chapter")
+                          if isinstance(chaps, list):
+                              sample = chaps[:2]
+                              print(f"    chapters sample: {json.dumps(sample)[:300]}")
                           continue
 
-                      # Merge scraped verses in
-                      verses_data = chap_obj.get("verses") or chap_obj.get("verse") or chap_obj
+                      verses_data = get_verses_container(chap_obj)
+                      existing = existing_verse_keys(verses_data)
+                      print(f"  Existing verses: {sorted(existing)[:5]}...", flush=True)
+
+                      added = 0
                       if isinstance(verses_data, list):
-                          existing_verse_nums = {v.get("verse") or v.get("number") for v in verses_data}
-                          added = 0
                           for v_num, text in sorted(scraped.items()):
-                              if v_num not in existing_verse_nums:
-                                  verses_data.append({"verse": v_num, "text": text})
+                              if v_num not in existing:
+                                  verses_data.append({VERSE_KEY: v_num, "text": text})
                                   added += 1
-                          verses_data.sort(key=lambda v: v.get("verse") or v.get("number") or 0)
-                          print(f"  Added {added} missing verses to {book_display} {chapter}")
+                          verses_data.sort(key=lambda v: int(v.get(VERSE_KEY) or 0))
                       elif isinstance(verses_data, dict):
-                          added = 0
                           for v_num, text in scraped.items():
-                              key = str(v_num)
-                              if key not in verses_data:
-                                  verses_data[key] = text
+                              if v_num not in existing:
+                                  verses_data[str(v_num)] = text
                                   added += 1
-                          print(f"  Added {added} missing verses to {book_display} {chapter}")
+
+                      print(f"  Added {added} verses to {book_display} {chapter}", flush=True)
 
                   except Exception:
                       print(f"  ERROR scraping {book_display} {chapter}:")
@@ -182,7 +290,6 @@ jobs:
 
               browser.close()
 
-          # Write patched JSON back
           json_path.write_text(
               json.dumps(bible, ensure_ascii=False, indent=2),
               encoding="utf-8"
