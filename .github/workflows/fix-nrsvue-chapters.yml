@@ -29,91 +29,171 @@ jobs:
         run: |
           python - <<'EOF'
           import json, re, time, sys, traceback
+          from pathlib import Path
           from bs4 import BeautifulSoup
           from playwright.sync_api import sync_playwright
 
           TRANSLATION = "NRSVUE"
 
-          try:
-              with sync_playwright() as p:
-                  browser = p.chromium.launch(headless=True)
-                  context = browser.new_context(
-                      user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                                 "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-                      locale="en-US",
+          # Chapters where verses are missing in the JSON.
+          # Each entry: (book display name, OSIS abbrev for URL, chapter number)
+          MISSING_CHAPTERS = [
+              ("Matthew", "Matt", 17),
+              ("Matthew", "Matt", 18),
+              ("Matthew", "Matt", 23),
+              ("Mark",    "Mark", 7),
+              ("Mark",    "Mark", 9),
+              ("Mark",    "Mark", 11),
+              ("Mark",    "Mark", 15),
+              ("Luke",    "Luke", 17),
+              ("Luke",    "Luke", 23),
+              ("John",    "John", 5),
+              ("Acts",    "Acts", 8),
+              ("Acts",    "Acts", 15),
+          ]
+
+          def clean_verse_text(span_el):
+              """Return plain verse text with footnote/crossref markers stripped."""
+              for sup in span_el.find_all("sup"):
+                  sup.decompose()
+              return span_el.get_text(" ", strip=True)
+
+          def scrape_chapter(page, book_display, osis, chapter):
+              url = (f"https://www.biblegateway.com/passage/"
+                     f"?search={osis}+{chapter}&version={TRANSLATION}")
+              print(f"Fetching {book_display} {chapter}...", flush=True)
+              page.goto(url, wait_until="domcontentloaded", timeout=30000)
+              time.sleep(4)
+              html = page.content()
+              soup = BeautifulSoup(html, "lxml")
+
+              verses = {}
+              for span in soup.select("span.text"):
+                  cls_list = span.get("class", [])
+                  # class includes e.g. "Matt-17-4"
+                  ref_cls = next(
+                      (c for c in cls_list if re.match(r".+-\d+-\d+$", c)), None
                   )
-                  page = context.new_page()
+                  if not ref_cls:
+                      continue
+                  parts = ref_cls.rsplit("-", 2)
+                  if len(parts) != 3:
+                      continue
+                  v_num = int(parts[2])
+                  text = clean_verse_text(span)
+                  if text:
+                      # Keep longest version if span appears multiple times
+                      if v_num not in verses or len(text) > len(verses[v_num]):
+                          verses[v_num] = text
+              return verses
 
-                  print("Loading BibleGateway homepage...", flush=True)
-                  try:
-                      page.goto("https://www.biblegateway.com", wait_until="domcontentloaded", timeout=30000)
-                      time.sleep(3)
-                  except Exception as e:
-                      print(f"  Homepage load error: {e}")
-
-                  try:
-                      page.screenshot(path="homepage.png", full_page=False)
-                      print(f"  Homepage title: {page.title()}")
-                      print(f"  Homepage URL: {page.url}")
-                  except Exception as e:
-                      print(f"  Screenshot error: {e}")
-                      with open("homepage.png", "wb") as f:
-                          f.write(b"")
-
-                  url = "https://www.biblegateway.com/passage/?search=Matt+17&version=NRSVUE"
-                  print(f"\nNavigating to passage...", flush=True)
-                  try:
-                      page.goto(url, wait_until="domcontentloaded", timeout=30000)
-                      time.sleep(5)
-                  except Exception as e:
-                      print(f"  Passage load error: {e}")
-
-                  try:
-                      page.screenshot(path="passage.png", full_page=True)
-                      print(f"  Passage title: {page.title()}")
-                      print(f"  Passage URL: {page.url}")
-                  except Exception as e:
-                      print(f"  Passage screenshot error: {e}")
-                      with open("passage.png", "wb") as f:
-                          f.write(b"")
-
-                  html = page.content()
-                  with open("passage.html", "w", encoding="utf-8") as f:
-                      f.write(html)
-
-                  soup = BeautifulSoup(html, "lxml")
-                  first_usfm = soup.find(attrs={"data-usfm": True})
-                  print(f"  data-usfm found: {first_usfm.get('data-usfm') if first_usfm else 'NONE'}")
-                  print(f"  passage-text div: {'FOUND' if soup.find(class_='passage-text') else 'NOT FOUND'}")
-                  print(f"  HTML length: {len(html)}")
-                  body = soup.find('body')
-                  print(f"  Body preview:\n{body.get_text(' ', strip=True)[:2000] if body else 'no body'}")
-
-                  browser.close()
-
-          except Exception:
-              traceback.print_exc()
-              # Ensure artifact files exist even on hard crash
-              for fname in ["homepage.png", "passage.png"]:
-                  try:
-                      open(fname, "ab").close()
-                  except Exception:
-                      pass
-              if not __import__('os').path.exists("passage.html"):
-                  with open("passage.html", "w") as f:
-                      f.write("<error>script crashed before HTML was captured</error>")
+          # ---- locate NRSVUE JSON file ----
+          # Typical path: data/NRSVUE.json  or  translations/NRSVUE.json
+          candidates = sorted(Path(".").rglob("*NRSVUE*.json"))
+          if not candidates:
+              print("ERROR: No NRSVUE JSON file found", flush=True)
               sys.exit(1)
+          json_path = candidates[0]
+          print(f"Using JSON file: {json_path}", flush=True)
+          bible = json.loads(json_path.read_text(encoding="utf-8"))
 
-          print("Done.")
+          # ---- scrape and patch ----
+          with sync_playwright() as p:
+              browser = p.chromium.launch(headless=True)
+              context = browser.new_context(
+                  user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                             "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                  locale="en-US",
+              )
+              page = context.new_page()
+
+              # Warm up cookie session
+              page.goto("https://www.biblegateway.com", wait_until="domcontentloaded", timeout=30000)
+              time.sleep(2)
+
+              for book_display, osis, chapter in MISSING_CHAPTERS:
+                  try:
+                      scraped = scrape_chapter(page, book_display, osis, chapter)
+                      if not scraped:
+                          print(f"  WARNING: no verses found for {book_display} {chapter}")
+                          continue
+                      print(f"  Got {len(scraped)} verses")
+
+                      # Navigate the JSON structure to the right chapter.
+                      # Try common structures: list-of-books or dict keyed by book name.
+                      book_obj = None
+                      if isinstance(bible, list):
+                          for b in bible:
+                              if b.get("name", "").lower() == book_display.lower() or \
+                                 b.get("book", "").lower() == book_display.lower():
+                                  book_obj = b
+                                  break
+                      elif isinstance(bible, dict):
+                          for key in [book_display, book_display.lower(), osis]:
+                              if key in bible:
+                                  book_obj = bible[key]
+                                  break
+
+                      if book_obj is None:
+                          print(f"  WARNING: book {book_display!r} not found in JSON, skipping")
+                          continue
+
+                      # Find chapter — could be list (1-indexed) or dict
+                      chapters_data = book_obj.get("chapters") or book_obj.get("chapter")
+                      chap_obj = None
+                      if isinstance(chapters_data, list):
+                          # Usually index = chapter-1
+                          for c in chapters_data:
+                              if isinstance(c, dict) and c.get("chapter") == chapter:
+                                  chap_obj = c
+                                  break
+                          if chap_obj is None and len(chapters_data) >= chapter:
+                              chap_obj = chapters_data[chapter - 1]
+                      elif isinstance(chapters_data, dict):
+                          chap_obj = chapters_data.get(str(chapter)) or chapters_data.get(chapter)
+
+                      if chap_obj is None:
+                          print(f"  WARNING: chapter {chapter} not found for {book_display}")
+                          continue
+
+                      # Merge scraped verses in
+                      verses_data = chap_obj.get("verses") or chap_obj.get("verse") or chap_obj
+                      if isinstance(verses_data, list):
+                          existing_verse_nums = {v.get("verse") or v.get("number") for v in verses_data}
+                          added = 0
+                          for v_num, text in sorted(scraped.items()):
+                              if v_num not in existing_verse_nums:
+                                  verses_data.append({"verse": v_num, "text": text})
+                                  added += 1
+                          verses_data.sort(key=lambda v: v.get("verse") or v.get("number") or 0)
+                          print(f"  Added {added} missing verses to {book_display} {chapter}")
+                      elif isinstance(verses_data, dict):
+                          added = 0
+                          for v_num, text in scraped.items():
+                              key = str(v_num)
+                              if key not in verses_data:
+                                  verses_data[key] = text
+                                  added += 1
+                          print(f"  Added {added} missing verses to {book_display} {chapter}")
+
+                  except Exception:
+                      print(f"  ERROR scraping {book_display} {chapter}:")
+                      traceback.print_exc()
+
+              browser.close()
+
+          # Write patched JSON back
+          json_path.write_text(
+              json.dumps(bible, ensure_ascii=False, indent=2),
+              encoding="utf-8"
+          )
+          print(f"\nWrote patched JSON to {json_path}")
           EOF
 
-      - name: Upload debug artifacts
-        if: always()
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: bg-debug
-          path: |
-            homepage.png
-            passage.png
-            passage.html
-          if-no-files-found: warn
+      - name: Commit patched JSON
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "fix(nrsvue): add missing verses to Matthew, Mark, Luke, John, Acts chapters"
+          git push
