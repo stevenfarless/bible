@@ -36,6 +36,11 @@
       "copyright": "Scripture taken from the Modern English Version. Copyright © 2014 by Military Bible Association. Used by permission. All rights reserved."
     },
     {
+      "id": "MSB",
+      "label": "MSB — Majority Standard Bible",
+      "copyright": "The Holy Bible, Majority Standard Bible, MSB is produced in cooperation with Bible Hub, Discovery Bible, unfoldingWord, Bible Aquifer, OpenBible.com, and the Berean Bible Translation Committee. This text of God's Word has been dedicated to the public domain."
+    },
+    {
       "id": "NIV",
       "label": "NIV — New International Version",
       "copyright": "Scripture quotations taken from The Holy Bible, New International Version® NIV®. Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.™ Used by permission. All rights reserved worldwide."
