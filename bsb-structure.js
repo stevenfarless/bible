@@ -9,6 +9,10 @@
 
 const _cache = new Map();
 
+function sanitizeForLog(value) {
+    return String(value).replace(/[\r\n]/g, '');
+}
+
 /**
  * Returns the scaffold event array for the given book name.
  * Results are cached in memory for the session.
@@ -29,7 +33,8 @@ export async function loadStructure(bookName) {
         _cache.set(bookName, events);
         return events;
     } catch (err) {
-        console.warn('bsb-structure: could not load scaffold for "%s"', bookName, err);
+        const safeBookName = sanitizeForLog(bookName);
+        console.warn('bsb-structure: could not load scaffold for "%s"', safeBookName, err);
         _cache.set(bookName, []);
         return [];
     }
