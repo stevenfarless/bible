@@ -30,22 +30,22 @@ jobs:
           import os, json, re, requests
           from bs4 import BeautifulSoup
 
+          BASE = "https://api.biblegateway.com/2"
           username = os.environ["BG_USERNAME"]
           password = os.environ["BG_PASSWORD"]
 
           # Authenticate
-          r = requests.post(
-              "https://api.biblegateway.com/3/user/authenticate",
-              data={"username": username, "password": password}
+          r = requests.get(
+              f"{BASE}/request_access_token",
+              params={"username": username, "password": password}
           )
           r.raise_for_status()
-          token = r.json()["response"]["user"]["token"]
+          print("Auth response:", r.text[:300])
+          token = r.json()["access_token"]
           print("Authenticated.")
 
           TRANSLATION = "NRSVUE"
 
-          # Chapters with known truncation issues in the JSON file
-          # Format: (Book, chapter_int, [absent_verses])
           CHAPTERS_TO_FIX = [
               ("Matthew", 17, [21]),
               ("Matthew", 18, [11]),
@@ -64,43 +64,41 @@ jobs:
               ("Romans",  16, [24]),
           ]
 
-          # Bible Gateway OSIS book name map
           BG_BOOK = {
               "Matthew": "Matt", "Mark": "Mark", "Luke": "Luke",
               "John": "John", "Acts": "Acts", "Romans": "Rom",
           }
 
           def fetch_chapter(book, chapter):
-              ref = f"{BG_BOOK[book]}.{chapter}"
-              url = f"https://api.biblegateway.com/3/bible/{ref}/{TRANSLATION}"
+              ref = f"{BG_BOOK[book]} {chapter}"
+              url = f"{BASE}/bible/{ref}/{TRANSLATION}"
               r = requests.get(url, params={"access_token": token})
               r.raise_for_status()
               data = r.json()
-              passages = data["response"]["search"]["result"]["passages"]
-              html = passages[0]["content"]
-              return html
+              return data[0]["content"]
 
-          def parse_verses(html):
+          def parse_verses(html, book, chapter):
               soup = BeautifulSoup(html, "lxml")
               verses = {}
-              for span in soup.find_all("span", class_=re.compile(r"text\s")):
-                  # class like "text Matt-1-1"
-                  classes = span.get("class", [])
-                  ref_class = next((c for c in classes if re.match(r"[A-Z].+-\d+-\d+", c)), None)
-                  if not ref_class:
+              # BG wraps verses in <span class="text BOOK-CH-V">
+              pattern = re.compile(rf"{BG_BOOK[book]}-{chapter}-(\d+)")
+              for span in soup.find_all("span", class_=True):
+                  classes = " ".join(span.get("class", []))
+                  m = pattern.search(classes)
+                  if not m:
                       continue
-                  parts = ref_class.rsplit("-", 2)
-                  if len(parts) < 3:
-                      continue
-                  v_num = parts[-1]
+                  v_num = m.group(1)
                   text = span.get_text(" ", strip=True)
+                  # remove leading verse number digit(s) if present
+                  text = re.sub(r"^\d+\s*", "", text).strip()
+                  if not text:
+                      continue
                   if v_num in verses:
                       verses[v_num] += " " + text
                   else:
                       verses[v_num] = text
               return verses
 
-          # Load current bible JSON
           bible_path = "translations/NRSVUE/NRSVUE_bible.json"
           with open(bible_path, "r", encoding="utf-8") as f:
               bible = json.load(f)
@@ -108,14 +106,19 @@ jobs:
           for book, chapter, absent in CHAPTERS_TO_FIX:
               ch_str = str(chapter)
               print(f"Fetching {book} {chapter}...")
-              html = fetch_chapter(book, chapter)
-              fetched = parse_verses(html)
-
-              if not fetched:
-                  print(f"  WARNING: no verses parsed for {book} {chapter}")
+              try:
+                  html = fetch_chapter(book, chapter)
+              except Exception as e:
+                  print(f"  ERROR fetching: {e}")
                   continue
 
-              # Remove absent verses
+              fetched = parse_verses(html, book, chapter)
+
+              if not fetched:
+                  print(f"  WARNING: no verses parsed for {book} {chapter} — skipping")
+                  print(f"  HTML preview: {html[:500]}")
+                  continue
+
               for v in absent:
                   fetched.pop(str(v), None)
 
@@ -125,7 +128,7 @@ jobs:
           with open(bible_path, "w", encoding="utf-8") as f:
               json.dump(bible, f, ensure_ascii=False, indent=2)
 
-          print("Done. File written.")
+          print("Done.")
           EOF
 
       - name: Commit patched bible
