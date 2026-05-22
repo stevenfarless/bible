@@ -22,74 +22,54 @@ jobs:
         run: pip install requests beautifulsoup4 lxml
 
       - name: Fetch and patch NRSVUE chapters
-        env:
-          BG_USERNAME: ${{ secrets.BG_USERNAME }}
-          BG_PASSWORD: ${{ secrets.BG_PASSWORD }}
         run: |
           python - <<'EOF'
-          import os, json, re, requests
+          import json, re, time, requests
           from bs4 import BeautifulSoup
 
-          BASE = "https://api.biblegateway.com/2"
-          username = os.environ["BG_USERNAME"]
-          password = os.environ["BG_PASSWORD"]
-
-          # Authenticate
-          r = requests.get(
-              f"{BASE}/request_access_token",
-              params={"username": username, "password": password}
-          )
-          r.raise_for_status()
-          print("Auth response:", r.text[:300])
-          token = r.json()["access_token"]
-          print("Authenticated.")
-
           TRANSLATION = "NRSVUE"
+          BASE = "https://www.biblegateway.com/passage/"
+          HEADERS = {"User-Agent": "Mozilla/5.0"}
 
           CHAPTERS_TO_FIX = [
-              ("Matthew", 17, [21]),
-              ("Matthew", 18, [11]),
-              ("Matthew", 23, [14]),
-              ("Mark",    7,  [16]),
-              ("Mark",    9,  [44, 46]),
-              ("Mark",    11, [26]),
-              ("Mark",    15, [28]),
-              ("Luke",    17, [36]),
-              ("Luke",    23, [17]),
-              ("John",    5,  [4]),
-              ("Acts",    8,  [37]),
-              ("Acts",    15, [34]),
-              ("Acts",    24, [7]),
-              ("Acts",    28, [29]),
-              ("Romans",  16, [24]),
+              ("Matthew", "Matt",    17, [21]),
+              ("Matthew", "Matt",    18, [11]),
+              ("Matthew", "Matt",    23, [14]),
+              ("Mark",    "Mark",    7,  [16]),
+              ("Mark",    "Mark",    9,  [44, 46]),
+              ("Mark",    "Mark",    11, [26]),
+              ("Mark",    "Mark",    15, [28]),
+              ("Luke",    "Luke",    17, [36]),
+              ("Luke",    "Luke",    23, [17]),
+              ("John",    "John",    5,  [4]),
+              ("Acts",    "Acts",    8,  [37]),
+              ("Acts",    "Acts",    15, [34]),
+              ("Acts",    "Acts",    24, [7]),
+              ("Acts",    "Acts",    28, [29]),
+              ("Romans",  "Rom",     16, [24]),
           ]
 
-          BG_BOOK = {
-              "Matthew": "Matt", "Mark": "Mark", "Luke": "Luke",
-              "John": "John", "Acts": "Acts", "Romans": "Rom",
-          }
-
-          def fetch_chapter(book, chapter):
-              ref = f"{BG_BOOK[book]} {chapter}"
-              url = f"{BASE}/bible/{ref}/{TRANSLATION}"
-              r = requests.get(url, params={"access_token": token})
+          def fetch_chapter(osis, chapter):
+              search = f"{osis} {chapter}"
+              r = requests.get(BASE, params={"search": search, "version": TRANSLATION}, headers=HEADERS, timeout=15)
               r.raise_for_status()
-              data = r.json()
-              return data[0]["content"]
+              return r.text
 
-          def parse_verses(html, book, chapter):
+          def parse_verses(html, osis, chapter):
               soup = BeautifulSoup(html, "lxml")
               verses = {}
-              # BG wraps verses in <span class="text BOOK-CH-V">
-              pattern = re.compile(rf"{BG_BOOK[book]}-{chapter}-(\d+)")
+              pattern = re.compile(rf"{osis}-{chapter}-(\d+)")
               for span in soup.find_all("span", class_=True):
                   classes = " ".join(span.get("class", []))
                   m = pattern.search(classes)
                   if not m:
                       continue
                   v_num = m.group(1)
+                  # skip chapter headings and footnote containers
+                  if any(c in classes for c in ["chapternum", "footnote", "crossreference"]):
+                      continue
                   text = span.get_text(" ", strip=True)
-                  # remove leading verse number digit(s) if present
+                  # strip leading verse number (superscript digits BG injects)
                   text = re.sub(r"^\d+\s*", "", text).strip()
                   if not text:
                       continue
@@ -103,20 +83,23 @@ jobs:
           with open(bible_path, "r", encoding="utf-8") as f:
               bible = json.load(f)
 
-          for book, chapter, absent in CHAPTERS_TO_FIX:
+          for book, osis, chapter, absent in CHAPTERS_TO_FIX:
               ch_str = str(chapter)
-              print(f"Fetching {book} {chapter}...")
+              print(f"Fetching {book} {chapter}...", flush=True)
               try:
-                  html = fetch_chapter(book, chapter)
+                  html = fetch_chapter(osis, chapter)
               except Exception as e:
-                  print(f"  ERROR fetching: {e}")
+                  print(f"  ERROR: {e}")
                   continue
 
-              fetched = parse_verses(html, book, chapter)
+              fetched = parse_verses(html, osis, chapter)
 
-              if not fetched:
-                  print(f"  WARNING: no verses parsed for {book} {chapter} — skipping")
-                  print(f"  HTML preview: {html[:500]}")
+              if len(fetched) < 5:
+                  print(f"  WARNING: only {len(fetched)} verses parsed — skipping")
+                  # Print first 800 chars of passage container for debug
+                  soup = BeautifulSoup(html, "lxml")
+                  p = soup.find(class_="passage-text")
+                  print(f"  HTML preview: {str(p)[:800] if p else 'no .passage-text found'}")
                   continue
 
               for v in absent:
@@ -124,6 +107,7 @@ jobs:
 
               bible[book][ch_str] = fetched
               print(f"  Stored {len(fetched)} verses (absent: {absent})")
+              time.sleep(1)  # be polite
 
           with open(bible_path, "w", encoding="utf-8") as f:
               json.dump(bible, f, ensure_ascii=False, indent=2)
@@ -136,5 +120,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add translations/NRSVUE/NRSVUE_bible.json
-          git diff --cached --quiet || git commit -m "fix(nrsvue): patch all truncated NT chapters via Bible Gateway API"
+          git diff --cached --quiet || git commit -m "fix(nrsvue): patch all truncated NT chapters via BibleGateway scrape"
           git push
