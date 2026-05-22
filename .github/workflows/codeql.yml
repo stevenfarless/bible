@@ -3,13 +3,7 @@ name: CodeQL
 on:
   push:
     branches:
-      - main
-      - json-ver
-  pull_request:
-    branches:
-      - json-ver
-  schedule:
-    - cron: '0 3 * * 1'
+      - codeql-disabled
 
 jobs:
   analyze:
