@@ -1,6 +1,10 @@
 // ================================
-// Firebase Configuration
+// Firebase Configuration — modular SDK (v9+)
 // ================================
+
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+import { getDatabase, ref, get } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCGVPqbTZCQ3Hrs9sFIJm_PR32FP_CVXSw",
@@ -12,34 +16,34 @@ const firebaseConfig = {
   appId: "1:824462651620:web:5f46fe033ac46d2329bcf1",
 };
 
-firebase.initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const database = getDatabase(app);
 
-const auth = firebase.auth();
-const database = firebase.database();
-
+// Expose on window so app.js can read window.firebaseAuth / window.firebaseDatabase
 window.firebaseAuth = auth;
 window.firebaseDatabase = database;
 
 export async function loadUserData(userId) {
   try {
-    const snapshot = await database.ref(`users/${userId}`).once("value");
+    const snapshot = await get(ref(database, `users/${userId}`));
     const userData = snapshot.val();
     if (!userData) return null;
 
     const s = userData.settings || {};
-    const settings = {
-      fontSize: s.fontSize || 18,
-      showVerseNumbers: s.showVerseNumbers !== false,
-      showHeadings: s.showHeadings !== false,
-      showFootnotes: s.showFootnotes === true,
-      showCrossReferences: s.showCrossReferences === true,
-      verseByVerse: s.verseByVerse === true,
-      colorTheme: s.colorTheme || "dracula",
-      lightMode: typeof s.lightMode === "boolean" ? s.lightMode : false,
-      translation: s.translation || "ESV",
+    return {
+      settings: {
+        fontSize:            s.fontSize            ?? 18,
+        showVerseNumbers:    s.showVerseNumbers     !== false,
+        showHeadings:        s.showHeadings         !== false,
+        showFootnotes:       s.showFootnotes        === true,
+        showCrossReferences: s.showCrossReferences  === true,
+        verseByVerse:        s.verseByVerse         === true,
+        colorTheme:          s.colorTheme           || "dracula",
+        lightMode:           typeof s.lightMode === "boolean" ? s.lightMode : false,
+        translation:         s.translation          || "ESV",
+      },
     };
-
-    return { settings };
   } catch (error) {
     console.error("Error loading user data:", error);
     return null;
