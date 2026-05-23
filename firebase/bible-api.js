@@ -1,9 +1,10 @@
 // bible-api.js
 // Serves Bible text from local JSON files.
 //
-// For BSB the optional `scaffold` parameter (from bsb-structure.js) inserts
+// The optional `scaffold` parameter (from bsb-structure.js) inserts
 // section headings and paragraph breaks into the rendered HTML without any
-// external network requests.
+// external network requests. The BSB structure file is always loaded
+// regardless of the active translation so structural formatting is consistent.
 
 const PAGE_SIZE = 100;
 
@@ -121,7 +122,7 @@ export class BibleApi {
      * @param {number|null} verseEnd
      * @param {Array} scaffoldEvents - Chapter-filtered events from bsb-structure.js,
      *   each: { ch, v, type: 'heading'|'para_break', text? }
-     *   Pass [] or omit for translations without scaffold data.
+     *   When empty, falls back to one <p> per verse so text always line-breaks.
      * @param {boolean} showHeadings - Whether to render heading events.
      * @returns {string|null}
      */
@@ -138,7 +139,24 @@ export class BibleApi {
 
         if (!verseNums.length) return null;
 
-        // Build a map: verse number → array of events (already sorted heading-first by build-structure.js)
+        const hasScaffold = scaffoldEvents.length > 0;
+
+        // Without scaffold, wrap each verse in its own <p> so text always
+        // line-breaks regardless of translation.
+        if (!hasScaffold) {
+            const parts = verseNums.map((v) => {
+                const renderedText = escapeHtml(chapterData[String(v)] || '');
+                return (
+                    `<p class="passage-para">` +
+                    `<span class="verse" data-verse="${v}" id="v${chapter}-${v}">` +
+                    `<sup class="verse-num">${v}</sup> ${renderedText} ` +
+                    `</span></p>`
+                );
+            });
+            return `<div class="passage"><div class="passage-text">${parts.join('')}</div></div>`;
+        }
+
+        // With scaffold: use heading and para_break events to structure the output.
         const eventMap = new Map();
         for (const evt of scaffoldEvents) {
             if (!eventMap.has(evt.v)) eventMap.set(evt.v, []);
@@ -160,8 +178,6 @@ export class BibleApi {
             }
         };
 
-        const hasScaffold = scaffoldEvents.length > 0;
-
         for (const v of verseNums) {
             const eventsHere = eventMap.get(v) || [];
 
@@ -176,16 +192,11 @@ export class BibleApi {
                 }
             }
 
-            // Open a paragraph if we don't have one yet.
             if (!inParagraph) openP();
 
-            const text = chapterData[String(v)] || '';
-            // Skip genuinely empty verses (e.g. John 5:4 in BSB) but preserve
-            // their verse number so navigation stays accurate.
-            const renderedText = escapeHtml(text);
-            // The space after </sup> is intentional: it prevents the verse number
-            // from concatenating with the first word when innerHTML is stripped to
-            // plain text (e.g. in search result previews).
+            const renderedText = escapeHtml(chapterData[String(v)] || '');
+            // The space after </sup> prevents the verse number from concatenating
+            // with the first word when innerHTML is stripped to plain text.
             parts.push(
                 `<span class="verse" data-verse="${v}" id="v${chapter}-${v}">` +
                 `<sup class="verse-num">${v}</sup> ${renderedText} ` +
@@ -195,13 +206,7 @@ export class BibleApi {
 
         closeP();
 
-        // If no scaffold was provided, fall back to a single wrapper div so
-        // non-BSB translations render identically to before this change.
-        const inner = parts.join('');
-        if (!hasScaffold) {
-            return `<div class="passage"><div class="passage-text">${inner}</div></div>`;
-        }
-        return `<div class="passage"><div class="passage-text">${inner}</div></div>`;
+        return `<div class="passage"><div class="passage-text">${parts.join('')}</div></div>`;
     }
 
     /**
@@ -209,7 +214,8 @@ export class BibleApi {
      *
      * @param {string} reference  - e.g. 'John 3' or 'Romans 8:1-17'
      * @param {Array}  scaffoldEvents - Optional pre-filtered chapter scaffold
-     *   events from bsb-structure.js eventsForChapter(). Pass [] for non-BSB.
+     *   events from bsb-structure.js eventsForChapter(). Pass [] to use the
+     *   per-verse paragraph fallback.
      * @param {boolean} showHeadings
      * @returns {Promise<{passages: string[], canonical: string}|null>}
      */
