@@ -2,14 +2,15 @@
 // ESV Bible Reader App
 // ====================
 
-import { BibleApi } from './bible-api.js';
+import { BibleApi, loadTranslationIndex } from './bible-api.js';
+import { loadStructure, eventsForChapter } from './bsb-structure.js';
 import {
     initializeState,
     navigateChapter as navChapter,
     scrollToVerse as scrollVerse,
     applyVerseGlow as glowVerse,
 } from './reading-state.js';
-import { loadUserData as loadUserDataFromFirebase } from './firebase-config.js';
+import { loadUserData as loadUserDataFromFirebase } from './config/firebase-config.js';
 import {
     cacheElements,
     loadTheme,
@@ -18,120 +19,70 @@ import {
     changeColorTheme,
 } from './ui.js';
 
+function readBool(key, defaultValue) {
+    const v = localStorage.getItem(key);
+    if (v === null) return defaultValue;
+    if (v === 'true') return true;
+    if (v === 'false') return false;
+    return defaultValue;
+}
+
+const TRANSLATION_ALIASES = {
+    NRSVue: 'NRSVUE',
+};
+
+function normalizeTranslation(t) {
+    return TRANSLATION_ALIASES[t] || t;
+}
+
 class BibleApp {
     constructor() {
-        // Configuration
-        this.API_BASE_URL = 'https://api.esv.org/v3';
-        this.API_KEY = '';
-
-        // Firebase references
         this.auth = window.firebaseAuth;
         this.database = window.firebaseDatabase;
         this.currentUser = null;
 
-        // Bible structure data
+        // Populated from translations/index.json.
+        // Keys are translation IDs (e.g. 'ESV'), values are copyright strings.
+        this._copyrightMap = {};
+
         this.bibleBooks = this.initializeBibleStructure();
 
-        // Book abbreviations for UI
         this.bookAbbreviations = {
-            Genesis: 'Gen',
-            Exodus: 'Exod',
-            Leviticus: 'Lev',
-            Numbers: 'Num',
-            Deuteronomy: 'Deut',
-            Joshua: 'Josh',
-            Judges: 'Judg',
-            Ruth: 'Ruth',
-            '1 Samuel': '1Sam',
-            '2 Samuel': '2Sam',
-            '1 Kings': '1Kgs',
-            '2 Kings': '2Kgs',
-            '1 Chronicles': '1Chr',
-            '2 Chronicles': '2Chr',
-            Ezra: 'Ezra',
-            Nehemiah: 'Neh',
-            Esther: 'Esth',
-            Job: 'Job',
-            Psalms: 'Ps',
-            Proverbs: 'Prov',
-            Ecclesiastes: 'Eccl',
-            'Song of Solomon': 'Song',
-            Isaiah: 'Isa',
-            Jeremiah: 'Jer',
-            Lamentations: 'Lam',
-            Ezekiel: 'Ezek',
-            Daniel: 'Dan',
-            Hosea: 'Hos',
-            Joel: 'Joel',
-            Amos: 'Amos',
-            Obadiah: 'Obad',
-            Jonah: 'Jonah',
-            Micah: 'Mic',
-            Nahum: 'Nah',
-            Habakkuk: 'Hab',
-            Zephaniah: 'Zeph',
-            Haggai: 'Hag',
-            Zechariah: 'Zech',
-            Malachi: 'Mal',
-            Matthew: 'Matt',
-            Mark: 'Mark',
-            Luke: 'Luke',
-            John: 'John',
-            Acts: 'Acts',
-            Romans: 'Rom',
-            '1 Corinthians': '1Cor',
-            '2 Corinthians': '2Cor',
-            Galatians: 'Gal',
-            Ephesians: 'Eph',
-            Philippians: 'Phil',
-            Colossians: 'Col',
-            '1 Thessalonians': '1Thes',
-            '2 Thessalonians': '2Thes',
-            '1 Timothy': '1Tim',
-            '2 Timothy': '2Tim',
-            Titus: 'Titus',
-            Philemon: 'Phlm',
-            Hebrews: 'Heb',
-            James: 'Jas',
-            '1 Peter': '1Pet',
-            '2 Peter': '2Pet',
-            '1 John': '1John',
-            '2 John': '2John',
-            '3 John': '3John',
-            Jude: 'Jude',
-            Revelation: 'Rev',
+            Genesis: 'Gen', Exodus: 'Exod', Leviticus: 'Lev', Numbers: 'Num', Deuteronomy: 'Deut',
+            Joshua: 'Josh', Judges: 'Judg', Ruth: 'Ruth', '1 Samuel': '1Sam', '2 Samuel': '2Sam',
+            '1 Kings': '1Kgs', '2 Kings': '2Kgs', '1 Chronicles': '1Chr', '2 Chronicles': '2Chr',
+            Ezra: 'Ezra', Nehemiah: 'Neh', Esther: 'Esth', Job: 'Job', Psalm: 'Ps', Proverbs: 'Prov',
+            Ecclesiastes: 'Eccl', 'Song of Solomon': 'Song', Isaiah: 'Isa', Jeremiah: 'Jer',
+            Lamentations: 'Lam', Ezekiel: 'Ezek', Daniel: 'Dan', Hosea: 'Hos', Joel: 'Joel', Amos: 'Amos',
+            Obadiah: 'Obad', Jonah: 'Jonah', Micah: 'Mic', Nahum: 'Nah', Habakkuk: 'Hab', Zephaniah: 'Zeph',
+            Haggai: 'Hag', Zechariah: 'Zech', Malachi: 'Mal', Matthew: 'Matt', Mark: 'Mark', Luke: 'Luke',
+            John: 'John', Acts: 'Acts', Romans: 'Rom', '1 Corinthians': '1Cor', '2 Corinthians': '2Cor',
+            Galatians: 'Gal', Ephesians: 'Eph', Philippians: 'Phil', Colossians: 'Col',
+            '1 Thessalonians': '1Thess', '2 Thessalonians': '2Thess', '1 Timothy': '1Tim', '2 Timothy': '2Tim',
+            Titus: 'Titus', Philemon: 'Phlm', Hebrews: 'Heb', James: 'Jas', '1 Peter': '1Pet', '2 Peter': '2Pet',
+            '1 John': '1John', '2 John': '2John', '3 John': '3John', Jude: 'Jude', Revelation: 'Rev',
         };
 
-        // State management (use helper now)
+        this.bookDisplayNames = {
+            Psalm: 'Psalms',
+        };
+
         this.state = initializeState();
-
-        // Cache for search debouncing
         this.searchTimeout = null;
-
-        // Search keyboard navigation state
         this.searchSelectedIndex = -1;
         this.searchResultItems = null;
-
-        // Search pagination state
         this.searchPage = 1;
         this.searchLastQuery = '';
         this.searchHasMore = false;
         this.currentSearchResults = [];
-
-        // Scroll tracking
         this.scrollTimeout = null;
-
-        // Reading position tracking
         this.lastScrollPosition = 0;
-
-        // Auto-hide chrome (Header + Nav)
         this.chromeHidden = false;
         this.chromeScrollLastY = window.scrollY || 0;
         this.chromeDelta = 2;
         this.chromeScrollTicking = false;
         this.chromeSuspend = false;
 
-        // Define chrome functions ON THE INSTANCE (so they exist at runtime)
         this.showChrome = () => {
             if (!this.chromeHidden) return;
             document.body.classList.remove('chrome-hidden');
@@ -156,7 +107,6 @@ class BibleApp {
             window.requestAnimationFrame(() => {
                 const y = window.scrollY || window.pageYOffset || 0;
                 const delta = y - this.chromeScrollLastY;
-
                 const modalOpen = !!document.querySelector('.modal.active');
                 const searchOpen = !!this.searchContainer?.classList.contains('active');
 
@@ -175,493 +125,11 @@ class BibleApp {
             });
         };
 
-        // stores untouched HTML for current chapter
         this.originalPassageHtml = null;
-
-        // Search grouping expansion state
-        this.searchExpandedTestaments = new Set(); // e.g., "Old Testament", "New Testament"
-        this.searchExpandedBooks = new Set();      // e.g., "Genesis", "Romans"
-
-        // ESV API client
-        this.bibleApi = new BibleApi(
-            this.API_BASE_URL,
-            () => this.API_KEY,
-            () => this.state
-        );
-
-        // this.searchPage = 1;
-        // this.searchLastQuery = '';
-        // this.searchHasMore = false;
-
-        // Initialize app
+        this.searchExpandedTestaments = new Set();
+        this.searchExpandedBooks = new Set();
+        this.bibleApi = new BibleApi(this.state.translation || 'ESV');
         this.init();
-    } // end constructor
-
-
-    // ================================
-    // Initialization
-    // ================================
-
-    init() {
-        cacheElements(this);
-        loadTheme(this);
-
-        // Set theme selector value AND apply the theme class
-        const themeSelector = document.getElementById('themeSelector');
-        const lightModeToggle = document.getElementById('lightModeToggle');
-
-        if (themeSelector) {
-            const savedTheme = localStorage.getItem('colorTheme') || 'dracula';
-            themeSelector.value = savedTheme;
-        }
-
-        if (lightModeToggle) {
-            lightModeToggle.checked = document.body.classList.contains('light-mode');
-        }
-
-        this.attachEventListeners();
-        this.initializeAccordion();
-
-        // Wait for Firebase auth state
-        this.auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                this.currentUser = user;
-                await this.loadUserData();
-                this.applySettings();
-                await this.loadSavedReadingPosition();
-            } else {
-                this.currentUser = null;
-                this.loadLocalSettings();
-                this.applySettings();
-                this.loadPassage(this.state.currentBook, this.state.currentChapter);
-                this.checkApiKey();
-            }
-        });
-    }
-
-    initializeAccordion() {
-        const accordionHeaders = document.querySelectorAll('.accordion-header');
-
-        accordionHeaders.forEach((header) => {
-            header.addEventListener('click', () => {
-                const section = header.closest('.accordion-section');
-                section.classList.toggle('active');
-            });
-        });
-
-        // Handle "Manage Account" button
-        const openAccountBtn = document.getElementById('openAccountBtn');
-        if (openAccountBtn) {
-            openAccountBtn.addEventListener('click', () => {
-                this.closeModal(this.settingsModal);
-                if (this.currentUser) {
-                    this.openModal(this.userMenuModal);
-                } else {
-                    this.openModal(this.loginModal);
-                }
-            });
-        }
-    }
-
-    attachEventListeners() {
-        // Header
-        this.searchToggleBtn.addEventListener('click', () => this.toggleSearch());
-        this.helpBtn.addEventListener('click', () => this.openModal(this.helpModal));
-        this.settingsBtn.addEventListener('click', () =>
-            this.openModal(this.settingsModal)
-        );
-
-        // Search
-        this.closeSearchBtn.addEventListener('click', () => this.closeSearch());
-        this.searchInput.addEventListener('input', (e) =>
-            this.handleSearch(e.target.value)
-        );
-        this.searchInput.addEventListener('keydown', (e) =>
-            this.handleSearchKeydown(e)
-        );
-
-        // Navigation
-        this.prevChapterBtn.addEventListener('click', () =>
-            this.navigateChapter(-1)
-        );
-        this.nextChapterBtn.addEventListener('click', () =>
-            this.navigateChapter(1)
-        );
-        this.bookSelector.addEventListener('click', () => this.openBookModal());
-        this.chapterSelector.addEventListener('click', () => this.openChapterModal());
-        this.verseSelector.addEventListener('click', () => this.openVerseModal());
-        this.closeVerseModal.addEventListener('click', () =>
-            this.closeModal(this.verseModal)
-        );
-
-        // References modal (footnotes and cross-references)
-        this.referencesModal = document.getElementById('referencesModal');
-        this.closeReferencesModal = document.getElementById('closeReferencesModal');
-        this.footnotesSection = document.getElementById('footnotesSection');
-        this.footnotesContent = document.getElementById('footnotesContent');
-        this.crossReferencesSection =
-            document.getElementById('crossReferencesSection');
-        this.crossReferencesContent = document.getElementById(
-            'crossReferencesContent'
-        );
-
-        [
-            this.bookModal,
-            this.chapterModal,
-            this.verseModal,
-            this.settingsModal,
-            this.helpModal,
-            this.loginModal,
-            this.signupModal,
-            this.userMenuModal,
-            this.referencesModal,
-        ].forEach((modal) => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) this.closeModal(modal);
-            });
-        });
-
-        // Modals
-        this.closeBookModal.addEventListener('click', () =>
-            this.closeModal(this.bookModal)
-        );
-        this.closeChapterModal.addEventListener('click', () =>
-            this.closeModal(this.chapterModal)
-        );
-        this.closeHelpModal.addEventListener('click', () =>
-            this.closeModal(this.helpModal)
-        );
-        this.closeSettingsModal.addEventListener('click', () =>
-            this.closeModal(this.settingsModal)
-        );
-        this.closeReferencesModal.addEventListener('click', () =>
-            this.closeModal(this.referencesModal)
-        );
-
-        // References modal drag-to-resize and swipe-to-close (SAME AS SETTINGS)
-        const referencesContent =
-            this.referencesModal.querySelector('.modal-content');
-        const referencesHeader = this.referencesModal.querySelector('.modal-header');
-        const referencesBody = this.referencesModal.querySelector('.modal-body');
-
-        let isRefDragging = false;
-        let refStartY = 0;
-        let refStartHeight = 0;
-        let refStartScrollTop = 0;
-
-        const handleRefTouchStart = (e) => {
-            if (!referencesHeader.contains(e.target)) return;
-
-            isRefDragging = true;
-            refStartY = e.touches[0].clientY;
-            refStartHeight = referencesContent.offsetHeight;
-            refStartScrollTop = referencesBody.scrollTop;
-            referencesContent.classList.add('dragging');
-        };
-
-        const handleRefTouchMove = (e) => {
-            if (!isRefDragging) return;
-
-            const currentY = e.touches[0].clientY;
-            const deltaY = refStartY - currentY;
-            let newHeight = refStartHeight + deltaY;
-
-            const minHeight = 200;
-            const maxHeight = window.innerHeight * 0.9;
-            newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
-
-            referencesContent.style.height = `${newHeight}px`;
-            e.preventDefault();
-        };
-
-        const handleRefTouchEnd = (e) => {
-            if (!isRefDragging) return;
-
-            isRefDragging = false;
-            referencesContent.classList.remove('dragging');
-
-            const endY = e.changedTouches[0].clientY;
-            const totalDragDistance = endY - refStartY;
-
-            if (totalDragDistance > 150 && refStartScrollTop === 0) {
-                this.closeModal(this.referencesModal);
-                setTimeout(() => {
-                    referencesContent.style.height = '50vh';
-                }, 300);
-            }
-        };
-
-        referencesHeader.addEventListener('touchstart', handleRefTouchStart, {
-            passive: false,
-        });
-        document.addEventListener('touchmove', handleRefTouchMove, { passive: false });
-        document.addEventListener('touchend', handleRefTouchEnd, { passive: true });
-
-        // Mouse events for desktop (References modal)
-        let isRefMouseDragging = false;
-        let refMouseStartY = 0;
-        let refMouseStartHeight = 0;
-
-        referencesHeader.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.close-btn')) return;
-
-            isRefMouseDragging = true;
-            refMouseStartY = e.clientY;
-            refMouseStartHeight = referencesContent.offsetHeight;
-            referencesContent.classList.add('dragging');
-            e.preventDefault();
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (!isRefMouseDragging) return;
-
-            const deltaY = refMouseStartY - e.clientY;
-            let newHeight = refMouseStartHeight + deltaY;
-
-            const minHeight = 200;
-            const maxHeight = window.innerHeight * 0.9;
-            newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
-
-            referencesContent.style.height = `${newHeight}px`;
-        });
-
-        document.addEventListener('mouseup', (e) => {
-            if (!isRefMouseDragging) return;
-
-            isRefMouseDragging = false;
-            referencesContent.classList.remove('dragging');
-
-            const endY = e.clientY;
-            const totalDragDistance = endY - refMouseStartY;
-
-            if (totalDragDistance > 150) {
-                this.closeModal(this.referencesModal);
-                setTimeout(() => {
-                    referencesContent.style.height = '50vh';
-                }, 300);
-            }
-        });
-
-        // Settings modal drag-to-resize and swipe-to-close
-        const settingsContent = this.settingsModal.querySelector('.modal-content');
-        const settingsHeader = this.settingsModal.querySelector('.modal-header');
-        const settingsBody = this.settingsModal.querySelector('.modal-body');
-
-        let isDragging = false;
-        let startY = 0;
-        let startHeight = 0;
-        let startScrollTop = 0;
-
-        const handleTouchStart = (e) => {
-            // Only allow dragging from the header area (not the body content)
-            if (!settingsHeader.contains(e.target)) return;
-
-            isDragging = true;
-            startY = e.touches[0].clientY;
-            startHeight = settingsContent.offsetHeight;
-            startScrollTop = settingsBody.scrollTop;
-            settingsContent.classList.add('dragging');
-        };
-
-        const handleTouchMove = (e) => {
-            if (!isDragging) return;
-
-            const currentY = e.touches[0].clientY;
-            const deltaY = startY - currentY; // Positive = dragging up, negative = dragging down
-
-            // Calculate new height
-            let newHeight = startHeight + deltaY;
-
-            // Clamp between min and max
-            const minHeight = 200;
-            const maxHeight = window.innerHeight * 0.9;
-            newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
-
-            settingsContent.style.height = `${newHeight}px`;
-
-            // Prevent scrolling while dragging
-            e.preventDefault();
-        };
-
-        const handleTouchEnd = (e) => {
-            if (!isDragging) return;
-
-            isDragging = false;
-            settingsContent.classList.remove('dragging');
-
-            const endY = e.changedTouches[0].clientY;
-            const totalDragDistance = endY - startY; // Positive = dragged down
-
-            // Only close if:
-            // 1. Dragged down (not up)
-            // 2. Dragged more than 150px down
-            // 3. Content was at top when started
-            if (totalDragDistance > 150 && startScrollTop === 0) {
-                this.closeModal(this.settingsModal);
-                // Reset height for next open
-                setTimeout(() => {
-                    settingsContent.style.height = '50vh';
-                }, 300);
-            }
-        };
-
-        // Touch events (mobile)
-        settingsHeader.addEventListener('touchstart', handleTouchStart, {
-            passive: false,
-        });
-        document.addEventListener('touchmove', handleTouchMove, { passive: false });
-        document.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-        // Mouse events (desktop)
-        let isMouseDragging = false;
-        let mouseStartY = 0;
-        let mouseStartHeight = 0;
-
-        settingsHeader.addEventListener('mousedown', (e) => {
-            // Ignore if clicking on close button
-            if (e.target.closest('.close-btn')) return;
-
-            isMouseDragging = true;
-            mouseStartY = e.clientY;
-            mouseStartHeight = settingsContent.offsetHeight;
-            settingsContent.classList.add('dragging');
-            e.preventDefault();
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (!isMouseDragging) return;
-
-            const deltaY = mouseStartY - e.clientY;
-            let newHeight = mouseStartHeight + deltaY;
-
-            const minHeight = 200;
-            const maxHeight = window.innerHeight * 0.9;
-            newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
-
-            settingsContent.style.height = `${newHeight}px`;
-        });
-
-        document.addEventListener('mouseup', (e) => {
-            if (!isMouseDragging) return;
-
-            isMouseDragging = false;
-            settingsContent.classList.remove('dragging');
-
-            const endY = e.clientY;
-            const totalDragDistance = endY - mouseStartY;
-
-            // Close if dragged down more than 150px
-            if (totalDragDistance > 150) {
-                this.closeModal(this.settingsModal);
-                setTimeout(() => {
-                    settingsContent.style.height = '50vh';
-                }, 300);
-            }
-        });
-
-        // Settings
-        this.saveApiKeyBtn.addEventListener('click', () => this.saveApiKey());
-        this.verseNumbersToggle.addEventListener('change', () =>
-            this.toggleSetting('showVerseNumbers')
-        );
-        this.headingsToggle.addEventListener('change', () =>
-            this.toggleSetting('showHeadings')
-        );
-        this.footnotesToggle.addEventListener('change', () =>
-            this.toggleSetting('showFootnotes')
-        );
-
-        this.crossReferencesToggle = document.getElementById('crossReferencesToggle');
-        if (this.crossReferencesToggle) {
-            this.crossReferencesToggle.addEventListener('change', () =>
-                this.toggleSetting('showCrossReferences')
-            );
-        }
-
-        this.verseByVerseToggle.addEventListener('change', () =>
-            this.toggleVerseByVerse()
-        );
-        this.fontSizeSlider.addEventListener('input', (e) =>
-            this.updateFontSize(e.target.value)
-        );
-
-        // Theme toggle
-        this.themeToggleBtn.addEventListener('click', () => toggleTheme(this));
-
-        // Theme selector
-        const themeSelector = document.getElementById('themeSelector');
-        const lightModeToggle = document.getElementById('lightModeToggle');
-
-        if (themeSelector) {
-            themeSelector.addEventListener('change', (e) => {
-                changeColorTheme(this, e.target.value);
-            });
-        }
-
-        if (lightModeToggle) {
-            lightModeToggle.addEventListener('change', () => {
-                toggleTheme(this);
-            });
-        }
-
-        // User button
-        this.userBtn.addEventListener('click', () => this.handleUserButtonClick());
-
-        // Auth modal switching
-        document.getElementById('showSignupLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.closeModal(this.loginModal);
-            this.openModal(this.signupModal);
-        });
-
-        document.getElementById('showLoginLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.closeModal(this.signupModal);
-            this.openModal(this.loginModal);
-        });
-
-        // Auth form submissions
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleLogin();
-        });
-
-        document.getElementById('signupForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleSignup();
-        });
-
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            this.handleLogout();
-        });
-
-        // Close auth modals
-        this.closeLoginModal.addEventListener('click', () =>
-            this.closeModal(this.loginModal)
-        );
-        this.closeSignupModal.addEventListener('click', () =>
-            this.closeModal(this.signupModal)
-        );
-        this.closeUserMenuModal.addEventListener('click', () =>
-            this.closeModal(this.userMenuModal)
-        );
-
-        // Track scroll position + auto-hide chrome
-        window.addEventListener(
-            'scroll',
-            () => {
-                this.handleChromeScroll();
-
-                clearTimeout(this.scrollTimeout);
-                this.scrollTimeout = setTimeout(() => {
-                    this.saveReadingPosition();
-                }, 500);
-            },
-            { passive: true }
-        );
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => this.handleKeyboardShortcuts(e));
     }
 
     // ================================
@@ -671,74 +139,22 @@ class BibleApp {
     initializeBibleStructure() {
         return {
             'Old Testament': {
-                Genesis: 50,
-                Exodus: 40,
-                Leviticus: 27,
-                Numbers: 36,
-                Deuteronomy: 34,
-                Joshua: 24,
-                Judges: 21,
-                Ruth: 4,
-                '1 Samuel': 31,
-                '2 Samuel': 24,
-                '1 Kings': 22,
-                '2 Kings': 25,
-                '1 Chronicles': 29,
-                '2 Chronicles': 36,
-                Ezra: 10,
-                Nehemiah: 13,
-                Esther: 10,
-                Job: 42,
-                Psalms: 150,
-                Proverbs: 31,
-                Ecclesiastes: 12,
-                'Song of Solomon': 8,
-                Isaiah: 66,
-                Jeremiah: 52,
-                Lamentations: 5,
-                Ezekiel: 48,
-                Daniel: 12,
-                Hosea: 14,
-                Joel: 3,
-                Amos: 9,
-                Obadiah: 1,
-                Jonah: 4,
-                Micah: 7,
-                Nahum: 3,
-                Habakkuk: 3,
-                Zephaniah: 3,
-                Haggai: 2,
-                Zechariah: 14,
-                Malachi: 4,
+                Genesis: 50, Exodus: 40, Leviticus: 27, Numbers: 36, Deuteronomy: 34,
+                Joshua: 24, Judges: 21, Ruth: 4, '1 Samuel': 31, '2 Samuel': 24,
+                '1 Kings': 22, '2 Kings': 25, '1 Chronicles': 29, '2 Chronicles': 36,
+                Ezra: 10, Nehemiah: 13, Esther: 10, Job: 42, Psalm: 150, Proverbs: 31,
+                Ecclesiastes: 12, 'Song of Solomon': 8, Isaiah: 66, Jeremiah: 52,
+                Lamentations: 5, Ezekiel: 48, Daniel: 12, Hosea: 14, Joel: 3, Amos: 9,
+                Obadiah: 1, Jonah: 4, Micah: 7, Nahum: 3, Habakkuk: 3, Zephaniah: 3,
+                Haggai: 2, Zechariah: 14, Malachi: 4,
             },
             'New Testament': {
-                Matthew: 28,
-                Mark: 16,
-                Luke: 24,
-                John: 21,
-                Acts: 28,
-                Romans: 16,
-                '1 Corinthians': 16,
-                '2 Corinthians': 13,
-                Galatians: 6,
-                Ephesians: 6,
-                Philippians: 4,
-                Colossians: 4,
-                '1 Thessalonians': 5,
-                '2 Thessalonians': 3,
-                '1 Timothy': 6,
-                '2 Timothy': 4,
-                Titus: 3,
-                Philemon: 1,
-                Hebrews: 13,
-                James: 5,
-                '1 Peter': 5,
-                '2 Peter': 3,
-                '1 John': 5,
-                '2 John': 1,
-                '3 John': 1,
-                Jude: 1,
-                Revelation: 22,
+                Matthew: 28, Mark: 16, Luke: 24, John: 21, Acts: 28, Romans: 16,
+                '1 Corinthians': 16, '2 Corinthians': 13, Galatians: 6, Ephesians: 6,
+                Philippians: 4, Colossians: 4, '1 Thessalonians': 5, '2 Thessalonians': 3,
+                '1 Timothy': 6, '2 Timothy': 4, Titus: 3, Philemon: 1, Hebrews: 13,
+                James: 5, '1 Peter': 5, '2 Peter': 3, '1 John': 5, '2 John': 1,
+                '3 John': 1, Jude: 1, Revelation: 22,
             },
         };
     }
@@ -765,29 +181,430 @@ class BibleApp {
         return null;
     }
 
+    getDisplayName(book) {
+        return this.bookDisplayNames[book] || book;
+    }
+
+    // ================================
+    // Initialization
+    // ================================
+
+    async init() {
+        await this._loadTranslationRegistry();
+        await registerServiceWorker(this);
+
+        cacheElements(this);
+        loadTheme(this);
+
+        const themeSelector = document.getElementById('themeSelector');
+        const lightModeToggle = document.getElementById('lightModeToggle');
+
+        if (themeSelector) {
+            const savedTheme = localStorage.getItem('colorTheme') || 'dracula';
+            themeSelector.value = savedTheme;
+        }
+
+        if (lightModeToggle) {
+            lightModeToggle.checked = document.body.classList.contains('light-mode');
+        }
+
+        this.attachEventListeners();
+        this.initializeAccordion();
+
+        if (!this.auth || !this.database) {
+            console.error('Firebase auth/database not ready when app initialized.');
+            this.loadLocalSettings();
+            this.applySettings();
+            this.loadPassage(this.state.currentBook, this.state.currentChapter);
+            setTimeout(() => {
+                this.showToast('Sign in is temporarily unavailable. Please refresh the page.');
+            }, 500);
+            return;
+        }
+
+        this.auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                this.currentUser = user;
+                await this.loadUserData();
+                this.applySettings();
+                await this.loadSavedReadingPosition();
+            } else {
+                this.currentUser = null;
+                this.loadLocalSettings();
+                this.applySettings();
+                this.loadPassage(this.state.currentBook, this.state.currentChapter);
+                this.checkApiKey();
+            }
+        });
+    }
+
+    async _loadTranslationRegistry() {
+        const translations = await loadTranslationIndex();
+
+        const select = document.getElementById('translationSelector');
+        if (select && translations.length > 0) {
+            select.innerHTML = '';
+            for (const t of translations) {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.label;
+                select.appendChild(opt);
+            }
+        }
+
+        this._copyrightMap = {};
+        for (const t of translations) {
+            this._copyrightMap[t.id] = t.copyright || '';
+        }
+    }
+
+    initializeAccordion() {
+        const accordionHeaders = document.querySelectorAll('.accordion-header');
+
+        accordionHeaders.forEach((header) => {
+            header.addEventListener('click', () => {
+                const section = header.closest('.accordion-section');
+                section.classList.toggle('active');
+            });
+        });
+
+        const openAccountBtn = document.getElementById('openAccountBtn');
+        if (openAccountBtn) {
+            openAccountBtn.addEventListener('click', () => {
+                this.closeModal(this.settingsModal);
+                if (this.currentUser) {
+                    this.openModal(this.userMenuModal);
+                } else {
+                    this.openModal(this.loginModal);
+                }
+            });
+        }
+    }
+
+    attachEventListeners() {
+        this.searchToggleBtn.addEventListener('click', () => this.toggleSearch());
+        this.helpBtn.addEventListener('click', () => this.openModal(this.helpModal));
+        this.settingsBtn.addEventListener('click', () => this.openModal(this.settingsModal));
+
+        this.closeSearchBtn.addEventListener('click', () => this.closeSearch());
+        this.searchInput.addEventListener('input', (e) => this.handleSearch(e.target.value));
+        this.searchInput.addEventListener('keydown', (e) => this.handleSearchKeydown(e));
+
+        this.prevChapterBtn.addEventListener('click', () => this.navigateChapter(-1));
+        this.nextChapterBtn.addEventListener('click', () => this.navigateChapter(1));
+        this.bookSelector.addEventListener('click', () => this.openBookModal());
+        this.chapterSelector.addEventListener('click', () => this.openChapterModal());
+        this.verseSelector.addEventListener('click', () => this.openVerseModal());
+        this.closeVerseModal.addEventListener('click', () => this.closeModal(this.verseModal));
+
+        this.referencesModal = document.getElementById('referencesModal');
+        this.closeReferencesModal = document.getElementById('closeReferencesModal');
+        this.footnotesSection = document.getElementById('footnotesSection');
+        this.footnotesContent = document.getElementById('footnotesContent');
+        this.crossReferencesSection = document.getElementById('crossReferencesSection');
+        this.crossReferencesContent = document.getElementById('crossReferencesContent');
+
+        [
+            this.bookModal,
+            this.chapterModal,
+            this.verseModal,
+            this.settingsModal,
+            this.helpModal,
+            this.loginModal,
+            this.signupModal,
+            this.userMenuModal,
+            this.referencesModal,
+        ].forEach((modal) => {
+            if (!modal) return;
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) this.closeModal(modal);
+            });
+        });
+
+        this.closeBookModal.addEventListener('click', () => this.closeModal(this.bookModal));
+        this.closeChapterModal.addEventListener('click', () => this.closeModal(this.chapterModal));
+        this.closeHelpModal.addEventListener('click', () => this.closeModal(this.helpModal));
+        this.closeSettingsModal.addEventListener('click', () => this.closeModal(this.settingsModal));
+        if (this.closeReferencesModal) {
+            this.closeReferencesModal.addEventListener('click', () => this.closeModal(this.referencesModal));
+        }
+
+        // References modal drag-to-resize
+        if (this.referencesModal) {
+            const referencesContent = this.referencesModal.querySelector('.modal-content');
+            const referencesHeader = this.referencesModal.querySelector('.modal-header');
+            const referencesBody = this.referencesModal.querySelector('.modal-body');
+
+            let isRefDragging = false;
+            let refStartY = 0;
+            let refStartHeight = 0;
+            let refStartScrollTop = 0;
+
+            referencesHeader?.addEventListener('touchstart', (e) => {
+                isRefDragging = true;
+                refStartY = e.touches[0].clientY;
+                refStartHeight = referencesContent.offsetHeight;
+                refStartScrollTop = referencesBody?.scrollTop ?? 0;
+                referencesContent.classList.add('dragging');
+            }, { passive: false });
+
+            document.addEventListener('touchmove', (e) => {
+                if (!isRefDragging) return;
+                const deltaY = refStartY - e.touches[0].clientY;
+                let newH = Math.max(200, Math.min(window.innerHeight * 0.9, refStartHeight + deltaY));
+                referencesContent.style.height = `${newH}px`;
+                e.preventDefault();
+            }, { passive: false });
+
+            document.addEventListener('touchend', (e) => {
+                if (!isRefDragging) return;
+                isRefDragging = false;
+                referencesContent.classList.remove('dragging');
+                const totalDrag = e.changedTouches[0].clientY - refStartY;
+                if (totalDrag > 150 && refStartScrollTop === 0) {
+                    this.closeModal(this.referencesModal);
+                    setTimeout(() => { referencesContent.style.height = '50vh'; }, 300);
+                }
+            }, { passive: true });
+
+            let isRefMouseDragging = false;
+            let refMouseStartY = 0;
+            let refMouseStartHeight = 0;
+
+            referencesHeader?.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.close-btn')) return;
+                isRefMouseDragging = true;
+                refMouseStartY = e.clientY;
+                refMouseStartHeight = referencesContent.offsetHeight;
+                referencesContent.classList.add('dragging');
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isRefMouseDragging) return;
+                const newH = Math.max(200, Math.min(window.innerHeight * 0.9, refMouseStartHeight + (refMouseStartY - e.clientY)));
+                referencesContent.style.height = `${newH}px`;
+            });
+
+            document.addEventListener('mouseup', (e) => {
+                if (!isRefMouseDragging) return;
+                isRefMouseDragging = false;
+                referencesContent.classList.remove('dragging');
+                if (e.clientY - refMouseStartY > 150) {
+                    this.closeModal(this.referencesModal);
+                    setTimeout(() => { referencesContent.style.height = '50vh'; }, 300);
+                }
+            });
+        }
+
+        // Settings modal drag-to-resize
+        const settingsContent = this.settingsModal.querySelector('.modal-content');
+        const settingsHeader = this.settingsModal.querySelector('.modal-header');
+        const settingsBody = this.settingsModal.querySelector('.modal-body');
+
+        let isDragging = false;
+        let startY = 0;
+        let startHeight = 0;
+        let startScrollTop = 0;
+
+        settingsHeader.addEventListener('touchstart', (e) => {
+            if (!settingsHeader.contains(e.target)) return;
+            isDragging = true;
+            startY = e.touches[0].clientY;
+            startHeight = settingsContent.offsetHeight;
+            startScrollTop = settingsBody.scrollTop;
+            settingsContent.classList.add('dragging');
+        }, { passive: false });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const deltaY = startY - e.touches[0].clientY;
+            const newH = Math.max(200, Math.min(window.innerHeight * 0.9, startHeight + deltaY));
+            settingsContent.style.height = `${newH}px`;
+            e.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            settingsContent.classList.remove('dragging');
+            const totalDrag = e.changedTouches[0].clientY - startY;
+            if (totalDrag > 150 && startScrollTop === 0) {
+                this.closeModal(this.settingsModal);
+                setTimeout(() => { settingsContent.style.height = '50vh'; }, 300);
+            }
+        }, { passive: true });
+
+        let isMouseDragging = false;
+        let mouseStartY = 0;
+        let mouseStartHeight = 0;
+
+        settingsHeader.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.close-btn')) return;
+            isMouseDragging = true;
+            mouseStartY = e.clientY;
+            mouseStartHeight = settingsContent.offsetHeight;
+            settingsContent.classList.add('dragging');
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isMouseDragging) return;
+            const newH = Math.max(200, Math.min(window.innerHeight * 0.9, mouseStartHeight + (mouseStartY - e.clientY)));
+            settingsContent.style.height = `${newH}px`;
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (!isMouseDragging) return;
+            isMouseDragging = false;
+            settingsContent.classList.remove('dragging');
+            if (e.clientY - mouseStartY > 150) {
+                this.closeModal(this.settingsModal);
+                setTimeout(() => { settingsContent.style.height = '50vh'; }, 300);
+            }
+        });
+
+        this.verseNumbersToggle.addEventListener('change', () => this.toggleSetting('showVerseNumbers'));
+        this.headingsToggle.addEventListener('change', () => this.toggleSetting('showHeadings'));
+        this.footnotesToggle.addEventListener('change', () => this.toggleSetting('showFootnotes'));
+
+        this.crossReferencesToggle = document.getElementById('crossReferencesToggle');
+        if (this.crossReferencesToggle) {
+            this.crossReferencesToggle.addEventListener('change', () => this.toggleSetting('showCrossReferences'));
+        }
+
+        this.verseByVerseToggle.addEventListener('change', () => this.toggleVerseByVerse());
+        this.fontSizeSlider.addEventListener('input', (e) => this.updateFontSize(e.target.value));
+
+        if (this.translationSelector) {
+            this.translationSelector.addEventListener('change', async (e) => {
+                await this.changeTranslation(e.target.value);
+            });
+        }
+
+        this.themeToggleBtn.addEventListener('click', () => toggleTheme(this));
+
+        const themeSelector = document.getElementById('themeSelector');
+        const lightModeToggle = document.getElementById('lightModeToggle');
+
+        if (themeSelector) {
+            themeSelector.addEventListener('change', (e) => changeColorTheme(this, e.target.value));
+        }
+
+        if (lightModeToggle) {
+            lightModeToggle.addEventListener('change', () => toggleTheme(this));
+        }
+
+        this.userBtn.addEventListener('click', () => this.handleUserButtonClick());
+
+        document.getElementById('showSignupLink')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.closeModal(this.loginModal);
+            this.openModal(this.signupModal);
+        });
+
+        document.getElementById('showLoginLink')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.closeModal(this.signupModal);
+            this.openModal(this.loginModal);
+        });
+
+        document.getElementById('loginForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleLogin();
+        });
+
+        document.getElementById('signupForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleSignup();
+        });
+
+        document.getElementById('logoutBtn')?.addEventListener('click', () => this.handleLogout());
+
+        this.closeLoginModal?.addEventListener('click', () => this.closeModal(this.loginModal));
+        this.closeSignupModal?.addEventListener('click', () => this.closeModal(this.signupModal));
+        this.closeUserMenuModal?.addEventListener('click', () => this.closeModal(this.userMenuModal));
+
+        window.addEventListener('scroll', () => {
+            this.handleChromeScroll();
+            clearTimeout(this.scrollTimeout);
+            this.scrollTimeout = setTimeout(() => this.saveReadingPosition(), 500);
+        }, { passive: true });
+
+        document.addEventListener('keydown', (e) => this.handleKeyboardShortcuts(e));
+    }
+
     // ==========================================
     // Passage Loading
     // ==========================================
 
-    async loadPassage(book, chapter, restoreScroll = false) {
-        // Save reading position before loading new passage
-        if (!restoreScroll) {
-            this.saveReadingPosition();
+    async loadSavedReadingPosition() {
+        if (!this.currentUser || !this.database) {
+            await this.loadPassage(this.state.currentBook, this.state.currentChapter);
+            return;
         }
 
-        // Update state
+        try {
+            const snapshot = await this.database
+                .ref(`users/${this.currentUser.uid}/readingPosition`)
+                .once('value');
+            const pos = snapshot.val();
+
+            if (pos && pos.book && pos.chapter) {
+                this.state.currentBook = pos.book;
+                this.state.currentChapter = pos.chapter;
+                this.lastScrollPosition = pos.scrollY || 0;
+            }
+        } catch (err) {
+            console.error('loadSavedReadingPosition: failed to read Firebase', err);
+        }
+
+        await this.loadPassage(this.state.currentBook, this.state.currentChapter, true);
+    }
+
+    saveReadingPosition() {
+        if (!this.currentUser || !this.database) return;
+
+        const pos = {
+            book: this.state.currentBook,
+            chapter: this.state.currentChapter,
+            scrollY: window.scrollY || 0,
+        };
+
+        this.database
+            .ref(`users/${this.currentUser.uid}/readingPosition`)
+            .set(pos)
+            .catch((err) => console.error('saveReadingPosition: Firebase write failed', err));
+    }
+
+    async loadPassage(book, chapter, restoreScroll = false) {
+        if (!restoreScroll) {
+            this.saveReadingPosition?.();
+        }
+
         this.state.currentBook = book;
         this.state.currentChapter = chapter;
         this.updateNavigationState();
 
-        // Build reference string
         const reference = `${book} ${chapter}`;
-
-        // Show loading state
         this.passageText.innerHTML = '<p class="loading">Loading passage...</p>';
 
-        // Fetch passage from API
-        const data = await this.bibleApi.fetchPassage(reference);
+        // Load BSB structure scaffold for all translations.
+        // The scaffold is keyed by chapter/verse and applies regardless of translation
+        // since all supported translations share the same versification.
+        let scaffoldEvents = [];
+        try {
+            const allEvents = await loadStructure(book);
+            scaffoldEvents = eventsForChapter(allEvents, chapter);
+        } catch (err) {
+            console.warn('loadPassage: BSB structure scaffold unavailable', err);
+        }
+
+        const data = await this.bibleApi.fetchPassage(
+            reference,
+            scaffoldEvents,
+            this.state.showHeadings !== false
+        );
 
         if (!data) {
             this.chromeSuspend = false;
@@ -795,59 +612,34 @@ class BibleApp {
             return;
         }
 
-        // Update UI with passage content
-        this.passageTitle.textContent = reference;
+        const displayTitle = book === 'Psalm'
+            ? `Psalm ${chapter}`
+            : `${this.getDisplayName(book)} ${chapter}`;
+        this.passageTitle.textContent = displayTitle;
         this.passageText.innerHTML = data.passages[0];
-
-        // debug
-        console.log('=== DEBUGGING FOOTNOTES ===');
-        console.log('showFootnotes setting:', this.state.showFootnotes);
-        console.log(
-            'All .footnote elements:',
-            this.passageText.querySelectorAll('.footnote')
-        );
-        const footnotes = this.passageText.querySelectorAll('.footnote');
-        footnotes.forEach((fn, i) => {
-            console.log(`Footnote ${i}:`, fn.outerHTML);
-        });
-        console.log('=== END DEBUG ===');
-
-        // Cache original HTML for highlight logic
         this.originalPassageHtml = this.passageText.innerHTML;
 
-        // Attach click handlers for footnotes and cross-references
-        this.attachFootnoteHandlers();
+        this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
 
-        // ← NEW: Make footnote superscripts clickable ↓
-        this.makeFootnotesClickable();
-
-        // Update copyright
-        this.copyright.textContent = `Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.`;
-
-        // Reset verse selector
+        this.updateCopyright();
         this.currentVerseSpan.textContent = '1';
-
-        // Temporarily disable chrome hide/show while we programmatically scroll
         this.chromeSuspend = true;
         document.body.classList.add('chrome-no-transition');
-        this.showChrome(); // keep header/nav visible during load
+        this.showChrome();
 
-        // Handle scroll position
         if (restoreScroll) {
             window.scrollTo(0, this.lastScrollPosition || 0);
         } else {
             window.scrollTo(0, 0);
         }
 
-        // Let the browser apply the scroll position first, then re-enable chrome logic
         requestAnimationFrame(() => {
             this.chromeScrollLastY = window.scrollY || window.pageYOffset || 0;
             this.chromeSuspend = false;
             document.body.classList.remove('chrome-no-transition');
         });
 
-        // Save reading position after loading
-        this.saveReadingPosition();
+        this.saveReadingPosition?.();
     }
 
     // ================================
@@ -864,16 +656,13 @@ class BibleApp {
         this.currentBookSpan.textContent = abbr;
         this.currentChapterSpan.textContent = this.state.currentChapter;
 
-        // Update button states
         const books = this.getAllBooks();
         const currentBookIndex = books.indexOf(book);
         const isFirstChapter = this.state.currentChapter === 1;
-        const isLastChapter =
-            this.state.currentChapter === this.getChapterCount(book);
+        const isLastChapter = this.state.currentChapter === this.getChapterCount(book);
 
         this.prevChapterBtn.disabled = currentBookIndex === 0 && isFirstChapter;
-        this.nextChapterBtn.disabled =
-            currentBookIndex === books.length - 1 && isLastChapter;
+        this.nextChapterBtn.disabled = currentBookIndex === books.length - 1 && isLastChapter;
     }
 
     // ================================
@@ -885,7 +674,6 @@ class BibleApp {
         if (this.searchContainer.classList.contains('active')) {
             this.searchInput.focus();
         } else {
-            // Keep this consistent with closeSearch()
             this.searchInput.value = '';
             this.searchResults.innerHTML = '';
             this.searchSelectedIndex = -1;
@@ -903,8 +691,6 @@ class BibleApp {
 
     handleSearch(query) {
         clearTimeout(this.searchTimeout);
-
-        // Reset pagination for a new query
         this.searchLastQuery = query;
         this.searchPage = 1;
         this.currentSearchResults = [];
@@ -926,50 +712,24 @@ class BibleApp {
         }, 300);
     }
 
-    addLoadMoreButton() {
-        const old = this.searchResults.querySelector('.search-load-more');
-        if (old) old.remove();
-
-        if (!this.searchHasMore) return;
-
-        const btn = document.createElement('button');
-        btn.className = 'search-load-more';
-        btn.textContent = 'Load more results';
-        btn.addEventListener('click', async () => {
-            this.searchPage += 1;
-            await this.performKeywordSearch(this.searchLastQuery, true);
-        });
-
-        this.searchResults.appendChild(btn);
-    }
-
     handleSearchKeydown(e) {
-        // Only handle keys we care about (let typing behave normally)
         if (e.key === 'Escape') {
             e.preventDefault();
             this.closeSearch();
             return;
         }
 
-        // No results: nothing to navigate
-        if (!this.searchResultItems || this.searchResultItems.length === 0) {
-            return;
-        }
+        if (!this.searchResultItems || this.searchResultItems.length === 0) return;
 
         if (e.key === 'ArrowDown') {
             e.preventDefault();
-            const next = Math.min(
-                this.searchSelectedIndex + 1,
-                this.searchResultItems.length - 1
-            );
-            this.setSearchSelectedIndex(next, true);
+            this.setSearchSelectedIndex(Math.min(this.searchSelectedIndex + 1, this.searchResultItems.length - 1), true);
             return;
         }
 
         if (e.key === 'ArrowUp') {
             e.preventDefault();
-            const prev = Math.max(this.searchSelectedIndex - 1, 0);
-            this.setSearchSelectedIndex(prev, true);
+            this.setSearchSelectedIndex(Math.max(this.searchSelectedIndex - 1, 0), true);
             return;
         }
 
@@ -992,11 +752,7 @@ class BibleApp {
         if (autoSelectFirst) {
             this.setSearchSelectedIndex(0, false);
         } else {
-            // keep existing selection if still valid
-            if (
-                this.searchSelectedIndex < 0 ||
-                this.searchSelectedIndex >= this.searchResultItems.length
-            ) {
+            if (this.searchSelectedIndex < 0 || this.searchSelectedIndex >= this.searchResultItems.length) {
                 this.searchSelectedIndex = -1;
             } else {
                 this.setSearchSelectedIndex(this.searchSelectedIndex, false);
@@ -1013,37 +769,26 @@ class BibleApp {
         const clamped = Math.max(0, Math.min(index, this.searchResultItems.length - 1));
         this.searchSelectedIndex = clamped;
 
-        // Update UI class
         this.searchResultItems.forEach((el, i) => {
-            if (i === clamped) el.classList.add('selected');
-            else el.classList.remove('selected');
+            el.classList.toggle('selected', i === clamped);
         });
 
-        const selectedEl = this.searchResultItems[clamped];
-        if (selectedEl && scrollIntoView) {
-            selectedEl.scrollIntoView({ block: 'nearest' });
+        if (scrollIntoView) {
+            this.searchResultItems[clamped]?.scrollIntoView({ block: 'nearest' });
         }
     }
 
     activateSelectedSearchResult() {
-        if (
-            !this.searchResultItems ||
-            this.searchSelectedIndex < 0 ||
-            this.searchSelectedIndex >= this.searchResultItems.length
-        ) {
-            return;
-        }
-        const selectedEl = this.searchResultItems[this.searchSelectedIndex];
-        if (selectedEl) selectedEl.click();
+        if (!this.searchResultItems || this.searchSelectedIndex < 0 || this.searchSelectedIndex >= this.searchResultItems.length) return;
+        this.searchResultItems[this.searchSelectedIndex]?.click();
     }
 
     isPassageReference(query) {
-        // Simple check for passage reference patterns
         const patterns = [
-            /^[1-3]?\s*[a-z]+\s+\d+/i, // Book Chapter
-            /^[1-3]?\s*[a-z]+\s+\d+:\d+/i, // Book Chapter:Verse
+            /^[1-3]?\s*[a-z]+\s+\d+/i,
+            /^[1-3]?\s*[a-z]+\s+\d+:\d+/i,
         ];
-        return patterns.some((pattern) => pattern.test(query.trim()));
+        return patterns.some((p) => p.test(query.trim()));
     }
 
     async handlePassageReference(reference) {
@@ -1067,16 +812,10 @@ class BibleApp {
                 });
             }
 
-            // If you have keyboard navigation helpers, keep this call; otherwise delete it.
-            if (typeof this.refreshSearchResultItems === 'function') {
-                this.refreshSearchResultItems(true);
-            }
+            this.refreshSearchResultItems(true);
         } else {
             this.searchResults.innerHTML = '<div class="search-no-results">No passage found</div>';
-
-            if (typeof this.refreshSearchResultItems === 'function') {
-                this.refreshSearchResultItems(false);
-            }
+            this.refreshSearchResultItems(false);
         }
     }
 
@@ -1088,21 +827,13 @@ class BibleApp {
             const data = await this.bibleApi.searchPassages(query, this.searchPage);
             if (!data || !data.results || !data.results.length) break;
 
-            // Merge this page's results
             this.currentSearchResults = this.currentSearchResults.concat(data.results);
 
             const total = data.total_results ?? data.total;
             const pageSize = data.page_size ?? 100;
             const totalPages = total && pageSize ? Math.ceil(total / pageSize) : 1;
 
-            if (this.searchPage >= totalPages) {
-                break; // all pages loaded
-            }
-
-            // Optional safety cap so you don't hammer the API on huge queries
-            if (this.searchPage >= 10) {
-                break; // stop after 10 pages even if more exist
-            }
+            if (this.searchPage >= totalPages || this.searchPage >= 10) break;
 
             this.searchPage += 1;
         }
@@ -1110,27 +841,24 @@ class BibleApp {
         return this.currentSearchResults;
     }
 
-    // Group search results by Testament and book, in canonical order
     groupSearchResultsByCanon(results) {
         if (!Array.isArray(results)) return [];
 
-        const otBooks = Object.keys(this.bibleBooks["Old Testament"]);
-        const ntBooks = Object.keys(this.bibleBooks["New Testament"]);
-
-        const otGroups = new Map(); // book -> [results]
-        const ntGroups = new Map(); // book -> [results]
+        const otBooks = Object.keys(this.bibleBooks['Old Testament']);
+        const ntBooks = Object.keys(this.bibleBooks['New Testament']);
+        const otGroups = new Map();
+        const ntGroups = new Map();
 
         for (const result of results) {
             const parsed = this.parseReference?.(result.reference);
             if (!parsed) continue;
-
             const { book } = parsed;
             const testament = this.getTestament?.(book);
 
-            if (testament === "Old Testament") {
+            if (testament === 'Old Testament') {
                 if (!otGroups.has(book)) otGroups.set(book, []);
                 otGroups.get(book).push(result);
-            } else if (testament === "New Testament") {
+            } else if (testament === 'New Testament') {
                 if (!ntGroups.has(book)) ntGroups.set(book, []);
                 ntGroups.get(book).push(result);
             }
@@ -1140,19 +868,15 @@ class BibleApp {
 
         if (otGroups.size) {
             grouped.push({
-                heading: "Old Testament",
-                books: otBooks
-                    .filter((b) => otGroups.has(b))
-                    .map((book) => ({ book, results: otGroups.get(book) })),
+                heading: 'Old Testament',
+                books: otBooks.filter((b) => otGroups.has(b)).map((book) => ({ book, results: otGroups.get(book) })),
             });
         }
 
         if (ntGroups.size) {
             grouped.push({
-                heading: "New Testament",
-                books: ntBooks
-                    .filter((b) => ntGroups.has(b))
-                    .map((book) => ({ book, results: ntGroups.get(book) })),
+                heading: 'New Testament',
+                books: ntBooks.filter((b) => ntGroups.has(b)).map((book) => ({ book, results: ntGroups.get(book) })),
             });
         }
 
@@ -1160,110 +884,45 @@ class BibleApp {
     }
 
     async performKeywordSearch(query) {
-        this.searchResults.innerHTML =
-            '<div class="loading" style="min-height: 100px">Searching...</div>';
+        this.searchResults.innerHTML = '<div class="loading" style="min-height: 100px">Searching...</div>';
         this.searchSelectedIndex = -1;
         this.searchResultItems = [];
 
-        // Reset expansion state for this new query
-        if (this.searchExpandedTestaments) this.searchExpandedTestaments.clear();
-        if (this.searchExpandedBooks) this.searchExpandedBooks.clear();
+        this.searchExpandedTestaments?.clear();
+        this.searchExpandedBooks?.clear();
 
         const allResults = await this.fetchAllSearchResults(query);
 
         if (allResults && allResults.length > 0) {
             this.displaySearchResults(allResults, query);
         } else {
-            this.searchResults.innerHTML =
-                '<div class="search-no-results">No results found</div>';
-            if (typeof this.refreshSearchResultItems === 'function') {
-                this.refreshSearchResultItems(false);
-            }
+            this.searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
+            this.refreshSearchResultItems(false);
         }
     }
-
-
-    // async performKeywordSearch(query, append = false) {
-    //     if (!append) {
-    //         this.searchResults.innerHTML =
-    //             '<div class="loading" style="min-height: 100px">Searching...</div>';
-    //         this.searchSelectedIndex = -1;
-    //         this.searchResultItems = [];
-
-    //         // Reset expansion state for this new query
-    //         if (this.searchExpandedTestaments) this.searchExpandedTestaments.clear();
-    //         if (this.searchExpandedBooks) this.searchExpandedBooks.clear();
-    //     }
-
-    //     const data = await this.bibleApi.searchPassages(query, this.searchPage);
-
-    //     if (!data || !data.results || !data.results.length) {
-    //         if (!append) {
-    //             this.searchResults.innerHTML =
-    //                 '<div class="search-no-results">No results found</div>';
-    //             this.refreshSearchResultItems(false);
-    //         }
-    //         this.searchHasMore = false;
-    //         return;
-    //     }
-
-    //     const total = data.total_results ?? data.total;
-    //     const pageSize = data.page_size ?? 100;
-    //     const loadedSoFar = this.searchPage * pageSize;
-    //     this.searchHasMore = total && loadedSoFar < total;
-
-    //     if (append) {
-    //         this.currentSearchResults = this.currentSearchResults.concat(data.results);
-    //     } else {
-    //         this.currentSearchResults = data.results;
-    //     }
-
-    //     this.displaySearchResults(this.currentSearchResults, query);
-
-    //     if (this.searchHasMore && typeof this.addLoadMoreButton === 'function') {
-    //         this.addLoadMoreButton();
-    //     }
-
-    //     if (typeof this.refreshSearchResultItems === 'function') {
-    //         this.refreshSearchResultItems(true);
-    //     }
-    // }
-
 
     displaySearchResults(results, query) {
         const groups = this.groupSearchResultsByCanon(results);
 
         if (!groups.length) {
-            this.searchResults.innerHTML =
-                '<div class="search-no-results">No results found</div>';
-            if (typeof this.refreshSearchResultItems === 'function') {
-                this.refreshSearchResultItems(false);
-            }
+            this.searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
+            this.refreshSearchResultItems(false);
             return;
         }
 
-        // Auto-expand defaults if nothing has been expanded yet
-        if (
-            this.searchExpandedTestaments.size === 0 &&
-            this.searchExpandedBooks.size === 0
-        ) {
+        if (this.searchExpandedTestaments.size === 0 && this.searchExpandedBooks.size === 0) {
             const firstGroup = groups[0];
             if (firstGroup) {
                 this.searchExpandedTestaments.add(firstGroup.heading);
                 const firstBook = firstGroup.books && firstGroup.books[0];
-                if (firstBook) {
-                    this.searchExpandedBooks.add(firstBook.book);
-                }
+                if (firstBook) this.searchExpandedBooks.add(firstBook.book);
             }
         }
 
-        const escapeHtml = (str) =>
+        const esc = (str) =>
             String(str || '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
         const parts = [];
 
@@ -1271,52 +930,40 @@ class BibleApp {
             const testName = group.heading;
             const testamentExpanded = this.searchExpandedTestaments.has(testName);
 
-            // Testament heading (clickable row)
             parts.push(`
-      <div class="search-group-heading" data-testament="${escapeHtml(testName)}">
-        <span class="search-group-title">${escapeHtml(testName)}</span>
-        <span class="search-group-chevron ${testamentExpanded ? 'expanded' : ''}">▾</span>
+      <div class="search-group-heading" data-testament="${esc(testName)}">
+        <span class="search-group-title">${esc(testName)}</span>
+        <span class="search-group-chevron ${testamentExpanded ? 'expanded' : ''}">&#9662;</span>
       </div>
     `);
 
-            if (!testamentExpanded) {
-                continue; // skip rendering books/results under collapsed testament
-            }
+            if (!testamentExpanded) continue;
 
             for (const bookBlock of group.books) {
                 const bookName = bookBlock.book;
                 const bookExpanded = this.searchExpandedBooks.has(bookName);
 
-                // Book heading (clickable row)
                 parts.push(`
-        <div class="search-book-heading" data-book="${escapeHtml(bookName)}">
-          <span class="search-book-title">${escapeHtml(bookName)}</span>
-          <span class="search-book-chevron ${bookExpanded ? 'expanded' : ''}">▾</span>
+        <div class="search-book-heading" data-book="${esc(bookName)}">
+          <span class="search-book-title">${esc(this.getDisplayName(bookName))}</span>
+          <span class="search-book-chevron ${bookExpanded ? 'expanded' : ''}">&#9662;</span>
         </div>
       `);
 
-                if (!bookExpanded) {
-                    continue; // skip verses for collapsed book
-                }
+                if (!bookExpanded) continue;
 
                 for (const result of bookBlock.results) {
-                    let highlightedContent = result.content;
+                    let highlighted = result.content;
                     try {
-                        highlightedContent = this.highlightSearchTerm(result.content, query);
+                        highlighted = this.highlightSearchTerm(result.content, query);
                     } catch (err) {
-                        console.warn(
-                            'displaySearchResults highlight failed, using raw content',
-                            err
-                        );
-                        highlightedContent = result.content;
+                        console.warn('highlight failed', err);
                     }
 
-                    const safeRef = escapeHtml(result.reference);
-
                     parts.push(`
-          <div class="search-result-item" data-reference="${safeRef}">
-            <div class="search-result-reference">${safeRef}</div>
-            <div class="search-result-content">${highlightedContent}</div>
+          <div class="search-result-item" data-reference="${esc(result.reference)}">
+            <div class="search-result-reference">${esc(result.reference)}</div>
+            <div class="search-result-content">${highlighted}</div>
           </div>
         `);
                 }
@@ -1325,63 +972,44 @@ class BibleApp {
 
         this.searchResults.innerHTML = parts.join('');
 
-        // Testament toggle handlers
-        this.searchResults
-            .querySelectorAll('.search-group-heading')
-            .forEach((el) => {
-                el.addEventListener('click', () => {
-                    const testament = el.getAttribute('data-testament');
-                    if (!testament) return;
-                    if (this.searchExpandedTestaments.has(testament)) {
-                        this.searchExpandedTestaments.delete(testament);
-                    } else {
-                        this.searchExpandedTestaments.add(testament);
-                    }
-                    this.displaySearchResults(results, query);
-                });
+        this.searchResults.querySelectorAll('.search-group-heading').forEach((el) => {
+            el.addEventListener('click', () => {
+                const testament = el.getAttribute('data-testament');
+                if (!testament) return;
+                if (this.searchExpandedTestaments.has(testament)) {
+                    this.searchExpandedTestaments.delete(testament);
+                } else {
+                    this.searchExpandedTestaments.add(testament);
+                }
+                this.displaySearchResults(results, query);
             });
+        });
 
-        // Book toggle handlers
-        this.searchResults
-            .querySelectorAll('.search-book-heading')
-            .forEach((el) => {
-                el.addEventListener('click', () => {
-                    const book = el.getAttribute('data-book');
-                    if (!book) return;
-                    if (this.searchExpandedBooks.has(book)) {
-                        this.searchExpandedBooks.delete(book);
-                    } else {
-                        this.searchExpandedBooks.add(book);
-                    }
-                    this.displaySearchResults(results, query);
-                });
+        this.searchResults.querySelectorAll('.search-book-heading').forEach((el) => {
+            el.addEventListener('click', () => {
+                const book = el.getAttribute('data-book');
+                if (!book) return;
+                if (this.searchExpandedBooks.has(book)) {
+                    this.searchExpandedBooks.delete(book);
+                } else {
+                    this.searchExpandedBooks.add(book);
+                }
+                this.displaySearchResults(results, query);
             });
+        });
 
-        // Click handlers for actual results
-        this.searchResults
-            .querySelectorAll('.search-result-item')
-            .forEach((item) => {
-                item.addEventListener('click', async () => {
-                    const reference = item.dataset.reference;
-                    await this.loadPassageFromReference(reference);
-                    this.closeSearch();
-                });
+        this.searchResults.querySelectorAll('.search-result-item').forEach((item) => {
+            item.addEventListener('click', async () => {
+                await this.loadPassageFromReference(item.dataset.reference);
+                this.closeSearch();
             });
+        });
 
-        if (typeof this.refreshSearchResultItems === 'function') {
-            this.refreshSearchResultItems(true);
-        }
+        this.refreshSearchResultItems(true);
     }
 
     parseReference(reference) {
         const cleaned = String(reference || '').trim();
-
-        // Supports:
-        // "John 3"
-        // "John 3:16"
-        // "1 John 2"
-        // "1 John 2:3"
-        // "Song of Solomon 1:2"
         const match = cleaned.match(/^(.+?)\s+(\d+)(?::(\d+))?$/);
         if (!match) return null;
 
@@ -1400,17 +1028,10 @@ class BibleApp {
         if (!parsed) return;
 
         const { book, chapter, verse } = parsed;
-
-        // Clear any existing verse highlight unless a verse was specified
         this.state.selectedVerse = verse || null;
-
-        // Load the chapter first (this updates the book/chapter dropdown UI)
         await this.loadPassage(book, chapter);
 
-        // If a verse was provided, update verse dropdown + glow + scroll
-        if (verse) {
-            this.scrollToVerse(verse);
-        }
+        if (verse) this.scrollToVerse(verse);
     }
 
     escapeRegExp(str) {
@@ -1420,19 +1041,14 @@ class BibleApp {
     highlightSearchTerm(text, term) {
         if (text == null) return '';
         const safeText = String(text);
-
         const rawTerm = term == null ? '' : String(term).trim();
         if (!rawTerm) return safeText;
 
-        // Treat the search term as literal text (not a regex)
-        const escapedTerm = this.escapeRegExp(rawTerm);
-
         try {
-            const regex = new RegExp(escapedTerm, 'gi');
+            const regex = new RegExp(this.escapeRegExp(rawTerm), 'gi');
             return safeText.replace(regex, (match) => `<strong>${match}</strong>`);
         } catch (err) {
-            // If something unexpected happens, fail "open" (no highlighting) rather than breaking search UI
-            console.warn('highlightSearchTerm failed; returning un-highlighted text', err);
+            console.warn('highlightSearchTerm failed', err);
             return safeText;
         }
     }
@@ -1448,19 +1064,20 @@ class BibleApp {
     // ================================
 
     openModal(modal) {
+        if (!modal) return;
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
 
     closeModal(modal) {
-        // Add closing animation for settings and references
+        if (!modal) return;
         if (modal === this.settingsModal || modal === this.referencesModal) {
             const content = modal.querySelector('.modal-content');
             content.style.animation = 'slideDownToBottom 250ms ease';
             setTimeout(() => {
                 modal.classList.remove('active');
                 document.body.style.overflow = '';
-                content.style.animation = ''; // Reset animation
+                content.style.animation = '';
             }, 250);
         } else {
             modal.classList.remove('active');
@@ -1479,7 +1096,7 @@ class BibleApp {
             btn.className = 'book-item';
             btn.textContent = this.bookAbbreviations[book] || book;
             btn.addEventListener('click', () => {
-                this.state.selectedVerse = null; // Clear verse selection
+                this.state.selectedVerse = null;
                 this.loadPassage(book, 1);
                 this.closeModal(this.bookModal);
             });
@@ -1487,12 +1104,12 @@ class BibleApp {
         };
 
         this.oldTestamentBooks.innerHTML = '';
-        Object.keys(this.bibleBooks['Old Testament']).forEach(book => {
+        Object.keys(this.bibleBooks['Old Testament']).forEach((book) => {
             this.oldTestamentBooks.appendChild(createBookButton(book));
         });
 
         this.newTestamentBooks.innerHTML = '';
-        Object.keys(this.bibleBooks['New Testament']).forEach(book => {
+        Object.keys(this.bibleBooks['New Testament']).forEach((book) => {
             this.newTestamentBooks.appendChild(createBookButton(book));
         });
     }
@@ -1503,7 +1120,7 @@ class BibleApp {
     }
 
     populateChapterModal() {
-        this.chapterModalBook.textContent = this.state.currentBook;
+        this.chapterModalBook.textContent = this.getDisplayName(this.state.currentBook);
         this.chapterGrid.innerHTML = '';
 
         const chapterCount = this.getChapterCount(this.state.currentBook);
@@ -1513,7 +1130,7 @@ class BibleApp {
             btn.className = 'chapter-item';
             btn.textContent = i;
             btn.addEventListener('click', () => {
-                this.state.selectedVerse = null; // Clear verse selection
+                this.state.selectedVerse = null;
                 this.loadPassage(this.state.currentBook, i);
                 this.closeModal(this.chapterModal);
             });
@@ -1527,12 +1144,15 @@ class BibleApp {
     }
 
     populateVerseModal() {
-        this.verseModalBook.textContent = `${this.state.currentBook} ${this.state.currentChapter}`;
+        const book = this.state.currentBook;
+        const displayBook = book === 'Psalm'
+            ? `Psalm ${this.state.currentChapter}`
+            : `${this.getDisplayName(book)} ${this.state.currentChapter}`;
+        this.verseModalBook.textContent = displayBook;
         this.verseGrid.innerHTML = '';
 
         const verseCount = this.getCurrentVerseCount();
 
-        // Only populate if we have valid verse data
         if (verseCount === 0) {
             this.verseGrid.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-secondary);">No verses found in current passage</p>';
             return;
@@ -1551,10 +1171,7 @@ class BibleApp {
     }
 
     getCurrentVerseCount() {
-        // Count verse numbers in current passage
-        const verseNums = this.passageText.querySelectorAll('.verse-num');
-        // Add 1 because verse 1 typically doesn't have a .verse-num element
-        return verseNums.length > 0 ? verseNums.length + 1 : 0;
+        return this.passageText.querySelectorAll('.verse-num').length;
     }
 
     scrollToVerse(verseNumber) {
@@ -1566,10 +1183,8 @@ class BibleApp {
         const maxVerse = this.getCurrentVerseCount();
 
         if (currentVerse < maxVerse) {
-            // Go to next verse in current chapter
             this.scrollToVerse(currentVerse + 1);
         } else {
-            // At last verse, go to next chapter
             this.navigateChapter(1);
         }
     }
@@ -1578,25 +1193,18 @@ class BibleApp {
         const currentVerse = this.state.selectedVerse || 1;
 
         if (currentVerse > 1) {
-            // Go to previous verse in current chapter
             this.scrollToVerse(currentVerse - 1);
         } else {
-            // At first verse, go to previous chapter (and its last verse)
             const books = this.getAllBooks();
             const currentBookIndex = books.indexOf(this.state.currentBook);
             const isFirstChapter = this.state.currentChapter === 1;
 
-            if (currentBookIndex === 0 && isFirstChapter) {
-                // Already at Genesis 1:1, can't go back further
-                return;
-            }
+            if (currentBookIndex === 0 && isFirstChapter) return;
 
-            // Navigate to previous chapter
             let newChapter = this.state.currentChapter - 1;
             let newBook = this.state.currentBook;
 
             if (newChapter < 1) {
-                // Go to previous book's last chapter
                 newBook = books[currentBookIndex - 1];
                 newChapter = this.getChapterCount(newBook);
             }
@@ -1615,147 +1223,124 @@ class BibleApp {
     // ================================
 
     checkApiKey() {
-        if (!this.API_KEY) {
-            setTimeout(() => {
-                this.showToast('Welcome! Please sign in to start reading.');
-                // Open login modal instead of signup
-                this.openModal(this.loginModal);
-            }, 500);
-        }
-    }
-
-    async saveApiKey() {
-        const apiKey = this.apiKeyInput.value.trim();
-
-        if (!apiKey) {
-            this.showToast('Please enter a valid API key');
-            return;
-        }
-
-        this.API_KEY = apiKey;
-
-        // Save to Firebase if logged in
-        if (this.currentUser) {
-            try {
-                const encrypted = window.encryptionHelper.encrypt(apiKey);
-                await this.database.ref(`users/${this.currentUser.uid}/apiKey`).set(encrypted);
-                this.showToast('API key saved successfully!');
-            } catch (error) {
-                console.error('Error saving API key:', error);
-                this.showToast('Failed to save API key');
-                return;
-            }
-        } else {
-            // Save locally if not logged in
-            localStorage.setItem('esvApiKey', apiKey);
-            this.showToast('API key saved locally!');
-        }
-
-        this.closeModal(this.settingsModal);
-        this.loadPassage(this.state.currentBook, this.state.currentChapter);
+        setTimeout(() => {
+            this.showToast('Sign in to sync your reading position across devices.');
+        }, 500);
     }
 
     loadLocalSettings() {
-        // API key for guests
-        this.API_KEY = localStorage.getItem('esvApiKey') || '';
-
-        this.state.fontSize = parseInt(localStorage.getItem('fontSize') || '18', 10);
-        this.state.showVerseNumbers = localStorage.getItem('showVerseNumbers') !== 'false';
-        this.state.showHeadings = localStorage.getItem('showHeadings') !== 'false';
-        this.state.showFootnotes = localStorage.getItem('showFootnotes') === 'true';
-        this.state.showCrossReferences = localStorage.getItem('showCrossReferences') === 'true';
-        this.state.verseByVerse = localStorage.getItem('verseByVerse') === 'true';
-
-        // Theme: read but do not apply yet
-        this.state.colorTheme = localStorage.getItem('colorTheme') || 'dracula';
-        this.state.lightMode = localStorage.getItem('lightMode') === 'true';
+        this.state.fontSize             = parseInt(localStorage.getItem('fontSize') || '18', 10);
+        this.state.showVerseNumbers     = readBool('showVerseNumbers',   true);
+        this.state.showHeadings         = readBool('showHeadings',       true);
+        this.state.showFootnotes        = readBool('showFootnotes',      false);
+        this.state.showCrossReferences  = readBool('showCrossReferences', false);
+        this.state.verseByVerse         = readBool('verseByVerse',       false);
+        this.state.lightMode            = readBool('lightMode',          false);
+        this.state.colorTheme  = localStorage.getItem('colorTheme')  || 'dracula';
+        this.state.translation = normalizeTranslation(localStorage.getItem('translation') || 'ESV');
     }
 
     applySettings() {
-        // Theme selector UI
         const themeSelector = document.getElementById('themeSelector');
         if (themeSelector && this.state.colorTheme) {
             themeSelector.value = this.state.colorTheme;
         }
+        changeColorTheme(this, this.state.colorTheme || 'dracula');
 
-        // Apply color theme class
-        const theme = this.state.colorTheme || 'dracula';
-        changeColorTheme(this, theme);
-
-        // Apply light/dark mode
-        if (this.state.lightMode) {
-            document.body.classList.add('light-mode');
-        } else {
-            document.body.classList.remove('light-mode');
+        if (this.translationSelector && this.state.translation) {
+            this.translationSelector.value = this.state.translation;
         }
+        this.bibleApi.setTranslation(this.state.translation || 'ESV');
+
+        document.body.classList.toggle('light-mode', !!this.state.lightMode);
+        const lightModeToggle = document.getElementById('lightModeToggle');
+        if (lightModeToggle) lightModeToggle.checked = !!this.state.lightMode;
         updateThemeIcon(this.state.lightMode);
+
+        document.body.classList.toggle('hide-verse-numbers', !this.state.showVerseNumbers);
+        if (this.verseNumbersToggle) this.verseNumbersToggle.checked = !!this.state.showVerseNumbers;
+
+        if (this.headingsToggle) this.headingsToggle.checked = !!this.state.showHeadings;
+        if (this.footnotesToggle) this.footnotesToggle.checked = !!this.state.showFootnotes;
+        if (this.crossReferencesToggle) this.crossReferencesToggle.checked = !!this.state.showCrossReferences;
+
+        if (this.passageText) {
+            this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
+        }
+        if (this.verseByVerseToggle) this.verseByVerseToggle.checked = !!this.state.verseByVerse;
+
+        const fontSize = this.state.fontSize || 18;
+        if (this.fontSizeSlider) this.fontSizeSlider.value = fontSize;
+        if (this.fontSizeValue) this.fontSizeValue.textContent = `${fontSize}px`;
+        if (this.passageText) this.passageText.style.fontSize = `${fontSize}px`;
+
+        this.updateCopyright();
     }
 
     async toggleSetting(setting) {
-        // Map setting names to their toggle element names
         const toggleMap = {
-            'showVerseNumbers': 'verseNumbersToggle',
-            'showHeadings': 'headingsToggle',
-            'showFootnotes': 'footnotesToggle',
-            'showCrossReferences': 'crossReferencesToggle'
+            showVerseNumbers:    'verseNumbersToggle',
+            showHeadings:        'headingsToggle',
+            showFootnotes:       'footnotesToggle',
+            showCrossReferences: 'crossReferencesToggle',
         };
-
         const toggleElement = this[toggleMap[setting]];
-
-        if (!toggleElement) {
-            console.error(`Toggle not found for setting: ${setting}`);
-            return;
-        }
-
+        if (!toggleElement) return;
         this.state[setting] = toggleElement.checked;
 
-        // Save to Firebase or localStorage
         if (this.currentUser) {
             await this.database.ref(`users/${this.currentUser.uid}/settings/${setting}`).set(toggleElement.checked);
         } else {
-            localStorage.setItem(setting, toggleElement.checked);
+            localStorage.setItem(setting, String(toggleElement.checked));
         }
 
-        // Special handling for verse numbers - use CSS toggle instead of reload
-        if (setting === 'showVerseNumbers') {
-            this.applySettings();  // Just toggle CSS class
-        } else {
-            // Save current scroll position BEFORE reloading
-            this.lastScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-
-            // Reload passage for headings/footnotes/cross-references
-            await this.loadPassage(this.state.currentBook, this.state.currentChapter, true);
+        // Re-render the current passage so heading visibility updates immediately.
+        if (setting === 'showHeadings') {
+            await this.loadPassage(this.state.currentBook, this.state.currentChapter);
+            return;
         }
+
+        this.applySettings();
     }
 
     async toggleVerseByVerse() {
         this.state.verseByVerse = this.verseByVerseToggle.checked;
-
-        // Save to Firebase or localStorage
         if (this.currentUser) {
             await this.database.ref(`users/${this.currentUser.uid}/settings/verseByVerse`).set(this.state.verseByVerse);
         } else {
-            localStorage.setItem('verseByVerse', this.state.verseByVerse);
+            localStorage.setItem('verseByVerse', String(this.state.verseByVerse));
         }
-
-        // Apply the class
-        if (this.state.verseByVerse) {
-            this.passageText.classList.add('verse-by-verse');
-        } else {
-            this.passageText.classList.remove('verse-by-verse');
-        }
+        this.passageText.classList.toggle('verse-by-verse', this.state.verseByVerse);
     }
 
     async updateFontSize(size) {
-        this.state.fontSize = parseInt(size);
+        this.state.fontSize = parseInt(size, 10);
         this.fontSizeValue.textContent = `${size}px`;
         this.passageText.style.fontSize = `${size}px`;
-
-        // Save to Firebase or localStorage
         if (this.currentUser) {
-            await this.database.ref(`users/${this.currentUser.uid}/settings/fontSize`).set(parseInt(size));
+            await this.database.ref(`users/${this.currentUser.uid}/settings/fontSize`).set(parseInt(size, 10));
         } else {
             localStorage.setItem('fontSize', size);
+        }
+    }
+
+    async changeTranslation(translation) {
+        this.state.translation = translation;
+        this.bibleApi.setTranslation(translation);
+
+        if (this.currentUser) {
+            await this.database.ref(`users/${this.currentUser.uid}/settings/translation`).set(translation);
+        } else {
+            localStorage.setItem('translation', translation);
+        }
+
+        this.updateCopyright();
+        await this.loadPassage(this.state.currentBook, this.state.currentChapter);
+    }
+
+    updateCopyright() {
+        if (this.copyright) {
+            this.copyright.textContent = this._copyrightMap[this.state.translation] || '';
         }
     }
 
@@ -1766,13 +1351,11 @@ class BibleApp {
     copyPassage() {
         const textContent = this.stripHTML(this.passageText.innerHTML);
         const reference = this.passageTitle.textContent;
-        const fullText = `${reference}\n\n${textContent}\n\n${this.copyright.textContent}`;
+        const fullText = `${reference}\n\n${textContent}\n\n${this.copyright?.textContent ?? ''}`;
 
         navigator.clipboard.writeText(fullText)
-            .then(() => {
-                this.showToast('Passage copied to clipboard!');
-            })
-            .catch(err => {
+            .then(() => this.showToast('Passage copied to clipboard!'))
+            .catch((err) => {
                 console.error('Failed to copy:', err);
                 this.showToast('Failed to copy passage');
             });
@@ -1783,54 +1366,48 @@ class BibleApp {
     }
 
     showToast(message) {
+        if (!this.toast) return;
         this.toast.textContent = message;
         this.toast.classList.add('show');
-        setTimeout(() => {
-            this.toast.classList.remove('show');
-        }, 3000);
+        setTimeout(() => this.toast.classList.remove('show'), 3000);
     }
 
     handleKeyboardShortcuts(e) {
-        // Ctrl/Cmd + K to open search
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
             e.preventDefault();
             this.toggleSearch();
         }
 
-        // Escape to close modals
         if (e.key === 'Escape') {
-            if (this.bookModal.classList.contains('active')) this.closeModal(this.bookModal);
-            if (this.chapterModal.classList.contains('active')) this.closeModal(this.chapterModal);
-            if (this.helpModal.classList.contains('active')) this.closeModal(this.helpModal);
-            if (this.settingsModal.classList.contains('active')) this.closeModal(this.settingsModal);
-            if (this.loginModal.classList.contains('active')) this.closeModal(this.loginModal);
-            if (this.signupModal.classList.contains('active')) this.closeModal(this.signupModal);
-            if (this.userMenuModal.classList.contains('active')) this.closeModal(this.userMenuModal);
-            if (this.searchContainer.classList.contains('active')) this.closeSearch();
-            if (this.verseModal.classList.contains('active')) this.closeModal(this.verseModal);
-            if (this.referencesModal.classList.contains('active')) {
-                this.closeModal(this.referencesModal);
-            }
+            if (this.bookModal?.classList.contains('active'))       this.closeModal(this.bookModal);
+            if (this.chapterModal?.classList.contains('active'))    this.closeModal(this.chapterModal);
+            if (this.helpModal?.classList.contains('active'))       this.closeModal(this.helpModal);
+            if (this.settingsModal?.classList.contains('active'))   this.closeModal(this.settingsModal);
+            if (this.loginModal?.classList.contains('active'))      this.closeModal(this.loginModal);
+            if (this.signupModal?.classList.contains('active'))     this.closeModal(this.signupModal);
+            if (this.userMenuModal?.classList.contains('active'))   this.closeModal(this.userMenuModal);
+            if (this.searchContainer?.classList.contains('active')) this.closeSearch();
+            if (this.verseModal?.classList.contains('active'))      this.closeModal(this.verseModal);
+            if (this.referencesModal?.classList.contains('active')) this.closeModal(this.referencesModal);
         }
 
-        // Navigation shortcuts (only when no modal is open and search is closed)
-        if (!document.querySelector('.modal.active') && !this.searchContainer.classList.contains('active')) {
-            // Chapter navigation: Arrow Left/Right or H/L
+        if (!document.querySelector('.modal.active') && !this.searchContainer?.classList.contains('active')) {
             if (e.key === 'ArrowLeft' || e.key === 'h') {
                 e.preventDefault();
                 this.navigateChapter(-1);
             } else if (e.key === 'ArrowRight' || e.key === 'l') {
                 e.preventDefault();
                 this.navigateChapter(1);
-            }
-
-            // Verse navigation: Arrow Up/Down or K/J
-            else if (e.key === 'ArrowUp' || e.key === 'k') {
+            } else if (e.key === 'ArrowUp' || e.key === 'k') {
                 e.preventDefault();
                 this.navigateToPreviousVerse();
             } else if (e.key === 'ArrowDown' || e.key === 'j') {
                 e.preventDefault();
                 this.navigateToNextVerse();
+            } else if (e.key === 'v') {
+                e.preventDefault();
+                this.verseByVerseToggle.checked = !this.verseByVerseToggle.checked;
+                this.toggleVerseByVerse();
             }
         }
     }
@@ -1841,23 +1418,19 @@ class BibleApp {
 
     handleUserButtonClick() {
         if (this.currentUser) {
-            // Show user menu
             document.getElementById('userEmail').textContent = this.currentUser.email;
             const isLight = document.body.classList.contains('light-mode');
             const colorTheme = this.state?.colorTheme || localStorage.getItem('colorTheme') || 'dracula';
-
             const themeNameMap = {
                 dracula: isLight ? 'Alucard (Light)' : 'Dracula (Dark)',
-                steel: `Steel (${isLight ? 'Light' : 'Dark'})`,
-                onyx: `Onyx (${isLight ? 'Light' : 'Dark'})`,
-                reader: `Reader (${isLight ? 'Parchment' : 'Night'})`
+                steel:   `Steel (${isLight ? 'Light' : 'Dark'})`,
+                onyx:    `Onyx (${isLight ? 'Light' : 'Dark'})`,
+                reader:  `Reader (${isLight ? 'Parchment' : 'Night'})`,
             };
-
             document.getElementById('userTheme').textContent =
                 themeNameMap[colorTheme] || (isLight ? 'Alucard (Light)' : 'Dracula (Dark)');
             this.openModal(this.userMenuModal);
         } else {
-            // Show login modal
             this.openModal(this.loginModal);
         }
     }
@@ -1875,14 +1448,12 @@ class BibleApp {
             await this.auth.signInWithEmailAndPassword(email, password);
             this.showToast('Signed in successfully!');
             this.closeModal(this.loginModal);
-
-            // Clear form
             document.getElementById('loginEmail').value = '';
             document.getElementById('loginPassword').value = '';
         } catch (error) {
             console.error('Login error:', error);
             if (error.code === 'auth/user-not-found') {
-                if (confirm('Invalid login. No account found with this email. Would you like to sign up instead?')) {
+                if (confirm('No account found with this email. Sign up instead?')) {
                     this.closeModal(this.loginModal);
                     this.openModal(this.signupModal);
                     document.getElementById('signupEmail').value = email;
@@ -1898,9 +1469,8 @@ class BibleApp {
     async handleSignup() {
         const email = document.getElementById('signupEmail').value;
         const password = document.getElementById('signupPassword').value;
-        const apiKey = document.getElementById('signupApiKey').value;
 
-        if (!email || !password || !apiKey) {
+        if (!email || !password) {
             this.showToast('Please fill in all fields');
             return;
         }
@@ -1911,36 +1481,27 @@ class BibleApp {
         }
 
         try {
-            // Create Firebase user
             const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
             const user = userCredential.user;
 
-            // Save API key (encrypted) and initial settings to database
-            const encrypted = window.encryptionHelper.encrypt(apiKey);
-            await this.database.ref(`users/${user.uid}`).set({
-                apiKey: encrypted,
-                settings: {
-                    fontSize: 18,
-                    showVerseNumbers: true,
-                    showHeadings: true,
-                    showFootnotes: false,
-                    showCrossReferences: false,
-                    verseByVerse: false,
-                },
-                createdAt: Date.now()
+            await this.database.ref(`users/${user.uid}/settings`).set({
+                fontSize: this.state.fontSize,
+                showVerseNumbers: this.state.showVerseNumbers,
+                showHeadings: this.state.showHeadings,
+                showFootnotes: this.state.showFootnotes,
+                showCrossReferences: this.state.showCrossReferences,
+                verseByVerse: this.state.verseByVerse,
+                colorTheme: this.state.colorTheme,
+                lightMode: this.state.lightMode,
+                translation: this.state.translation || 'ESV',
             });
 
             this.showToast('Account created successfully!');
             this.closeModal(this.signupModal);
-
-            // Clear form
-            document.getElementById('signupEmail').value = '';
-            document.getElementById('signupPassword').value = '';
-            document.getElementById('signupApiKey').value = '';
         } catch (error) {
             console.error('Signup error:', error);
             if (error.code === 'auth/email-already-in-use') {
-                this.showToast('Account already exists. Please sign in.');
+                this.showToast('An account with this email already exists');
             } else {
                 this.showToast(`Signup failed: ${error.message}`);
             }
@@ -1950,438 +1511,108 @@ class BibleApp {
     async handleLogout() {
         try {
             await this.auth.signOut();
-            this.showToast('Signed out successfully!');
+            this.showToast('Signed out successfully');
             this.closeModal(this.userMenuModal);
         } catch (error) {
             console.error('Logout error:', error);
-            this.showToast('Logout failed');
+            this.showToast('Failed to sign out');
         }
     }
-
-    // ================================
-    // Firebase Data Management
-    // ================================
 
     async loadUserData() {
         if (!this.currentUser) return;
-
         const data = await loadUserDataFromFirebase(this.currentUser.uid);
         if (!data) return;
-
-        this.API_KEY = data.apiKey;
         const s = data.settings;
-
-        this.state.fontSize = s.fontSize;
-        this.state.showVerseNumbers = s.showVerseNumbers;
-        this.state.showHeadings = s.showHeadings;
-        this.state.showFootnotes = s.showFootnotes;
-        this.state.showCrossReferences = s.showCrossReferences || false;
-        this.state.verseByVerse = s.verseByVerse;
-        this.state.colorTheme = s.colorTheme || 'dracula';
-        this.state.lightMode = typeof s.lightMode === 'boolean' ? s.lightMode : false;
-    }
-
-    // ================================
-    // Reading Position Persistence
-    // ================================
-
-    async saveReadingPosition() {
-        if (!this.currentUser) return;
-
-        const position = {
-            book: this.state.currentBook,
-            chapter: this.state.currentChapter,
-            scrollPosition: window.pageYOffset || document.documentElement.scrollTop,
-            lastUpdated: Date.now()
-        };
-
-        try {
-            await this.database.ref(`users/${this.currentUser.uid}/readingPosition`).set(position);
-        } catch (error) {
-            console.error('Error saving reading position:', error);
-        }
-    }
-
-    getSavedScrollPosition() {
-        // This will be loaded from Firebase in loadSavedReadingPosition
-        return this.lastScrollPosition;
-    }
-
-    async loadSavedReadingPosition() {
-        if (!this.currentUser) return;
-
-        try {
-            const snapshot = await this.database.ref(`users/${this.currentUser.uid}/readingPosition`).once('value');
-            const position = snapshot.val();
-
-            if (position && position.book && position.chapter) {
-                this.lastScrollPosition = position.scrollPosition || 0;
-                await this.loadPassage(position.book, position.chapter, true);
-            } else {
-                await this.loadPassage(this.state.currentBook, this.state.currentChapter);
-            }
-        } catch (error) {
-            console.error('Error loading reading position:', error);
-            await this.loadPassage(this.state.currentBook, this.state.currentChapter);
-        }
-    }
-
-    // =========================================
-    // FOOTNOTES AND CROSS-REFERENCES
-    // =========================================
-
-    attachFootnoteHandlers() {
-        // Handle footnote and cross-reference clicks
-        const links = this.passageText.querySelectorAll('a.fn');
-
-        links.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.handleReferenceClick(link);
-            });
-        });
-    }
-
-    handleReferenceClick(link) {
-        const href = link.getAttribute('href');
-        if (!href) return;
-
-        // Reset modal sections
-        this.footnotesSection.style.display = 'none';
-        this.crossReferencesSection.style.display = 'none';
-        this.footnotesContent.innerHTML = '';
-        this.crossReferencesContent.innerHTML = '';
-
-        // Check if it's a footnote (starts with #f)
-        if (href.startsWith('#f')) {
-            const footnoteId = href.substring(1); // Remove the #
-            this.loadFootnote(footnoteId, link); // ← Pass the link!
-        }
-
-        // Open the modal
-        this.openModal(this.referencesModal);
-    }
-
-    loadFootnote(footnoteId, clickedLink) {
-        // Extract the verse reference from the clicked link's context
-        let verseRef = this.getVerseReferenceForElement(clickedLink);
-
-        // Find the footnote at the bottom of the passage
-        const footnoteElement = this.passageText.querySelector(`#${footnoteId}`);
-
-        if (footnoteElement) {
-            // The footnote anchor is inside a span.footnote, get its parent
-            const footnoteSpan = footnoteElement.closest('.footnote');
-            if (!footnoteSpan) {
-                this.showFootnoteError(verseRef);
-                return;
-            }
-
-            // Collect all nodes from this footnote until the next <br> or next .footnote
-            let footnoteText = '';
-            let currentNode = footnoteSpan.nextSibling;
-
-            while (currentNode) {
-                // Stop if we hit a BR (end of this footnote) or another .footnote span
-                if (currentNode.nodeName === 'BR') {
-                    break;
-                }
-                if (currentNode.nodeType === 1 && currentNode.classList && currentNode.classList.contains('footnote')) {
-                    break;
-                }
-
-                // Skip the verse reference span (e.g., "1:6")
-                if (currentNode.nodeType === 1 && currentNode.classList && currentNode.classList.contains('footnote-ref')) {
-                    currentNode = currentNode.nextSibling;
-                    continue;
-                }
-
-                // Collect text from <note> elements
-                if (currentNode.nodeType === 1 && currentNode.tagName === 'NOTE') {
-                    footnoteText += currentNode.textContent.trim();
-                    break; // Usually the note is the last element before <br>
-                }
-
-                // Collect text nodes
-                if (currentNode.nodeType === 3) { // Text node
-                    footnoteText += currentNode.textContent;
-                }
-
-                currentNode = currentNode.nextSibling;
-            }
-
-            footnoteText = footnoteText.trim();
-
-            // Display the footnote
-            this.footnotesContent.innerHTML = `
-                <div class="footnote-item">
-                    <div class="footnote-ref-display" style="color: var(--secondary-color); font-size: 0.9em; margin-bottom: 0.5rem; font-weight: 600;">${verseRef}</div>
-                    <div class="footnote-text">${footnoteText || 'Footnote text not found.'}</div>
-                </div>
-            `;
-
-            this.footnotesSection.style.display = 'block';
-        } else {
-            this.showFootnoteError(verseRef);
-        }
-    }
-
-    showFootnoteError(verseRef) {
-        this.footnotesContent.innerHTML = `
-            <div class="footnote-item">
-                <div class="footnote-ref-display" style="color: var(--secondary-color); font-size: 0.9em; margin-bottom: 0.5rem; font-weight: 600;">${verseRef}</div>
-                <div class="footnote-text">Footnote not found. Make sure "Show footnotes" is enabled in Settings, then reload this passage.</div>
-            </div>
-        `;
-        this.footnotesSection.style.display = 'block';
-    }
-
-    // ==========================================
-    // NEW HELPER FUNCTIONS 
-    // ==========================================
-
-    // Make footnote superscripts clickable
-    makeFootnotesClickable() {
-        const footnoteSupElements =
-            this.passageText.querySelectorAll('sup.footnote');
-
-        footnoteSupElements.forEach((sup) => {
-            // Make it look like a link
-            sup.style.cursor = 'pointer';
-
-            // Add click event
-            sup.addEventListener('click', (e) => {
-                e.preventDefault();
-
-                const footnoteNumber = sup.textContent.trim();
-                const verseRef = this.getVerseReferenceForElement(sup);
-
-                // Show footnote modal with this info
-                this.showFootnoteModal(footnoteNumber, verseRef);
-            });
-        });
-    }
-
-    // Helper to find the verse reference for a given element
-    getVerseReferenceForElement(element) {
-        let currentElement = element;
-
-        // Walk backwards through siblings to find verse number
-        while (currentElement) {
-            const verseNum = currentElement.querySelector?.('.verse-num');
-            if (verseNum) {
-                const verseNumber = verseNum.textContent.trim();
-                return `${this.state.currentBook} ${this.state.currentChapter}:${verseNumber}`;
-            }
-
-            currentElement = currentElement.previousElementSibling;
-
-            if (
-                !currentElement ||
-                currentElement.tagName === 'H2' ||
-                currentElement.tagName === 'H3'
-            ) {
-                break;
-            }
-        }
-
-        // Fallback: try walking up to parent
-        const parent = element.closest('p, div');
-        if (parent) {
-            const verses = parent.querySelectorAll('.verse-num');
-            if (verses.length > 0) {
-                for (let i = verses.length - 1; i >= 0; i--) {
-                    if (
-                        parent.contains(verses[i]) &&
-                        verses[i].compareDocumentPosition(element) &
-                        Node.DOCUMENT_POSITION_FOLLOWING
-                    ) {
-                        const verseNumber = verses[i].textContent.trim();
-                        return `${this.state.currentBook} ${this.state.currentChapter}:${verseNumber}`;
-                    }
-                }
-            }
-        }
-
-        // Final fallback
-        return `${this.state.currentBook} ${this.state.currentChapter}`;
-    }
-
-    // Show a simple footnote modal
-    showFootnoteModal(footnoteNumber, verseRef) {
-        // Find the matching <sup class="footnote"> that has this number
-        const allSups = this.passageText.querySelectorAll('sup.footnote');
-        let footnoteText = '';
-
-        allSups.forEach((sup) => {
-            const link = sup.querySelector('a.fn');
-            if (!link) return;
-
-            const linkText = link.textContent.trim();
-            if (linkText === footnoteNumber) {
-                // Get the title attribute which contains the HTML-encoded note
-                const title = link.getAttribute('title');
-                if (title) {
-                    // Decode HTML entities
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = title;
-                    const decoded = tempDiv.textContent || tempDiv.innerText || '';
-
-                    // Extract text from <note>...</note> wrapper
-                    const noteMatch = decoded.match(/<note[^>]*>(.*?)<\/note>/s);
-                    if (noteMatch) {
-                        // Parse the inner HTML to preserve formatting like <i>
-                        tempDiv.innerHTML = noteMatch[1];
-                        footnoteText = tempDiv.innerHTML;
-                    } else {
-                        footnoteText = decoded;
-                    }
-                }
-            }
-        });
-
-        if (!footnoteText) {
-            footnoteText =
-                'Footnote content not available with current API settings. To view full footnote text, enable "Show footnotes" in Settings.';
-        }
-
-        this.footnotesSection.style.display = 'block';
-        this.crossReferencesSection.style.display = 'none';
-        this.footnotesContent.innerHTML = `
-    <div class="footnote-item">
-      <div class="footnote-ref-display" style="color: var(--secondary-color); font-size: 0.9em; margin-bottom: 0.5rem; font-weight: 600;">
-        ${verseRef} [${footnoteNumber}]
-      </div>
-      <div class="footnote-text">
-        ${footnoteText}
-      </div>
-    </div>
-  `;
-        this.referencesModal.classList.add('active');
-    }
-
-    // ==========================================
-    // CROSS-REFERENCE HELPERS
-    // ==========================================
-
-    loadCrossReferencesFromLink(link) {
-        // Try to find cross-references in the title attribute or data attributes
-        const crossRefs =
-            link.getAttribute('title') ||
-            link.getAttribute('data-cross-refs') ||
-            '';
-
-        // Also check the link text itself
-        const linkText = link.textContent.trim();
-
-        // Parse references from various formats
-        const references = [];
-
-        if (crossRefs) {
-            // Split by common delimiters
-            references.push(
-                ...crossRefs
-                    .split(/[;,]/)
-                    .map((r) => r.trim())
-                    .filter((r) => r)
-            );
-        }
-
-        // Check if link text looks like a reference (e.g., "Gen. 1:1")
-        if (linkText && /[A-Z][a-z]*\.?\s*\d+:\d+/.test(linkText)) {
-            references.push(linkText);
-        }
-
-        // Check parent elements for cross-reference data
-        const parent = link.closest('.crossrefs, .cross-references, [class*="cross"]');
-        if (parent) {
-            const parentLinks = parent.querySelectorAll('a');
-            parentLinks.forEach((l) => {
-                const ref = l.textContent.trim();
-                if (ref && !references.includes(ref)) {
-                    references.push(ref);
-                }
-            });
-        }
-
-        if (references.length > 0) {
-            this.displayCrossReferences(references);
-        }
-    }
-
-    displayCrossReferences(references) {
-        let content = '';
-
-        references.forEach((ref, index) => {
-            const safeId = `crossref-${index}-${Date.now()}`;
-            content += `
-      <div class="crossref-item" data-reference="${ref}" data-id="${safeId}">
-        <div class="crossref-header" onclick="window.bibleApp.toggleCrossReference('${safeId}')">
-          <span>${ref}</span>
-        </div>
-        <div class="crossref-verse-text" id="${safeId}">
-          <div class="crossref-loading">Click to load verse...</div>
-        </div>
-      </div>
-    `;
-        });
-
-        this.crossReferencesContent.innerHTML = content;
-        this.crossReferencesSection.style.display = 'block';
-    }
-
-    async toggleCrossReference(elementId) {
-        const verseTextElement = document.getElementById(elementId);
-        if (!verseTextElement) return;
-
-        const crossrefItem = verseTextElement.closest('.crossref-item');
-        if (!crossrefItem) return;
-
-        const reference = crossrefItem.getAttribute('data-reference');
-        const header = crossrefItem.querySelector('.crossref-header');
-
-        // Toggle visibility
-        if (verseTextElement.classList.contains('visible')) {
-            verseTextElement.classList.remove('visible');
-            header?.classList.remove('expanded');
-            return;
-        }
-
-        // If not loaded yet, fetch the verse
-        if (verseTextElement.innerHTML.includes('Click to load')) {
-            verseTextElement.innerHTML =
-                '<div class="crossref-loading">Loading...</div>';
-
-            try {
-                const data = await this.bibleApi.fetchPassage(reference);
-
-                if (data && data.passages && data.passages[0]) {
-                    // Strip HTML tags for cleaner display
-                    const verseText = this.stripHTML(data.passages[0]);
-                    verseTextElement.innerHTML = `
-          <div class="crossref-reference">${reference}</div>
-          <div>${verseText}</div>
-        `;
-                } else {
-                    verseTextElement.innerHTML =
-                        '<div class="crossref-loading">Verse not found.</div>';
-                }
-            } catch (error) {
-                console.error('Error loading cross-reference:', error);
-                verseTextElement.innerHTML =
-                    '<div class="crossref-loading">Error loading verse.</div>';
-            }
-        }
-
-        verseTextElement.classList.add('visible');
-        header?.classList.add('expanded');
+        this.state.fontSize             = s.fontSize;
+        this.state.showVerseNumbers     = s.showVerseNumbers;
+        this.state.showHeadings         = s.showHeadings;
+        this.state.showFootnotes        = s.showFootnotes;
+        this.state.showCrossReferences  = s.showCrossReferences;
+        this.state.verseByVerse         = s.verseByVerse;
+        this.state.colorTheme           = s.colorTheme;
+        this.state.lightMode            = s.lightMode;
+        this.state.translation          = normalizeTranslation(s.translation || 'ESV');
     }
 }
 
-// ==========================================
-// INITIALIZE APP
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    const app = new BibleApp();
-    window.bibleApp = app;
-});
+
+/* ─── Service Worker & Update Toast ─── */
+async function registerServiceWorker(appInstance) {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+
+    const buildMeta = document.querySelector('meta[name="build-id"]')?.content || '__BUILD_ID__';
+    console.info('[BUILD_ID]', buildMeta);
+
+    navigator.serviceWorker.addEventListener('message', (e) => {
+      if (e.data?.type === 'NEW_VERSION') showUpdateToast(appInstance);
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        reg.update().catch((err) => console.warn('SW update check failed', err));
+      }
+    });
+  } catch (err) {
+    console.warn('SW registration failed', err);
+  }
+}
+
+function showUpdateToast(appInstance) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.innerHTML = '';
+
+  const text = document.createElement('span');
+  text.textContent = 'A new version is available.';
+  text.style.flex = '1';
+
+  const action = document.createElement('button');
+  action.textContent = 'Refresh';
+  action.className = 'toast-action';
+  action.addEventListener('click', () => location.reload());
+
+  const dismiss = document.createElement('button');
+  dismiss.textContent = '\u00d7';
+  dismiss.className = 'toast-dismiss';
+  dismiss.addEventListener('click', () => toast.classList.remove('show'));
+
+  toast.appendChild(text);
+  toast.appendChild(action);
+  toast.appendChild(dismiss);
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 30000);
+}
+
+function initializeBibleApp() {
+    if (window.firebaseAuth && window.firebaseDatabase) {
+        new BibleApp();
+        return;
+    }
+
+    let attempts = 0;
+    const maxAttempts = 50;
+    const retryDelayMs = 100;
+
+    const waitForFirebase = () => {
+        if (window.firebaseAuth && window.firebaseDatabase) {
+            new BibleApp();
+            return;
+        }
+
+        attempts += 1;
+        if (attempts >= maxAttempts) {
+            console.error('Firebase failed to initialize before app startup timeout.');
+            new BibleApp();
+            return;
+        }
+
+        window.setTimeout(waitForFirebase, retryDelayMs);
+    };
+
+    waitForFirebase();
+}
+
+document.addEventListener('DOMContentLoaded', initializeBibleApp);
