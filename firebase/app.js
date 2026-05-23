@@ -1411,13 +1411,12 @@ class BibleApp {
                 e.preventDefault();
                 this.verseByVerseToggle.checked = !this.verseByVerseToggle.checked;
                 this.toggleVerseByVerse();
-            else if (e.key === 's') {
+            } else if (e.key === 's') {
                 e.preventDefault();
                 if (this.headingsToggle) {
-                this.headingsToggle.checked = !this.headingsToggle.checked;
-                this.toggleSetting('showHeadings');
-    }
-}
+                    this.headingsToggle.checked = !this.headingsToggle.checked;
+                    this.toggleSetting('showHeadings');
+                }
             }
         }
     }
