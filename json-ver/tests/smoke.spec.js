@@ -30,7 +30,7 @@ test('book navigation: selecting a book updates the chapter modal', async ({ pag
 	await expect(page.locator('#bookModal')).toBeVisible();
 
 	// Pick Matthew (New Testament)
-	const matthewBtn = page.locator('#newTestamentBooks button', { hasText: 'Matt' });
+	const matthewBtn = page.locator('#newTestamentBooks button:has-text("Matthew")').first();
 	await matthewBtn.click();
 
 	// Chapter modal should open for Matthew
