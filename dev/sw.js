@@ -1,4 +1,4 @@
-const BUILD_ID = "0314e7a90592195223f4184c8561de74c7717a39";
+const BUILD_ID = "6f337e501c7b32839b5040401b9896a354292319";
 const CACHE_NAME = `esv-bible-${BUILD_ID}`;
 
 self.addEventListener('install', () => {
