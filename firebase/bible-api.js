@@ -140,6 +140,7 @@ export class BibleApi {
         const verseNums = Object.keys(chapterData)
             .map(Number)
             .filter(Number.isFinite)
+            .filter((v) => v > 0)  // skip verse 0 (intro/dedication metadata in some translations)
             .sort((a, b) => a - b)
             .filter((v) => {
                 if (verseStart !== null && v < verseStart) return false;
@@ -266,6 +267,7 @@ export class BibleApi {
 
             for (const [chapterStr, chapterData] of chapterEntries) {
                 const verseEntries = Object.entries(chapterData)
+                    .filter(([verseStr]) => Number(verseStr) > 0)  // skip verse 0
                     .sort((a, b) => Number(a[0]) - Number(b[0]));
 
                 for (const [verseStr, text] of verseEntries) {
