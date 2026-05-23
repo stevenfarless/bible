@@ -122,7 +122,7 @@ test('settings: toggling verse numbers checkbox changes its state', async ({ pag
 	// Expand Display accordion section if not already open
 	// Accordion sections have .accordion-header children with the section label
 	const displayHeader = page.locator('.accordion-header').filter({ hasText: 'Display' });
-	const displayContent = displayHeader.locator('xpath=following-sibling::div[contains(@class,"accordion-content")]');
+	const displayContent = displayHeader.locator('xpath=following-sibling::div[contains(@class,"accordion-panel")]');
 	if (!(await displayContent.isVisible())) {
 		await displayHeader.click();
 		await expect(displayContent).toBeVisible();
@@ -147,7 +147,7 @@ test('theme switch: toggling light mode changes body class', async ({ page }) =>
 	await expect(page.locator('#settingsModal')).toBeVisible();
 
 	const themeHeader = page.locator('.accordion-header').filter({ hasText: 'Theme' });
-	const themeContent = themeHeader.locator('xpath=following-sibling::div[contains(@class,"accordion-content")]');
+	const themeContent = themeHeader.locator('xpath=following-sibling::div[contains(@class,"accordion-panel")]');
 	if (!(await themeContent.isVisible())) {
 		await themeHeader.click();
 		await expect(themeContent).toBeVisible();
