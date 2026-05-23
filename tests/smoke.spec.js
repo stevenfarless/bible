@@ -70,7 +70,7 @@ test('verse navigation: selecting a verse updates currentVerse display', async (
 
 	// Go to John 3 first via book+chapter selectors
 	await page.locator('#bookSelector').click();
-	await page.locator('#newTestamentBooks button', { hasText: 'John' }).click();
+	await page.locator('#newTestamentBooks').getByRole('button', { name: 'John', exact: true }).click();
 	await page.locator('#chapterGrid button', { hasText: '3' }).click();
 
 	// Open verse modal
