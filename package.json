@@ -9,6 +9,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "vitest": "^2.0.0"
   }
 }
