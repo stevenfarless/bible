@@ -13,7 +13,9 @@ export default defineConfig({
 			use: { ...devices['Desktop Chrome'] },
 		},
 	],
-	testDir: './tests',
+	// Scope to smoke tests only — prevents Playwright from scanning
+	// tests/unit/*.test.js which import vitest and crash the Playwright runner.
+	testMatch: ['**/tests/smoke.spec.js'],
 	reporter: [['html', { open: 'never' }], ['list']],
 	// Give the local server time to boot before tests run
 	webServer: process.env.CI
