@@ -3,7 +3,7 @@
 
 const REQUIRED_IDS = [
 	'topChrome',
-	'searchToggle', 'helpBtn', 'settingsBtn', 'themeToggle', 'userBtn',
+	'searchToggle', 'helpBtn', 'settingsBtn', 'userBtn',
 	'prevChapter', 'nextChapter', 'bookSelector', 'chapterSelector', 'verseSelector',
 	'currentBook', 'currentChapter', 'currentVerse',
 	'searchContainer', 'closeSearch', 'searchInput', 'searchResults',
