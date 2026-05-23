@@ -2,9 +2,9 @@ name: Unit Tests
 
 on:
   push:
-    branches: [json-ver]
+    branches: [main]
   pull_request:
-    branches: [json-ver]
+    branches: [main]
 
 jobs:
   unit-tests:
