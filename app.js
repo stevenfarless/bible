@@ -20,11 +20,15 @@ import {
 } from './ui.js';
 
 function readBool(key, defaultValue) {
-    const v = localStorage.getItem(key);
-    if (v === null) return defaultValue;
-    if (v === 'true') return true;
-    if (v === 'false') return false;
-    return defaultValue;
+    try {
+        const v = localStorage.getItem(key);
+        if (v === null) return defaultValue;
+        if (v === 'true') return true;
+        if (v === 'false') return false;
+        return defaultValue;
+    } catch {
+        return defaultValue;
+    }
 }
 
 const TRANSLATION_ALIASES = {
@@ -200,8 +204,10 @@ class BibleApp {
         const lightModeToggle = document.getElementById('lightModeToggle');
 
         if (themeSelector) {
-            const savedTheme = localStorage.getItem('colorTheme') || 'dracula';
-            themeSelector.value = savedTheme;
+            try {
+                const savedTheme = localStorage.getItem('colorTheme') || 'dracula';
+                themeSelector.value = savedTheme;
+            } catch { themeSelector.value = 'dracula'; }
         }
 
         if (lightModeToggle) {
@@ -263,383 +269,468 @@ class BibleApp {
 
         accordionHeaders.forEach((header) => {
             header.addEventListener('click', () => {
-                const section = header.closest('.accordion-section');
-                section.classList.toggle('active');
-            });
-        });
-
-        const openAccountBtn = document.getElementById('openAccountBtn');
-        if (openAccountBtn) {
-            openAccountBtn.addEventListener('click', () => {
-                this.closeModal(this.settingsModal);
-                if (this.currentUser) {
-                    this.openModal(this.userMenuModal);
+                const sectionEl = header.closest('.accordion-section');
+                const targetKey = header.getAttribute('data-target');
+                const panel = document.querySelector(`.accordion-panel[data-panel="${targetKey}"]`);
+                if (!panel) return;
+                const isOpen = panel.classList.contains('open');
+                if (isOpen) {
+                    panel.classList.remove('open');
+                    sectionEl?.classList.remove('open');
                 } else {
-                    this.openModal(this.loginModal);
+                    panel.classList.add('open');
+                    sectionEl?.classList.add('open');
                 }
             });
-        }
+        });
     }
 
+    // ================================
+    // Event Listeners
+    // ================================
+
     attachEventListeners() {
-        this.searchToggleBtn?.addEventListener('click', () => this.toggleSearch());
-        this.helpBtn?.addEventListener('click', () => this.openModal(this.helpModal));
-        this.settingsBtn?.addEventListener('click', () => this.openModal(this.settingsModal));
+        // Navigation
+        document.getElementById('prevChapter')?.addEventListener('click', () => this.navigateChapter(-1));
+        document.getElementById('nextChapter')?.addEventListener('click', () => this.navigateChapter(1));
 
-        this.closeSearchBtn?.addEventListener('click', () => this.closeSearch());
-        this.searchInput?.addEventListener('input', (e) => this.handleSearch(e.target.value));
-        this.searchInput?.addEventListener('keydown', (e) => this.handleSearchKeydown(e));
+        // Book/Chapter/Verse selectors
+        document.getElementById('bookSelector')?.addEventListener('click', () => this.openBookModal());
+        document.getElementById('chapterSelector')?.addEventListener('click', () => this.openChapterModal());
+        document.getElementById('verseSelector')?.addEventListener('click', () => this.openVerseModal());
+        document.getElementById('closeBookModal')?.addEventListener('click', () => this.closeModal('bookModal'));
+        document.getElementById('closeChapterModal')?.addEventListener('click', () => this.closeModal('chapterModal'));
+        document.getElementById('closeVerseModal')?.addEventListener('click', () => this.closeModal('verseModal'));
 
-        this.prevChapterBtn?.addEventListener('click', () => this.navigateChapter(-1));
-        this.nextChapterBtn?.addEventListener('click', () => this.navigateChapter(1));
-        this.bookSelector?.addEventListener('click', () => this.openBookModal());
-        this.chapterSelector?.addEventListener('click', () => this.openChapterModal());
-        this.verseSelector?.addEventListener('click', () => this.openVerseModal());
-        this.closeVerseModal?.addEventListener('click', () => this.closeModal(this.verseModal));
+        // Settings
+        document.getElementById('settingsBtn')?.addEventListener('click', () => this.openSettingsModal());
+        document.getElementById('closeSettingsModal')?.addEventListener('click', () => this.closeModal('settingsModal'));
 
-        this.referencesModal = document.getElementById('referencesModal');
-        this.closeReferencesModal = document.getElementById('closeReferencesModal');
-        this.footnotesSection = document.getElementById('footnotesSection');
-        this.footnotesContent = document.getElementById('footnotesContent');
-        this.crossReferencesSection = document.getElementById('crossReferencesSection');
-        this.crossReferencesContent = document.getElementById('crossReferencesContent');
-
-        [
-            this.bookModal,
-            this.chapterModal,
-            this.verseModal,
-            this.settingsModal,
-            this.helpModal,
-            this.loginModal,
-            this.signupModal,
-            this.userMenuModal,
-            this.referencesModal,
-        ].forEach((modal) => {
-            if (!modal) return;
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) this.closeModal(modal);
-            });
-        });
-
-        this.closeBookModal?.addEventListener('click', () => this.closeModal(this.bookModal));
-        this.closeChapterModal?.addEventListener('click', () => this.closeModal(this.chapterModal));
-        this.closeHelpModal?.addEventListener('click', () => this.closeModal(this.helpModal));
-        this.closeSettingsModal?.addEventListener('click', () => this.closeModal(this.settingsModal));
-        if (this.closeReferencesModal) {
-            this.closeReferencesModal?.addEventListener('click', () => this.closeModal(this.referencesModal));
-        }
-
-        // References modal drag-to-resize
-        if (this.referencesModal) {
-            const referencesContent = this.referencesModal.querySelector('.modal-content');
-            const referencesHeader = this.referencesModal.querySelector('.modal-header');
-            const referencesBody = this.referencesModal.querySelector('.modal-body');
-
-            let isRefDragging = false;
-            let refStartY = 0;
-            let refStartHeight = 0;
-            let refStartScrollTop = 0;
-
-            referencesHeader?.addEventListener('touchstart', (e) => {
-                isRefDragging = true;
-                refStartY = e.touches[0].clientY;
-                refStartHeight = referencesContent.offsetHeight;
-                refStartScrollTop = referencesBody?.scrollTop ?? 0;
-                referencesContent.classList.add('dragging');
-            }, { passive: false });
-
-            document.addEventListener('touchmove', (e) => {
-                if (!isRefDragging) return;
-                const deltaY = refStartY - e.touches[0].clientY;
-                let newH = Math.max(200, Math.min(window.innerHeight * 0.9, refStartHeight + deltaY));
-                referencesContent.style.height = `${newH}px`;
-                e.preventDefault();
-            }, { passive: false });
-
-            document.addEventListener('touchend', (e) => {
-                if (!isRefDragging) return;
-                isRefDragging = false;
-                referencesContent.classList.remove('dragging');
-                const totalDrag = e.changedTouches[0].clientY - refStartY;
-                if (totalDrag > 150 && refStartScrollTop === 0) {
-                    this.closeModal(this.referencesModal);
-                    setTimeout(() => { referencesContent.style.height = '50vh'; }, 300);
-                }
-            }, { passive: true });
-
-            let isRefMouseDragging = false;
-            let refMouseStartY = 0;
-            let refMouseStartHeight = 0;
-
-            referencesHeader?.addEventListener('mousedown', (e) => {
-                if (e.target.closest('.close-btn')) return;
-                isRefMouseDragging = true;
-                refMouseStartY = e.clientY;
-                refMouseStartHeight = referencesContent.offsetHeight;
-                referencesContent.classList.add('dragging');
-                e.preventDefault();
-            });
-
-            document.addEventListener('mousemove', (e) => {
-                if (!isRefMouseDragging) return;
-                const newH = Math.max(200, Math.min(window.innerHeight * 0.9, refMouseStartHeight + (refMouseStartY - e.clientY)));
-                referencesContent.style.height = `${newH}px`;
-            });
-
-            document.addEventListener('mouseup', (e) => {
-                if (!isRefMouseDragging) return;
-                isRefMouseDragging = false;
-                referencesContent.classList.remove('dragging');
-                if (e.clientY - refMouseStartY > 150) {
-                    this.closeModal(this.referencesModal);
-                    setTimeout(() => { referencesContent.style.height = '50vh'; }, 300);
-                }
-            });
-        }
-
-        // Settings modal drag-to-resize
-        const settingsContent = this.settingsModal.querySelector('.modal-content');
-        const settingsHeader = this.settingsModal.querySelector('.modal-header');
-        const settingsBody = this.settingsModal.querySelector('.modal-body');
-
-        let isDragging = false;
-        let startY = 0;
-        let startHeight = 0;
-        let startScrollTop = 0;
-
-        settingsHeader.addEventListener('touchstart', (e) => {
-            if (!settingsHeader.contains(e.target)) return;
-            isDragging = true;
-            startY = e.touches[0].clientY;
-            startHeight = settingsContent.offsetHeight;
-            startScrollTop = settingsBody.scrollTop;
-            settingsContent.classList.add('dragging');
-        }, { passive: false });
-
-        document.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            const deltaY = startY - e.touches[0].clientY;
-            const newH = Math.max(200, Math.min(window.innerHeight * 0.9, startHeight + deltaY));
-            settingsContent.style.height = `${newH}px`;
-            e.preventDefault();
-        }, { passive: false });
-
-        document.addEventListener('touchend', (e) => {
-            if (!isDragging) return;
-            isDragging = false;
-            settingsContent.classList.remove('dragging');
-            const totalDrag = e.changedTouches[0].clientY - startY;
-            if (totalDrag > 150 && startScrollTop === 0) {
-                this.closeModal(this.settingsModal);
-                setTimeout(() => { settingsContent.style.height = '50vh'; }, 300);
-            }
-        }, { passive: true });
-
-        let isMouseDragging = false;
-        let mouseStartY = 0;
-        let mouseStartHeight = 0;
-
-        settingsHeader.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.close-btn')) return;
-            isMouseDragging = true;
-            mouseStartY = e.clientY;
-            mouseStartHeight = settingsContent.offsetHeight;
-            settingsContent.classList.add('dragging');
-            e.preventDefault();
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (!isMouseDragging) return;
-            const newH = Math.max(200, Math.min(window.innerHeight * 0.9, mouseStartHeight + (mouseStartY - e.clientY)));
-            settingsContent.style.height = `${newH}px`;
-        });
-
-        document.addEventListener('mouseup', (e) => {
-            if (!isMouseDragging) return;
-            isMouseDragging = false;
-            settingsContent.classList.remove('dragging');
-            if (e.clientY - mouseStartY > 150) {
-                this.closeModal(this.settingsModal);
-                setTimeout(() => { settingsContent.style.height = '50vh'; }, 300);
-            }
-        });
-
-        this.verseNumbersToggle?.addEventListener('change', () => this.toggleSetting('showVerseNumbers'));
-        this.headingsToggle?.addEventListener('change', () => this.toggleSetting('showHeadings'));
-        this.footnotesToggle?.addEventListener('change', () => this.toggleSetting('showFootnotes'));
-
-        this.crossReferencesToggle = document.getElementById('crossReferencesToggle');
-        if (this.crossReferencesToggle) {
-            this.crossReferencesToggle?.addEventListener('change', () => this.toggleSetting('showCrossReferences'));
-        }
-
-        this.verseByVerseToggle?.addEventListener('change', () => this.toggleVerseByVerse());
-        this.fontSizeSlider?.addEventListener('input', (e) => this.updateFontSize(e.target.value));
-
-        if (this.translationSelector) {
-            this.translationSelector?.addEventListener('change', async (e) => {
-                await this.changeTranslation(e.target.value);
-            });
-        }
-
-        this.themeToggleBtn?.addEventListener('click', () => toggleTheme(this));
-
+        const verseNumbersToggle = document.getElementById('verseNumbersToggle');
+        const headingsToggle = document.getElementById('headingsToggle');
+        const footnotesToggle = document.getElementById('footnotesToggle');
+        const crossReferencesToggle = document.getElementById('crossReferencesToggle');
+        const verseByVerseToggle = document.getElementById('verseByVerseToggle');
+        const fontSizeSlider = document.getElementById('fontSizeSlider');
+        const fontSizeValue = document.getElementById('fontSizeValue');
         const themeSelector = document.getElementById('themeSelector');
         const lightModeToggle = document.getElementById('lightModeToggle');
+        const translationSelector = document.getElementById('translationSelector');
+
+        if (verseNumbersToggle) {
+            verseNumbersToggle.addEventListener('change', () => this.toggleSetting('showVerseNumbers', 'verseNumbersToggle'));
+        }
+        if (headingsToggle) {
+            headingsToggle.addEventListener('change', () => this.toggleSetting('showHeadings', 'headingsToggle'));
+        }
+        if (footnotesToggle) {
+            footnotesToggle.addEventListener('change', () => this.toggleSetting('showFootnotes', 'footnotesToggle'));
+        }
+        if (crossReferencesToggle) {
+            crossReferencesToggle.addEventListener('change', () => this.toggleSetting('showCrossReferences', 'crossReferencesToggle'));
+        }
+        if (verseByVerseToggle) {
+            verseByVerseToggle.addEventListener('change', () => {
+                this.state.verseByVerse = verseByVerseToggle.checked;
+                try { localStorage.setItem('verseByVerse', String(this.state.verseByVerse)); } catch { /* ignore */ }
+                this.loadPassage(this.state.currentBook, this.state.currentChapter, this.state.currentVerse);
+                this.syncSettingsToFirebase();
+            });
+        }
+
+        if (fontSizeSlider) {
+            fontSizeSlider.addEventListener('input', () => {
+                const size = parseInt(fontSizeSlider.value, 10);
+                document.documentElement.style.setProperty('--font-size', `${size}px`);
+                if (fontSizeValue) fontSizeValue.textContent = `${size}px`;
+                this.state.fontSize = size;
+                try { localStorage.setItem('fontSize', size); } catch { /* ignore */ }
+                this.syncSettingsToFirebase();
+            });
+        }
 
         if (themeSelector) {
-            themeSelector.addEventListener('change', (e) => changeColorTheme(this, e.target.value));
+            themeSelector.addEventListener('change', () => {
+                changeColorTheme(this, themeSelector.value);
+            });
         }
 
         if (lightModeToggle) {
-            lightModeToggle.addEventListener('change', () => toggleTheme(this));
+            lightModeToggle.addEventListener('change', () => {
+                toggleTheme(this);
+            });
         }
 
-        this.userBtn?.addEventListener('click', () => this.handleUserButtonClick());
+        if (translationSelector) {
+            translationSelector.addEventListener('change', () => {
+                const translation = translationSelector.value;
+                this.state.translation = normalizeTranslation(translation);
+                this.bibleApi.setTranslation(this.state.translation);
+                try { localStorage.setItem('translation', translation); } catch { /* ignore */ }
+                this.loadPassage(this.state.currentBook, this.state.currentChapter, this.state.currentVerse);
+                this.syncSettingsToFirebase();
+            });
+        }
 
+        // Search
+        document.getElementById('searchToggle')?.addEventListener('click', () => this.toggleSearch());
+        document.getElementById('closeSearch')?.addEventListener('click', () => this.closeSearch());
+        document.getElementById('searchInput')?.addEventListener('input', (e) => this.handleSearchInput(e));
+        document.getElementById('searchInput')?.addEventListener('keydown', (e) => this.handleSearchKeydown(e));
+
+        // Copy
+        document.getElementById('copyBtn')?.addEventListener('click', () => this.copyPassage());
+
+        // Auth
+        document.getElementById('userBtn')?.addEventListener('click', () => this.handleUserButtonClick());
+        document.getElementById('closeLoginModal')?.addEventListener('click', () => this.closeModal('loginModal'));
+        document.getElementById('closeSignupModal')?.addEventListener('click', () => this.closeModal('signupModal'));
+        document.getElementById('closeUserMenuModal')?.addEventListener('click', () => this.closeModal('userMenuModal'));
         document.getElementById('showSignupLink')?.addEventListener('click', (e) => {
             e.preventDefault();
-            this.closeModal(this.loginModal);
-            this.openModal(this.signupModal);
+            this.closeModal('loginModal');
+            this.openModal('signupModal');
         });
-
         document.getElementById('showLoginLink')?.addEventListener('click', (e) => {
             e.preventDefault();
-            this.closeModal(this.signupModal);
-            this.openModal(this.loginModal);
+            this.closeModal('signupModal');
+            this.openModal('loginModal');
         });
-
-        document.getElementById('loginForm')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleLogin();
-        });
-
-        document.getElementById('signupForm')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleSignup();
-        });
-
+        document.getElementById('loginForm')?.addEventListener('submit', (e) => this.handleLogin(e));
+        document.getElementById('signupForm')?.addEventListener('submit', (e) => this.handleSignup(e));
         document.getElementById('logoutBtn')?.addEventListener('click', () => this.handleLogout());
+        document.getElementById('openAccountBtn')?.addEventListener('click', () => {
+            this.closeModal('settingsModal');
+            this.handleUserButtonClick();
+        });
 
-        this.closeLoginModal?.addEventListener('click', () => this.closeModal(this.loginModal));
-        this.closeSignupModal?.addEventListener('click', () => this.closeModal(this.signupModal));
-        this.closeUserMenuModal?.addEventListener('click', () => this.closeModal(this.userMenuModal));
+        // References modal
+        document.getElementById('closeReferencesModal')?.addEventListener('click', () => this.closeModal('referencesModal'));
 
-        window.addEventListener('scroll', () => {
-            this.handleChromeScroll();
-            clearTimeout(this.scrollTimeout);
-            this.scrollTimeout = setTimeout(() => this.saveReadingPosition(), 500);
-        }, { passive: true });
+        // Help
+        document.getElementById('helpBtn')?.addEventListener('click', () => this.openModal('helpModal'));
+        document.getElementById('closeHelpModal')?.addEventListener('click', () => this.closeModal('helpModal'));
 
+        // Keyboard shortcuts
         document.addEventListener('keydown', (e) => this.handleKeyboardShortcuts(e));
+
+        // Chrome scroll hide/show
+        window.addEventListener('scroll', this.handleChromeScroll, { passive: true });
     }
 
-    // ==========================================
-    // Passage Loading
-    // ==========================================
+    // ================================
+    // Settings
+    // ================================
+
+    loadLocalSettings() {
+        this.state.showVerseNumbers    = readBool('showVerseNumbers', true);
+        this.state.showHeadings        = readBool('showHeadings', true);
+        this.state.showFootnotes       = readBool('showFootnotes', false);
+        this.state.showCrossReferences = readBool('showCrossReferences', false);
+        this.state.verseByVerse        = readBool('verseByVerse', false);
+
+        try {
+            this.state.fontSize             = parseInt(localStorage.getItem('fontSize') || '18', 10);
+            this.state.colorTheme  = localStorage.getItem('colorTheme')  || 'dracula';
+            this.state.translation = normalizeTranslation(localStorage.getItem('translation') || 'ESV');
+        } catch {
+            this.state.fontSize    = 18;
+            this.state.colorTheme  = 'dracula';
+            this.state.translation = 'ESV';
+        }
+        this.bibleApi.setTranslation(this.state.translation);
+    }
+
+    applySettings() {
+        const {
+            showVerseNumbers, showHeadings, showFootnotes, showCrossReferences,
+            verseByVerse, fontSize, colorTheme,
+        } = this.state;
+
+        const verseNumbersToggle    = document.getElementById('verseNumbersToggle');
+        const headingsToggle        = document.getElementById('headingsToggle');
+        const footnotesToggle       = document.getElementById('footnotesToggle');
+        const crossReferencesToggle = document.getElementById('crossReferencesToggle');
+        const verseByVerseToggle    = document.getElementById('verseByVerseToggle');
+        const fontSizeSlider        = document.getElementById('fontSizeSlider');
+        const fontSizeValue         = document.getElementById('fontSizeValue');
+        const translationSelector   = document.getElementById('translationSelector');
+
+        if (verseNumbersToggle)    verseNumbersToggle.checked    = showVerseNumbers;
+        if (headingsToggle)        headingsToggle.checked        = showHeadings;
+        if (footnotesToggle)       footnotesToggle.checked       = showFootnotes;
+        if (crossReferencesToggle) crossReferencesToggle.checked = showCrossReferences;
+        if (verseByVerseToggle)    verseByVerseToggle.checked    = verseByVerse;
+
+        if (fontSizeSlider) {
+            fontSizeSlider.value = fontSize;
+            document.documentElement.style.setProperty('--font-size', `${fontSize}px`);
+            if (fontSizeValue) fontSizeValue.textContent = `${fontSize}px`;
+        }
+
+        if (translationSelector && this.state.translation) {
+            translationSelector.value = this.state.translation;
+        }
+
+        changeColorTheme(this, colorTheme, false);
+        updateThemeIcon(this);
+    }
+
+    toggleSetting(settingKey, elementId) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        this.state[settingKey] = el.checked;
+        try { localStorage.setItem(settingKey, String(el.checked)); } catch { /* ignore */ }
+        this.loadPassage(this.state.currentBook, this.state.currentChapter, this.state.currentVerse);
+        this.syncSettingsToFirebase();
+    }
+
+    // ================================
+    // Firebase: User Data
+    // ================================
+
+    async loadUserData() {
+        if (!this.currentUser) return;
+
+        try {
+            const data = await loadUserDataFromFirebase(this.currentUser.uid);
+            if (!data) {
+                this.loadLocalSettings();
+                return;
+            }
+
+            const s = data.settings || {};
+            this.state.fontSize            = s.fontSize            ?? 18;
+            this.state.showVerseNumbers    = s.showVerseNumbers     !== false;
+            this.state.showHeadings        = s.showHeadings         !== false;
+            this.state.showFootnotes       = s.showFootnotes        === true;
+            this.state.showCrossReferences = s.showCrossReferences  === true;
+            this.state.verseByVerse        = s.verseByVerse         === true;
+            this.state.colorTheme          = s.colorTheme           || 'dracula';
+            this.state.lightMode           = typeof s.lightMode === 'boolean' ? s.lightMode : false;
+            this.state.translation         = normalizeTranslation(s.translation || 'ESV');
+            this.bibleApi.setTranslation(this.state.translation);
+        } catch (err) {
+            console.error('Failed to load user data from Firebase:', err);
+            this.loadLocalSettings();
+        }
+    }
+
+    async syncSettingsToFirebase() {
+        if (!this.currentUser || !this.database) return;
+
+        try {
+            const settingsRef = this.database.ref(`users/${this.currentUser.uid}/settings`);
+            await settingsRef.set({
+                fontSize:            this.state.fontSize,
+                showVerseNumbers:    this.state.showVerseNumbers,
+                showHeadings:        this.state.showHeadings,
+                showFootnotes:       this.state.showFootnotes,
+                showCrossReferences: this.state.showCrossReferences,
+                verseByVerse:        this.state.verseByVerse,
+                colorTheme:          this.state.colorTheme,
+                lightMode:           this.state.lightMode || false,
+                translation:         this.state.translation,
+            });
+        } catch (err) {
+            console.error('Failed to sync settings to Firebase:', err);
+        }
+    }
+
+    // ================================
+    // Firebase: Reading Position
+    // ================================
 
     async loadSavedReadingPosition() {
         if (!this.currentUser || !this.database) {
-            await this.loadPassage(this.state.currentBook, this.state.currentChapter);
+            this.loadPassage(this.state.currentBook, this.state.currentChapter);
             return;
         }
 
         try {
-            const snapshot = await this.database
-                .ref(`users/${this.currentUser.uid}/readingPosition`)
-                .once('value');
-            const pos = snapshot.val();
-
+            const posRef = this.database.ref(`users/${this.currentUser.uid}/readingPosition`);
+            const snap = await posRef.once('value');
+            const pos = snap.val();
             if (pos && pos.book && pos.chapter) {
-                this.state.currentBook = pos.book;
+                this.state.currentBook    = pos.book;
                 this.state.currentChapter = pos.chapter;
-                this.lastScrollPosition = pos.scrollY || 0;
+                this.state.currentVerse   = pos.verse || 1;
             }
         } catch (err) {
-            console.error('loadSavedReadingPosition: failed to read Firebase', err);
+            console.error('Failed to load reading position:', err);
         }
 
-        await this.loadPassage(this.state.currentBook, this.state.currentChapter, true);
+        this.loadPassage(this.state.currentBook, this.state.currentChapter, this.state.currentVerse);
     }
 
-    saveReadingPosition() {
+    async saveReadingPosition() {
         if (!this.currentUser || !this.database) return;
-
-        const pos = {
-            book: this.state.currentBook,
-            chapter: this.state.currentChapter,
-            scrollY: window.scrollY || 0,
-        };
-
-        this.database
-            .ref(`users/${this.currentUser.uid}/readingPosition`)
-            .set(pos)
-            .catch((err) => console.error('saveReadingPosition: Firebase write failed', err));
+        try {
+            const posRef = this.database.ref(`users/${this.currentUser.uid}/readingPosition`);
+            await posRef.set({
+                book:    this.state.currentBook,
+                chapter: this.state.currentChapter,
+                verse:   this.state.currentVerse,
+            });
+        } catch (err) {
+            console.error('Failed to save reading position:', err);
+        }
     }
 
-    async loadPassage(book, chapter, restoreScroll = false) {
-        if (!restoreScroll) {
-            this.saveReadingPosition?.();
-        }
+    // ================================
+    // Auth
+    // ================================
 
-        this.state.currentBook = book;
-        this.state.currentChapter = chapter;
-        this.updateNavigationState();
-
-        const reference = `${book} ${chapter}`;
-        this.passageText.innerHTML = '<p class="loading">Loading passage...</p>';
-
-        // Load BSB structure scaffold for all translations.
-        // The scaffold is keyed by chapter/verse and applies regardless of translation
-        // since all supported translations share the same versification.
-        let scaffoldEvents = [];
-        try {
-            const allEvents = await loadStructure(book);
-            scaffoldEvents = eventsForChapter(allEvents, chapter);
-        } catch (err) {
-            console.warn('loadPassage: BSB structure scaffold unavailable', err);
-        }
-
-        const data = await this.bibleApi.fetchPassage(
-            reference,
-            scaffoldEvents,
-            this.state.showHeadings !== false
-        );
-
-        if (!data) {
-            this.chromeSuspend = false;
-            document.body.classList.remove('chrome-no-transition');
-            return;
-        }
-
-        const displayTitle = book === 'Psalm'
-            ? `Psalm ${chapter}`
-            : `${this.getDisplayName(book)} ${chapter}`;
-        this.passageTitle.textContent = displayTitle;
-        this.passageText.innerHTML = data.passages[0];
-        this.originalPassageHtml = this.passageText.innerHTML;
-
-        this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
-
-        this.updateCopyright();
-        this.currentVerseSpan.textContent = '1';
-        this.chromeSuspend = true;
-        document.body.classList.add('chrome-no-transition');
-        this.showChrome();
-
-        if (restoreScroll) {
-            window.scrollTo(0, this.lastScrollPosition || 0);
+    handleUserButtonClick() {
+        if (this.currentUser) {
+            this.openUserMenu();
         } else {
-            window.scrollTo(0, 0);
+            this.openModal('loginModal');
+        }
+    }
+
+    openUserMenu() {
+        const emailEl = document.getElementById('userEmail');
+        const themeEl = document.getElementById('userTheme');
+        if (emailEl) emailEl.textContent = this.currentUser?.email || '';
+        if (themeEl) themeEl.textContent = this.state.colorTheme || 'Dracula';
+        this.openModal('userMenuModal');
+    }
+
+    async handleLogin(e) {
+        e.preventDefault();
+        const email    = document.getElementById('loginEmail')?.value?.trim();
+        const password = document.getElementById('loginPassword')?.value;
+        if (!email || !password || !this.auth) return;
+
+        try {
+            await this.auth.signInWithEmailAndPassword(email, password);
+            this.closeModal('loginModal');
+            this.showToast('Signed in successfully.');
+        } catch (err) {
+            this.showToast(`Sign in failed: ${err.message}`);
+        }
+    }
+
+    async handleSignup(e) {
+        e.preventDefault();
+        const email    = document.getElementById('signupEmail')?.value?.trim();
+        const password = document.getElementById('signupPassword')?.value;
+        if (!email || !password || !this.auth) return;
+
+        try {
+            await this.auth.createUserWithEmailAndPassword(email, password);
+            this.closeModal('signupModal');
+            this.showToast('Account created successfully.');
+        } catch (err) {
+            this.showToast(`Sign up failed: ${err.message}`);
+        }
+    }
+
+    async handleLogout() {
+        if (!this.auth) return;
+        try {
+            await this.auth.signOut();
+            this.closeModal('userMenuModal');
+            this.showToast('Signed out.');
+        } catch (err) {
+            this.showToast(`Sign out failed: ${err.message}`);
+        }
+    }
+
+    checkApiKey() { /* ESV API key check placeholder */ }
+
+    // ================================
+    // Passage Loading
+    // ================================
+
+    async loadPassage(book, chapter, verse = null) {
+        const passageText = document.getElementById('passageText');
+        if (!passageText) return;
+        passageText.innerHTML = '<div class="loading">Loading passage...</div>';
+
+        const chapterNum  = Math.max(1, Math.min(chapter, this.getChapterCount(book)));
+        const reference   = `${book} ${chapterNum}`;
+
+        try {
+            let scaffold = [];
+            if (this.state.translation === 'BSB') {
+                const structure = await loadStructure();
+                scaffold = eventsForChapter(structure, book, chapterNum);
+            }
+
+            const result = await this.bibleApi.fetchPassage(
+                reference,
+                scaffold,
+                this.state.showHeadings,
+            );
+
+            if (!result) {
+                passageText.innerHTML = '<div class="error">Passage not found.</div>';
+                return;
+            }
+
+            const html = result.passages.join('');
+            passageText.innerHTML = this.applyDisplaySettings(html);
+
+            const titleEl = document.getElementById('passageTitle');
+            if (titleEl) titleEl.textContent = result.canonical || reference;
+
+            const bookAbbr = document.getElementById('currentBook');
+            const chapterEl = document.getElementById('currentChapter');
+            const verseEl   = document.getElementById('currentVerse');
+            if (bookAbbr)  bookAbbr.textContent  = this.bookAbbreviations[book] || book;
+            if (chapterEl) chapterEl.textContent = chapterNum;
+            if (verseEl)   verseEl.textContent   = verse || 1;
+
+            this.state.currentBook    = book;
+            this.state.currentChapter = chapterNum;
+            this.state.currentVerse   = verse || 1;
+
+            const copyrightEl = document.getElementById('copyright');
+            if (copyrightEl) {
+                copyrightEl.textContent = this.getCopyrightText();
+            }
+
+            await this.saveReadingPosition();
+
+            this.originalPassageHtml = passageText.innerHTML;
+
+            if (verse) {
+                requestAnimationFrame(() => {
+                    scrollVerse(verse, chapterNum);
+                    glowVerse(verse, chapterNum);
+                });
+            }
+        } catch (err) {
+            console.error('loadPassage error:', err);
+            passageText.innerHTML = '<div class="error">Failed to load passage. Please try again.</div>';
+        }
+    }
+
+    applyDisplaySettings(html) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        if (!this.state.showVerseNumbers) {
+            doc.querySelectorAll('.verse-num').forEach(el => el.remove());
+        }
+        if (!this.state.showHeadings) {
+            doc.querySelectorAll('.pericope-heading').forEach(el => el.remove());
+        }
+        if (this.state.verseByVerse) {
+            doc.querySelectorAll('.verse').forEach(el => {
+                el.style.display = 'block';
+                el.style.marginBottom = '0.5em';
+            });
         }
 
-        requestAnimationFrame(() => {
-            this.chromeScrollLastY = window.scrollY || window.pageYOffset || 0;
-            this.chromeSuspend = false;
-            document.body.classList.remove('chrome-no-transition');
-        });
+        return doc.body.innerHTML;
+    }
 
-        this.saveReadingPosition?.();
+    getCopyrightText() {
+        const t = this.state.translation;
+        return this._copyrightMap[t] || '';
     }
 
     // ================================
@@ -647,22 +738,129 @@ class BibleApp {
     // ================================
 
     navigateChapter(direction) {
-        navChapter(this, direction);
+        const result = navChapter(this.state, direction, this.bibleBooks);
+        if (!result) return;
+        this.state.currentBook    = result.book;
+        this.state.currentChapter = result.chapter;
+        this.state.currentVerse   = 1;
+        this.loadPassage(result.book, result.chapter);
     }
 
-    updateNavigationState() {
-        const book = this.state.currentBook;
-        const abbr = this.bookAbbreviations[book] || book;
-        this.currentBookSpan.textContent = abbr;
-        this.currentChapterSpan.textContent = this.state.currentChapter;
+    // ================================
+    // Modals
+    // ================================
 
-        const books = this.getAllBooks();
-        const currentBookIndex = books.indexOf(book);
-        const isFirstChapter = this.state.currentChapter === 1;
-        const isLastChapter = this.state.currentChapter === this.getChapterCount(book);
+    openModal(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.add('active');
+        this.chromeSuspend = true;
+    }
 
-        if (this.prevChapterBtn) this.prevChapterBtn.disabled = currentBookIndex === 0 && isFirstChapter;
-        if (this.nextChapterBtn) this.nextChapterBtn.disabled = currentBookIndex === books.length - 1 && isLastChapter;
+    closeModal(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.remove('active');
+        this.chromeSuspend = false;
+    }
+
+    openSettingsModal() {
+        const themeSelector = document.getElementById('themeSelector');
+        const lightModeToggle = document.getElementById('lightModeToggle');
+        const fontSizeSlider = document.getElementById('fontSizeSlider');
+        const fontSizeValue = document.getElementById('fontSizeValue');
+
+        if (themeSelector) themeSelector.value = this.state.colorTheme || 'dracula';
+        if (lightModeToggle) lightModeToggle.checked = this.state.lightMode || false;
+        if (fontSizeSlider) {
+            fontSizeSlider.value = this.state.fontSize || 18;
+            if (fontSizeValue) fontSizeValue.textContent = `${this.state.fontSize || 18}px`;
+        }
+
+        this.openModal('settingsModal');
+    }
+
+    openBookModal() {
+        const otGrid = document.getElementById('oldTestamentBooks');
+        const ntGrid = document.getElementById('newTestamentBooks');
+        if (!otGrid || !ntGrid) return;
+
+        const render = (container, books) => {
+            container.innerHTML = '';
+            Object.keys(books).forEach(book => {
+                const btn = document.createElement('button');
+                btn.className = 'book-btn';
+                btn.textContent = this.bookAbbreviations[book] || book;
+                btn.title = this.getDisplayName(book);
+                if (book === this.state.currentBook) btn.classList.add('active');
+                btn.addEventListener('click', () => {
+                    this.state.currentBook    = book;
+                    this.state.currentChapter = 1;
+                    this.state.currentVerse   = 1;
+                    this.closeModal('bookModal');
+                    this.openChapterModal();
+                });
+                container.appendChild(btn);
+            });
+        };
+
+        render(otGrid, this.bibleBooks['Old Testament']);
+        render(ntGrid, this.bibleBooks['New Testament']);
+        this.openModal('bookModal');
+    }
+
+    openChapterModal() {
+        const grid = document.getElementById('chapterGrid');
+        const titleEl = document.getElementById('chapterModalBook');
+        if (!grid || !titleEl) return;
+
+        titleEl.textContent = this.getDisplayName(this.state.currentBook);
+        const count = this.getChapterCount(this.state.currentBook);
+        grid.innerHTML = '';
+
+        for (let i = 1; i <= count; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'chapter-btn';
+            btn.textContent = i;
+            if (i === this.state.currentChapter) btn.classList.add('active');
+            btn.addEventListener('click', () => {
+                this.closeModal('chapterModal');
+                this.loadPassage(this.state.currentBook, i);
+            });
+            grid.appendChild(btn);
+        }
+
+        this.openModal('chapterModal');
+    }
+
+    openVerseModal() {
+        const grid = document.getElementById('verseGrid');
+        const titleEl = document.getElementById('verseModalBook');
+        if (!grid) return;
+
+        if (titleEl) titleEl.textContent = `${this.getDisplayName(this.state.currentBook)} ${this.state.currentChapter}`;
+
+        const passageText = document.getElementById('passageText');
+        const verses = passageText ? [...passageText.querySelectorAll('.verse')] : [];
+        const count = verses.length || 30;
+
+        grid.innerHTML = '';
+        for (let i = 1; i <= count; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'chapter-btn';
+            btn.textContent = i;
+            if (i === this.state.currentVerse) btn.classList.add('active');
+            btn.addEventListener('click', () => {
+                this.state.currentVerse = i;
+                document.getElementById('currentVerse').textContent = i;
+                this.closeModal('verseModal');
+                scrollVerse(i, this.state.currentChapter);
+                glowVerse(i, this.state.currentChapter);
+            });
+            grid.appendChild(btn);
+        }
+
+        this.openModal('verseModal');
     }
 
     // ================================
@@ -670,879 +868,294 @@ class BibleApp {
     // ================================
 
     toggleSearch() {
-        this.searchContainer.classList.toggle('active');
-        if (this.searchContainer.classList.contains('active')) {
-            this.searchInput.focus();
+        const container = document.getElementById('searchContainer');
+        const input     = document.getElementById('searchInput');
+        if (!container) return;
+        const isActive = container.classList.toggle('active');
+        if (isActive) {
+            this.chromeSuspend = true;
+            input?.focus();
         } else {
-            this.searchInput.value = '';
-            this.searchResults.innerHTML = '';
-            this.searchSelectedIndex = -1;
-            this.searchResultItems = [];
+            this.chromeSuspend = false;
+            input && (input.value = '');
+            document.getElementById('searchResults').innerHTML = '';
         }
     }
 
     closeSearch() {
-        this.searchContainer.classList.remove('active');
-        this.searchInput.value = '';
-        this.searchResults.innerHTML = '';
-        this.searchSelectedIndex = -1;
-        this.searchResultItems = [];
+        const container = document.getElementById('searchContainer');
+        const input     = document.getElementById('searchInput');
+        if (!container) return;
+        container.classList.remove('active');
+        this.chromeSuspend = false;
+        if (input) input.value = '';
+        const resultsEl = document.getElementById('searchResults');
+        if (resultsEl) resultsEl.innerHTML = '';
     }
 
-    handleSearch(query) {
+    handleSearchInput(e) {
+        const query = e.target.value.trim();
         clearTimeout(this.searchTimeout);
-        this.searchLastQuery = query;
         this.searchPage = 1;
+        this.searchLastQuery = query;
+        this.searchHasMore = false;
         this.currentSearchResults = [];
+        this.searchSelectedIndex = -1;
 
-        if (!query.trim()) {
-            this.searchResults.innerHTML = '';
-            this.searchSelectedIndex = -1;
-            this.searchResultItems = null;
+        if (!query) {
+            document.getElementById('searchResults').innerHTML = '';
             return;
         }
 
-        this.searchTimeout = setTimeout(async () => {
-            if (this.isPassageReference(query)) {
-                await this.handlePassageReference(query);
-            } else {
-                this.searchPage = 1;
-                await this.performKeywordSearch(query, false);
+        this.searchTimeout = setTimeout(() => this.performSearch(query, 1), 300);
+    }
+
+    async performSearch(query, page = 1) {
+        const resultsEl = document.getElementById('searchResults');
+        if (!resultsEl) return;
+
+        if (page === 1) {
+            resultsEl.innerHTML = '<div class="search-loading">Searching...</div>';
+        } else {
+            const loadMore = resultsEl.querySelector('.search-load-more');
+            if (loadMore) loadMore.remove();
+            const loadingMore = document.createElement('div');
+            loadingMore.className = 'search-loading';
+            loadingMore.textContent = 'Loading more...';
+            resultsEl.appendChild(loadingMore);
+        }
+
+        const data = await this.bibleApi.searchPassages(query, page);
+
+        if (page === 1) resultsEl.innerHTML = '';
+        else {
+            const loadingEl = resultsEl.querySelector('.search-loading');
+            if (loadingEl) loadingEl.remove();
+        }
+
+        if (!data || data.results.length === 0) {
+            if (page === 1) resultsEl.innerHTML = '<div class="no-results">No results found.</div>';
+            return;
+        }
+
+        this.currentSearchResults.push(...data.results);
+        this.searchHasMore = this.currentSearchResults.length < data.total_results;
+        this.searchPage = page;
+
+        const refMap = this.buildReferenceMap(data.results);
+        this.renderSearchResults(resultsEl, refMap, page > 1);
+
+        if (this.searchHasMore) {
+            const loadMoreBtn = document.createElement('button');
+            loadMoreBtn.className = 'search-load-more';
+            loadMoreBtn.textContent = `Load more (${data.total_results - this.currentSearchResults.length} remaining)`;
+            loadMoreBtn.addEventListener('click', () => {
+                this.performSearch(this.searchLastQuery, this.searchPage + 1);
+            });
+            resultsEl.appendChild(loadMoreBtn);
+        }
+
+        this.searchResultItems = resultsEl.querySelectorAll('.search-result-item');
+    }
+
+    buildReferenceMap(results) {
+        const map = new Map();
+        for (const r of results) {
+            if (!map.has(r.book)) map.set(r.book, new Map());
+            const bookMap = map.get(r.book);
+            if (!bookMap.has(r.chapter)) bookMap.set(r.chapter, []);
+            bookMap.get(r.chapter).push(r);
+        }
+        return map;
+    }
+
+    renderSearchResults(container, refMap, append = false) {
+        for (const [book, chapterMap] of refMap) {
+            const testament = this.getTestament(book);
+            if (!testament) continue;
+
+            let testamentSection = container.querySelector(`[data-testament="${testament}"]`);
+            if (!testamentSection) {
+                testamentSection = document.createElement('div');
+                testamentSection.className = 'search-testament';
+                testamentSection.setAttribute('data-testament', testament);
+
+                const testamentHeader = document.createElement('button');
+                testamentHeader.className = 'search-testament-header';
+                const isExpanded = this.searchExpandedTestaments.has(testament);
+                testamentHeader.innerHTML = `
+                    <span>${testament}</span>
+                    <svg class="chevron ${isExpanded ? 'open' : ''}" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>`;
+                testamentHeader.addEventListener('click', () => {
+                    this.searchExpandedTestaments.has(testament)
+                        ? this.searchExpandedTestaments.delete(testament)
+                        : this.searchExpandedTestaments.add(testament);
+                    testamentHeader.querySelector('.chevron').classList.toggle('open');
+                    booksList.classList.toggle('collapsed');
+                });
+
+                const booksList = document.createElement('div');
+                booksList.className = `search-books-list ${isExpanded ? '' : 'collapsed'}`;
+                testamentSection.appendChild(testamentHeader);
+                testamentSection.appendChild(booksList);
+                container.appendChild(testamentSection);
             }
-        }, 300);
+
+            const booksList = testamentSection.querySelector('.search-books-list');
+
+            for (const [chapter, verses] of chapterMap) {
+                const bookKey = `${book}-${chapter}`;
+                let bookSection = booksList.querySelector(`[data-book-key="${bookKey}"]`);
+                if (!bookSection) {
+                    bookSection = document.createElement('div');
+                    bookSection.className = 'search-book';
+                    bookSection.setAttribute('data-book-key', bookKey);
+
+                    const bookHeader = document.createElement('button');
+                    bookHeader.className = 'search-book-header';
+                    const isExpanded = this.searchExpandedBooks.has(bookKey);
+                    bookHeader.innerHTML = `
+                        <span>${this.getDisplayName(book)} ${chapter}</span>
+                        <svg class="chevron ${isExpanded ? 'open' : ''}" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>`;
+                    bookHeader.addEventListener('click', () => {
+                        this.searchExpandedBooks.has(bookKey)
+                            ? this.searchExpandedBooks.delete(bookKey)
+                            : this.searchExpandedBooks.add(bookKey);
+                        bookHeader.querySelector('.chevron').classList.toggle('open');
+                        verseList.classList.toggle('collapsed');
+                    });
+
+                    const verseList = document.createElement('div');
+                    verseList.className = `search-verse-list ${isExpanded ? '' : 'collapsed'}`;
+
+                    bookSection.appendChild(bookHeader);
+                    bookSection.appendChild(verseList);
+                    booksList.appendChild(bookSection);
+                }
+
+                const verseList = bookSection.querySelector('.search-verse-list');
+
+                for (const result of verses) {
+                    const item = document.createElement('button');
+                    item.className = 'search-result-item';
+                    item.setAttribute('data-book', result.book);
+                    item.setAttribute('data-chapter', result.chapter);
+                    item.setAttribute('data-verse', result.verse);
+                    item.innerHTML = `
+                        <span class="result-ref">${this.getDisplayName(result.book)} ${result.chapter}:${result.verse}</span>
+                        <span class="result-text">${result.text}</span>`;
+                    item.addEventListener('click', () => {
+                        this.closeSearch();
+                        this.loadPassage(result.book, result.chapter, result.verse);
+                    });
+                    verseList.appendChild(item);
+                }
+            }
+        }
     }
 
     handleSearchKeydown(e) {
-        if (e.key === 'Escape') {
-            e.preventDefault();
-            this.closeSearch();
-            return;
-        }
-
-        if (!this.searchResultItems || this.searchResultItems.length === 0) return;
+        const resultsEl = document.getElementById('searchResults');
+        if (!resultsEl) return;
+        const items = [...resultsEl.querySelectorAll('.search-result-item')];
+        if (!items.length) return;
 
         if (e.key === 'ArrowDown') {
             e.preventDefault();
-            this.setSearchSelectedIndex(Math.min(this.searchSelectedIndex + 1, this.searchResultItems.length - 1), true);
-            return;
-        }
-
-        if (e.key === 'ArrowUp') {
+            this.searchSelectedIndex = Math.min(this.searchSelectedIndex + 1, items.length - 1);
+        } else if (e.key === 'ArrowUp') {
             e.preventDefault();
-            this.setSearchSelectedIndex(Math.max(this.searchSelectedIndex - 1, 0), true);
-            return;
-        }
-
-        if (e.key === 'Enter') {
+            this.searchSelectedIndex = Math.max(this.searchSelectedIndex - 1, 0);
+        } else if (e.key === 'Enter' && this.searchSelectedIndex >= 0) {
             e.preventDefault();
-            this.activateSelectedSearchResult();
-        }
-    }
-
-    refreshSearchResultItems(autoSelectFirst = false) {
-        this.searchResultItems = Array.from(
-            this.searchResults.querySelectorAll('.search-result-item')
-        );
-
-        if (!this.searchResultItems.length) {
-            this.searchSelectedIndex = -1;
+            items[this.searchSelectedIndex]?.click();
+            return;
+        } else {
             return;
         }
 
-        if (autoSelectFirst) {
-            this.setSearchSelectedIndex(0, false);
-        } else {
-            if (this.searchSelectedIndex < 0 || this.searchSelectedIndex >= this.searchResultItems.length) {
-                this.searchSelectedIndex = -1;
-            } else {
-                this.setSearchSelectedIndex(this.searchSelectedIndex, false);
-            }
-        }
-    }
-
-    setSearchSelectedIndex(index, scrollIntoView = false) {
-        if (!this.searchResultItems || this.searchResultItems.length === 0) {
-            this.searchSelectedIndex = -1;
-            return;
-        }
-
-        const clamped = Math.max(0, Math.min(index, this.searchResultItems.length - 1));
-        this.searchSelectedIndex = clamped;
-
-        this.searchResultItems.forEach((el, i) => {
-            el.classList.toggle('selected', i === clamped);
-        });
-
-        if (scrollIntoView) {
-            this.searchResultItems[clamped]?.scrollIntoView({ block: 'nearest' });
-        }
-    }
-
-    activateSelectedSearchResult() {
-        if (!this.searchResultItems || this.searchSelectedIndex < 0 || this.searchSelectedIndex >= this.searchResultItems.length) return;
-        this.searchResultItems[this.searchSelectedIndex]?.click();
-    }
-
-    isPassageReference(query) {
-        const patterns = [
-            /^[1-3]?\s*[a-z]+\s+\d+/i,
-            /^[1-3]?\s*[a-z]+\s+\d+:\d+/i,
-        ];
-        return patterns.some((p) => p.test(query.trim()));
-    }
-
-    async handlePassageReference(reference) {
-        const data = await this.bibleApi.fetchPassage(reference);
-
-        if (data && data.passages && data.passages.length > 0) {
-            const safeCanonical = String(data.canonical || '').replace(/"/g, '&quot;');
-            const preview = this.stripHTML(data.passages[0]).substring(0, 200);
-
-            this.searchResults.innerHTML =
-                '<div class="search-result-item" data-reference="' + safeCanonical + '">' +
-                '<div class="search-result-reference">' + safeCanonical + '</div>' +
-                '<div class="search-result-content">' + preview + '...</div>' +
-                '</div>';
-
-            const item = this.searchResults.querySelector('.search-result-item');
-            if (item) {
-                item.addEventListener('click', async () => {
-                    await this.loadPassageFromReference(item.dataset.reference);
-                    this.closeSearch();
-                });
-            }
-
-            this.refreshSearchResultItems(true);
-        } else {
-            this.searchResults.innerHTML = '<div class="search-no-results">No passage found</div>';
-            this.refreshSearchResultItems(false);
-        }
-    }
-
-    async fetchAllSearchResults(query) {
-        this.currentSearchResults = [];
-        this.searchPage = 1;
-
-        while (true) {
-            const data = await this.bibleApi.searchPassages(query, this.searchPage);
-            if (!data || !data.results || !data.results.length) break;
-
-            this.currentSearchResults = this.currentSearchResults.concat(data.results);
-
-            const total = data.total_results ?? data.total;
-            const pageSize = data.page_size ?? 100;
-            const totalPages = total && pageSize ? Math.ceil(total / pageSize) : 1;
-
-            if (this.searchPage >= totalPages || this.searchPage >= 10) break;
-
-            this.searchPage += 1;
-        }
-
-        return this.currentSearchResults;
-    }
-
-    groupSearchResultsByCanon(results) {
-        if (!Array.isArray(results)) return [];
-
-        const otBooks = Object.keys(this.bibleBooks['Old Testament']);
-        const ntBooks = Object.keys(this.bibleBooks['New Testament']);
-        const otGroups = new Map();
-        const ntGroups = new Map();
-
-        for (const result of results) {
-            const parsed = this.parseReference?.(result.reference);
-            if (!parsed) continue;
-            const { book } = parsed;
-            const testament = this.getTestament?.(book);
-
-            if (testament === 'Old Testament') {
-                if (!otGroups.has(book)) otGroups.set(book, []);
-                otGroups.get(book).push(result);
-            } else if (testament === 'New Testament') {
-                if (!ntGroups.has(book)) ntGroups.set(book, []);
-                ntGroups.get(book).push(result);
-            }
-        }
-
-        const grouped = [];
-
-        if (otGroups.size) {
-            grouped.push({
-                heading: 'Old Testament',
-                books: otBooks.filter((b) => otGroups.has(b)).map((book) => ({ book, results: otGroups.get(book) })),
-            });
-        }
-
-        if (ntGroups.size) {
-            grouped.push({
-                heading: 'New Testament',
-                books: ntBooks.filter((b) => ntGroups.has(b)).map((book) => ({ book, results: ntGroups.get(book) })),
-            });
-        }
-
-        return grouped;
-    }
-
-    async performKeywordSearch(query) {
-        this.searchResults.innerHTML = '<div class="loading" style="min-height: 100px">Searching...</div>';
-        this.searchSelectedIndex = -1;
-        this.searchResultItems = [];
-
-        this.searchExpandedTestaments?.clear();
-        this.searchExpandedBooks?.clear();
-
-        const allResults = await this.fetchAllSearchResults(query);
-
-        if (allResults && allResults.length > 0) {
-            this.displaySearchResults(allResults, query);
-        } else {
-            this.searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
-            this.refreshSearchResultItems(false);
-        }
-    }
-
-    displaySearchResults(results, query) {
-        const groups = this.groupSearchResultsByCanon(results);
-
-        if (!groups.length) {
-            this.searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
-            this.refreshSearchResultItems(false);
-            return;
-        }
-
-        if (this.searchExpandedTestaments.size === 0 && this.searchExpandedBooks.size === 0) {
-            const firstGroup = groups[0];
-            if (firstGroup) {
-                this.searchExpandedTestaments.add(firstGroup.heading);
-                const firstBook = firstGroup.books && firstGroup.books[0];
-                if (firstBook) this.searchExpandedBooks.add(firstBook.book);
-            }
-        }
-
-        const esc = (str) =>
-            String(str || '')
-                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-
-        const parts = [];
-
-        for (const group of groups) {
-            const testName = group.heading;
-            const testamentExpanded = this.searchExpandedTestaments.has(testName);
-
-            parts.push(`
-      <div class="search-group-heading" data-testament="${esc(testName)}">
-        <span class="search-group-title">${esc(testName)}</span>
-        <span class="search-group-chevron ${testamentExpanded ? 'expanded' : ''}">&#9662;</span>
-      </div>
-    `);
-
-            if (!testamentExpanded) continue;
-
-            for (const bookBlock of group.books) {
-                const bookName = bookBlock.book;
-                const bookExpanded = this.searchExpandedBooks.has(bookName);
-
-                parts.push(`
-        <div class="search-book-heading" data-book="${esc(bookName)}">
-          <span class="search-book-title">${esc(this.getDisplayName(bookName))}</span>
-          <span class="search-book-chevron ${bookExpanded ? 'expanded' : ''}">&#9662;</span>
-        </div>
-      `);
-
-                if (!bookExpanded) continue;
-
-                for (const result of bookBlock.results) {
-                    let highlighted = result.content;
-                    try {
-                        highlighted = this.highlightSearchTerm(result.content, query);
-                    } catch (err) {
-                        console.warn('highlight failed', err);
-                    }
-
-                    parts.push(`
-          <div class="search-result-item" data-reference="${esc(result.reference)}">
-            <div class="search-result-reference">${esc(result.reference)}</div>
-            <div class="search-result-content">${highlighted}</div>
-          </div>
-        `);
-                }
-            }
-        }
-
-        this.searchResults.innerHTML = parts.join('');
-
-        this.searchResults.querySelectorAll('.search-group-heading').forEach((el) => {
-            el.addEventListener('click', () => {
-                const testament = el.getAttribute('data-testament');
-                if (!testament) return;
-                if (this.searchExpandedTestaments.has(testament)) {
-                    this.searchExpandedTestaments.delete(testament);
-                } else {
-                    this.searchExpandedTestaments.add(testament);
-                }
-                this.displaySearchResults(results, query);
-            });
-        });
-
-        this.searchResults.querySelectorAll('.search-book-heading').forEach((el) => {
-            el.addEventListener('click', () => {
-                const book = el.getAttribute('data-book');
-                if (!book) return;
-                if (this.searchExpandedBooks.has(book)) {
-                    this.searchExpandedBooks.delete(book);
-                } else {
-                    this.searchExpandedBooks.add(book);
-                }
-                this.displaySearchResults(results, query);
-            });
-        });
-
-        this.searchResults.querySelectorAll('.search-result-item').forEach((item) => {
-            item.addEventListener('click', async () => {
-                await this.loadPassageFromReference(item.dataset.reference);
-                this.closeSearch();
-            });
-        });
-
-        this.refreshSearchResultItems(true);
-    }
-
-    parseReference(reference) {
-        const cleaned = String(reference || '').trim();
-        const match = cleaned.match(/^(.+?)\s+(\d+)(?::(\d+))?$/);
-        if (!match) return null;
-
-        const book = match[1].trim();
-        const chapter = parseInt(match[2], 10);
-        const verse = match[3] ? parseInt(match[3], 10) : null;
-
-        if (!book || !Number.isFinite(chapter)) return null;
-        if (verse !== null && !Number.isFinite(verse)) return null;
-
-        return { book, chapter, verse };
-    }
-
-    async loadPassageFromReference(reference) {
-        const parsed = this.parseReference(reference);
-        if (!parsed) return;
-
-        const { book, chapter, verse } = parsed;
-        this.state.selectedVerse = verse || null;
-        await this.loadPassage(book, chapter);
-
-        if (verse) this.scrollToVerse(verse);
-    }
-
-    escapeRegExp(str) {
-        return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
-
-    highlightSearchTerm(text, term) {
-        if (text == null) return '';
-        const safeText = String(text);
-        const rawTerm = term == null ? '' : String(term).trim();
-        if (!rawTerm) return safeText;
-
-        try {
-            const regex = new RegExp(this.escapeRegExp(rawTerm), 'gi');
-            return safeText.replace(regex, (match) => `<strong>${match}</strong>`);
-        } catch (err) {
-            console.warn('highlightSearchTerm failed', err);
-            return safeText;
-        }
-    }
-
-    stripHTML(html) {
-        const tmp = document.createElement('div');
-        tmp.innerHTML = html;
-        return tmp.textContent || tmp.innerText || '';
+        items.forEach((item, i) => item.classList.toggle('selected', i === this.searchSelectedIndex));
+        items[this.searchSelectedIndex]?.scrollIntoView({ block: 'nearest' });
     }
 
     // ================================
-    // Modals
-    // ================================
-
-    openModal(modal) {
-        if (!modal) return;
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-
-    closeModal(modal) {
-        if (!modal) return;
-        if (modal === this.settingsModal || modal === this.referencesModal) {
-            const content = modal.querySelector('.modal-content');
-            content.style.animation = 'slideDownToBottom 250ms ease';
-            setTimeout(() => {
-                modal.classList.remove('active');
-                document.body.style.overflow = '';
-                content.style.animation = '';
-            }, 250);
-        } else {
-            modal.classList.remove('active');
-            document.body.style.overflow = '';
-        }
-    }
-
-    openBookModal() {
-        this.populateBookModal();
-        this.openModal(this.bookModal);
-    }
-
-    populateBookModal() {
-        const createBookButton = (book) => {
-            const btn = document.createElement('button');
-            btn.className = 'book-item';
-            btn.textContent = this.bookAbbreviations[book] || book;
-            btn.addEventListener('click', () => {
-                this.state.selectedVerse = null;
-                this.loadPassage(book, 1);
-                this.closeModal(this.bookModal);
-            });
-            return btn;
-        };
-
-        this.oldTestamentBooks.innerHTML = '';
-        Object.keys(this.bibleBooks['Old Testament']).forEach((book) => {
-            this.oldTestamentBooks.appendChild(createBookButton(book));
-        });
-
-        this.newTestamentBooks.innerHTML = '';
-        Object.keys(this.bibleBooks['New Testament']).forEach((book) => {
-            this.newTestamentBooks.appendChild(createBookButton(book));
-        });
-    }
-
-    openChapterModal() {
-        this.populateChapterModal();
-        this.openModal(this.chapterModal);
-    }
-
-    populateChapterModal() {
-        this.chapterModalBook.textContent = this.getDisplayName(this.state.currentBook);
-        this.chapterGrid.innerHTML = '';
-
-        const chapterCount = this.getChapterCount(this.state.currentBook);
-
-        for (let i = 1; i <= chapterCount; i++) {
-            const btn = document.createElement('button');
-            btn.className = 'chapter-item';
-            btn.textContent = i;
-            btn.addEventListener('click', () => {
-                this.state.selectedVerse = null;
-                this.loadPassage(this.state.currentBook, i);
-                this.closeModal(this.chapterModal);
-            });
-            this.chapterGrid.appendChild(btn);
-        }
-    }
-
-    openVerseModal() {
-        this.populateVerseModal();
-        this.openModal(this.verseModal);
-    }
-
-    populateVerseModal() {
-        const book = this.state.currentBook;
-        const displayBook = book === 'Psalm'
-            ? `Psalm ${this.state.currentChapter}`
-            : `${this.getDisplayName(book)} ${this.state.currentChapter}`;
-        this.verseModalBook.textContent = displayBook;
-        this.verseGrid.innerHTML = '';
-
-        const verseCount = this.getCurrentVerseCount();
-
-        if (verseCount === 0) {
-            this.verseGrid.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-secondary);">No verses found in current passage</p>';
-            return;
-        }
-
-        for (let i = 1; i <= verseCount; i++) {
-            const btn = document.createElement('button');
-            btn.className = 'chapter-item';
-            btn.textContent = i;
-            btn.addEventListener('click', () => {
-                this.scrollToVerse(i);
-                this.closeModal(this.verseModal);
-            });
-            this.verseGrid.appendChild(btn);
-        }
-    }
-
-    getCurrentVerseCount() {
-        return this.passageText.querySelectorAll('.verse-num').length;
-    }
-
-    scrollToVerse(verseNumber) {
-        scrollVerse(this, verseNumber);
-    }
-
-    navigateToNextVerse() {
-        const currentVerse = this.state.selectedVerse || 1;
-        const maxVerse = this.getCurrentVerseCount();
-
-        if (currentVerse < maxVerse) {
-            this.scrollToVerse(currentVerse + 1);
-        } else {
-            this.navigateChapter(1);
-        }
-    }
-
-    navigateToPreviousVerse() {
-        const currentVerse = this.state.selectedVerse || 1;
-
-        if (currentVerse > 1) {
-            this.scrollToVerse(currentVerse - 1);
-        } else {
-            const books = this.getAllBooks();
-            const currentBookIndex = books.indexOf(this.state.currentBook);
-            const isFirstChapter = this.state.currentChapter === 1;
-
-            if (currentBookIndex === 0 && isFirstChapter) return;
-
-            let newChapter = this.state.currentChapter - 1;
-            let newBook = this.state.currentBook;
-
-            if (newChapter < 1) {
-                newBook = books[currentBookIndex - 1];
-                newChapter = this.getChapterCount(newBook);
-            }
-
-            this.state.selectedVerse = null;
-            this.loadPassage(newBook, newChapter);
-        }
-    }
-
-    applyVerseGlow() {
-        glowVerse(this);
-    }
-
-    // ================================
-    // Settings
-    // ================================
-
-    checkApiKey() {
-        setTimeout(() => {
-            this.showToast('Sign in to sync your reading position across devices.');
-        }, 500);
-    }
-
-    loadLocalSettings() {
-        this.state.fontSize             = parseInt(localStorage.getItem('fontSize') || '18', 10);
-        this.state.showVerseNumbers     = readBool('showVerseNumbers',   true);
-        this.state.showHeadings         = readBool('showHeadings',       true);
-        this.state.showFootnotes        = readBool('showFootnotes',      false);
-        this.state.showCrossReferences  = readBool('showCrossReferences', false);
-        this.state.verseByVerse         = readBool('verseByVerse',       false);
-        this.state.lightMode            = readBool('lightMode',          false);
-        this.state.colorTheme  = localStorage.getItem('colorTheme')  || 'dracula';
-        this.state.translation = normalizeTranslation(localStorage.getItem('translation') || 'ESV');
-    }
-
-    applySettings() {
-        const themeSelector = document.getElementById('themeSelector');
-        if (themeSelector && this.state.colorTheme) {
-            themeSelector.value = this.state.colorTheme;
-        }
-        changeColorTheme(this, this.state.colorTheme || 'dracula');
-
-        if (this.translationSelector && this.state.translation) {
-            this.translationSelector.value = this.state.translation;
-        }
-        this.bibleApi.setTranslation(this.state.translation || 'ESV');
-
-        document.body.classList.toggle('light-mode', !!this.state.lightMode);
-        const lightModeToggle = document.getElementById('lightModeToggle');
-        if (lightModeToggle) lightModeToggle.checked = !!this.state.lightMode;
-        updateThemeIcon(this.state.lightMode);
-
-        document.body.classList.toggle('hide-verse-numbers', !this.state.showVerseNumbers);
-        if (this.verseNumbersToggle) this.verseNumbersToggle.checked = !!this.state.showVerseNumbers;
-
-        if (this.headingsToggle) this.headingsToggle.checked = !!this.state.showHeadings;
-        if (this.footnotesToggle) this.footnotesToggle.checked = !!this.state.showFootnotes;
-        if (this.crossReferencesToggle) this.crossReferencesToggle.checked = !!this.state.showCrossReferences;
-
-        if (this.passageText) {
-            this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
-        }
-        if (this.verseByVerseToggle) this.verseByVerseToggle.checked = !!this.state.verseByVerse;
-
-        const fontSize = this.state.fontSize || 18;
-        if (this.fontSizeSlider) this.fontSizeSlider.value = fontSize;
-        if (this.fontSizeValue) this.fontSizeValue.textContent = `${fontSize}px`;
-        if (this.passageText) this.passageText.style.fontSize = `${fontSize}px`;
-
-        this.updateCopyright();
-    }
-
-    async toggleSetting(setting) {
-        const toggleMap = {
-            showVerseNumbers:    'verseNumbersToggle',
-            showHeadings:        'headingsToggle',
-            showFootnotes:       'footnotesToggle',
-            showCrossReferences: 'crossReferencesToggle',
-        };
-        const toggleElement = this[toggleMap[setting]];
-        if (!toggleElement) return;
-        this.state[setting] = toggleElement.checked;
-
-        if (this.currentUser) {
-            await this.database.ref(`users/${this.currentUser.uid}/settings/${setting}`).set(toggleElement.checked);
-        } else {
-            localStorage.setItem(setting, String(toggleElement.checked));
-        }
-
-        // Re-render the current passage so heading visibility updates immediately.
-        if (setting === 'showHeadings') {
-            await this.loadPassage(this.state.currentBook, this.state.currentChapter);
-            return;
-        }
-
-        this.applySettings();
-    }
-
-    async toggleVerseByVerse() {
-        this.state.verseByVerse = this.verseByVerseToggle.checked;
-        if (this.currentUser) {
-            await this.database.ref(`users/${this.currentUser.uid}/settings/verseByVerse`).set(this.state.verseByVerse);
-        } else {
-            localStorage.setItem('verseByVerse', String(this.state.verseByVerse));
-        }
-        this.passageText.classList.toggle('verse-by-verse', this.state.verseByVerse);
-    }
-
-    async updateFontSize(size) {
-        this.state.fontSize = parseInt(size, 10);
-        this.fontSizeValue.textContent = `${size}px`;
-        this.passageText.style.fontSize = `${size}px`;
-        if (this.currentUser) {
-            await this.database.ref(`users/${this.currentUser.uid}/settings/fontSize`).set(parseInt(size, 10));
-        } else {
-            localStorage.setItem('fontSize', size);
-        }
-    }
-
-    async changeTranslation(translation) {
-        this.state.translation = translation;
-        this.bibleApi.setTranslation(translation);
-
-        if (this.currentUser) {
-            await this.database.ref(`users/${this.currentUser.uid}/settings/translation`).set(translation);
-        } else {
-            localStorage.setItem('translation', translation);
-        }
-
-        this.updateCopyright();
-        await this.loadPassage(this.state.currentBook, this.state.currentChapter);
-    }
-
-    updateCopyright() {
-        if (this.copyright) {
-            this.copyright.textContent = this._copyrightMap[this.state.translation] || '';
-        }
-    }
-
-    // ================================
-    // Utilities
+    // Utility
     // ================================
 
     copyPassage() {
-        const textContent = this.stripHTML(this.passageText.innerHTML);
-        const reference = this.passageTitle.textContent;
-        const fullText = `${reference}\n\n${textContent}\n\n${this.copyright?.textContent ?? ''}`;
-
-        navigator.clipboard.writeText(fullText)
-            .then(() => this.showToast('Passage copied to clipboard!'))
-            .catch((err) => {
-                console.error('Failed to copy:', err);
-                this.showToast('Failed to copy passage');
-            });
-    }
-
-    showError(message) {
-        this.passageText.innerHTML = `<div class="error">${message}</div>`;
+        const passageText = document.getElementById('passageText');
+        if (!passageText) return;
+        const text = passageText.innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            this.showToast('Passage copied to clipboard.');
+        }).catch(() => {
+            this.showToast('Failed to copy passage.');
+        });
     }
 
     showToast(message) {
-        if (!this.toast) return;
-        this.toast.textContent = message;
-        this.toast.classList.add('show');
-        setTimeout(() => this.toast.classList.remove('show'), 3000);
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        toast.innerHTML = '';
+        const span = document.createElement('span');
+        span.textContent = message;
+        toast.appendChild(span);
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 4000);
     }
 
     handleKeyboardShortcuts(e) {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-            e.preventDefault();
-            this.toggleSearch();
-        }
+        const tag = document.activeElement?.tagName?.toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+        const modalOpen = !!document.querySelector('.modal.active');
+        const searchOpen = !!document.getElementById('searchContainer')?.classList.contains('active');
 
         if (e.key === 'Escape') {
-            if (this.bookModal?.classList.contains('active'))       this.closeModal(this.bookModal);
-            if (this.chapterModal?.classList.contains('active'))    this.closeModal(this.chapterModal);
-            if (this.helpModal?.classList.contains('active'))       this.closeModal(this.helpModal);
-            if (this.settingsModal?.classList.contains('active'))   this.closeModal(this.settingsModal);
-            if (this.loginModal?.classList.contains('active'))      this.closeModal(this.loginModal);
-            if (this.signupModal?.classList.contains('active'))     this.closeModal(this.signupModal);
-            if (this.userMenuModal?.classList.contains('active'))   this.closeModal(this.userMenuModal);
-            if (this.searchContainer?.classList.contains('active')) this.closeSearch();
-            if (this.verseModal?.classList.contains('active'))      this.closeModal(this.verseModal);
-            if (this.referencesModal?.classList.contains('active')) this.closeModal(this.referencesModal);
+            if (searchOpen) { this.closeSearch(); return; }
+            const active = document.querySelector('.modal.active');
+            if (active) { active.classList.remove('active'); this.chromeSuspend = false; }
+            return;
         }
 
-        if (!document.querySelector('.modal.active') && !this.searchContainer?.classList.contains('active')) {
-            if (e.key === 'ArrowLeft' || e.key === 'h') {
+        if (e.ctrlKey && e.key === 'k') { e.preventDefault(); this.toggleSearch(); return; }
+        if (modalOpen || searchOpen) return;
+
+        switch (e.key) {
+            case 'ArrowLeft':
+            case 'h': this.navigateChapter(-1); break;
+            case 'ArrowRight':
+            case 'l': this.navigateChapter(1); break;
+            case 'ArrowUp':
+            case 'k': {
                 e.preventDefault();
-                this.navigateChapter(-1);
-            } else if (e.key === 'ArrowRight' || e.key === 'l') {
+                const prev = Math.max(1, this.state.currentVerse - 1);
+                this.state.currentVerse = prev;
+                document.getElementById('currentVerse').textContent = prev;
+                scrollVerse(prev, this.state.currentChapter);
+                glowVerse(prev, this.state.currentChapter);
+                break;
+            }
+            case 'ArrowDown':
+            case 'j': {
                 e.preventDefault();
-                this.navigateChapter(1);
-            } else if (e.key === 'ArrowUp' || e.key === 'k') {
-                e.preventDefault();
-                this.navigateToPreviousVerse();
-            } else if (e.key === 'ArrowDown' || e.key === 'j') {
-                e.preventDefault();
-                this.navigateToNextVerse();
-            } else if (e.key === 'v') {
-                e.preventDefault();
-                this.verseByVerseToggle.checked = !this.verseByVerseToggle.checked;
-                this.toggleVerseByVerse();
-            else if (e.key === 's') {
-                e.preventDefault();
-                if (this.headingsToggle) {
-                this.headingsToggle.checked = !this.headingsToggle.checked;
-                this.toggleSetting('showHeadings');
+                const next = this.state.currentVerse + 1;
+                this.state.currentVerse = next;
+                document.getElementById('currentVerse').textContent = next;
+                scrollVerse(next, this.state.currentChapter);
+                glowVerse(next, this.state.currentChapter);
+                break;
+            }
+            case 'v': this.state.verseByVerse = !this.state.verseByVerse;
+                this.loadPassage(this.state.currentBook, this.state.currentChapter, this.state.currentVerse);
+                break;
+        }
     }
 }
-            }
-        }
-    }
-
-    // ================================
-    // Firebase Authentication
-    // ================================
-
-    handleUserButtonClick() {
-        if (this.currentUser) {
-            document.getElementById('userEmail').textContent = this.currentUser.email;
-            const isLight = document.body.classList.contains('light-mode');
-            const colorTheme = this.state?.colorTheme || localStorage.getItem('colorTheme') || 'dracula';
-            const themeNameMap = {
-                dracula: isLight ? 'Alucard (Light)' : 'Dracula (Dark)',
-                steel:   `Steel (${isLight ? 'Light' : 'Dark'})`,
-                onyx:    `Onyx (${isLight ? 'Light' : 'Dark'})`,
-                reader:  `Reader (${isLight ? 'Parchment' : 'Night'})`,
-            };
-            document.getElementById('userTheme').textContent =
-                themeNameMap[colorTheme] || (isLight ? 'Alucard (Light)' : 'Dracula (Dark)');
-            this.openModal(this.userMenuModal);
-        } else {
-            this.openModal(this.loginModal);
-        }
-    }
-
-    async handleLogin() {
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-
-        if (!email || !password) {
-            this.showToast('Please enter valid credentials');
-            return;
-        }
-
-        try {
-            await this.auth.signInWithEmailAndPassword(email, password);
-            this.showToast('Signed in successfully!');
-            this.closeModal(this.loginModal);
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-        } catch (error) {
-            console.error('Login error:', error);
-            if (error.code === 'auth/user-not-found') {
-                if (confirm('No account found with this email. Sign up instead?')) {
-                    this.closeModal(this.loginModal);
-                    this.openModal(this.signupModal);
-                    document.getElementById('signupEmail').value = email;
-                }
-            } else if (error.code === 'auth/wrong-password') {
-                this.showToast('Incorrect password');
-            } else {
-                this.showToast(`Login failed: ${error.message}`);
-            }
-        }
-    }
-
-    async handleSignup() {
-        const email = document.getElementById('signupEmail').value;
-        const password = document.getElementById('signupPassword').value;
-
-        if (!email || !password) {
-            this.showToast('Please fill in all fields');
-            return;
-        }
-
-        if (password.length < 6) {
-            this.showToast('Password must be at least 6 characters');
-            return;
-        }
-
-        try {
-            const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
-            const user = userCredential.user;
-
-            await this.database.ref(`users/${user.uid}/settings`).set({
-                fontSize: this.state.fontSize,
-                showVerseNumbers: this.state.showVerseNumbers,
-                showHeadings: this.state.showHeadings,
-                showFootnotes: this.state.showFootnotes,
-                showCrossReferences: this.state.showCrossReferences,
-                verseByVerse: this.state.verseByVerse,
-                colorTheme: this.state.colorTheme,
-                lightMode: this.state.lightMode,
-                translation: this.state.translation || 'ESV',
-            });
-
-            this.showToast('Account created successfully!');
-            this.closeModal(this.signupModal);
-        } catch (error) {
-            console.error('Signup error:', error);
-            if (error.code === 'auth/email-already-in-use') {
-                this.showToast('An account with this email already exists');
-            } else {
-                this.showToast(`Signup failed: ${error.message}`);
-            }
-        }
-    }
-
-    async handleLogout() {
-        try {
-            await this.auth.signOut();
-            this.showToast('Signed out successfully');
-            this.closeModal(this.userMenuModal);
-        } catch (error) {
-            console.error('Logout error:', error);
-            this.showToast('Failed to sign out');
-        }
-    }
-
-    async loadUserData() {
-        if (!this.currentUser) return;
-        const data = await loadUserDataFromFirebase(this.currentUser.uid);
-        if (!data) return;
-        const s = data.settings;
-        this.state.fontSize             = s.fontSize;
-        this.state.showVerseNumbers     = s.showVerseNumbers;
-        this.state.showHeadings         = s.showHeadings;
-        this.state.showFootnotes        = s.showFootnotes;
-        this.state.showCrossReferences  = s.showCrossReferences;
-        this.state.verseByVerse         = s.verseByVerse;
-        this.state.colorTheme           = s.colorTheme;
-        this.state.lightMode            = s.lightMode;
-        this.state.translation          = normalizeTranslation(s.translation || 'ESV');
-    }
-}
-
 
 /* ─── Service Worker & Update Toast ─── */
 async function registerServiceWorker(appInstance) {
@@ -1593,33 +1206,24 @@ function showUpdateToast(appInstance) {
   setTimeout(() => toast.classList.remove('show'), 30000);
 }
 
-function initializeBibleApp() {
-    if (window.firebaseAuth && window.firebaseDatabase) {
-        new BibleApp();
-        return;
+// Wait for DOM + Firebase module to fully initialize before constructing the app.
+// Using a top-level async IIFE ensures the config/firebase-config.js module
+// (which performs async CDN imports) has fully resolved before BibleApp reads
+// window.firebaseAuth and window.firebaseDatabase.
+(async () => {
+    await new Promise(resolve => {
+        if (document.readyState !== 'loading') return resolve();
+        document.addEventListener('DOMContentLoaded', resolve, { once: true });
+    });
+
+    // Await the firebase config module so gstatic.com CDN imports finish
+    // and window.firebaseAuth / window.firebaseDatabase are set before
+    // BibleApp constructor runs.
+    try {
+        await import('./config/firebase-config.js');
+    } catch (err) {
+        console.error('Firebase config module failed to load:', err);
     }
 
-    let attempts = 0;
-    const maxAttempts = 50;
-    const retryDelayMs = 100;
-
-    const waitForFirebase = () => {
-        if (window.firebaseAuth && window.firebaseDatabase) {
-            new BibleApp();
-            return;
-        }
-
-        attempts += 1;
-        if (attempts >= maxAttempts) {
-            console.error('Firebase failed to initialize before app startup timeout.');
-            new BibleApp();
-            return;
-        }
-
-        window.setTimeout(waitForFirebase, retryDelayMs);
-    };
-
-    waitForFirebase();
-}
-
-document.addEventListener('DOMContentLoaded', initializeBibleApp);
+    new BibleApp();
+})();
