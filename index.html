@@ -5,18 +5,17 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>Bible Reader</title>
+	<meta name="build-id" content="cc0840de014a0c3f45b58594e7f1afcf1520e28c" />
 	<link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
-	<!-- Wrapper around Header + Navigation (for auto-hide on scroll) -->
 	<div id="topChrome" class="top-chrome">
 		<header class="header">
 			<div class="header-content">
-				<h1 class="logo">Bible Dev</h1>
+				<h1 class="logo">Lege Lux</h1>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggleBtn" title="Search (Ctrl+K)">
-						<!-- search icon svg -->
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 								d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -24,7 +23,6 @@
 					</button>
 
 					<button class="icon-btn" id="helpBtn" title="Help / Shortcuts">
-						<!-- question mark icon -->
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 								d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
@@ -33,12 +31,10 @@
 					</button>
 
 					<button class="icon-btn" id="themeToggleBtn" title="Toggle Light/Dark Mode">
-						<!-- sun/moon icon injected by JS -->
 						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"></svg>
 					</button>
 
 					<button class="icon-btn" id="settingsBtn" title="Settings">
-						<!-- gear icon -->
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 								d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
@@ -58,7 +54,6 @@
 			</div>
 		</header>
 
-		<!-- Navigation bar -->
 		<nav class="navigation">
 			<div class="nav-content">
 				<button id="prevChapterBtn" class="nav-btn">
@@ -104,7 +99,6 @@
 		</nav>
 	</div>
 
-	<!-- Search bar -->
 	<div id="searchContainer" class="search-container">
 		<div class="search-wrapper">
 			<input type="text" id="searchInput" class="search-input"
@@ -114,7 +108,6 @@
 		<div id="searchResults" class="search-results"></div>
 	</div>
 
-	<!-- Main passage area -->
 	<main class="main-content">
 		<div class="passage-container">
 			<div class="passage-header">
@@ -135,7 +128,6 @@
 		</div>
 	</main>
 
-	<!-- Book modal -->
 	<div id="bookModal" class="modal">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -155,7 +147,6 @@
 		</div>
 	</div>
 
-	<!-- Chapter modal -->
 	<div id="chapterModal" class="modal">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -168,7 +159,6 @@
 		</div>
 	</div>
 
-	<!-- Verse modal -->
 	<div id="verseModal" class="modal">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -181,7 +171,6 @@
 		</div>
 	</div>
 
-	<!-- Settings modal (bottom sheet) -->
 	<div id="settingsModal" class="modal">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -189,7 +178,6 @@
 				<button class="close-btn" id="closeSettingsModal">×</button>
 			</div>
 			<div class="modal-body">
-				<!-- Accordion Section 1: Display Options -->
 				<div class="accordion-section" data-section="display">
 					<button class="accordion-header" data-target="display">
 						<span class="accordion-title">Display Options</span>
@@ -235,11 +223,16 @@
 								<input type="range" id="fontSizeSlider" class="slider" min="12" max="32" value="18" />
 								<span id="fontSizeValue">18px</span>
 							</div>
+							<div class="setting-item">
+								<label for="translationSelector">Translation</label>
+								<!-- Options are populated dynamically from translations/index.json -->
+								<select id="translationSelector" class="input-field"></select>
+								<small class="help-text">Switch between available local translations.</small>
+							</div>
 						</div>
 					</div>
 				</div>
 
-				<!-- Accordion Section 2: Theme -->
 				<div class="accordion-section" data-section="theme">
 					<button class="accordion-header" data-target="theme">
 						<span class="accordion-title">Theme</span>
@@ -270,32 +263,6 @@
 					</div>
 				</div>
 
-				<!-- Accordion Section 3: API & Data -->
-				<div class="accordion-section" data-section="api">
-					<button class="accordion-header" data-target="api">
-						<span class="accordion-title">API &amp; Data</span>
-						<svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
-							stroke="currentColor" stroke-width="2">
-							<polyline points="6 9 12 15 18 9"></polyline>
-						</svg>
-					</button>
-					<div class="accordion-panel" data-panel="api">
-						<div class="settings-group">
-							<div class="setting-item">
-								<label>ESV API Key</label>
-								<input type="text" id="apiKeyInput" class="input-field"
-									placeholder="Enter your API key" />
-								<small class="help-text">
-									Get your free API key at
-									<a href="https://api.esv.org/account" target="_blank">api.esv.org/account</a>.
-								</small>
-							</div>
-							<button id="saveApiKeyBtn" class="primary-btn">Save API Key</button>
-						</div>
-					</div>
-				</div>
-
-				<!-- Accordion Section 4: Account -->
 				<div class="accordion-section" data-section="account">
 					<button class="accordion-header" data-target="account">
 						<span class="accordion-title">Account</span>
@@ -307,9 +274,7 @@
 					<div class="accordion-panel" data-panel="account">
 						<div class="settings-group">
 							<p class="help-text">
-								Account settings (email, theme, reading position) are automatically synced via Firebase
-								when you're
-								signed in.
+								Account settings (email, theme, translation, reading position) are automatically synced via Firebase when you're signed in.
 							</p>
 							<button id="openAccountBtn" class="primary-btn" style="width: 100%; margin-top: 1rem;">
 								Manage Account
@@ -358,6 +323,10 @@
 							<span>Toggle search</span>
 						</div>
 						<div class="shortcut-item">
+							<kbd>V</kbd>
+							<span>Toggle verse mode</span>
+						</div>
+						<div class="shortcut-item">
 							<kbd>Esc</kbd>
 							<span>Close modal/search</span>
 						</div>
@@ -368,46 +337,26 @@
 					<h4>Tips</h4>
 					<ul class="tips-list">
 						<li>Click on the book, chapter, or verse selector to jump to any location.</li>
-						<li>
-							Search by reference to jump quickly (examples: <code>John 3</code>, <code>John 3:16</code>,
-							<code>jn 3 16</code>).
-						</li>
-						<li>
-							Search by keywords to find mentions across the Bible (example: <code>covenant</code>).
-						</li>
-						<li>
-							Search for an exact phrase by wrapping it in double quotes (example:
-							<code>"in love"</code>).
-						</li>
-						<li>Toggle verse-by-verse mode for easier reading.</li>
-						<li>Your reading position and all settings sync across devices when signed in.</li>
-						<li>Choose from 3 themes (Dracula, Steel, Onyx) with light/dark modes.</li>
+						<li>Search by reference to jump quickly (examples: <code>John 3</code>, <code>John 3:16</code>, <code>jn 3 16</code>).</li>
+						<li>Search by keywords to find mentions across the Bible (example: <code>covenant</code>).</li>
+						<li>Search for an exact phrase by wrapping it in double quotes (example: <code>"in love"</code>).</li>
+						<li>Use Settings to change font size, display options, theme, and translation.</li>
+						<li>Your reading position and settings sync across devices when signed in.</li>
 					</ul>
 				</div>
 
 				<div class="settings-group">
 					<h4>Getting Started</h4>
 					<ul class="tips-list">
-						<li>
-							<strong>Get an API Key:</strong> Visit
-							<a href="https://api.esv.org" target="_blank" rel="noopener">api.esv.org</a>
-							to register for a free ESV API key.
-						</li>
-						<li>
-							<strong>Sign Up:</strong> Create an account to sync your settings and reading position
-							across devices.
-						</li>
-						<li>
-							<strong>Customize:</strong> Adjust font size, toggle verse numbers, headings, and more in
-							Settings.
-						</li>
+						<li><strong>Sign Up:</strong> Create an account to sync your settings and reading position across devices.</li>
+						<li><strong>Customize:</strong> Adjust font size, toggle verse numbers, headings, and translation in Settings.</li>
+						<li><strong>Search:</strong> Use search to jump directly to references or find words and phrases across the selected translation.</li>
 					</ul>
 				</div>
 			</div>
 		</div>
 	</div>
 
-	<!-- Login modal -->
 	<div id="loginModal" class="modal">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -436,7 +385,6 @@
 		</div>
 	</div>
 
-	<!-- Signup modal -->
 	<div id="signupModal" class="modal">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -455,15 +403,6 @@
 						<input type="password" id="signupPassword" class="input-field"
 							placeholder="At least 6 characters" autocomplete="new-password" required />
 					</div>
-					<div class="setting-item">
-						<label>ESV API Key</label>
-						<input type="text" id="signupApiKey" class="input-field" placeholder="Your ESV API key"
-							autocomplete="off" required />
-						<small class="help-text">
-							Get your free API key at
-							<a href="https://api.esv.org/account" target="_blank">api.esv.org/account</a>.
-						</small>
-					</div>
 					<button type="submit" class="primary-btn" style="width: 100%">Create Account</button>
 				</form>
 				<p class="auth-switch">
@@ -474,7 +413,6 @@
 		</div>
 	</div>
 
-	<!-- User menu modal -->
 	<div id="userMenuModal" class="modal">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -497,27 +435,20 @@
 		</div>
 	</div>
 
-	<!-- Footnotes and Cross-References Modal (Bottom Sheet) -->
 	<div id="referencesModal" class="modal">
 		<div class="modal-content modal-bottom-sheet">
 			<div class="modal-header">
-				<h3><!-- Footnotes & Cross-References --></h3>
+				<h3></h3>
 				<button class="close-btn" id="closeReferencesModal">×</button>
 			</div>
 			<div class="modal-body">
-				<!-- Footnotes Section -->
 				<div id="footnotesSection" style="display: none;">
 					<h4 style="color: var(--secondary-color); margin-bottom: var(--spacing-md);">Footnotes</h4>
 					<div id="footnotesContent"></div>
 				</div>
 
-				<!-- Cross-References Section -->
 				<div id="crossReferencesSection" style="display: none;">
-					<h4 style="
-                color: var(--secondary-color);
-                margin-bottom: var(--spacing-md);
-                margin-top: var(--spacing-lg);
-              ">
+					<h4 style="color: var(--secondary-color); margin-bottom: var(--spacing-md); margin-top: var(--spacing-lg);">
 						Cross-References
 					</h4>
 					<div id="crossReferencesContent"></div>
@@ -526,14 +457,13 @@
 		</div>
 	</div>
 
-	<!-- Toast notification -->
 	<div id="toast" class="toast"></div>
 
 	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-	<script type="module" src="firebase-config.js"></script>
+	<script type="module" src="config/firebase-config.js"></script>
 	<script type="module" src="app.js"></script>
 </body>
 

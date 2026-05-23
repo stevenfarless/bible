@@ -63,8 +63,6 @@ export function cacheElements(app) {
 	app.verseGrid = document.getElementById('verseGrid');
 
 	// Settings
-	app.apiKeyInput = document.getElementById('apiKeyInput');
-	app.saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
 	app.verseNumbersToggle = document.getElementById('verseNumbersToggle');
 	app.headingsToggle = document.getElementById('headingsToggle');
 	app.footnotesToggle = document.getElementById('footnotesToggle');
@@ -72,6 +70,7 @@ export function cacheElements(app) {
 	app.verseByVerseToggle = document.getElementById('verseByVerseToggle');
 	app.fontSizeSlider = document.getElementById('fontSizeSlider');
 	app.fontSizeValue = document.getElementById('fontSizeValue');
+	app.translationSelector = document.getElementById('translationSelector');
 
 	// References modal (footnotes and cross-references)
 	app.referencesModal = document.getElementById('referencesModal');
@@ -120,7 +119,6 @@ export function updateThemeIcon(isLightMode) {
 	if (!svg) return;
 
 	if (isLightMode) {
-		// Light mode → show moon (to indicate you can switch to dark)
 		svg.outerHTML = `
       <svg width="20" height="20" viewBox="0 0 24 24"
            fill="none" stroke="currentColor" stroke-width="2"
@@ -130,7 +128,6 @@ export function updateThemeIcon(isLightMode) {
       </svg>
     `;
 	} else {
-		// Dark mode → show sun (to indicate you can switch to light)
 		svg.outerHTML = `
       <svg width="20" height="20" viewBox="0 0 24 24"
            fill="none" stroke="currentColor" stroke-width="2"
@@ -149,23 +146,18 @@ export function updateThemeIcon(isLightMode) {
 	}
 }
 
-// Change color theme (dracula, steel, or onyx)
 export async function changeColorTheme(app, theme) {
-	// Remove all theme classes (dracula is default = no extra class)
 	document.body.classList.remove("steel-theme", "onyx-theme", "reader-theme");
 
-	// Add new theme class
 	if (theme === "steel") document.body.classList.add("steel-theme");
 	else if (theme === "onyx") document.body.classList.add("onyx-theme");
 	else if (theme === "reader") document.body.classList.add("reader-theme");
 
-	// Save to Firebase if logged in
 	if (app.currentUser) {
 		await app.database
 			.ref(`users/${app.currentUser.uid}/settings/colorTheme`)
 			.set(theme);
 	} else {
-		// Fallback to localStorage if not logged in
 		localStorage.setItem("colorTheme", theme);
 	}
 }
