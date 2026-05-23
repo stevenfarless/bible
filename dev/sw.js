@@ -1,4 +1,4 @@
-const BUILD_ID = "c90bee6016a96e9916198d8acb81674b5e820166";
+const BUILD_ID = "0d38bd7f223ecf492faab6c8f90b43aa3efd6282";
 const CACHE_NAME = `esv-bible-${BUILD_ID}`;
 
 self.addEventListener('install', () => {
@@ -23,9 +23,14 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Never cache the service worker script itself — the browser must always
-  // fetch it from the network so it can detect when a new version is available.
+  // Never cache the service worker script itself.
   if (url.pathname.endsWith('/sw.js')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Never cache Firebase RTDB requests — always fetch live data.
+  if (url.hostname.endsWith('.firebaseio.com')) {
     event.respondWith(fetch(event.request));
     return;
   }

@@ -20,11 +20,13 @@ import {
 } from './ui.js';
 
 function readBool(key, defaultValue) {
-    const v = localStorage.getItem(key);
-    if (v === null) return defaultValue;
-    if (v === 'true') return true;
-    if (v === 'false') return false;
-    return defaultValue;
+    try {
+        const v = localStorage.getItem(key);
+        if (v === null) return defaultValue;
+        if (v === 'true') return true;
+        if (v === 'false') return false;
+        return defaultValue;
+    } catch { return defaultValue; }
 }
 
 const TRANSLATION_ALIASES = {
@@ -191,7 +193,7 @@ class BibleApp {
 
     async init() {
         await this._loadTranslationRegistry();
-        await registerServiceWorker(this);
+        try { await registerServiceWorker(this); } catch (_swErr) { console.warn('Service worker unavailable:', _swErr); }
 
         cacheElements(this);
         loadTheme(this);
@@ -200,7 +202,8 @@ class BibleApp {
         const lightModeToggle = document.getElementById('lightModeToggle');
 
         if (themeSelector) {
-            const savedTheme = localStorage.getItem('colorTheme') || 'dracula';
+            let savedTheme = 'dracula';
+            try { savedTheme = localStorage.getItem('colorTheme') || 'dracula'; } catch (_) {}
             themeSelector.value = savedTheme;
         }
 
@@ -1010,7 +1013,10 @@ class BibleApp {
 
     parseReference(reference) {
         const cleaned = String(reference || '').trim();
-        const match = cleaned.match(/^(.+?)\s+(\d+)(?::(\d+))?$/);
+        // Capture book names that may start with a digit prefix (e.g. "1 Samuel", "2 Kings",
+        // "1 Corinthians"). The pattern greedily matches everything up to the last standalone
+        // number, which is the chapter (optionally followed by :verse).
+        const match = cleaned.match(/^((?:\d\s+)?[A-Za-z][A-Za-z ]*?)\s+(\d+)(?::(\d+))?$/);
         if (!match) return null;
 
         const book = match[1].trim();
@@ -1229,15 +1235,15 @@ class BibleApp {
     }
 
     loadLocalSettings() {
-        this.state.fontSize             = parseInt(localStorage.getItem('fontSize') || '18', 10);
+        try { this.state.fontSize = parseInt(localStorage.getItem('fontSize') || '18', 10); } catch (_) { this.state.fontSize = 18; }
         this.state.showVerseNumbers     = readBool('showVerseNumbers',   true);
         this.state.showHeadings         = readBool('showHeadings',       true);
         this.state.showFootnotes        = readBool('showFootnotes',      false);
         this.state.showCrossReferences  = readBool('showCrossReferences', false);
         this.state.verseByVerse         = readBool('verseByVerse',       false);
         this.state.lightMode            = readBool('lightMode',          false);
-        this.state.colorTheme  = localStorage.getItem('colorTheme')  || 'dracula';
-        this.state.translation = normalizeTranslation(localStorage.getItem('translation') || 'ESV');
+        try { this.state.colorTheme = localStorage.getItem('colorTheme') || 'dracula'; } catch (_) { this.state.colorTheme = 'dracula'; }
+        try { this.state.translation = normalizeTranslation(localStorage.getItem('translation') || 'ESV'); } catch (_) { this.state.translation = 'ESV'; }
     }
 
     applySettings() {
@@ -1291,7 +1297,7 @@ class BibleApp {
         if (this.currentUser) {
             await this.database.ref(`users/${this.currentUser.uid}/settings/${setting}`).set(toggleElement.checked);
         } else {
-            localStorage.setItem(setting, String(toggleElement.checked));
+            try { localStorage.setItem(setting, String(toggleElement.checked)); } catch (_) {}
         }
 
         // Re-render the current passage so heading visibility updates immediately.
@@ -1308,7 +1314,7 @@ class BibleApp {
         if (this.currentUser) {
             await this.database.ref(`users/${this.currentUser.uid}/settings/verseByVerse`).set(this.state.verseByVerse);
         } else {
-            localStorage.setItem('verseByVerse', String(this.state.verseByVerse));
+            try { localStorage.setItem('verseByVerse', String(this.state.verseByVerse)); } catch (_) {}
         }
         this.passageText.classList.toggle('verse-by-verse', this.state.verseByVerse);
     }
@@ -1320,7 +1326,7 @@ class BibleApp {
         if (this.currentUser) {
             await this.database.ref(`users/${this.currentUser.uid}/settings/fontSize`).set(parseInt(size, 10));
         } else {
-            localStorage.setItem('fontSize', size);
+            try { localStorage.setItem('fontSize', size); } catch (_) {}
         }
     }
 
@@ -1331,7 +1337,7 @@ class BibleApp {
         if (this.currentUser) {
             await this.database.ref(`users/${this.currentUser.uid}/settings/translation`).set(translation);
         } else {
-            localStorage.setItem('translation', translation);
+            try { localStorage.setItem('translation', translation); } catch (_) {}
         }
 
         this.updateCopyright();
@@ -1408,6 +1414,12 @@ class BibleApp {
                 e.preventDefault();
                 this.verseByVerseToggle.checked = !this.verseByVerseToggle.checked;
                 this.toggleVerseByVerse();
+            } else if (e.key === 's') {
+                e.preventDefault();
+                if (this.headingsToggle) {
+                    this.headingsToggle.checked = !this.headingsToggle.checked;
+                    this.toggleSetting('showHeadings');
+                }
             }
         }
     }
@@ -1420,7 +1432,9 @@ class BibleApp {
         if (this.currentUser) {
             document.getElementById('userEmail').textContent = this.currentUser.email;
             const isLight = document.body.classList.contains('light-mode');
-            const colorTheme = this.state?.colorTheme || localStorage.getItem('colorTheme') || 'dracula';
+            let colorTheme = this.state?.colorTheme || 'dracula';
+
+            try { colorTheme = this.state?.colorTheme || localStorage.getItem('colorTheme') || 'dracula'; } catch (_) {}
             const themeNameMap = {
                 dracula: isLight ? 'Alucard (Light)' : 'Dracula (Dark)',
                 steel:   `Steel (${isLight ? 'Light' : 'Dark'})`,
@@ -1586,33 +1600,15 @@ function showUpdateToast(appInstance) {
   setTimeout(() => toast.classList.remove('show'), 30000);
 }
 
-function initializeBibleApp() {
-    if (window.firebaseAuth && window.firebaseDatabase) {
-        new BibleApp();
-        return;
+(async () => {
+    await new Promise(resolve => {
+        if (document.readyState !== 'loading') return resolve();
+        document.addEventListener('DOMContentLoaded', resolve, { once: true });
+    });
+    try {
+        await import('./config/firebase-config.js');
+    } catch (err) {
+        console.error('Firebase config module failed to load:', err);
     }
-
-    let attempts = 0;
-    const maxAttempts = 50;
-    const retryDelayMs = 100;
-
-    const waitForFirebase = () => {
-        if (window.firebaseAuth && window.firebaseDatabase) {
-            new BibleApp();
-            return;
-        }
-
-        attempts += 1;
-        if (attempts >= maxAttempts) {
-            console.error('Firebase failed to initialize before app startup timeout.');
-            new BibleApp();
-            return;
-        }
-
-        window.setTimeout(waitForFirebase, retryDelayMs);
-    };
-
-    waitForFirebase();
-}
-
-document.addEventListener('DOMContentLoaded', initializeBibleApp);
+    new BibleApp();
+})();

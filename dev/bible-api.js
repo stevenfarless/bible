@@ -1,16 +1,17 @@
 // bible-api.js
 // Serves Bible text from Firebase Realtime Database.
 //
-// RTDB path for verse text:  /{translation}/bible/{book}
+// RTDB path for verse text:  /translations/{translation}/{book}
 //   Returns: { "1": { "1": "verse text", ... }, ... }  (chapter → verse → text)
 //
 // RTDB path for translation index: /translations
-//   Returns: [ { id, label, copyright }, ... ]
+//   Returns: { BSB: {...}, NRSVUE: {...}, ... }
+//   The index is a separate node — see loadTranslationIndex().
 //
 // For BSB the optional `scaffold` parameter (from bsb-structure.js) inserts
 // section headings and paragraph breaks into the rendered HTML.
 
-import { FIREBASE_DB_URL } from './firebase-config.js';
+import { FIREBASE_DB_URL } from './config/firebase-config.js';
 
 const PAGE_SIZE = 100;
 
@@ -41,17 +42,19 @@ function escapeHtml(value) {
 
 /**
  * Loads the translation index from RTDB.
- * RTDB path: /translations
- * Returns the array of translation objects: [ { id, label, copyright }, ... ]
+ * RTDB path: /translationIndex
+ * Returns an array of translation metadata objects: [ { id, label, copyright }, ... ]
+ *
+ * The /translations node contains book data keyed by translation ID.
+ * A separate /translationIndex node holds the metadata array if present;
+ * otherwise we derive a minimal list from the translation keys.
  */
 export async function loadTranslationIndex() {
-    const url = `${FIREBASE_DB_URL}/translations.json`;
+    const url = `${FIREBASE_DB_URL}/translationIndex.json`;
     try {
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        // RTDB may return an object keyed by push-ID or a plain array.
-        // Normalise to an array either way.
         if (Array.isArray(data)) return data;
         if (data && typeof data === 'object') return Object.values(data);
         return [];
@@ -78,11 +81,8 @@ export class BibleApi {
 
     /**
      * Fetches a single book from RTDB.
-     * RTDB path: /{translation}/bible/{book}
+     * RTDB path: /translations/{translation}/{book}
      * Returns: { "1": { "1": "verse text", ... }, ... } or null on failure.
-     *
-     * Fetching per-book (rather than the entire bible JSON) keeps individual
-     * requests small — Genesis is the largest book at ~66 KB.
      */
     async _loadBook(translation, book) {
         const cacheKey = `${translation}/${book}`;
@@ -90,7 +90,7 @@ export class BibleApi {
             return this._bookCache.get(cacheKey);
         }
 
-        const url = `${FIREBASE_DB_URL}/${encodeURIComponent(translation)}/bible/${encodeURIComponent(book)}.json`;
+        const url = `${FIREBASE_DB_URL}/translations/${encodeURIComponent(translation)}/${encodeURIComponent(book)}.json`;
         try {
             const res = await fetch(url);
             if (!res.ok) throw new Error(`HTTP ${res.status} for ${res.url}`);
@@ -140,6 +140,7 @@ export class BibleApi {
         const verseNums = Object.keys(chapterData)
             .map(Number)
             .filter(Number.isFinite)
+            .filter((v) => v > 0)  // skip verse 0 (intro/dedication metadata in some translations)
             .sort((a, b) => a - b)
             .filter((v) => {
                 if (verseStart !== null && v < verseStart) return false;
@@ -149,7 +150,25 @@ export class BibleApi {
 
         if (!verseNums.length) return null;
 
-        // Build a map: verse number → array of events
+        const hasScaffold = scaffoldEvents.length > 0;
+
+        // Without scaffold data (non-BSB translations), collect verse spans and
+        // wrap them in a single <p> — no openP/closeP calls, which would produce
+        // nested <p><p> when the spans are wrapped again below.
+        if (!hasScaffold) {
+            const spans = [];
+            for (const v of verseNums) {
+                const text = chapterData[String(v)] || '';
+                spans.push(
+                    `<span class="verse" data-verse="${v}" id="v${chapter}-${v}">` +
+                    `<sup class="verse-num">${v}</sup> ${escapeHtml(text)} ` +
+                    `</span>`
+                );
+            }
+            return `<p class="passage-para">${spans.join('')}</p>`;
+        }
+
+        // With scaffold data (BSB): interleave headings and paragraph breaks.
         const eventMap = new Map();
         for (const evt of scaffoldEvents) {
             if (!eventMap.has(evt.v)) eventMap.set(evt.v, []);
@@ -171,8 +190,6 @@ export class BibleApi {
             }
         };
 
-        const hasScaffold = scaffoldEvents.length > 0;
-
         for (const v of verseNums) {
             const eventsHere = eventMap.get(v) || [];
 
@@ -190,29 +207,18 @@ export class BibleApi {
             if (!inParagraph) openP();
 
             const text = chapterData[String(v)] || '';
-            const renderedText = escapeHtml(text);
             parts.push(
                 `<span class="verse" data-verse="${v}" id="v${chapter}-${v}">` +
-                `<sup class="verse-num">${v}</sup> ${renderedText} ` +
+                `<sup class="verse-num">${v}</sup> ${escapeHtml(text)} ` +
                 `</span>`
             );
         }
 
         closeP();
 
-        const inner = parts.join('');
-        return `<div class="passage"><div class="passage-text">${inner}</div></div>`;
+        return parts.join('');
     }
 
-    /**
-     * Fetches and renders a passage.
-     *
-     * @param {string} reference  - e.g. 'John 3' or 'Romans 8:1-17'
-     * @param {Array}  scaffoldEvents - Optional pre-filtered chapter scaffold
-     *   events from bsb-structure.js eventsForChapter(). Pass [] for non-BSB.
-     * @param {boolean} showHeadings
-     * @returns {Promise<{passages: string[], canonical: string}|null>}
-     */
     async fetchPassage(reference, scaffoldEvents = [], showHeadings = true) {
         const parsed = this._parseReference(reference);
         if (!parsed) {
@@ -266,6 +272,7 @@ export class BibleApi {
 
             for (const [chapterStr, chapterData] of chapterEntries) {
                 const verseEntries = Object.entries(chapterData)
+                    .filter(([verseStr]) => Number(verseStr) > 0)  // skip verse 0
                     .sort((a, b) => Number(a[0]) - Number(b[0]));
 
                 for (const [verseStr, text] of verseEntries) {
@@ -273,7 +280,11 @@ export class BibleApi {
                     if (!verseText.toLowerCase().includes(q)) continue;
                     results.push({
                         reference: `${book} ${chapterStr}:${verseStr}`,
-                        content: verseText,
+                        content:   verseText,
+                        book,
+                        chapter:   Number(chapterStr),
+                        verse:     Number(verseStr),
+                        text:      verseText,
                     });
                 }
             }
