@@ -1,7 +1,36 @@
 // ui.js
 // Responsibility: DOM caching, theme management
 
+const REQUIRED_IDS = [
+	'topChrome',
+	'searchToggle', 'helpBtn', 'settingsBtn', 'themeToggle', 'userBtn',
+	'prevChapter', 'nextChapter', 'bookSelector', 'chapterSelector', 'verseSelector',
+	'currentBook', 'currentChapter', 'currentVerse',
+	'searchContainer', 'closeSearch', 'searchInput', 'searchResults',
+	'passageTitle', 'passageText', 'copyright',
+	'bookModal', 'chapterModal', 'verseModal', 'settingsModal', 'helpModal',
+	'loginModal', 'signupModal', 'userMenuModal',
+	'closeBookModal', 'closeChapterModal', 'closeVerseModal',
+	'closeSettingsModal', 'closeHelpModal', 'closeLoginModal',
+	'closeSignupModal', 'closeUserMenuModal',
+	'oldTestamentBooks', 'newTestamentBooks',
+	'chapterModalBook', 'chapterGrid', 'verseModalBook', 'verseGrid',
+	'verseNumbersToggle', 'headingsToggle', 'footnotesToggle',
+	'crossReferencesToggle', 'verseByVerseToggle',
+	'fontSizeSlider', 'fontSizeValue', 'translationSelector',
+	'referencesModal', 'closeReferencesModal',
+	'footnotesSection', 'footnotesContent',
+	'crossReferencesSection', 'crossReferencesContent',
+	'toast',
+];
+
 export function cacheElements(app) {
+	// Validate all required IDs exist — warns immediately if HTML is stale or mismatched
+	const missing = REQUIRED_IDS.filter(id => !document.getElementById(id));
+	if (missing.length > 0) {
+		console.warn('[cacheElements] Missing DOM elements:', missing);
+	}
+
 	// Top chrome wrapper (Header + Navigation)
 	app.topChrome = document.getElementById('topChrome');
 
