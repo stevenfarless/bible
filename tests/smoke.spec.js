@@ -2,6 +2,17 @@
 import { test, expect } from '@playwright/test';
 
 // ---------------------------------------------------------------------------
+// Helper — waits until the BibleApp has attached its event listeners.
+// app.js sets data-app-ready on <body> immediately after
+// attachEventListeners() + initializeAccordion() complete, before the
+// Firebase auth callback resolves. This is the earliest point at which
+// clicking any button will have an effect.
+// ---------------------------------------------------------------------------
+async function waitForApp(page) {
+	await page.waitForSelector('body[data-app-ready]', { timeout: 10000 });
+}
+
+// ---------------------------------------------------------------------------
 // 1. Page load — app loads without JS errors, key UI elements visible
 // ---------------------------------------------------------------------------
 test('page load: main UI elements are visible', async ({ page }) => {
@@ -26,6 +37,7 @@ test('page load: main UI elements are visible', async ({ page }) => {
 // ---------------------------------------------------------------------------
 test('book navigation: selecting a book loads its first chapter', async ({ page }) => {
 	await page.goto('/');
+	await waitForApp(page);
 
 	// Open book modal
 	await page.locator('#bookSelector').click();
@@ -45,6 +57,7 @@ test('book navigation: selecting a book loads its first chapter', async ({ page 
 // ---------------------------------------------------------------------------
 test('chapter navigation: selecting a chapter loads passage text', async ({ page }) => {
 	await page.goto('/');
+	await waitForApp(page);
 
 	// First navigate to Matthew via book modal
 	await page.locator('#bookSelector').click();
@@ -69,6 +82,7 @@ test('chapter navigation: selecting a chapter loads passage text', async ({ page
 // ---------------------------------------------------------------------------
 test('verse navigation: selecting a verse closes the verse modal', async ({ page }) => {
 	await page.goto('/');
+	await waitForApp(page);
 
 	// Navigate to John 3 (book button text is 'John')
 	await page.locator('#bookSelector').click();
@@ -96,6 +110,7 @@ test('verse navigation: selecting a verse closes the verse modal', async ({ page
 // ---------------------------------------------------------------------------
 test('search: entering a keyword returns results', async ({ page }) => {
 	await page.goto('/');
+	await waitForApp(page);
 
 	// Open search
 	await page.locator('#searchToggle').click();
@@ -114,6 +129,7 @@ test('search: entering a keyword returns results', async ({ page }) => {
 // ---------------------------------------------------------------------------
 test('settings: toggling verse numbers checkbox changes its state', async ({ page }) => {
 	await page.goto('/');
+	await waitForApp(page);
 
 	// Open settings modal
 	await page.locator('#settingsBtn').click();
@@ -141,6 +157,7 @@ test('settings: toggling verse numbers checkbox changes its state', async ({ pag
 // ---------------------------------------------------------------------------
 test('theme switch: toggling light mode changes body class', async ({ page }) => {
 	await page.goto('/');
+	await waitForApp(page);
 
 	// Open settings and expand Theme accordion
 	await page.locator('#settingsBtn').click();
