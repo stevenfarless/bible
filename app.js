@@ -1013,7 +1013,10 @@ class BibleApp {
 
     parseReference(reference) {
         const cleaned = String(reference || '').trim();
-        const match = cleaned.match(/^(.+?)\s+(\d+)(?::(\d+))?$/);
+        // Capture book names that may start with a digit prefix (e.g. "1 Samuel", "2 Kings",
+        // "1 Corinthians"). The pattern greedily matches everything up to the last standalone
+        // number, which is the chapter (optionally followed by :verse).
+        const match = cleaned.match(/^((?:\d\s+)?[A-Za-z][A-Za-z ]*?)\s+(\d+)(?::(\d+))?$/);
         if (!match) return null;
 
         const book = match[1].trim();
