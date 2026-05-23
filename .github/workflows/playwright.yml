@@ -21,13 +21,14 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Playwright in isolated directory
-        run: |
-          mkdir -p /tmp/pw
-          cd /tmp/pw
-          npm init -y
-          npm install --save-dev @playwright/test
-          npx playwright install chromium --with-deps
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright test runner
+        run: npm install --save-dev @playwright/test
+
+      - name: Install Chromium browser
+        run: npx playwright install chromium --with-deps
 
       - name: Start local HTTP server
         run: |
@@ -39,9 +40,7 @@ jobs:
       - name: Run Playwright smoke tests
         env:
           BASE_URL: http://localhost:8080
-        run: |
-          cd /tmp/pw
-          npx playwright test --config=$GITHUB_WORKSPACE/playwright.config.js --project=chromium
+        run: npx playwright test --project=chromium
 
       - name: Upload Playwright report
         if: failure()
