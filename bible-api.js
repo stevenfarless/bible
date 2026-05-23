@@ -11,7 +11,7 @@
 // For BSB the optional `scaffold` parameter (from bsb-structure.js) inserts
 // section headings and paragraph breaks into the rendered HTML.
 
-import { FIREBASE_DB_URL } from './firebase-config.js';
+import { FIREBASE_DB_URL } from './config/firebase-config.js';
 
 const PAGE_SIZE = 100;
 
@@ -42,7 +42,7 @@ function escapeHtml(value) {
 
 /**
  * Loads the translation index from RTDB.
- * RTDB path: /translations
+ * RTDB path: /translationIndex
  * Returns an array of translation metadata objects: [ { id, label, copyright }, ... ]
  *
  * The /translations node contains book data keyed by translation ID.
@@ -204,7 +204,7 @@ export class BibleApi {
         // If no scaffold events were provided, wrap everything in a single paragraph
         // so non-BSB translations still get paragraph styling.
         if (!hasScaffold) {
-            return `<p class="passage-para">${parts.slice(1, -1).join('')}</p>`;
+            return `<p class="passage-para">${parts.join('')}</p>`;
         }
 
         return parts.join('');
@@ -270,10 +270,12 @@ export class BibleApi {
                     const verseText = String(text || '');
                     if (!verseText.toLowerCase().includes(q)) continue;
                     results.push({
+                        reference: `${book} ${chapterStr}:${verseStr}`,
+                        content:   verseText,
                         book,
-                        chapter: Number(chapterStr),
-                        verse:   Number(verseStr),
-                        text:    verseText,
+                        chapter:   Number(chapterStr),
+                        verse:     Number(verseStr),
+                        text:      verseText,
                     });
                 }
             }
