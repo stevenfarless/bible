@@ -213,6 +213,7 @@ class BibleApp {
 
         this.attachEventListeners();
         this.initializeAccordion();
+        document.body.setAttribute('data-app-ready', 'true');
 
         if (!this.auth || !this.database) {
             console.error('Firebase auth/database not ready when app initialized.');
