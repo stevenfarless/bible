@@ -150,7 +150,25 @@ export class BibleApi {
 
         if (!verseNums.length) return null;
 
-        // Build a map: verse number → array of events
+        const hasScaffold = scaffoldEvents.length > 0;
+
+        // Without scaffold data (non-BSB translations), collect verse spans and
+        // wrap them in a single <p> — no openP/closeP calls, which would produce
+        // nested <p><p> when the spans are wrapped again below.
+        if (!hasScaffold) {
+            const spans = [];
+            for (const v of verseNums) {
+                const text = chapterData[String(v)] || '';
+                spans.push(
+                    `<span class="verse" data-verse="${v}" id="v${chapter}-${v}">` +
+                    `<sup class="verse-num">${v}</sup> ${escapeHtml(text)} ` +
+                    `</span>`
+                );
+            }
+            return `<p class="passage-para">${spans.join('')}</p>`;
+        }
+
+        // With scaffold data (BSB): interleave headings and paragraph breaks.
         const eventMap = new Map();
         for (const evt of scaffoldEvents) {
             if (!eventMap.has(evt.v)) eventMap.set(evt.v, []);
@@ -172,8 +190,6 @@ export class BibleApi {
             }
         };
 
-        const hasScaffold = scaffoldEvents.length > 0;
-
         for (const v of verseNums) {
             const eventsHere = eventMap.get(v) || [];
 
@@ -191,21 +207,14 @@ export class BibleApi {
             if (!inParagraph) openP();
 
             const text = chapterData[String(v)] || '';
-            const renderedText = escapeHtml(text);
             parts.push(
                 `<span class="verse" data-verse="${v}" id="v${chapter}-${v}">` +
-                `<sup class="verse-num">${v}</sup> ${renderedText} ` +
+                `<sup class="verse-num">${v}</sup> ${escapeHtml(text)} ` +
                 `</span>`
             );
         }
 
         closeP();
-
-        // If no scaffold events were provided, wrap everything in a single paragraph
-        // so non-BSB translations still get paragraph styling.
-        if (!hasScaffold) {
-            return `<p class="passage-para">${parts.join('')}</p>`;
-        }
 
         return parts.join('');
     }

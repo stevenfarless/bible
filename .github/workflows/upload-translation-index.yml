@@ -30,8 +30,6 @@ jobs:
       - name: Build and upload translation index
         run: |
           python - <<'EOF'
-          import os
-          import glob
           import firebase_admin
           from firebase_admin import credentials, db
 
@@ -57,19 +55,18 @@ jobs:
               "NRSVUE":  "New Revised Standard Version Updated Edition",
           }
 
-          # Derive list of translations from folders present in translations/
-          translation_dirs = sorted([
-              os.path.basename(d)
-              for d in glob.glob("translations/*/")
-              if os.path.isdir(d)
-          ])
+          # Derive list of translations from RTDB keys (the source of truth
+          # after the Firebase migration — local translation/ folders are gone).
+          translations_ref = db.reference("translations")
+          rtdb_keys = translations_ref.get(shallow=True) or {}
+          translation_ids = sorted(rtdb_keys.keys())
 
-          if not translation_dirs:
-              print("No translation folders found under translations/.")
+          if not translation_ids:
+              print("No translations found in RTDB at /translations.")
               exit(1)
 
           index = []
-          for abbr in translation_dirs:
+          for abbr in translation_ids:
               entry = {
                   "id":    abbr,
                   "label": LABELS.get(abbr, abbr),
