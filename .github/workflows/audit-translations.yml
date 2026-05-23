@@ -1,0 +1,27 @@
+name: Audit Translations
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - json-ver
+    paths:
+      - 'translations/**'
+      - 'scripts/audit-translations.js'
+
+jobs:
+  audit:
+    name: Check for missing passages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run audit
+        run: node --experimental-vm-modules scripts/audit-translations.js

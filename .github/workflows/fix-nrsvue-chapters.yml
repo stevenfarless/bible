@@ -1,0 +1,290 @@
+name: Fix Bible Translation Chapters
+
+on:
+  workflow_dispatch:
+    inputs:
+      translation:
+        description: 'Translation ID (e.g. NRSVUE, BSB, ESV)'
+        required: true
+        default: 'NRSVUE'
+      book:
+        description: 'Book display name (e.g. Matthew, Mark, Luke) — leave blank to use chapters_list'
+        required: false
+        default: ''
+      osis:
+        description: 'Book OSIS abbreviation (e.g. Matt, Mark, Luke) — required if book is set'
+        required: false
+        default: ''
+      chapters:
+        description: 'Comma-separated chapter numbers for the book above (e.g. 17,18,23) — required if book is set'
+        required: false
+        default: ''
+      chapters_list:
+        description: |-
+          Full chapter list as JSON array of [book, osis, chapter] triples.
+          Used when book/chapters inputs are blank.
+          Example: [["Matthew","Matt",17],["Mark","Mark",9]]
+        required: false
+        default: ''
+
+jobs:
+  fix-chapters:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      INPUT_TRANSLATION: ${{ github.event.inputs.translation }}
+      INPUT_BOOK: ${{ github.event.inputs.book }}
+      INPUT_OSIS: ${{ github.event.inputs.osis }}
+      INPUT_CHAPTERS: ${{ github.event.inputs.chapters }}
+      INPUT_CHAPTERS_LIST: ${{ github.event.inputs.chapters_list }}
+    steps:
+      - name: Checkout json-ver
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: json-ver
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install playwright beautifulsoup4 lxml
+          python -m playwright install chromium --with-deps
+
+      - name: Fetch and overwrite chapters
+        run: |
+          python - <<'EOF'
+          import json, os, re, time, traceback
+          from pathlib import Path
+          from bs4 import BeautifulSoup
+          from playwright.sync_api import sync_playwright
+
+          # --- resolve inputs ---
+          TRANSLATION   = os.environ.get("INPUT_TRANSLATION", "NRSVUE").strip()
+          book_input    = os.environ.get("INPUT_BOOK", "").strip()
+          osis_input    = os.environ.get("INPUT_OSIS", "").strip()
+          chapters_raw  = os.environ.get("INPUT_CHAPTERS", "").strip()
+          chapters_list_raw = os.environ.get("INPUT_CHAPTERS_LIST", "").strip()
+
+          if book_input and chapters_raw:
+              chapter_nums = [int(c.strip()) for c in chapters_raw.split(",") if c.strip().isdigit()]
+              TARGET_CHAPTERS = [(book_input, osis_input or book_input, ch) for ch in chapter_nums]
+          elif chapters_list_raw:
+              raw = json.loads(chapters_list_raw)
+              TARGET_CHAPTERS = [(r[0], r[1], int(r[2])) for r in raw]
+          else:
+              raise ValueError(
+                  "Provide either (book + osis + chapters) or chapters_list input."
+              )
+
+          print(f"Translation : {TRANSLATION}")
+          print(f"Chapters    : {TARGET_CHAPTERS}")
+
+          def clean_verse_text(span_el):
+              for tag in span_el.find_all("sup"):
+                  tag.decompose()
+              for tag in span_el.find_all(
+                  class_=["crossreference", "crossrefs", "versenum", "chapternum"]
+              ):
+                  tag.decompose()
+              text = span_el.get_text(" ", strip=True)
+              text = re.sub(r'\(\s*[A-Z]\s*\)', '', text)
+              text = re.sub(r'\[\s*[a-z]\s*\]', '', text)
+              text = re.sub(r'  +', ' ', text).strip()
+              return text
+
+          def scrape_chapter(page, book_display, osis, chapter):
+              url = (f"https://www.biblegateway.com/passage/"
+                     f"?search={osis}+{chapter}&version={TRANSLATION}")
+              print(f"Fetching {book_display} {chapter}...", flush=True)
+              page.goto(url, wait_until="domcontentloaded", timeout=30000)
+              time.sleep(4)
+              html = page.content()
+              soup = BeautifulSoup(html, "lxml")
+
+              for heading_tag in soup.find_all(["h1", "h2", "h3", "h4"]):
+                  heading_tag.decompose()
+
+              verses = {}
+              for span in soup.select("span.text"):
+                  cls_list = span.get("class", [])
+                  ref_cls = next(
+                      (c for c in cls_list if re.match(r".+-\d+-\d+$", c)), None
+                  )
+                  if not ref_cls:
+                      continue
+                  parts = ref_cls.rsplit("-", 2)
+                  if len(parts) != 3:
+                      continue
+                  v_num = int(parts[2])
+                  text = clean_verse_text(span)
+                  if text:
+                      verses[v_num] = (verses[v_num] + " " + text) if v_num in verses else text
+
+              cleaned = {}
+              for v_num, text in verses.items():
+                  cleaned[v_num] = re.sub(r'  +', ' ', text).strip()
+              return cleaned
+
+          def find_book(bible, book_display, osis):
+              if isinstance(bible, list):
+                  for b in bible:
+                      if not isinstance(b, dict): continue
+                      for field in ["name", "book", "title"]:
+                          val = str(b.get(field, "")).lower()
+                          if val == book_display.lower() or val == osis.lower():
+                              return b
+              elif isinstance(bible, dict):
+                  for key in [book_display, book_display.lower(), osis, osis.lower()]:
+                      if key in bible:
+                          return bible[key]
+              return None
+
+          def find_chapter(book_obj, chapter):
+              if not isinstance(book_obj, dict): return None
+              for field in ["chapters", "chapter"]:
+                  chaps = book_obj.get(field)
+                  if chaps is None: continue
+                  if isinstance(chaps, list):
+                      for c in chaps:
+                          if isinstance(c, dict):
+                              cnum = c.get("chapter") or c.get("chapterNumber") or c.get("number")
+                              try:
+                                  if int(cnum) == chapter: return c
+                              except (TypeError, ValueError): pass
+                      if len(chaps) >= chapter: return chaps[chapter - 1]
+                  elif isinstance(chaps, dict):
+                      for key in [str(chapter), chapter]:
+                          if key in chaps: return chaps[key]
+                  return None
+              digit_keys = [k for k in book_obj if str(k).isdigit()]
+              if digit_keys:
+                  for key in [str(chapter), chapter]:
+                      if key in book_obj: return book_obj[key]
+              return None
+
+          def get_verses_container(chap_obj):
+              if isinstance(chap_obj, dict):
+                  for field in ["verses", "verse"]:
+                      v = chap_obj.get(field)
+                      if v is not None: return field, v
+                  digit_keys = [k for k in chap_obj if str(k).isdigit()]
+                  if digit_keys: return None, chap_obj
+              return None, chap_obj
+
+          def detect_verse_key(bible):
+              try:
+                  books = bible if isinstance(bible, list) else list(bible.values())
+                  for bk in books:
+                      if not isinstance(bk, dict): continue
+                      chaps = bk.get("chapters") or bk.get("chapter")
+                      if chaps:
+                          for c in (chaps if isinstance(chaps, list) else chaps.values()):
+                              vv = (c.get("verses") or c.get("verse") if isinstance(c, dict) else c)
+                              if isinstance(vv, list) and vv and isinstance(vv[0], dict):
+                                  return next((k for k in ["verse", "number", "verseNumber"] if k in vv[0]), "verse")
+                      else:
+                          digit_keys = [k for k in bk if str(k).isdigit()]
+                          if digit_keys:
+                              chap = bk[digit_keys[0]]
+                              if isinstance(chap, dict):
+                                  inner_digits = [k for k in chap if str(k).isdigit()]
+                                  if inner_digits:
+                                      val = chap[inner_digits[0]]
+                                      if isinstance(val, str): return None
+                                  for field in ["verses", "verse"]:
+                                      vv = chap.get(field)
+                                      if isinstance(vv, list) and vv and isinstance(vv[0], dict):
+                                          return next((k for k in ["verse", "number", "verseNumber"] if k in vv[0]), "verse")
+              except Exception: pass
+              return "verse"
+
+          # ---- load JSON ----
+          json_path = Path(f"translations/{TRANSLATION}/{TRANSLATION}_bible.json")
+          if not json_path.exists():
+              raise FileNotFoundError(f"JSON not found: {json_path}")
+          bible = json.loads(json_path.read_text(encoding="utf-8"))
+          VERSE_KEY = detect_verse_key(bible)
+          print(f"Detected verse key: {VERSE_KEY!r}", flush=True)
+
+          # ---- scrape and overwrite ----
+          with sync_playwright() as p:
+              browser = p.chromium.launch(headless=True)
+              context = browser.new_context(
+                  user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                             "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                  locale="en-US",
+              )
+              page = context.new_page()
+              page.goto("https://www.biblegateway.com", wait_until="domcontentloaded", timeout=30000)
+              time.sleep(2)
+
+              for book_display, osis, chapter in TARGET_CHAPTERS:
+                  try:
+                      scraped = scrape_chapter(page, book_display, osis, chapter)
+                      if not scraped:
+                          print(f"  WARNING: no verses scraped for {book_display} {chapter}")
+                          continue
+                      print(f"  Got {len(scraped)} verses", flush=True)
+                      first_v = min(scraped)
+                      print(f"  v{first_v}: {scraped[first_v][:100]}", flush=True)
+
+                      book_obj = find_book(bible, book_display, osis)
+                      if book_obj is None:
+                          print(f"  ERROR: book {book_display!r} not found in JSON")
+                          continue
+
+                      chap_obj = find_chapter(book_obj, chapter)
+                      if chap_obj is None:
+                          print(f"  ERROR: chapter {chapter} not found for {book_display}")
+                          print(f"    book_obj keys sample: {list(book_obj.keys())[:10]}")
+                          continue
+
+                      verses_field, verses_data = get_verses_container(chap_obj)
+
+                      if isinstance(verses_data, list):
+                          new_verses = [
+                              {VERSE_KEY: v_num, "text": text}
+                              for v_num, text in sorted(scraped.items())
+                          ]
+                          if verses_field and isinstance(chap_obj, dict):
+                              chap_obj[verses_field] = new_verses
+                          else:
+                              verses_data.clear()
+                              verses_data.extend(new_verses)
+                      elif isinstance(verses_data, dict):
+                          sample_vals = [v for v in verses_data.values() if v is not None]
+                          if sample_vals and isinstance(sample_vals[0], str):
+                              verses_data.clear()
+                              for v_num, text in sorted(scraped.items()):
+                                  verses_data[str(v_num)] = text
+                          else:
+                              verses_data.clear()
+                              for v_num, text in sorted(scraped.items()):
+                                  verses_data[str(v_num)] = {VERSE_KEY: v_num, "text": text}
+
+                      print(f"  Overwrote {book_display} {chapter} with {len(scraped)} clean verses", flush=True)
+
+                  except Exception:
+                      print(f"  ERROR on {book_display} {chapter}:")
+                      traceback.print_exc()
+
+              browser.close()
+
+          json_path.write_text(
+              json.dumps(bible, ensure_ascii=False, indent=2),
+              encoding="utf-8"
+          )
+          print(f"\nWrote patched JSON to {json_path}")
+          EOF
+
+      - name: Commit patched JSON
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "fix(${{ github.event.inputs.translation }}): overwrite chapters with clean scraped verse text"
+          git push
