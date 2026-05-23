@@ -1,10 +1,16 @@
 // bible-api.js
-// Serves Bible text from local JSON files.
+// Serves Bible text from Firebase Realtime Database.
 //
-// The optional `scaffold` parameter (from bsb-structure.js) inserts
-// section headings and paragraph breaks into the rendered HTML without any
-// external network requests. The BSB structure file is always loaded
-// regardless of the active translation so structural formatting is consistent.
+// RTDB path for verse text:  /{translation}/bible/{book}
+//   Returns: { "1": { "1": "verse text", ... }, ... }  (chapter → verse → text)
+//
+// RTDB path for translation index: /translations
+//   Returns: [ { id, label, copyright }, ... ]
+//
+// For BSB the optional `scaffold` parameter (from bsb-structure.js) inserts
+// section headings and paragraph breaks into the rendered HTML.
+
+import { FIREBASE_DB_URL } from './firebase-config.js';
 
 const PAGE_SIZE = 100;
 
@@ -33,16 +39,24 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
-// Loads translations/index.json and returns the array of translation objects.
-// Each object has { id, label, copyright }.
+/**
+ * Loads the translation index from RTDB.
+ * RTDB path: /translations
+ * Returns the array of translation objects: [ { id, label, copyright }, ... ]
+ */
 export async function loadTranslationIndex() {
+    const url = `${FIREBASE_DB_URL}/translations.json`;
     try {
-        const res = await fetch('./translations/index.json');
+        const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        return Array.isArray(data.translations) ? data.translations : [];
+        // RTDB may return an object keyed by push-ID or a plain array.
+        // Normalise to an array either way.
+        if (Array.isArray(data)) return data;
+        if (data && typeof data === 'object') return Object.values(data);
+        return [];
     } catch (err) {
-        console.error('BibleApi: failed to load translations/index.json', err);
+        console.error('BibleApi: failed to load translation index from RTDB', err);
         return [];
     }
 }
@@ -50,7 +64,8 @@ export async function loadTranslationIndex() {
 export class BibleApi {
     constructor(translation = 'ESV') {
         this._translation = translation;
-        this._bibleCache = new Map();
+        // Per-book cache: Map<`${translation}/${book}`, bookData | null>
+        this._bookCache = new Map();
     }
 
     setTranslation(translation) {
@@ -61,37 +76,32 @@ export class BibleApi {
         return this._translation;
     }
 
-    _biblePath(translation) {
-        return `./translations/${translation}/${translation}_bible.json`;
-    }
-
-    async _loadBible(translation) {
-        if (this._bibleCache.has(translation)) {
-            return this._bibleCache.get(translation);
+    /**
+     * Fetches a single book from RTDB.
+     * RTDB path: /{translation}/bible/{book}
+     * Returns: { "1": { "1": "verse text", ... }, ... } or null on failure.
+     *
+     * Fetching per-book (rather than the entire bible JSON) keeps individual
+     * requests small — Genesis is the largest book at ~66 KB.
+     */
+    async _loadBook(translation, book) {
+        const cacheKey = `${translation}/${book}`;
+        if (this._bookCache.has(cacheKey)) {
+            return this._bookCache.get(cacheKey);
         }
 
+        const url = `${FIREBASE_DB_URL}/${encodeURIComponent(translation)}/bible/${encodeURIComponent(book)}.json`;
         try {
-            const res = await fetch(this._biblePath(translation));
+            const res = await fetch(url);
             if (!res.ok) throw new Error(`HTTP ${res.status} for ${res.url}`);
-
-            const text = await res.text();
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch (parseErr) {
-                console.error(
-                    `BibleApi: JSON parse failed for "${translation}". ` +
-                    `Received ${text.length} bytes. Last 200 chars: ` +
-                    text.slice(-200)
-                );
-                throw parseErr;
-            }
-
-            this._bibleCache.set(translation, data);
-            return data;
+            const data = await res.json();
+            // RTDB returns null for missing nodes.
+            const bookData = (data && typeof data === 'object') ? data : null;
+            this._bookCache.set(cacheKey, bookData);
+            return bookData;
         } catch (err) {
-            console.error(`BibleApi: failed to load translation "${translation}"`, err);
-            this._bibleCache.set(translation, null);
+            console.error(`BibleApi: failed to load ${translation}/${book} from RTDB`, err);
+            this._bookCache.set(cacheKey, null);
             return null;
         }
     }
@@ -122,7 +132,7 @@ export class BibleApi {
      * @param {number|null} verseEnd
      * @param {Array} scaffoldEvents - Chapter-filtered events from bsb-structure.js,
      *   each: { ch, v, type: 'heading'|'para_break', text? }
-     *   When empty, falls back to one <p> per verse so text always line-breaks.
+     *   Pass [] or omit for translations without scaffold data.
      * @param {boolean} showHeadings - Whether to render heading events.
      * @returns {string|null}
      */
@@ -139,24 +149,7 @@ export class BibleApi {
 
         if (!verseNums.length) return null;
 
-        const hasScaffold = scaffoldEvents.length > 0;
-
-        // Without scaffold, wrap each verse in its own <p> so text always
-        // line-breaks regardless of translation.
-        if (!hasScaffold) {
-            const parts = verseNums.map((v) => {
-                const renderedText = escapeHtml(chapterData[String(v)] || '');
-                return (
-                    `<p class="passage-para">` +
-                    `<span class="verse" data-verse="${v}" id="v${chapter}-${v}">` +
-                    `<sup class="verse-num">${v}</sup> ${renderedText} ` +
-                    `</span></p>`
-                );
-            });
-            return `<div class="passage"><div class="passage-text">${parts.join('')}</div></div>`;
-        }
-
-        // With scaffold: use heading and para_break events to structure the output.
+        // Build a map: verse number → array of events
         const eventMap = new Map();
         for (const evt of scaffoldEvents) {
             if (!eventMap.has(evt.v)) eventMap.set(evt.v, []);
@@ -178,6 +171,8 @@ export class BibleApi {
             }
         };
 
+        const hasScaffold = scaffoldEvents.length > 0;
+
         for (const v of verseNums) {
             const eventsHere = eventMap.get(v) || [];
 
@@ -194,9 +189,8 @@ export class BibleApi {
 
             if (!inParagraph) openP();
 
-            const renderedText = escapeHtml(chapterData[String(v)] || '');
-            // The space after </sup> prevents the verse number from concatenating
-            // with the first word when innerHTML is stripped to plain text.
+            const text = chapterData[String(v)] || '';
+            const renderedText = escapeHtml(text);
             parts.push(
                 `<span class="verse" data-verse="${v}" id="v${chapter}-${v}">` +
                 `<sup class="verse-num">${v}</sup> ${renderedText} ` +
@@ -206,7 +200,8 @@ export class BibleApi {
 
         closeP();
 
-        return `<div class="passage"><div class="passage-text">${parts.join('')}</div></div>`;
+        const inner = parts.join('');
+        return `<div class="passage"><div class="passage-text">${inner}</div></div>`;
     }
 
     /**
@@ -214,8 +209,7 @@ export class BibleApi {
      *
      * @param {string} reference  - e.g. 'John 3' or 'Romans 8:1-17'
      * @param {Array}  scaffoldEvents - Optional pre-filtered chapter scaffold
-     *   events from bsb-structure.js eventsForChapter(). Pass [] to use the
-     *   per-verse paragraph fallback.
+     *   events from bsb-structure.js eventsForChapter(). Pass [] for non-BSB.
      * @param {boolean} showHeadings
      * @returns {Promise<{passages: string[], canonical: string}|null>}
      */
@@ -227,10 +221,7 @@ export class BibleApi {
         }
 
         const { book, chapter, verseStart, verseEnd } = parsed;
-        const bible = await this._loadBible(this._translation);
-        if (!bible) return null;
-
-        const bookData = bible[book];
+        const bookData = await this._loadBook(this._translation, book);
         if (!bookData) {
             console.error(`BibleApi: book "${this._sanitizeForLog(book)}" not found in ${this._translation}`);
             return null;
@@ -264,13 +255,10 @@ export class BibleApi {
         const q = String(query || '').toLowerCase().trim();
         if (!q) return { results: [], total_results: 0, page_size: PAGE_SIZE };
 
-        const bible = await this._loadBible(this._translation);
-        if (!bible) return { results: [], total_results: 0, page_size: PAGE_SIZE };
-
         const results = [];
 
         for (const book of BOOK_LOAD_ORDER) {
-            const bookData = bible[book];
+            const bookData = await this._loadBook(this._translation, book);
             if (!bookData) continue;
 
             const chapterEntries = Object.entries(bookData)
