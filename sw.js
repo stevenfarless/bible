@@ -23,9 +23,14 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Never cache the service worker script itself — the browser must always
-  // fetch it from the network so it can detect when a new version is available.
+  // Never cache the service worker script itself.
   if (url.pathname.endsWith('/sw.js')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Never cache Firebase RTDB requests — always fetch live data.
+  if (url.hostname.endsWith('.firebaseio.com')) {
     event.respondWith(fetch(event.request));
     return;
   }
