@@ -115,7 +115,8 @@ export function cacheElements(app) {
 
 // Load theme on app start (uses localStorage as initial fallback)
 export function loadTheme(app) {
-	const savedLightMode = localStorage.getItem('lightMode') === 'true';
+	let savedLightMode = false;
+	try { savedLightMode = localStorage.getItem('lightMode') === 'true'; } catch (_) {}
 	if (savedLightMode) {
 		document.documentElement.classList.add('light-mode');
 		document.body.classList.add('light-mode');
@@ -133,7 +134,7 @@ export async function toggleTheme(app) {
 	if (app.currentUser) {
 		await app.database.ref(`users/${app.currentUser.uid}/settings/lightMode`).set(isLightMode);
 	} else {
-		localStorage.setItem('lightMode', isLightMode);
+		try { localStorage.setItem('lightMode', isLightMode); } catch (_) {}
 	}
 
 	updateThemeIcon(isLightMode);
