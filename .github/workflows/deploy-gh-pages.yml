@@ -1,12 +1,12 @@
-name: Deploy firebase to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches:
-      - firebase
+      - dev
 
 concurrency:
-  group: gh-pages-firebase
+  group: gh-pages-dev
   cancel-in-progress: true
 
 jobs:
