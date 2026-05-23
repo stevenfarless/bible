@@ -282,20 +282,20 @@ class BibleApp {
     }
 
     attachEventListeners() {
-        this.searchToggleBtn.addEventListener('click', () => this.toggleSearch());
-        this.helpBtn.addEventListener('click', () => this.openModal(this.helpModal));
-        this.settingsBtn.addEventListener('click', () => this.openModal(this.settingsModal));
+        this.searchToggleBtn?.addEventListener('click', () => this.toggleSearch());
+        this.helpBtn?.addEventListener('click', () => this.openModal(this.helpModal));
+        this.settingsBtn?.addEventListener('click', () => this.openModal(this.settingsModal));
 
-        this.closeSearchBtn.addEventListener('click', () => this.closeSearch());
-        this.searchInput.addEventListener('input', (e) => this.handleSearch(e.target.value));
-        this.searchInput.addEventListener('keydown', (e) => this.handleSearchKeydown(e));
+        this.closeSearchBtn?.addEventListener('click', () => this.closeSearch());
+        this.searchInput?.addEventListener('input', (e) => this.handleSearch(e.target.value));
+        this.searchInput?.addEventListener('keydown', (e) => this.handleSearchKeydown(e));
 
-        this.prevChapterBtn.addEventListener('click', () => this.navigateChapter(-1));
-        this.nextChapterBtn.addEventListener('click', () => this.navigateChapter(1));
-        this.bookSelector.addEventListener('click', () => this.openBookModal());
-        this.chapterSelector.addEventListener('click', () => this.openChapterModal());
-        this.verseSelector.addEventListener('click', () => this.openVerseModal());
-        this.closeVerseModal.addEventListener('click', () => this.closeModal(this.verseModal));
+        this.prevChapterBtn?.addEventListener('click', () => this.navigateChapter(-1));
+        this.nextChapterBtn?.addEventListener('click', () => this.navigateChapter(1));
+        this.bookSelector?.addEventListener('click', () => this.openBookModal());
+        this.chapterSelector?.addEventListener('click', () => this.openChapterModal());
+        this.verseSelector?.addEventListener('click', () => this.openVerseModal());
+        this.closeVerseModal?.addEventListener('click', () => this.closeModal(this.verseModal));
 
         this.referencesModal = document.getElementById('referencesModal');
         this.closeReferencesModal = document.getElementById('closeReferencesModal');
@@ -321,12 +321,12 @@ class BibleApp {
             });
         });
 
-        this.closeBookModal.addEventListener('click', () => this.closeModal(this.bookModal));
-        this.closeChapterModal.addEventListener('click', () => this.closeModal(this.chapterModal));
-        this.closeHelpModal.addEventListener('click', () => this.closeModal(this.helpModal));
-        this.closeSettingsModal.addEventListener('click', () => this.closeModal(this.settingsModal));
+        this.closeBookModal?.addEventListener('click', () => this.closeModal(this.bookModal));
+        this.closeChapterModal?.addEventListener('click', () => this.closeModal(this.chapterModal));
+        this.closeHelpModal?.addEventListener('click', () => this.closeModal(this.helpModal));
+        this.closeSettingsModal?.addEventListener('click', () => this.closeModal(this.settingsModal));
         if (this.closeReferencesModal) {
-            this.closeReferencesModal.addEventListener('click', () => this.closeModal(this.referencesModal));
+            this.closeReferencesModal?.addEventListener('click', () => this.closeModal(this.referencesModal));
         }
 
         // References modal drag-to-resize
@@ -464,25 +464,25 @@ class BibleApp {
             }
         });
 
-        this.verseNumbersToggle.addEventListener('change', () => this.toggleSetting('showVerseNumbers'));
-        this.headingsToggle.addEventListener('change', () => this.toggleSetting('showHeadings'));
-        this.footnotesToggle.addEventListener('change', () => this.toggleSetting('showFootnotes'));
+        this.verseNumbersToggle?.addEventListener('change', () => this.toggleSetting('showVerseNumbers'));
+        this.headingsToggle?.addEventListener('change', () => this.toggleSetting('showHeadings'));
+        this.footnotesToggle?.addEventListener('change', () => this.toggleSetting('showFootnotes'));
 
         this.crossReferencesToggle = document.getElementById('crossReferencesToggle');
         if (this.crossReferencesToggle) {
-            this.crossReferencesToggle.addEventListener('change', () => this.toggleSetting('showCrossReferences'));
+            this.crossReferencesToggle?.addEventListener('change', () => this.toggleSetting('showCrossReferences'));
         }
 
-        this.verseByVerseToggle.addEventListener('change', () => this.toggleVerseByVerse());
-        this.fontSizeSlider.addEventListener('input', (e) => this.updateFontSize(e.target.value));
+        this.verseByVerseToggle?.addEventListener('change', () => this.toggleVerseByVerse());
+        this.fontSizeSlider?.addEventListener('input', (e) => this.updateFontSize(e.target.value));
 
         if (this.translationSelector) {
-            this.translationSelector.addEventListener('change', async (e) => {
+            this.translationSelector?.addEventListener('change', async (e) => {
                 await this.changeTranslation(e.target.value);
             });
         }
 
-        this.themeToggleBtn.addEventListener('click', () => toggleTheme(this));
+        this.themeToggleBtn?.addEventListener('click', () => toggleTheme(this));
 
         const themeSelector = document.getElementById('themeSelector');
         const lightModeToggle = document.getElementById('lightModeToggle');
@@ -495,7 +495,7 @@ class BibleApp {
             lightModeToggle.addEventListener('change', () => toggleTheme(this));
         }
 
-        this.userBtn.addEventListener('click', () => this.handleUserButtonClick());
+        this.userBtn?.addEventListener('click', () => this.handleUserButtonClick());
 
         document.getElementById('showSignupLink')?.addEventListener('click', (e) => {
             e.preventDefault();
