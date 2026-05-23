@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<meta name="build-id" content="10fab963a9a5bcc7901349b596b2255ffddfe23f" />
+	<meta name="build-id" content="0d274bfc85ff51e2b1ed2f9a97f3b1d608cb9015" />
 	<title>ESV Bible</title>
 	<link rel="manifest" href="manifest.json" />
 	<link rel="apple-touch-icon" href="icons/icon-192.png" />
@@ -91,7 +91,7 @@
 					<circle cx="11" cy="11" r="8"></circle>
 					<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
 				</svg>
-				<input type="text" id="searchInput" placeholder="Search or jump to passage (e.g. John 3:16)" autocomplete="off" />
+				<input type="text" id="searchInput" aria-label="Search or jump to passage" placeholder="Search or jump to passage (e.g. John 3:16)" autocomplete="off" />
 			</div>
 			<button class="close-search-btn" id="closeSearch">
 				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -205,7 +205,7 @@
 					</div>
 					<div class="accordion-content">
 						<div class="setting-row">
-							<select id="translationSelector" class="translation-select">
+							<label for="translationSelector" class="sr-only">Translation</label><select id="translationSelector" class="translation-select">
 								<option value="ESV">ESV</option>
 							</select>
 						</div>
@@ -222,35 +222,35 @@
 					</div>
 					<div class="accordion-content">
 						<div class="setting-row">
-							<label>Verse Numbers</label>
+							<label for="verseNumbersToggle">Verse Numbers</label>
 							<label class="toggle-switch">
 								<input type="checkbox" id="verseNumbersToggle" checked />
 								<span class="slider"></span>
 							</label>
 						</div>
 						<div class="setting-row">
-							<label>Headings</label>
+							<label for="headingsToggle">Headings</label>
 							<label class="toggle-switch">
 								<input type="checkbox" id="headingsToggle" checked />
 								<span class="slider"></span>
 							</label>
 						</div>
 						<div class="setting-row">
-							<label>Footnotes</label>
+							<label for="footnotesToggle">Footnotes</label>
 							<label class="toggle-switch">
 								<input type="checkbox" id="footnotesToggle" />
 								<span class="slider"></span>
 							</label>
 						</div>
 						<div class="setting-row">
-							<label>Cross References</label>
+							<label for="crossReferencesToggle">Cross References</label>
 							<label class="toggle-switch">
 								<input type="checkbox" id="crossReferencesToggle" />
 								<span class="slider"></span>
 							</label>
 						</div>
 						<div class="setting-row">
-							<label>Verse by Verse</label>
+							<label for="verseByVerseToggle">Verse by Verse</label>
 							<label class="toggle-switch">
 								<input type="checkbox" id="verseByVerseToggle" />
 								<span class="slider"></span>
@@ -269,7 +269,8 @@
 					</div>
 					<div class="accordion-content">
 						<div class="setting-row">
-							<input type="range" id="fontSizeSlider" min="12" max="28" value="18" class="font-slider" />
+
+								<label for="fontSizeSlider" class="sr-only">Font Size</label><input type="range" id="fontSizeSlider" min="12" max="28" value="18" class="font-slider" />
 							<span id="fontSizeValue">18px</span>
 						</div>
 					</div>
@@ -285,14 +286,14 @@
 					</div>
 					<div class="accordion-content">
 						<div class="setting-row">
-							<label>Light Mode</label>
+							<label for="lightModeToggle">Light Mode</label>
 							<label class="toggle-switch">
 								<input type="checkbox" id="lightModeToggle" />
 								<span class="slider"></span>
 							</label>
 						</div>
 						<div class="setting-row">
-							<label>Color Theme</label>
+							<label for="themeSelector">Color Theme</label>
 							<select id="themeSelector" class="translation-select">
 								<option value="dracula">Dracula / Alucard</option>
 								<option value="steel">Steel</option>
@@ -444,7 +445,7 @@
 	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 	<script type="module" src="config/firebase-config.js"></script>
-	<script type="module" src="app.js?v=10fab963a9a5bcc7901349b596b2255ffddfe23f"></script>
+	<script type="module" src="app.js?v=0d274bfc85ff51e2b1ed2f9a97f3b1d608cb9015"></script>
 </body>
 
 </html>
