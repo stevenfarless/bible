@@ -1,9 +1,9 @@
-name: Deploy main to GitHub Pages
+name: Deploy dev to GitHub Pages
 
 on:
   push:
     branches:
-      - main
+      - dev
 
 jobs:
   build-and-deploy:
@@ -26,11 +26,11 @@ jobs:
           sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" sw.js
           sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" index.html
 
-      - name: Deploy to GitHub Pages (main)
+      - name: Deploy to GitHub Pages (dev)
         uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./
-          destination_dir: .
+          destination_dir: dev
           keep_files: true
