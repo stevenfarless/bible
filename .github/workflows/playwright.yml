@@ -1,0 +1,49 @@
+name: Playwright Smoke Tests
+
+on:
+  push:
+    branches: [json-ver]
+  pull_request:
+    branches: [json-ver]
+
+jobs:
+  smoke-tests:
+    name: Run Playwright smoke tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright and test runner
+        run: |
+          npm init -y
+          npm install --save-dev @playwright/test
+          npx playwright install chromium --with-deps
+
+      - name: Start local HTTP server
+        run: |
+          python3 -m http.server 8080 &
+          # Wait for the server to be ready
+          for i in $(seq 1 10); do
+            curl -s http://localhost:8080 > /dev/null && break || sleep 1
+          done
+
+      - name: Run Playwright smoke tests
+        env:
+          BASE_URL: http://localhost:8080
+        run: npx playwright test --project=chromium
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
