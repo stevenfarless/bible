@@ -48,6 +48,10 @@ test('book navigation: selecting a book updates the chapter modal', async ({ pag
 // ---------------------------------------------------------------------------
 test('chapter navigation: selecting a chapter loads passage text', async ({ page }) => {
 	await page.goto('/');
+    await page.locator('#bookSelector').click();
+    await page.locator('#newTestamentBooks button', { hasText: 'Matthew' }).first().click();
+    await page.locator('#chapterModal').waitFor({ state: 'visible' });
+    await page.locator('#chapterGrid button:has-text("5")').click();
 
 	// Navigate: book → Matthew → chapter 5
 	await page.locator('#bookSelector').click();
