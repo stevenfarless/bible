@@ -1,12 +1,12 @@
-name: Deploy dev to GitHub Pages
+name: Deploy firebase to GitHub Pages
 
 on:
   push:
     branches:
-      - dev
+      - firebase
 
 concurrency:
-  group: gh-pages-dev
+  group: gh-pages-firebase
   cancel-in-progress: true
 
 jobs:
@@ -34,13 +34,13 @@ jobs:
           sed -i "s|__BUILD_INFO__|${INFO}|g" index.html
           sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" sw.js index.html
 
-      - name: Deploy to GitHub Pages (dev)
+      - name: Deploy to GitHub Pages (firebase)
         uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./
-          destination_dir: dev
+          destination_dir: firebase
           keep_files: true
           force_orphan: false
           enable_jekyll: false
