@@ -1861,3 +1861,31 @@ body.hide-verse-numbers .passage-text .verse-num {
 .toast-dismiss:hover {
     color: var(--text-primary);
 }
+
+/* ================================
+   Build Info Badge
+   Injected by CI — hidden on main
+   ================================ */
+
+#build-info {
+    display: inline-block;
+    font-family: 'Courier New', monospace;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--dracula-bg);
+    background: var(--dracula-comment);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin-left: 0.5rem;
+    opacity: 0.85;
+    user-select: none;
+    white-space: nowrap;
+}
+
+#build-info:empty,
+#build-info[data-branch="main"] {
+    display: none;
+}
