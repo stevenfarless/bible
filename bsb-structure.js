@@ -5,7 +5,7 @@
 // Events fire BEFORE the verse they reference.
 //
 // Only used at runtime when the active translation is BSB.
-// RTDB path: /translations/BSB/structure/{bookName}
+// RTDB path: /structure/BSB/{bookName}
 
 import { FIREBASE_DB_URL } from './firebase-config.js';
 
@@ -26,7 +26,7 @@ function sanitizeForLog(value) {
 export async function loadStructure(bookName) {
     if (_cache.has(bookName)) return _cache.get(bookName);
 
-    const url = `${FIREBASE_DB_URL}/translations/BSB/structure/${encodeURIComponent(bookName)}.json`;
+    const url = `${FIREBASE_DB_URL}/structure/BSB/${encodeURIComponent(bookName)}.json`;
     try {
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
