@@ -1,0 +1,79 @@
+name: Upload Translations to Firebase
+
+on:
+  workflow_dispatch:
+    inputs:
+      translation:
+        description: 'Translation to upload (e.g. ESV, KJV) — leave blank to upload all'
+        required: false
+        default: ''
+
+jobs:
+  upload:
+    name: Upload to Firebase Realtime Database
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install firebase-admin
+
+      - name: Write service account key
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: echo "$FIREBASE_SERVICE_ACCOUNT" > /tmp/service_account.json
+
+      - name: Upload translations
+        env:
+          TARGET_TRANSLATION: ${{ github.event.inputs.translation }}
+        run: |
+          python - <<'EOF'
+          import os
+          import json
+          import glob
+          import firebase_admin
+          from firebase_admin import credentials, db
+
+          cred = credentials.Certificate("/tmp/service_account.json")
+          firebase_admin.initialize_app(cred, {
+              "databaseURL": "https://esv-bible-6dffb-default-rtdb.firebaseio.com"
+          })
+
+          target = os.environ.get("TARGET_TRANSLATION", "").strip()
+
+          pattern = "translations/*/**_bible.json"
+          files = sorted(glob.glob(pattern))
+
+          if not files:
+              print("No translation JSON files found.")
+              exit(1)
+
+          for path in files:
+              # path looks like translations/ESV/ESV_bible.json
+              parts = path.split("/")
+              abbr = parts[1]  # e.g. ESV
+
+              if target and abbr.upper() != target.upper():
+                  continue
+
+              print(f"Reading {path} ({abbr})...")
+              with open(path, "r", encoding="utf-8-sig") as f:
+                  data = json.load(f)
+
+              ref = db.reference(f"translations/{abbr}")
+              ref.set(data)
+              print(f"  Uploaded {abbr} to Firebase.")
+
+          print("Done.")
+          EOF
+
+      - name: Clean up key
+        if: always()
+        run: rm -f /tmp/service_account.json
