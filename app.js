@@ -661,8 +661,8 @@ class BibleApp {
         const isFirstChapter = this.state.currentChapter === 1;
         const isLastChapter = this.state.currentChapter === this.getChapterCount(book);
 
-        this.prevChapterBtn.disabled = currentBookIndex === 0 && isFirstChapter;
-        this.nextChapterBtn.disabled = currentBookIndex === books.length - 1 && isLastChapter;
+        if (this.prevChapterBtn) this.prevChapterBtn.disabled = currentBookIndex === 0 && isFirstChapter;
+        if (this.nextChapterBtn) this.nextChapterBtn.disabled = currentBookIndex === books.length - 1 && isLastChapter;
     }
 
     // ================================
