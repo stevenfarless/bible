@@ -5,7 +5,7 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>Bible Reader</title>
-	<meta name="build-id" content="f917eb88ee92eb9188424753e62acc429c861a5e" />
+	<meta name="build-id" content="af216de815ac330a9850c454f29f215b29f01b9f" />
 	<link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -239,8 +239,8 @@
 			</div>
 			<div class="modal-body">
 				<form id="loginForm">
-					<input type="email" id="loginEmail" placeholder="Email" />
-					<input type="password" id="loginPassword" placeholder="Password" />
+					<input type="email" id="loginEmail" placeholder="Email" autocomplete="email" />
+					<input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" />
 					<button type="submit">Sign In</button>
 				</form>
 				<p><a href="#" id="showSignupLink">Create account</a></p>
@@ -257,8 +257,8 @@
 			</div>
 			<div class="modal-body">
 				<form id="signupForm">
-					<input type="email" id="signupEmail" placeholder="Email" />
-					<input type="password" id="signupPassword" placeholder="Password" />
+					<input type="email" id="signupEmail" placeholder="Email" autocomplete="email" />
+					<input type="password" id="signupPassword" placeholder="Password" autocomplete="new-password" />
 					<button type="submit">Create Account</button>
 				</form>
 				<p><a href="#" id="showLoginLink">Already have an account?</a></p>
@@ -303,6 +303,9 @@
 
 	<div id="toast" class="toast"></div>
 
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 	<script type="module" src="app.js"></script>
 </body>
 
