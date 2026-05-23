@@ -1,4 +1,4 @@
-const BUILD_ID = "db08b2fb94dc9a3f98ea0b1797c92dbe567124d8";
+const BUILD_ID = "0994c40d258e90c9523adda5590b84dc08f1f846";
 const CACHE_NAME = `esv-bible-${BUILD_ID}`;
 
 self.addEventListener('install', () => {
@@ -22,6 +22,14 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+
+  // Never cache the service worker script itself — the browser must always
+  // fetch it from the network so it can detect when a new version is available.
+  if (url.pathname.endsWith('/sw.js')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   const isRoot = url.pathname === '/' || url.pathname.endsWith('/index.html');
 
   if (isRoot) {
