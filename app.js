@@ -195,6 +195,7 @@ class BibleApp {
 
         cacheElements(this);
         loadTheme(this);
+        this._injectBuildVersion();
 
         const themeSelector = document.getElementById('themeSelector');
         const lightModeToggle = document.getElementById('lightModeToggle');
@@ -1345,6 +1346,20 @@ class BibleApp {
 
         this.updateCopyright();
         await this.loadPassage(this.state.currentBook, this.state.currentChapter);
+    }
+
+    _injectBuildVersion() {
+        const buildId = document.querySelector('meta[name="build-id"]')?.content || '';
+        if (!buildId || buildId === '__BUILD_ID__') return;
+        const short = buildId.slice(0, 7);
+        const el = document.createElement('a');
+        el.id = 'buildVersion';
+        el.href = `https://github.com/stevenfarless/esv-bible/commit/${buildId}`;
+        el.target = '_blank';
+        el.rel = 'noopener noreferrer';
+        el.textContent = `v${short}`;
+        el.style.cssText = 'display:block;text-align:center;font-size:var(--text-xs);color:var(--color-text-faint);text-decoration:none;margin-top:var(--space-1);';
+        this.copyright?.insertAdjacentElement('afterend', el);
     }
 
     updateCopyright() {
