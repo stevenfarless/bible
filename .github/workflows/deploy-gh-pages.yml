@@ -1,10 +1,5 @@
 name: Deploy main to GitHub Pages
 
-permissions:
-  contents: write
-  pages: write
-  id-token: write
-
 on:
   push:
     branches:
@@ -13,6 +8,11 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+      actions: read
 
     steps:
       - name: Checkout code
