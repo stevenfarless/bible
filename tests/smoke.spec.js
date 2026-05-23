@@ -14,7 +14,7 @@ test('page load: main UI elements are visible', async ({ page }) => {
 	await expect(page.locator('#passageText')).toBeVisible();
 	await expect(page.locator('#bookSelector')).toBeVisible();
 	await expect(page.locator('#chapterSelector')).toBeVisible();
-	await expect(page.locator('#searchToggleBtn')).toBeVisible();
+	await expect(page.locator('#searchToggle')).toBeVisible();
 
 	expect(errors).toHaveLength(0);
 });
@@ -98,7 +98,7 @@ test('search: entering a keyword returns results', async ({ page }) => {
 	await page.goto('/');
 
 	// Open search
-	await page.locator('#searchToggleBtn').click();
+	await page.locator('#searchToggle').click();
 	await expect(page.locator('#searchContainer')).toBeVisible();
 
 	// Type a query and wait for async results (up to 10 s for network)
@@ -119,11 +119,13 @@ test('settings: toggling verse numbers checkbox changes its state', async ({ pag
 	await page.locator('#settingsBtn').click();
 	await expect(page.locator('#settingsModal')).toBeVisible();
 
-	// Expand Display Options accordion section if not already open
-	const displayPanel = page.locator('[data-panel="display"]');
-	if (!(await displayPanel.isVisible())) {
-		await page.locator('[data-target="display"]').click();
-		await expect(displayPanel).toBeVisible();
+	// Expand Display accordion section if not already open
+	// Accordion sections have .accordion-header children with the section label
+	const displayHeader = page.locator('.accordion-header').filter({ hasText: 'Display' });
+	const displayContent = displayHeader.locator('xpath=following-sibling::div[contains(@class,"accordion-content")]');
+	if (!(await displayContent.isVisible())) {
+		await displayHeader.click();
+		await expect(displayContent).toBeVisible();
 	}
 
 	const toggle = page.locator('#verseNumbersToggle');
@@ -144,10 +146,11 @@ test('theme switch: toggling light mode changes body class', async ({ page }) =>
 	await page.locator('#settingsBtn').click();
 	await expect(page.locator('#settingsModal')).toBeVisible();
 
-	const themePanel = page.locator('[data-panel="theme"]');
-	if (!(await themePanel.isVisible())) {
-		await page.locator('[data-target="theme"]').click();
-		await expect(themePanel).toBeVisible();
+	const themeHeader = page.locator('.accordion-header').filter({ hasText: 'Theme' });
+	const themeContent = themeHeader.locator('xpath=following-sibling::div[contains(@class,"accordion-content")]');
+	if (!(await themeContent.isVisible())) {
+		await themeHeader.click();
+		await expect(themeContent).toBeVisible();
 	}
 
 	const lightToggle = page.locator('#lightModeToggle');
