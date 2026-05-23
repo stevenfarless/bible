@@ -20,6 +20,7 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Stamps branch, run number, and SHA into the build-info badge
       - name: Inject build info
         run: |
           BRANCH="${GITHUB_REF_NAME}"
