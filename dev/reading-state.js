@@ -10,10 +10,11 @@ export function initializeState() {
         showVerseNumbers: true,
         showHeadings: true,
         showFootnotes: false,
-        showCrossReferences: false,  // ← ADD THIS
+        showCrossReferences: false,
         verseByVerse: false,
         colorTheme: 'dracula',
-        lightMode: false
+        lightMode: false,
+        translation: 'ESV'
     };
 }
 
@@ -54,167 +55,35 @@ export function scrollToVerse(app, verseNumber) {
     app.applyVerseGlow();
 }
 
-// 12/09/25 fixed glow for poetry format verses
 export function applyVerseGlow(app) {
-    // Restore original HTML first
-    if (!app.originalPassageHtml) return;
-    app.passageText.innerHTML = app.originalPassageHtml;
+    // Remove any existing glow wrapper without resetting innerHTML.
+    // The wrapper is a <div data-verse-glow> inserted around the target .verse span.
+    app.passageText.querySelectorAll('[data-verse-glow]').forEach(wrapper => {
+        // Unwrap: move the verse span back to where the wrapper was, then remove wrapper.
+        const parent = wrapper.parentNode;
+        while (wrapper.firstChild) {
+            parent.insertBefore(wrapper.firstChild, wrapper);
+        }
+        parent.removeChild(wrapper);
+    });
 
     if (app.state.selectedVerse === null) return;
 
-    // Special handling for verse 1
-    if (app.state.selectedVerse === 1) {
-        const firstParagraph = app.passageText.querySelector('p');
-        if (firstParagraph) {
-            // Find verse 2 to split verse 1 precisely
-            const verse2 = firstParagraph.querySelector('.verse-num');
-            if (verse2) {
-                const verse1Block = document.createElement('div');
-                verse1Block.classList.add('selected-verse-glow');
-                let foundVerse2 = false;
-                const nodes = Array.from(firstParagraph.childNodes);
-                nodes.forEach(node => {
-                    if (node === verse2) {
-                        foundVerse2 = true;
-                        return;
-                    }
-                    if (!foundVerse2) {
-                        verse1Block.appendChild(node.cloneNode(true));
-                    }
-                });
-                firstParagraph.parentNode.insertBefore(verse1Block, firstParagraph);
-                firstParagraph.style.display = 'none'; // Hide original temporarily
-            } else {
-                firstParagraph.classList.add('selected-verse-glow');
-            }
-            firstParagraph.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        return;
-    }
+    const target = app.passageText.querySelector(
+        `.verse[data-verse="${app.state.selectedVerse}"]`
+    );
+    if (!target) return;
 
-    // Find the verse number element
-    const verseNums = app.passageText.querySelectorAll('.verse-num');
-    let targetVerseNum = null;
-    for (const vn of verseNums) {
-        if (vn.textContent.trim() === app.state.selectedVerse.toString()) {
-            targetVerseNum = vn;
-            break;
-        }
-    }
+    // Wrap the target verse in a block-level div that carries the glow styling.
+    // Using a wrapper div means the glow is *always* a block element from the
+    // very first paint — there is no inline-to-block reflow, so no position jump.
+    const wrapper = document.createElement('div');
+    wrapper.className = 'selected-verse-glow';
+    wrapper.setAttribute('data-verse-glow', '');
+    target.parentNode.insertBefore(wrapper, target);
+    wrapper.appendChild(target);
 
-    if (!targetVerseNum) return;
-
-    // Check if this is a poetry/line-group verse
-    const parentParagraph = targetVerseNum.closest('p');
-    if (!parentParagraph) return;
-
-    const lineSpans = parentParagraph.querySelectorAll('span.line, span.indent.line');
-
-    // POETRY MODE: If we have line spans, this is poetry
-    if (lineSpans.length > 0) {
-        // Find which line contains our verse number
-        let verseLineSpan = null;
-        for (const span of lineSpans) {
-            if (span.contains(targetVerseNum)) {
-                verseLineSpan = span;
-                break;
-            }
-        }
-
-        if (!verseLineSpan) return;
-
-        // Get the id attribute from the verse's line span
-        const verseId = verseLineSpan.id;
-        if (!verseId) return;
-
-        // Collect all line spans with the same id (they belong to this verse)
-        const verseLines = [];
-        for (const span of lineSpans) {
-            if (span.id === verseId) {
-                verseLines.push(span);
-            }
-        }
-
-        if (verseLines.length === 0) return;
-
-        // Create a wrapper div for the glow
-        const glowWrapper = document.createElement('div');
-        glowWrapper.classList.add('selected-verse-glow');
-
-        // Clone all verse lines into the glow wrapper
-        verseLines.forEach((line, index) => {
-            const clonedLine = line.cloneNode(true);
-            glowWrapper.appendChild(clonedLine);
-            if (index < verseLines.length - 1) {
-                glowWrapper.appendChild(document.createElement('br'));
-            }
-        });
-
-        // Insert the glow wrapper before the first line
-        verseLines[0].parentNode.insertBefore(glowWrapper, verseLines[0]);
-
-        // Hide the original lines AND their <br> tags
-        verseLines.forEach(line => {
-            line.style.display = 'none';
-
-            // Also hide the <br> tag that follows this span
-            const nextSibling = line.nextSibling;
-            if (nextSibling && nextSibling.nodeName === 'BR') {
-                nextSibling.style.display = 'none';
-            }
-        });
-
-        glowWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return;
-    }
-
-    // PROSE MODE: Use the original paragraph splitting logic
-    const beforeP = document.createElement('p');
-    const selectedBlock = document.createElement('div');
-    const afterP = document.createElement('p');
-    selectedBlock.classList.add('selected-verse-glow');
-
-    let mode = 'before';
-    const nodes = Array.from(parentParagraph.childNodes);
-
-    nodes.forEach(node => {
-        if (node === targetVerseNum) {
-            mode = 'selected';
-            selectedBlock.appendChild(node);
-            return;
-        }
-
-        if (mode === 'selected') {
-            if (node.nodeType === 1 && node.classList.contains('verse-num')) {
-                mode = 'after';
-                afterP.appendChild(node);
-                return;
-            }
-        }
-
-        if (mode === 'before') {
-            beforeP.appendChild(node);
-        } else if (mode === 'selected') {
-            selectedBlock.appendChild(node);
-        } else {
-            afterP.appendChild(node);
-        }
-    });
-
-    const parent = parentParagraph.parentNode;
-    if (beforeP.childNodes.length > 0) {
-        parent.insertBefore(beforeP, parentParagraph);
-    }
-    parent.insertBefore(selectedBlock, parentParagraph);
-    if (afterP.childNodes.length > 0) {
-        parent.insertBefore(afterP, parentParagraph);
-    }
-    parent.removeChild(parentParagraph);
-
-    selectedBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-    // RE-APPLY RED LETTERS after restoring HTML
-    if (typeof app.applyRedLetters === 'function') {
-        app.applyRedLetters();
-    }
+    // scrollIntoView on an inline <span> is unreliable across browsers —
+    // scroll to the block wrapper instead, which has stable geometry.
+    wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
