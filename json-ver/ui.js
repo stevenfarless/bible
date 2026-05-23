@@ -1,20 +1,49 @@
 // ui.js
 // Responsibility: DOM caching, theme management
 
+const REQUIRED_IDS = [
+	'topChrome',
+	'searchToggle', 'helpBtn', 'settingsBtn', 'themeToggle', 'userBtn',
+	'prevChapter', 'nextChapter', 'bookSelector', 'chapterSelector', 'verseSelector',
+	'currentBook', 'currentChapter', 'currentVerse',
+	'searchContainer', 'closeSearch', 'searchInput', 'searchResults',
+	'passageTitle', 'passageText', 'copyright',
+	'bookModal', 'chapterModal', 'verseModal', 'settingsModal', 'helpModal',
+	'loginModal', 'signupModal', 'userMenuModal',
+	'closeBookModal', 'closeChapterModal', 'closeVerseModal',
+	'closeSettingsModal', 'closeHelpModal', 'closeLoginModal',
+	'closeSignupModal', 'closeUserMenuModal',
+	'oldTestamentBooks', 'newTestamentBooks',
+	'chapterModalBook', 'chapterGrid', 'verseModalBook', 'verseGrid',
+	'verseNumbersToggle', 'headingsToggle', 'footnotesToggle',
+	'crossReferencesToggle', 'verseByVerseToggle',
+	'fontSizeSlider', 'fontSizeValue', 'translationSelector',
+	'referencesModal', 'closeReferencesModal',
+	'footnotesSection', 'footnotesContent',
+	'crossReferencesSection', 'crossReferencesContent',
+	'toast',
+];
+
 export function cacheElements(app) {
+	// Validate all required IDs exist — warns immediately if HTML is stale or mismatched
+	const missing = REQUIRED_IDS.filter(id => !document.getElementById(id));
+	if (missing.length > 0) {
+		console.warn('[cacheElements] Missing DOM elements:', missing);
+	}
+
 	// Top chrome wrapper (Header + Navigation)
 	app.topChrome = document.getElementById('topChrome');
 
 	// Header
-	app.searchToggleBtn = document.getElementById('searchToggleBtn');
+	app.searchToggleBtn = document.getElementById('searchToggle');
 	app.helpBtn = document.getElementById('helpBtn');
 	app.settingsBtn = document.getElementById('settingsBtn');
-	app.themeToggleBtn = document.getElementById('themeToggleBtn');
+	app.themeToggleBtn = document.getElementById('themeToggle');
 	app.userBtn = document.getElementById('userBtn');
 
 	// Navigation
-	app.prevChapterBtn = document.getElementById('prevChapterBtn');
-	app.nextChapterBtn = document.getElementById('nextChapterBtn');
+	app.prevChapterBtn = document.getElementById('prevChapter');
+	app.nextChapterBtn = document.getElementById('nextChapter');
 	app.bookSelector = document.getElementById('bookSelector');
 	app.chapterSelector = document.getElementById('chapterSelector');
 	app.verseSelector = document.getElementById('verseSelector');
@@ -24,7 +53,7 @@ export function cacheElements(app) {
 
 	// Search
 	app.searchContainer = document.getElementById('searchContainer');
-	app.closeSearchBtn = document.getElementById('closeSearchBtn');
+	app.closeSearchBtn = document.getElementById('closeSearch');
 	app.searchInput = document.getElementById('searchInput');
 	app.searchResults = document.getElementById('searchResults');
 
@@ -32,7 +61,7 @@ export function cacheElements(app) {
 	app.passageTitle = document.getElementById('passageTitle');
 	app.passageText = document.getElementById('passageText');
 	app.copyright = document.getElementById('copyright');
-	app.copyBtn = document.getElementById('copyBtn');
+	app.copyBtn = document.getElementById('copyBtn') ?? null;
 
 	// Modals
 	app.bookModal = document.getElementById('bookModal');
@@ -112,7 +141,7 @@ export async function toggleTheme(app) {
 
 // Update theme icon based on current mode
 export function updateThemeIcon(isLightMode) {
-	const btn = document.getElementById('themeToggleBtn');
+	const btn = document.getElementById('themeToggle');
 	if (!btn) return;
 
 	const svg = btn.querySelector('svg');

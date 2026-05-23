@@ -183,9 +183,12 @@ export class BibleApi {
             // Skip genuinely empty verses (e.g. John 5:4 in BSB) but preserve
             // their verse number so navigation stays accurate.
             const renderedText = escapeHtml(text);
+            // The space after </sup> is intentional: it prevents the verse number
+            // from concatenating with the first word when innerHTML is stripped to
+            // plain text (e.g. in search result previews).
             parts.push(
                 `<span class="verse" data-verse="${v}" id="v${chapter}-${v}">` +
-                `<sup class="verse-num">${v}</sup>${renderedText} ` +
+                `<sup class="verse-num">${v}</sup> ${renderedText} ` +
                 `</span>`
             );
         }
