@@ -21,16 +21,15 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Playwright and test runner
-        run: |
-          npm init -y
-          npm install --save-dev @playwright/test
-          npx playwright install chromium --with-deps
+      - name: Install Playwright
+        run: npm install --save-dev @playwright/test
+
+      - name: Install Chromium browser
+        run: npx playwright install chromium --with-deps
 
       - name: Start local HTTP server
         run: |
           python3 -m http.server 8080 &
-          # Wait for the server to be ready
           for i in $(seq 1 10); do
             curl -s http://localhost:8080 > /dev/null && break || sleep 1
           done
