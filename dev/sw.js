@@ -1,4 +1,4 @@
-const BUILD_ID = "d881bcc4b8d01877540753a296cef1d7c17eeb5e";
+const BUILD_ID = "5656c27074fec04d4c0f2f3c6d7d8de01c1c7707";
 const CACHE_NAME = `esv-bible-${BUILD_ID}`;
 
 // App shell JS modules — always fetched from the network so a refresh
@@ -15,8 +15,8 @@ self.addEventListener('activate', (event) => {
     const keys = await caches.keys();
     await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
     await self.clients.claim();
-    // No forced reload needed — JS files are network-first, so every page
-    // load already fetches the latest code directly from the network.
+    // No forced reload needed — JS files are network-first with no-store,
+    // so every page load already fetches the latest code directly from the network.
   })());
 });
 
@@ -35,11 +35,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // App shell JS: network-first, no caching.
-  // This ensures a refresh always executes the latest deployed code.
+  // App shell JS: network-first, bypass the browser HTTP cache entirely.
+  // cache: 'no-store' prevents the browser's memory/disk cache from
+  // satisfying the fetch before it reaches the network.
   if (APP_SHELL_PATTERN.test(url.pathname)) {
     event.respondWith(
-      fetch(event.request).catch(async () => {
+      fetch(new Request(event.request, { cache: 'no-store' })).catch(async () => {
         // Offline fallback only — return cached copy if network is unreachable.
         const cached = await caches.match(event.request);
         return cached || new Response('Offline', { status: 503 });
