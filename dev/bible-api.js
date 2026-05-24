@@ -37,6 +37,7 @@ const BOOK_LOAD_ORDER = [
 // Add new aliases here when additional mismatches are discovered.
 const BOOK_KEY_ALIASES = {
     // CSB (and possibly others) store title-cased prepositions.
+    // ESV RTDB top-level node is also keyed with capital "O".
     'Song of Solomon': 'Song Of Solomon',
 };
 
@@ -108,6 +109,10 @@ export class BibleApi {
      * Fetches a single book from RTDB.
      * RTDB path: /translations/{translation}/{book}
      * Returns: { "1": { "1": "verse text", ... }, ... } or null on failure.
+     *
+     * When the canonical book name returns null (RTDB key mismatch), retries
+     * once using the alias from BOOK_KEY_ALIASES if one exists. The result is
+     * cached under the canonical key regardless of which key was used to fetch.
      */
     async _loadBook(translation, book) {
         const cacheKey = `${translation}/${book}`;
@@ -115,13 +120,25 @@ export class BibleApi {
             return this._bookCache.get(cacheKey);
         }
 
-        const url = `${FIREBASE_DB_URL}/translations/${encodeURIComponent(translation)}/${encodeURIComponent(book)}.json`;
-        try {
+        const fetchNode = async (nodeKey) => {
+            const url = `${FIREBASE_DB_URL}/translations/${encodeURIComponent(translation)}/${encodeURIComponent(nodeKey)}.json`;
             const res = await fetch(url);
             if (!res.ok) throw new Error(`HTTP ${res.status} for ${res.url}`);
             const data = await res.json();
-            // RTDB returns null for missing nodes.
-            const bookData = (data && typeof data === 'object') ? data : null;
+            return (data && typeof data === 'object') ? data : null;
+        };
+
+        try {
+            let bookData = await fetchNode(book);
+
+            // If the canonical key returned null, check for a known alias and retry.
+            if (bookData === null) {
+                const alias = BOOK_KEY_ALIASES[book];
+                if (alias) {
+                    bookData = await fetchNode(alias);
+                }
+            }
+
             this._bookCache.set(cacheKey, bookData);
             return bookData;
         } catch (err) {
