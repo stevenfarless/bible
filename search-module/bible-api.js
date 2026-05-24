@@ -292,36 +292,40 @@ export class BibleApi {
 
         const results = [];
 
-        for (const book of BOOK_LOAD_ORDER) {
-            const bookData = await this._loadBook(this._translation, book);
-            if (!bookData) continue;
-
-            // Resolve alias so translations with variant key capitalisation
-            // (e.g. "Song Of Solomon" in CSB) are not silently skipped.
-            const resolvedKey = _resolveBookKey(bookData, book);
-            const resolvedBookData = resolvedKey ? bookData[resolvedKey] ?? bookData : bookData;
-
-            const chapterEntries = Object.entries(resolvedBookData)
-                .sort((a, b) => Number(a[0]) - Number(b[0]));
-
-            for (const [chapterStr, chapterData] of chapterEntries) {
-                const verseEntries = Object.entries(chapterData)
-                    .filter(([verseStr]) => Number(verseStr) > 0)  // skip verse 0
+const SEARCH_BATCH_SIZE = 10;
+        for (let i = 0; i < BOOK_LOAD_ORDER.length; i += SEARCH_BATCH_SIZE) {
+            const batch = BOOK_LOAD_ORDER.slice(i, i + SEARCH_BATCH_SIZE);
+            const bookDataBatch = await Promise.all(
+                batch.map(book => this._loadBook(this._translation, book))
+            );
+            for (const [batchIdx, bookData] of bookDataBatch.entries()) {
+                if (!bookData) continue;
+                const book = batch[batchIdx];
+                // Resolve alias so translations with variant key capitalisation
+                // (e.g. "Song Of Solomon" in CSB) are not silently skipped.
+                const resolvedKey = _resolveBookKey(bookData, book);
+                const resolvedBookData = resolvedKey ? bookData[resolvedKey] ?? bookData : bookData;
+                const chapterEntries = Object.entries(resolvedBookData)
                     .sort((a, b) => Number(a[0]) - Number(b[0]));
-
-                for (const [verseStr, text] of verseEntries) {
-                    const verseText = String(text || '');
-                    if (!verseText.toLowerCase().includes(q)) continue;
-                    results.push({
-                        reference: `${book} ${chapterStr}:${verseStr}`,
-                        content:   verseText,
-                        book,
-                        chapter:   Number(chapterStr),
-                        verse:     Number(verseStr),
-                        text:      verseText,
-                    });
+                for (const [chapterStr, chapterData] of chapterEntries) {
+                    const verseEntries = Object.entries(chapterData)
+                        .filter(([verseStr]) => Number(verseStr) > 0) // skip verse 0
+                        .sort((a, b) => Number(a[0]) - Number(b[0]));
+                    for (const [verseStr, text] of verseEntries) {
+                        const verseText = String(text || '');
+                        if (!verseText.toLowerCase().includes(q)) continue;
+                        results.push({
+                            reference: `${book} ${chapterStr}:${verseStr}`,
+                            content:   verseText,
+                            book,
+                            chapter:   Number(chapterStr),
+                            verse:     Number(verseStr),
+                            text:      verseText,
+                        });
+                    }
                 }
             }
+        }
         }
 
         const total = results.length;
