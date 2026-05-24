@@ -8,14 +8,18 @@
 //   Returns: { BSB: {...}, NRSVUE: {...}, ... }
 //   The index is a separate node — see loadTranslationIndex().
 //
+// RTDB path for search index: /searchIndex/{translation}
+//   Returns: { "Genesis 1:1": "in the beginning...", ... }  (ref → lowercased text)
+//   Built by scripts/build-search-index.py and stored at build time.
+//   searchPassages() uses this when available; falls back to per-book fetches.
+//
 // For BSB the optional `scaffold` parameter (from bsb-structure.js) inserts
 // section headings and paragraph breaks into the rendered HTML.
 
 import { FIREBASE_DB_URL } from './config/firebase-config.js';
 
 const PAGE_SIZE = 100;
-// Max concurrent RTDB book fetches during search. Each book can be
-// hundreds of KB; too many in parallel stalls the connection on mobile.
+// Max concurrent RTDB book fetches during search (fallback path only).
 const SEARCH_CONCURRENCY = 5;
 
 const BOOK_LOAD_ORDER = [
@@ -74,6 +78,8 @@ export class BibleApi {
         this._translation = translation;
         this._bookCache = new Map();
         this._shallowIndexCache = new Map();
+        // Cache for flat ref->text search indexes, keyed by translation.
+        this._searchIndexCache = new Map();
     }
 
     setTranslation(translation) {
@@ -140,6 +146,34 @@ export class BibleApi {
         } catch (err) {
             console.error(`BibleApi: failed to load ${translation}/${book} from RTDB`, err);
             this._bookCache.set(cacheKey, null);
+            return null;
+        }
+    }
+
+    /**
+     * Attempt to load the prebuilt flat search index for a translation.
+     * Returns null if the index hasn't been built yet or the fetch fails.
+     * Result is cached in _searchIndexCache so subsequent calls are free.
+     *
+     * @param {string} translation
+     * @returns {Promise<Object|null>}  { "Genesis 1:1": "in the beginning...", ... }
+     */
+    async _loadSearchIndex(translation) {
+        if (this._searchIndexCache.has(translation)) {
+            return this._searchIndexCache.get(translation);
+        }
+        try {
+            const url = `${FIREBASE_DB_URL}/searchIndex/${encodeURIComponent(translation)}.json`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            // RTDB returns null for nodes that don't exist.
+            const index = (data && typeof data === 'object') ? data : null;
+            this._searchIndexCache.set(translation, index);
+            return index;
+        } catch (err) {
+            console.warn(`BibleApi: search index unavailable for ${translation}, falling back to book fetches`, err);
+            this._searchIndexCache.set(translation, null);
             return null;
         }
     }
@@ -257,12 +291,16 @@ export class BibleApi {
     }
 
     /**
-     * Search all books for verses matching `query`.
+     * Search all verses for `query`.
      *
-     * Books are fetched in batches of SEARCH_CONCURRENCY (5) so at most 5
-     * large RTDB payloads are in-flight at once. After each batch settles,
-     * any matched verses are passed to the optional `onBatchResults` callback
-     * so the caller can render incrementally without waiting for all 66 books.
+     * Fast path: if a prebuilt flat ref->text index exists in RTDB at
+     * /searchIndex/{translation}, fetch it once (cached after first call)
+     * and search via Object.entries + String.includes. Single round trip,
+     * instant on repeat searches.
+     *
+     * Fallback path: if the index is absent or the fetch fails, fetch books
+     * in batches of SEARCH_CONCURRENCY and search as they arrive. Results
+     * stream incrementally via onBatchResults.
      *
      * @param {string} query
      * @param {function(Array):void} [onBatchResults]  - called with new results after each batch
@@ -272,9 +310,39 @@ export class BibleApi {
         const q = String(query || '').toLowerCase().trim();
         if (!q) return { results: [], total_results: 0, page_size: PAGE_SIZE };
 
+        // ── Fast path: prebuilt search index ──────────────────────────────
+        const searchIndex = await this._loadSearchIndex(this._translation);
+
+        if (searchIndex !== null) {
+            const results = [];
+            for (const [ref, normalizedText] of Object.entries(searchIndex)) {
+                if (!normalizedText.includes(q)) continue;
+                // Parse "Book Chapter:Verse" from the ref key.
+                const colonIdx = ref.lastIndexOf(':');
+                const spaceIdx = ref.lastIndexOf(' ', colonIdx);
+                const book    = ref.slice(0, spaceIdx);
+                const chapter = Number(ref.slice(spaceIdx + 1, colonIdx));
+                const verse   = Number(ref.slice(colonIdx + 1));
+                results.push({
+                    reference: ref,
+                    content:   normalizedText,
+                    book,
+                    chapter,
+                    verse,
+                    text:      normalizedText,
+                });
+            }
+            // Fire onBatchResults once with all results so callers that
+            // depend on the callback for rendering still work correctly.
+            if (results.length > 0 && typeof onBatchResults === 'function') {
+                onBatchResults(results);
+            }
+            return { results, total_results: results.length, page_size: PAGE_SIZE };
+        }
+
+        // ── Fallback path: batched per-book RTDB fetches ──────────────────
         const allResults = [];
 
-        // Process books in batches of SEARCH_CONCURRENCY.
         for (let i = 0; i < BOOK_LOAD_ORDER.length; i += SEARCH_CONCURRENCY) {
             const batch = BOOK_LOAD_ORDER.slice(i, i + SEARCH_CONCURRENCY);
 
