@@ -1,5 +1,9 @@
-const BUILD_ID = "ecce4c2a66f76ac5748def422fc12a3475d1ee0e";
+const BUILD_ID = "6de1702aa33009c5a5b9b59e598a665ae110b9f7";
 const CACHE_NAME = `esv-bible-${BUILD_ID}`;
+
+// App shell JS modules — always fetched from the network so a refresh
+// always runs the latest deployed code. Never serve these from cache.
+const APP_SHELL_PATTERN = /\.(js|mjs)$/;
 
 self.addEventListener('install', () => {
   self.skipWaiting();
@@ -35,6 +39,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // App shell JS: network-first, no caching.
+  // This ensures a refresh always executes the latest deployed code.
+  if (APP_SHELL_PATTERN.test(url.pathname)) {
+    event.respondWith(
+      fetch(event.request).catch(async () => {
+        // Offline fallback only — return cached copy if network is unreachable.
+        const cached = await caches.match(event.request);
+        return cached || new Response('Offline', { status: 503 });
+      })
+    );
+    return;
+  }
+
   const isRoot = url.pathname === '/' || url.pathname.endsWith('/index.html');
 
   if (isRoot) {
@@ -52,6 +69,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Everything else (JSON data files, CSS, fonts, images): cache-first.
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(event.request);
