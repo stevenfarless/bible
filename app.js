@@ -1632,6 +1632,9 @@ async function registerServiceWorker(appInstance) {
 
     navigator.serviceWorker.addEventListener('message', (e) => {
       if (e.data?.type === 'NEW_VERSION') showUpdateToast(appInstance);
+      // SW sends RELOAD when it takes over from an old cached version.
+      // JS files are now network-first, so a reload fetches the latest code.
+      if (e.data?.type === 'RELOAD') window.location.reload();
     });
 
     document.addEventListener('visibilitychange', () => {
