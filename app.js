@@ -37,6 +37,17 @@ function normalizeTranslation(t) {
     return TRANSLATION_ALIASES[t] || t;
 }
 
+/**
+ * Race a promise against a timeout. Resolves with the promise result if it
+ * settles within `ms`, otherwise resolves with `fallback` (never rejects).
+ */
+function withTimeout(promise, ms, fallback = null) {
+    return Promise.race([
+        promise.catch(() => fallback),
+        new Promise(resolve => setTimeout(() => resolve(fallback), ms)),
+    ]);
+}
+
 class BibleApp {
     constructor() {
         this.auth = window.firebaseAuth;
@@ -229,7 +240,9 @@ class BibleApp {
         this.auth.onAuthStateChanged(async (user) => {
             if (user) {
                 this.currentUser = user;
-                await this.loadUserData();
+                // Race user data fetch against 5 s — a slow RTDB connection on
+                // refresh must not block the passage from loading.
+                await withTimeout(this.loadUserData(), 5000);
                 this.applySettings();
                 await this.loadSavedReadingPosition();
             } else {
@@ -549,21 +562,29 @@ class BibleApp {
         }
 
         try {
-            const snapshot = await this.database
-                .ref(`users/${this.currentUser.uid}/readingPosition`)
-                .once('value');
-            const pos = snapshot.val();
+            // Race the RTDB fetch against a 5 s timeout. On refresh the WebSocket
+            // may take several seconds to connect; we must not block the passage
+            // load waiting for it.
+            const snapshot = await withTimeout(
+                this.database.ref(`users/${this.currentUser.uid}/readingPosition`).once('value'),
+                5000
+            );
 
-            if (pos && pos.book && pos.chapter) {
-                this.state.currentBook = pos.book;
-                this.state.currentChapter = pos.chapter;
-                this.lastScrollPosition = pos.scrollY || 0;
+            if (snapshot) {
+                const pos = snapshot.val();
+                if (pos && pos.book && pos.chapter) {
+                    this.state.currentBook = pos.book;
+                    this.state.currentChapter = pos.chapter;
+                    this.lastScrollPosition = pos.scrollY || 0;
+                }
+            } else {
+                console.warn('loadSavedReadingPosition: timed out, loading from local state');
             }
         } catch (err) {
             console.error('loadSavedReadingPosition: failed to read Firebase', err);
         }
 
-        await this.loadPassage(this.state.currentBook, this.state.currentChapter, true);
+        await this.loadPassage(this.state.currentBook, this.state.currentChapter, !!this.lastScrollPosition);
     }
 
     saveReadingPosition() {
