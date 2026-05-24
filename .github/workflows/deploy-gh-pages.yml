@@ -1,9 +1,13 @@
-name: Deploy main to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches:
       - main
+
+concurrency:
+  group: gh-pages-main
+  cancel-in-progress: true
 
 jobs:
   build-and-deploy:
@@ -20,7 +24,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Stamps branch, run number, and SHA into the build-info badge
       - name: Inject build info
         run: |
           BRANCH="${GITHUB_REF_NAME}"
@@ -34,6 +37,8 @@ jobs:
           # Set data-branch attr so CSS can hide it on main
           sed -i 's|id="build-info"|id="build-info" data-branch="main"|g' index.html
           sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" sw.js index.html
+          # Append ?v=<SHA> to every JS <script src> so cache layers cannot serve a stale bundle.
+          sed -i "s|\(<script[^>]* src=\"\)\([^?\"]*\)\(\.js\)\(\"\)|\1\2\3?v=${GITHUB_SHA}\4|g" index.html
 
       - name: Deploy to GitHub Pages (main)
         uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4
@@ -43,3 +48,5 @@ jobs:
           publish_dir: ./
           destination_dir: .
           keep_files: true
+          force_orphan: false
+          enable_jekyll: false
