@@ -17,7 +17,6 @@ Environment / file:
 
 import argparse
 import json
-import os
 import sys
 import firebase_admin
 from firebase_admin import credentials, db
@@ -41,54 +40,64 @@ BOOK_LOAD_ORDER = [
     "1 John", "2 John", "3 John", "Jude", "Revelation",
 ]
 
+BOOK_KEY_ALIASES = {
+    "Song of Solomon": "Song Of Solomon",
+}
 
-def validate_service_account():
-    if not os.path.exists(SERVICE_ACCOUNT_PATH):
-        print(f"ERROR: service account file not found at {SERVICE_ACCOUNT_PATH}", file=sys.stderr)
-        sys.exit(1)
-    try:
-        with open(SERVICE_ACCOUNT_PATH) as f:
-            sa = json.load(f)
-        required = ["type", "project_id", "private_key", "client_email"]
-        missing = [k for k in required if not sa.get(k)]
-        if missing:
-            print(f"ERROR: service account JSON missing fields: {missing}", file=sys.stderr)
-            sys.exit(1)
-        print(f"  Service account: {sa.get('client_email')} (project: {sa.get('project_id')})")
-    except json.JSONDecodeError as e:
-        print(f"ERROR: service account file is not valid JSON: {e}", file=sys.stderr)
-        sys.exit(1)
+
+def resolve_book_key(book_data: dict, canonical: str) -> str | None:
+    if canonical in book_data:
+        return canonical
+    alias = BOOK_KEY_ALIASES.get(canonical)
+    if alias and alias in book_data:
+        return alias
+    lower_map = {k.lower(): k for k in book_data}
+    return lower_map.get(canonical.lower())
 
 
 def build_index(translation: str) -> dict:
-    """Fetch each book individually from RTDB and return a flat ref->text dict."""
+    """Fetch all 66 books from RTDB and return a flat ref->text dict."""
     index = {}
-    translation_ref = db.reference(f"translations/{translation}")
+    rtdb_ref = db.reference(f"translations/{translation}")
 
     for book in BOOK_LOAD_ORDER:
-        book_data = translation_ref.child(book).get()
+        print(f"  Fetching {book}...", end=" ", flush=True)
+        try:
+            book_data = rtdb_ref.child(book).get()
 
-        if not book_data or not isinstance(book_data, dict):
-            print(f"  SKIP {book} (no data or unexpected type: {type(book_data).__name__})")
-            continue
+            # Try alias if primary key returned nothing
+            if book_data is None:
+                alias = BOOK_KEY_ALIASES.get(book)
+                if alias:
+                    book_data = rtdb_ref.child(alias).get()
 
-        verse_count = 0
-        for ch_key, chapter_data in book_data.items():
-            if not isinstance(chapter_data, dict):
+            # Try case-insensitive fallback via shallow index
+            if book_data is None:
+                shallow = rtdb_ref.get(shallow=True) or {}
+                resolved = resolve_book_key(shallow, book)
+                if resolved:
+                    book_data = rtdb_ref.child(resolved).get()
+
+            if not book_data or not isinstance(book_data, dict):
+                print("SKIP (no data)")
                 continue
-            # Firebase may return integer keys or string keys
-            ch_str = str(ch_key)
-            for v_key, text in chapter_data.items():
-                v_str = str(v_key)
-                if not v_str.isdigit() or int(v_str) < 1:
-                    continue
-                if not text:
-                    continue
-                ref = f"{book} {ch_str}:{v_str}"
-                index[ref] = str(text).lower()
-                verse_count += 1
 
-        print(f"  {book}: {verse_count} verses", flush=True)
+            verse_count = 0
+            for chapter_str, chapter_data in book_data.items():
+                if not isinstance(chapter_data, dict):
+                    continue
+                for verse_str, text in chapter_data.items():
+                    if not str(verse_str).isdigit() or int(verse_str) < 1:
+                        continue
+                    ref = f"{book} {chapter_str}:{verse_str}"
+                    index[ref] = str(text or "").lower()
+                    verse_count += 1
+
+            print(f"{verse_count} verses")
+
+        except Exception as e:
+            print(f"ERROR: {e}")
+            continue
 
     return index
 
@@ -101,8 +110,6 @@ def main():
     translation = args.translation.strip().upper()
     print(f"Building search index for {translation}...")
 
-    validate_service_account()
-
     cred = credentials.Certificate(SERVICE_ACCOUNT_PATH)
     firebase_admin.initialize_app(cred, {"databaseURL": FIREBASE_DB_URL})
 
@@ -112,8 +119,7 @@ def main():
         print(f"ERROR: No verses found for {translation}. Aborting.", file=sys.stderr)
         sys.exit(1)
 
-    print(f"\nTotal verses indexed: {len(index)}")
-    print(f"Writing to /searchIndex/{translation}...")
+    print(f"\nWriting {len(index)} verse entries to /searchIndex/{translation}...")
     db.reference(f"searchIndex/{translation}").set(index)
     print("Done.")
 
