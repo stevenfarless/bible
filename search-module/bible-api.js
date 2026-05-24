@@ -292,7 +292,7 @@ export class BibleApi {
 
         const results = [];
 
-const SEARCH_BATCH_SIZE = 10;
+        const SEARCH_BATCH_SIZE = 10;
         for (let i = 0; i < BOOK_LOAD_ORDER.length; i += SEARCH_BATCH_SIZE) {
             const batch = BOOK_LOAD_ORDER.slice(i, i + SEARCH_BATCH_SIZE);
             const bookDataBatch = await Promise.all(
