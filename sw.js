@@ -15,6 +15,14 @@ self.addEventListener('activate', (event) => {
     const keys = await caches.keys();
     await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
     await self.clients.claim();
+
+    // Notify all controlled clients to reload so they pick up the new
+    // build immediately. This is the primary fix for iOS Safari PWA
+    // home screen shortcuts that otherwise serve stale cached content.
+    const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: false });
+    for (const client of allClients) {
+      client.postMessage({ type: 'RELOAD' });
+    }
   })());
 });
 
