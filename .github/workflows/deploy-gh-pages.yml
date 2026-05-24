@@ -3,10 +3,10 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - search
+      - dev
 
 concurrency:
-  group: gh-pages-search
+  group: gh-pages-dev
   cancel-in-progress: true
 
 jobs:
@@ -36,13 +36,13 @@ jobs:
           # Append ?v=<SHA> to every JS <script src> so cache layers cannot serve a stale bundle.
           sed -i "s|\(<script[^>]* src=\"\)\([^?\"]*\)\(\.js\)\(\"\)|\1\2\3?v=${GITHUB_SHA}\4|g" index.html
 
-      - name: Deploy to GitHub Pages (search)
+      - name: Deploy to GitHub Pages (dev)
         uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./
-          destination_dir: search
+          destination_dir: dev
           keep_files: true
           force_orphan: false
           enable_jekyll: false
