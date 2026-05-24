@@ -31,6 +31,31 @@ const BOOK_LOAD_ORDER = [
     '1 John','2 John','3 John','Jude','Revelation',
 ];
 
+// Some translations store book keys with non-canonical capitalisation.
+// Each entry maps the canonical BOOK_LOAD_ORDER name to the variant stored
+// in that translation's JSON. Applied in both fetchPassage and searchPassages.
+// Add new aliases here when additional mismatches are discovered.
+const BOOK_KEY_ALIASES = {
+    // CSB (and possibly others) store title-cased prepositions.
+    'Song of Solomon': 'Song Of Solomon',
+};
+
+/**
+ * Returns the key to use when indexing into a loaded bookData object.
+ * Tries the canonical name first; falls back to the alias if present.
+ * Returns null if neither key exists in the data.
+ *
+ * @param {Object} bible - The loaded translation object keyed by book name.
+ * @param {string} canonicalName - The BOOK_LOAD_ORDER canonical name.
+ * @returns {string|null}
+ */
+function _resolveBookKey(bible, canonicalName) {
+    if (bible[canonicalName] !== undefined) return canonicalName;
+    const alias = BOOK_KEY_ALIASES[canonicalName];
+    if (alias !== undefined && bible[alias] !== undefined) return alias;
+    return null;
+}
+
 function escapeHtml(value) {
     return String(value)
         .replace(/&/g, '&amp;')
@@ -233,7 +258,11 @@ export class BibleApi {
             return null;
         }
 
-        const chapterData = bookData[String(chapter)];
+        // Resolve the key used in this translation's JSON (may differ from canonical name).
+        const resolvedKey = _resolveBookKey(bookData, book);
+        const resolvedBookData = resolvedKey ? bookData[resolvedKey] ?? bookData : bookData;
+
+        const chapterData = resolvedBookData[String(chapter)];
         if (!chapterData) {
             console.error(`BibleApi: chapter ${chapter} not found in "${this._sanitizeForLog(book)}"`);
             return null;
@@ -267,7 +296,12 @@ export class BibleApi {
             const bookData = await this._loadBook(this._translation, book);
             if (!bookData) continue;
 
-            const chapterEntries = Object.entries(bookData)
+            // Resolve alias so translations with variant key capitalisation
+            // (e.g. "Song Of Solomon" in CSB) are not silently skipped.
+            const resolvedKey = _resolveBookKey(bookData, book);
+            const resolvedBookData = resolvedKey ? bookData[resolvedKey] ?? bookData : bookData;
+
+            const chapterEntries = Object.entries(resolvedBookData)
                 .sort((a, b) => Number(a[0]) - Number(b[0]));
 
             for (const [chapterStr, chapterData] of chapterEntries) {
