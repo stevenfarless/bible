@@ -37,10 +37,6 @@ function normalizeTranslation(t) {
     return TRANSLATION_ALIASES[t] || t;
 }
 
-/**
- * Race a promise against a timeout. Resolves with the promise result if it
- * settles within `ms`, otherwise resolves with `fallback` (never rejects).
- */
 function withTimeout(promise, ms, fallback = null) {
     return Promise.race([
         promise.catch(() => fallback),
@@ -54,8 +50,6 @@ class BibleApp {
         this.database = window.firebaseDatabase;
         this.currentUser = null;
 
-        // Populated from translations/index.json.
-        // Keys are translation IDs (e.g. 'ESV'), values are copyright strings.
         this._copyrightMap = {};
 
         this.bibleBooks = this.initializeBibleStructure();
@@ -224,10 +218,6 @@ class BibleApp {
         this.initializeAccordion();
         document.body.setAttribute('data-app-ready', 'true');
 
-        // --- Unconditional initial render ---
-        // Load local settings and render the passage immediately so the page
-        // is never stuck on "Loading passage..." regardless of Firebase state.
-        // onAuthStateChanged below will refine this if the user is signed in.
         this.loadLocalSettings();
         this.applySettings();
         await this.loadPassage(this.state.currentBook, this.state.currentChapter);
@@ -240,20 +230,14 @@ class BibleApp {
             return;
         }
 
-        // Firebase auth runs in parallel — if the user is signed in, load their
-        // cloud settings and saved position, then re-render only if the position
-        // actually differs from what's already showing.
         this.auth.onAuthStateChanged(async (user) => {
             if (user) {
                 this.currentUser = user;
-                // Race user data fetch against 5 s — a slow RTDB connection on
-                // refresh must not block the passage from loading.
                 await withTimeout(this.loadUserData(), 5000);
                 this.applySettings();
                 await this._loadSavedPositionIfChanged();
             } else {
                 this.currentUser = null;
-                // Local render already happened above; just show the sign-in hint.
                 this.checkApiKey();
             }
         });
@@ -559,11 +543,6 @@ class BibleApp {
     // Passage Loading
     // ==========================================
 
-    /**
-     * Called after Firebase resolves a signed-in user. Reads the cloud-saved
-     * reading position and re-renders only if it differs from the passage that
-     * was already loaded during the unconditional init render.
-     */
     async _loadSavedPositionIfChanged() {
         if (!this.currentUser || !this.database) return;
 
@@ -591,14 +570,12 @@ class BibleApp {
             console.error('_loadSavedPositionIfChanged: Firebase read failed', err);
         }
 
-        // Only re-render if the saved position differs from what's already showing.
         if (targetBook !== this.state.currentBook || targetChapter !== this.state.currentChapter) {
             this.state.currentBook = targetBook;
             this.state.currentChapter = targetChapter;
             this.lastScrollPosition = targetScrollY;
             await this.loadPassage(targetBook, targetChapter, !!targetScrollY);
         } else if (targetScrollY) {
-            // Same passage — just restore the scroll position.
             window.scrollTo(0, targetScrollY);
         }
     }
@@ -660,9 +637,6 @@ class BibleApp {
         const reference = `${book} ${chapter}`;
         this.passageText.innerHTML = '<p class="loading">Loading passage...</p>';
 
-        // Load BSB structure scaffold for all translations.
-        // The scaffold is keyed by chapter/verse and applies regardless of translation
-        // since all supported translations share the same versification.
         let scaffoldEvents = [];
         try {
             const allEvents = await loadStructure(book);
@@ -888,9 +862,16 @@ class BibleApp {
         }
     }
 
-    async fetchAllSearchResults(query) {
-        const data = await this.bibleApi.searchPassages(query);
-        this.currentSearchResults = (data && data.results) ? data.results : [];
+    /**
+     * Runs a full-Bible keyword search, streaming results into the UI as each
+     * batch of books resolves. Returns the complete result array when done.
+     */
+    async fetchAllSearchResults(query, onBatch) {
+        this.currentSearchResults = [];
+        await this.bibleApi.searchPassages(query, (batchResults) => {
+            this.currentSearchResults.push(...batchResults);
+            if (typeof onBatch === 'function') onBatch(this.currentSearchResults.slice());
+        });
         return this.currentSearchResults;
     }
 
@@ -944,10 +925,17 @@ class BibleApp {
         this.searchExpandedTestaments?.clear();
         this.searchExpandedBooks?.clear();
 
-        const allResults = await this.fetchAllSearchResults(query);
+        // Stream results into the UI as each batch of books resolves.
+        await this.fetchAllSearchResults(query, (accumulatedResults) => {
+            if (accumulatedResults.length > 0) {
+                this.displaySearchResults(accumulatedResults, query);
+            }
+        });
 
-        if (allResults && allResults.length > 0) {
-            this.displaySearchResults(allResults, query);
+        // Final render — ensures the completed result set is shown even if the
+        // last batch produced no new matches (callback would not have fired).
+        if (this.currentSearchResults.length > 0) {
+            this.displaySearchResults(this.currentSearchResults, query);
         } else {
             this.searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
             this.refreshSearchResultItems(false);
@@ -1063,9 +1051,6 @@ class BibleApp {
 
     parseReference(reference) {
         const cleaned = String(reference || '').trim();
-        // Capture book names that may start with a digit prefix (e.g. "1 Samuel", "2 Kings",
-        // "1 Corinthians"). The pattern greedily matches everything up to the last standalone
-        // number, which is the chapter (optionally followed by :verse).
         const match = cleaned.match(/^((?:\d\s+)?[A-Za-z][A-Za-z ]*?)\s+(\d+)(?::(\d+))?$/);
         if (!match) return null;
 
@@ -1350,7 +1335,6 @@ class BibleApp {
             try { localStorage.setItem(setting, String(toggleElement.checked)); } catch (_) {}
         }
 
-        // Re-render the current passage so heading visibility updates immediately.
         if (setting === 'showHeadings') {
             await this.loadPassage(this.state.currentBook, this.state.currentChapter);
             return;
@@ -1612,8 +1596,6 @@ async function registerServiceWorker(appInstance) {
 
     navigator.serviceWorker.addEventListener('message', (e) => {
       if (e.data?.type === 'NEW_VERSION') showUpdateToast(appInstance);
-      // SW sends RELOAD when it takes over from an old cached version.
-      // JS files are now network-first, so a reload fetches the latest code.
       if (e.data?.type === 'RELOAD') window.location.reload();
     });
 
