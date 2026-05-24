@@ -1,4 +1,4 @@
-const BUILD_ID = "5219c0890b00554d2b62a807bdb27b0e54421bc8";
+const BUILD_ID = "403a82252de74b2e8997f2d246c5ae71bb9e40ed";
 const CACHE_NAME = `esv-bible-${BUILD_ID}`;
 
 // App shell JS modules — always fetched from the network so a refresh
@@ -15,8 +15,6 @@ self.addEventListener('activate', (event) => {
     const keys = await caches.keys();
     await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
     await self.clients.claim();
-    // No forced reload needed — JS files are network-first with no-store,
-    // so every page load already fetches the latest code directly from the network.
   })());
 });
 
@@ -54,7 +52,10 @@ self.addEventListener('fetch', (event) => {
   if (isRoot) {
     event.respondWith((async () => {
       try {
-        const resp = await fetch(event.request);
+        // cache: 'no-store' bypasses Brave iOS shields and the browser HTTP
+        // cache so the fresh HTML (with the updated ?v=<SHA> script src) is
+        // always fetched from the network on every load.
+        const resp = await fetch(new Request(event.request, { cache: 'no-store' }));
         const cache = await caches.open(CACHE_NAME);
         cache.put(event.request, resp.clone());
         return resp;
