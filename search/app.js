@@ -84,9 +84,7 @@ class BibleApp {
         this.searchTimeout = null;
         this.searchSelectedIndex = -1;
         this.searchResultItems = null;
-        this.searchPage = 1;
         this.searchLastQuery = '';
-        this.searchHasMore = false;
         this.currentSearchResults = [];
         this.scrollTimeout = null;
         this.lastScrollPosition = 0;
@@ -765,7 +763,6 @@ class BibleApp {
     handleSearch(query) {
         clearTimeout(this.searchTimeout);
         this.searchLastQuery = query;
-        this.searchPage = 1;
         this.currentSearchResults = [];
 
         if (!query.trim()) {
@@ -779,8 +776,7 @@ class BibleApp {
             if (this.isPassageReference(query)) {
                 await this.handlePassageReference(query);
             } else {
-                this.searchPage = 1;
-                await this.performKeywordSearch(query, false);
+                await this.performKeywordSearch(query);
             }
         }, 300);
     }
@@ -893,24 +889,8 @@ class BibleApp {
     }
 
     async fetchAllSearchResults(query) {
-        this.currentSearchResults = [];
-        this.searchPage = 1;
-
-        while (true) {
-            const data = await this.bibleApi.searchPassages(query, this.searchPage);
-            if (!data || !data.results || !data.results.length) break;
-
-            this.currentSearchResults = this.currentSearchResults.concat(data.results);
-
-            const total = data.total_results ?? data.total;
-            const pageSize = data.page_size ?? 100;
-            const totalPages = total && pageSize ? Math.ceil(total / pageSize) : 1;
-
-            if (this.searchPage >= totalPages || this.searchPage >= 10) break;
-
-            this.searchPage += 1;
-        }
-
+        const data = await this.bibleApi.searchPassages(query);
+        this.currentSearchResults = (data && data.results) ? data.results : [];
         return this.currentSearchResults;
     }
 
