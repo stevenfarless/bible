@@ -1,4 +1,4 @@
-const BUILD_ID = "b6cd22b36a0166ca522332672ff87309c2fa5fa4";
+const BUILD_ID = "f8def292e963f111e723929e8b894a9d0bb0a8f8";
 const CACHE_NAME = `esv-bible-${BUILD_ID}`;
 
 // App shell JS modules — always fetched from the network so a refresh
@@ -15,6 +15,14 @@ self.addEventListener('activate', (event) => {
     const keys = await caches.keys();
     await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
     await self.clients.claim();
+
+    // Notify all controlled clients to reload so they pick up the new
+    // build immediately. This is the primary fix for iOS Safari PWA
+    // home screen shortcuts that otherwise serve stale cached content.
+    const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: false });
+    for (const client of allClients) {
+      client.postMessage({ type: 'RELOAD' });
+    }
   })());
 });
 
