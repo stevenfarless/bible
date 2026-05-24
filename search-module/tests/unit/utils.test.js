@@ -15,7 +15,7 @@ import {
     buildBiblePath,
     initializeState,
     eventsForChapter,
-} from '../../js/utils.js';
+} from '../../js/utils.js?v=59f02061383f649bfa3ebdd1ebb6a4cc58bccfa0';
 
 // ---------------------------------------------------------------------------
 // escapeHtml

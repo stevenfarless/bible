@@ -11,7 +11,7 @@
 // For BSB the optional `scaffold` parameter (from bsb-structure.js) inserts
 // section headings and paragraph breaks into the rendered HTML.
 
-import { FIREBASE_DB_URL } from './config/firebase-config.js';
+import { FIREBASE_DB_URL } from './config/firebase-config.js?v=59f02061383f649bfa3ebdd1ebb6a4cc58bccfa0';
 
 const PAGE_SIZE = 100;
 

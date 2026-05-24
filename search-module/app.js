@@ -2,22 +2,22 @@
 // ESV Bible Reader App
 // ====================
 
-import { BibleApi, loadTranslationIndex } from './bible-api.js';
-import { loadStructure, eventsForChapter } from './bsb-structure.js';
+import { BibleApi, loadTranslationIndex } from './bible-api.js?v=59f02061383f649bfa3ebdd1ebb6a4cc58bccfa0';
+import { loadStructure, eventsForChapter } from './bsb-structure.js?v=59f02061383f649bfa3ebdd1ebb6a4cc58bccfa0';
 import {
     initializeState,
     navigateChapter as navChapter,
     scrollToVerse as scrollVerse,
     applyVerseGlow as glowVerse,
-} from './reading-state.js';
-import { loadUserData as loadUserDataFromFirebase } from './config/firebase-config.js';
+} from './reading-state.js?v=59f02061383f649bfa3ebdd1ebb6a4cc58bccfa0';
+import { loadUserData as loadUserDataFromFirebase } from './config/firebase-config.js?v=59f02061383f649bfa3ebdd1ebb6a4cc58bccfa0';
 import {
     cacheElements,
     loadTheme,
     toggleTheme,
     updateThemeIcon,
     changeColorTheme,
-} from './ui.js';
+} from './ui.js?v=59f02061383f649bfa3ebdd1ebb6a4cc58bccfa0';
 import {
     toggleSearch,
     closeSearch,
@@ -36,7 +36,7 @@ import {
     refreshSearchResultItems,
     setSearchSelectedIndex,
     activateSelectedSearchResult,
-} from './search.js';
+} from './search.js?v=59f02061383f649bfa3ebdd1ebb6a4cc58bccfa0';
 
 function readBool(key, defaultValue) {
     try {

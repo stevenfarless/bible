@@ -7,7 +7,7 @@
 // Only used at runtime when the active translation is BSB.
 // RTDB path: /structure/BSB/{bookName}
 
-import { FIREBASE_DB_URL } from './config/firebase-config.js';
+import { FIREBASE_DB_URL } from './config/firebase-config.js?v=59f02061383f649bfa3ebdd1ebb6a4cc58bccfa0';
 
 const _cache = new Map();
 
