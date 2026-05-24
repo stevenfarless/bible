@@ -343,14 +343,21 @@ export class BibleApi {
         return { passages: [html], canonical };
     }
 
-    async searchPassages(query, page = 1) {
+    async searchPassages(query) {
         const q = String(query || '').toLowerCase().trim();
         if (!q) return { results: [], total_results: 0, page_size: PAGE_SIZE };
 
+        // Fetch all 66 books in parallel. Each _loadBook call is individually
+        // cached, so subsequent searches (or passage loads) hit the cache.
+        const bookDataList = await Promise.all(
+            BOOK_LOAD_ORDER.map((book) => this._loadBook(this._translation, book))
+        );
+
         const results = [];
 
-        for (const book of BOOK_LOAD_ORDER) {
-            const bookData = await this._loadBook(this._translation, book);
+        for (let i = 0; i < BOOK_LOAD_ORDER.length; i++) {
+            const book = BOOK_LOAD_ORDER[i];
+            const bookData = bookDataList[i];
             if (!bookData) continue;
 
             // Resolve alias so translations with variant key capitalisation
@@ -381,11 +388,9 @@ export class BibleApi {
             }
         }
 
-        const total = results.length;
-        const start = Math.max(0, (page - 1) * PAGE_SIZE);
         return {
-            results: results.slice(start, start + PAGE_SIZE),
-            total_results: total,
+            results,
+            total_results: results.length,
             page_size: PAGE_SIZE,
         };
     }
