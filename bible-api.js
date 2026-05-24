@@ -31,12 +31,10 @@ const BOOK_LOAD_ORDER = [
     '1 John','2 John','3 John','Jude','Revelation',
 ];
 
-// Some translations store book keys with non-canonical capitalisation.
-// Each entry maps the canonical BOOK_LOAD_ORDER name to the variant stored
-// in that translation's JSON. Applied in both fetchPassage and searchPassages.
-// Add new aliases here when additional mismatches are discovered.
+// Static aliases kept as a fast-path for known mismatches so we avoid a
+// shallow-index fetch on every session for translations we have already
+// characterised. The dynamic fallback below handles anything not listed here.
 const BOOK_KEY_ALIASES = {
-    // CSB (and possibly others) store title-cased prepositions.
     'Song of Solomon': 'Song Of Solomon',
 };
 
@@ -94,6 +92,8 @@ export class BibleApi {
         this._translation = translation;
         // Per-book cache: Map<`${translation}/${book}`, bookData | null>
         this._bookCache = new Map();
+        // Per-translation shallow key index: Map<translation, Map<lowerKey, exactKey>>
+        this._shallowIndexCache = new Map();
     }
 
     setTranslation(translation) {
@@ -105,9 +105,45 @@ export class BibleApi {
     }
 
     /**
+     * Fetches the shallow key index for a translation and returns a Map of
+     * lowercase book name → exact stored key. Cached per translation per session.
+     *
+     * @param {string} translation
+     * @returns {Promise<Map<string,string>>}
+     */
+    async _getShallowIndex(translation) {
+        if (this._shallowIndexCache.has(translation)) {
+            return this._shallowIndexCache.get(translation);
+        }
+        const index = new Map();
+        try {
+            const url = `${FIREBASE_DB_URL}/translations/${encodeURIComponent(translation)}.json?shallow=true`;
+            const res = await fetch(url);
+            if (res.ok) {
+                const data = await res.json();
+                if (data && typeof data === 'object') {
+                    for (const key of Object.keys(data)) {
+                        index.set(key.toLowerCase(), key);
+                    }
+                }
+            }
+        } catch (err) {
+            console.warn(`BibleApi: shallow index fetch failed for ${translation}`, err);
+        }
+        this._shallowIndexCache.set(translation, index);
+        return index;
+    }
+
+    /**
      * Fetches a single book from RTDB.
      * RTDB path: /translations/{translation}/{book}
      * Returns: { "1": { "1": "verse text", ... }, ... } or null on failure.
+     *
+     * Resolution order when the canonical key returns null:
+     *   1. Check BOOK_KEY_ALIASES for a known static alias and retry.
+     *   2. Fetch the translation's shallow key index and find the stored key
+     *      by case-insensitive match, then retry with that exact key.
+     * The successful result is cached under the canonical cache key.
      */
     async _loadBook(translation, book) {
         const cacheKey = `${translation}/${book}`;
@@ -115,13 +151,34 @@ export class BibleApi {
             return this._bookCache.get(cacheKey);
         }
 
-        const url = `${FIREBASE_DB_URL}/translations/${encodeURIComponent(translation)}/${encodeURIComponent(book)}.json`;
-        try {
+        const fetchNode = async (nodeKey) => {
+            const url = `${FIREBASE_DB_URL}/translations/${encodeURIComponent(translation)}/${encodeURIComponent(nodeKey)}.json`;
             const res = await fetch(url);
             if (!res.ok) throw new Error(`HTTP ${res.status} for ${res.url}`);
             const data = await res.json();
-            // RTDB returns null for missing nodes.
-            const bookData = (data && typeof data === 'object') ? data : null;
+            return (data && typeof data === 'object') ? data : null;
+        };
+
+        try {
+            let bookData = await fetchNode(book);
+
+            if (bookData === null) {
+                // Step 1: try known static alias.
+                const alias = BOOK_KEY_ALIASES[book];
+                if (alias) {
+                    bookData = await fetchNode(alias);
+                }
+            }
+
+            if (bookData === null) {
+                // Step 2: fetch shallow index and find key by case-insensitive match.
+                const shallowIndex = await this._getShallowIndex(translation);
+                const exactKey = shallowIndex.get(book.toLowerCase());
+                if (exactKey && exactKey !== book) {
+                    bookData = await fetchNode(exactKey);
+                }
+            }
+
             this._bookCache.set(cacheKey, bookData);
             return bookData;
         } catch (err) {
