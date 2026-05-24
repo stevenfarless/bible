@@ -15,8 +15,6 @@ self.addEventListener('activate', (event) => {
     const keys = await caches.keys();
     await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
     await self.clients.claim();
-    // No forced reload needed — JS files are network-first with no-store,
-    // so every page load already fetches the latest code directly from the network.
   })());
 });
 
@@ -54,7 +52,10 @@ self.addEventListener('fetch', (event) => {
   if (isRoot) {
     event.respondWith((async () => {
       try {
-        const resp = await fetch(event.request);
+        // cache: 'no-store' bypasses Brave iOS shields and the browser HTTP
+        // cache so the fresh HTML (with the updated ?v=<SHA> script src) is
+        // always fetched from the network on every load.
+        const resp = await fetch(new Request(event.request, { cache: 'no-store' }));
         const cache = await caches.open(CACHE_NAME);
         cache.put(event.request, resp.clone());
         return resp;
