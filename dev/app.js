@@ -226,17 +226,25 @@ class BibleApp {
         this.initializeAccordion();
         document.body.setAttribute('data-app-ready', 'true');
 
+        // --- Unconditional initial render ---
+        // Load local settings and render the passage immediately so the page
+        // is never stuck on "Loading passage..." regardless of Firebase state.
+        // onAuthStateChanged below will refine this if the user is signed in.
+        this.loadLocalSettings();
+        this.applySettings();
+        await this.loadPassage(this.state.currentBook, this.state.currentChapter);
+
         if (!this.auth || !this.database) {
             console.error('Firebase auth/database not ready when app initialized.');
-            this.loadLocalSettings();
-            this.applySettings();
-            this.loadPassage(this.state.currentBook, this.state.currentChapter);
             setTimeout(() => {
                 this.showToast('Sign in is temporarily unavailable. Please refresh the page.');
             }, 500);
             return;
         }
 
+        // Firebase auth runs in parallel — if the user is signed in, load their
+        // cloud settings and saved position, then re-render only if the position
+        // actually differs from what's already showing.
         this.auth.onAuthStateChanged(async (user) => {
             if (user) {
                 this.currentUser = user;
@@ -244,12 +252,10 @@ class BibleApp {
                 // refresh must not block the passage from loading.
                 await withTimeout(this.loadUserData(), 5000);
                 this.applySettings();
-                await this.loadSavedReadingPosition();
+                await this._loadSavedPositionIfChanged();
             } else {
                 this.currentUser = null;
-                this.loadLocalSettings();
-                this.applySettings();
-                this.loadPassage(this.state.currentBook, this.state.currentChapter);
+                // Local render already happened above; just show the sign-in hint.
                 this.checkApiKey();
             }
         });
@@ -555,6 +561,51 @@ class BibleApp {
     // Passage Loading
     // ==========================================
 
+    /**
+     * Called after Firebase resolves a signed-in user. Reads the cloud-saved
+     * reading position and re-renders only if it differs from the passage that
+     * was already loaded during the unconditional init render.
+     */
+    async _loadSavedPositionIfChanged() {
+        if (!this.currentUser || !this.database) return;
+
+        let targetBook = this.state.currentBook;
+        let targetChapter = this.state.currentChapter;
+        let targetScrollY = 0;
+
+        try {
+            const snapshot = await withTimeout(
+                this.database.ref(`users/${this.currentUser.uid}/readingPosition`).once('value'),
+                5000
+            );
+
+            if (snapshot) {
+                const pos = snapshot.val();
+                if (pos && pos.book && pos.chapter) {
+                    targetBook = pos.book;
+                    targetChapter = pos.chapter;
+                    targetScrollY = pos.scrollY || 0;
+                }
+            } else {
+                console.warn('_loadSavedPositionIfChanged: timed out, keeping current passage');
+            }
+        } catch (err) {
+            console.error('_loadSavedPositionIfChanged: Firebase read failed', err);
+        }
+
+        // Only re-render if the saved position differs from what's already showing.
+        if (targetBook !== this.state.currentBook || targetChapter !== this.state.currentChapter) {
+            this.state.currentBook = targetBook;
+            this.state.currentChapter = targetChapter;
+            this.lastScrollPosition = targetScrollY;
+            await this.loadPassage(targetBook, targetChapter, !!targetScrollY);
+        } else if (targetScrollY) {
+            // Same passage — just restore the scroll position.
+            window.scrollTo(0, targetScrollY);
+        }
+    }
+
+    /** @deprecated Use _loadSavedPositionIfChanged for the auth flow. */
     async loadSavedReadingPosition() {
         if (!this.currentUser || !this.database) {
             await this.loadPassage(this.state.currentBook, this.state.currentChapter);
@@ -562,9 +613,6 @@ class BibleApp {
         }
 
         try {
-            // Race the RTDB fetch against a 5 s timeout. On refresh the WebSocket
-            // may take several seconds to connect; we must not block the passage
-            // load waiting for it.
             const snapshot = await withTimeout(
                 this.database.ref(`users/${this.currentUser.uid}/readingPosition`).once('value'),
                 5000
