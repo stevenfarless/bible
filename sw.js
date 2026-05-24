@@ -11,21 +11,12 @@ self.addEventListener('install', () => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
+    // Delete any caches from previous versions.
     const keys = await caches.keys();
-    const hadPreviousCache = keys.some(k => k !== CACHE_NAME && k.startsWith('esv-bible-'));
     await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
     await self.clients.claim();
-
-    const allClients = await self.clients.matchAll({ type: 'window' });
-
-    if (hadPreviousCache) {
-      // A previous version was installed. The new SW now controls the page
-      // but the old cached JS has already executed. Force a reload so the
-      // page re-fetches all JS files under the new network-first policy.
-      for (const client of allClients) {
-        client.postMessage({ type: 'RELOAD' });
-      }
-    }
+    // No forced reload needed — JS files are network-first, so every page
+    // load already fetches the latest code directly from the network.
   })());
 });
 
