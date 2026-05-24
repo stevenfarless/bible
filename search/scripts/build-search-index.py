@@ -17,6 +17,7 @@ Environment / file:
 
 import argparse
 import json
+import os
 import sys
 import firebase_admin
 from firebase_admin import credentials, db
@@ -45,59 +46,76 @@ BOOK_KEY_ALIASES = {
 }
 
 
-def resolve_book_key(book_data: dict, canonical: str) -> str | None:
-    if canonical in book_data:
-        return canonical
-    alias = BOOK_KEY_ALIASES.get(canonical)
-    if alias and alias in book_data:
-        return alias
-    lower_map = {k.lower(): k for k in book_data}
-    return lower_map.get(canonical.lower())
+def validate_service_account():
+    if not os.path.exists(SERVICE_ACCOUNT_PATH):
+        print(f"ERROR: service account file not found at {SERVICE_ACCOUNT_PATH}", file=sys.stderr)
+        sys.exit(1)
+    try:
+        with open(SERVICE_ACCOUNT_PATH) as f:
+            sa = json.load(f)
+        required = ["type", "project_id", "private_key", "client_email"]
+        missing = [k for k in required if not sa.get(k)]
+        if missing:
+            print(f"ERROR: service account JSON missing fields: {missing}", file=sys.stderr)
+            sys.exit(1)
+        print(f"  Service account: {sa.get('client_email')} (project: {sa.get('project_id')})")
+    except json.JSONDecodeError as e:
+        print(f"ERROR: service account file is not valid JSON: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 def build_index(translation: str) -> dict:
-    """Fetch all 66 books from RTDB and return a flat ref->text dict."""
+    """Fetch entire translation from RTDB in one call and return a flat ref->text dict."""
+    print(f"  Fetching all books for {translation} in one call...", flush=True)
+
+    translation_data = db.reference(f"translations/{translation}").get()
+
+    if translation_data is None:
+        # Try shallow fetch to see what keys exist at translations/
+        print("  WARNING: translation node returned None. Checking available translations...", flush=True)
+        available = db.reference("translations").get(shallow=True)
+        if available:
+            print(f"  Available translation keys in RTDB: {list(available.keys())}")
+        else:
+            print("  ERROR: translations/ node also returned None — credentials may be invalid or RTDB rules deny access.")
+        return {}
+
+    if not isinstance(translation_data, dict):
+        print(f"  ERROR: expected dict at translations/{translation}, got {type(translation_data)}")
+        return {}
+
+    print(f"  Top-level keys found: {list(translation_data.keys())[:5]}{'...' if len(translation_data) > 5 else ''}")
+
     index = {}
-    rtdb_ref = db.reference(f"translations/{translation}")
+    for canonical in BOOK_LOAD_ORDER:
+        # Try canonical name, then alias, then case-insensitive match
+        book_data = translation_data.get(canonical)
+        if book_data is None:
+            alias = BOOK_KEY_ALIASES.get(canonical)
+            if alias:
+                book_data = translation_data.get(alias)
+        if book_data is None:
+            lower_map = {k.lower(): k for k in translation_data}
+            resolved = lower_map.get(canonical.lower())
+            if resolved:
+                book_data = translation_data[resolved]
 
-    for book in BOOK_LOAD_ORDER:
-        print(f"  Fetching {book}...", end=" ", flush=True)
-        try:
-            book_data = rtdb_ref.child(book).get()
-
-            # Try alias if primary key returned nothing
-            if book_data is None:
-                alias = BOOK_KEY_ALIASES.get(book)
-                if alias:
-                    book_data = rtdb_ref.child(alias).get()
-
-            # Try case-insensitive fallback via shallow index
-            if book_data is None:
-                shallow = rtdb_ref.get(shallow=True) or {}
-                resolved = resolve_book_key(shallow, book)
-                if resolved:
-                    book_data = rtdb_ref.child(resolved).get()
-
-            if not book_data or not isinstance(book_data, dict):
-                print("SKIP (no data)")
-                continue
-
-            verse_count = 0
-            for chapter_str, chapter_data in book_data.items():
-                if not isinstance(chapter_data, dict):
-                    continue
-                for verse_str, text in chapter_data.items():
-                    if not str(verse_str).isdigit() or int(verse_str) < 1:
-                        continue
-                    ref = f"{book} {chapter_str}:{verse_str}"
-                    index[ref] = str(text or "").lower()
-                    verse_count += 1
-
-            print(f"{verse_count} verses")
-
-        except Exception as e:
-            print(f"ERROR: {e}")
+        if not book_data or not isinstance(book_data, dict):
+            print(f"  SKIP {canonical} (no data)")
             continue
+
+        verse_count = 0
+        for chapter_str, chapter_data in book_data.items():
+            if not isinstance(chapter_data, dict):
+                continue
+            for verse_str, text in chapter_data.items():
+                if not str(verse_str).isdigit() or int(verse_str) < 1:
+                    continue
+                ref = f"{canonical} {chapter_str}:{verse_str}"
+                index[ref] = str(text or "").lower()
+                verse_count += 1
+
+        print(f"  {canonical}: {verse_count} verses")
 
     return index
 
@@ -109,6 +127,8 @@ def main():
 
     translation = args.translation.strip().upper()
     print(f"Building search index for {translation}...")
+
+    validate_service_account()
 
     cred = credentials.Certificate(SERVICE_ACCOUNT_PATH)
     firebase_admin.initialize_app(cred, {"databaseURL": FIREBASE_DB_URL})
