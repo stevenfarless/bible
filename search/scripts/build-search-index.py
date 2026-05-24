@@ -41,10 +41,6 @@ BOOK_LOAD_ORDER = [
     "1 John", "2 John", "3 John", "Jude", "Revelation",
 ]
 
-BOOK_KEY_ALIASES = {
-    "Song of Solomon": "Song Of Solomon",
-}
-
 
 def validate_service_account():
     if not os.path.exists(SERVICE_ACCOUNT_PATH):
@@ -65,57 +61,34 @@ def validate_service_account():
 
 
 def build_index(translation: str) -> dict:
-    """Fetch entire translation from RTDB in one call and return a flat ref->text dict."""
-    print(f"  Fetching all books for {translation} in one call...", flush=True)
-
-    translation_data = db.reference(f"translations/{translation}").get()
-
-    if translation_data is None:
-        # Try shallow fetch to see what keys exist at translations/
-        print("  WARNING: translation node returned None. Checking available translations...", flush=True)
-        available = db.reference("translations").get(shallow=True)
-        if available:
-            print(f"  Available translation keys in RTDB: {list(available.keys())}")
-        else:
-            print("  ERROR: translations/ node also returned None — credentials may be invalid or RTDB rules deny access.")
-        return {}
-
-    if not isinstance(translation_data, dict):
-        print(f"  ERROR: expected dict at translations/{translation}, got {type(translation_data)}")
-        return {}
-
-    print(f"  Top-level keys found: {list(translation_data.keys())[:5]}{'...' if len(translation_data) > 5 else ''}")
-
+    """Fetch each book individually from RTDB and return a flat ref->text dict."""
     index = {}
-    for canonical in BOOK_LOAD_ORDER:
-        # Try canonical name, then alias, then case-insensitive match
-        book_data = translation_data.get(canonical)
-        if book_data is None:
-            alias = BOOK_KEY_ALIASES.get(canonical)
-            if alias:
-                book_data = translation_data.get(alias)
-        if book_data is None:
-            lower_map = {k.lower(): k for k in translation_data}
-            resolved = lower_map.get(canonical.lower())
-            if resolved:
-                book_data = translation_data[resolved]
+    translation_ref = db.reference(f"translations/{translation}")
+
+    for book in BOOK_LOAD_ORDER:
+        book_data = translation_ref.child(book).get()
 
         if not book_data or not isinstance(book_data, dict):
-            print(f"  SKIP {canonical} (no data)")
+            print(f"  SKIP {book} (no data or unexpected type: {type(book_data).__name__})")
             continue
 
         verse_count = 0
-        for chapter_str, chapter_data in book_data.items():
+        for ch_key, chapter_data in book_data.items():
             if not isinstance(chapter_data, dict):
                 continue
-            for verse_str, text in chapter_data.items():
-                if not str(verse_str).isdigit() or int(verse_str) < 1:
+            # Firebase may return integer keys or string keys
+            ch_str = str(ch_key)
+            for v_key, text in chapter_data.items():
+                v_str = str(v_key)
+                if not v_str.isdigit() or int(v_str) < 1:
                     continue
-                ref = f"{canonical} {chapter_str}:{verse_str}"
-                index[ref] = str(text or "").lower()
+                if not text:
+                    continue
+                ref = f"{book} {ch_str}:{v_str}"
+                index[ref] = str(text).lower()
                 verse_count += 1
 
-        print(f"  {canonical}: {verse_count} verses")
+        print(f"  {book}: {verse_count} verses", flush=True)
 
     return index
 
@@ -139,7 +112,8 @@ def main():
         print(f"ERROR: No verses found for {translation}. Aborting.", file=sys.stderr)
         sys.exit(1)
 
-    print(f"\nWriting {len(index)} verse entries to /searchIndex/{translation}...")
+    print(f"\nTotal verses indexed: {len(index)}")
+    print(f"Writing to /searchIndex/{translation}...")
     db.reference(f"searchIndex/{translation}").set(index)
     print("Done.")
 
