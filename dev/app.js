@@ -420,11 +420,23 @@ async function registerServiceWorker(appInstance) {
     if (!('serviceWorker' in navigator)) return;
     try {
         const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
-        console.info('[BUILD_ID]', document.querySelector('meta[name="build-id"]')?.content || '__BUILD_ID__');
+        const pageBuildId = document.querySelector('meta[name="build-id"]')?.content || '';
+        console.info('[BUILD_ID]', pageBuildId || '__BUILD_ID__');
+
         navigator.serviceWorker.addEventListener('message', (e) => {
-            if (e.data?.type === 'NEW_VERSION') showUpdateToast(appInstance);
-            if (e.data?.type === 'RELOAD') window.location.reload();
+            if (e.data?.type === 'NEW_VERSION') {
+                showUpdateToast(appInstance);
+            } else if (e.data?.type === 'NEW_BUILD') {
+                // Only reload if the SW's build differs from the page's build.
+                // This prevents a reload loop when the same build is re-activated
+                // (e.g. normal page refresh with an unchanged SW).
+                const swBuildId = e.data.buildId || '';
+                if (pageBuildId && swBuildId && pageBuildId !== swBuildId) {
+                    window.location.reload();
+                }
+            }
         });
+
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible')
                 reg.update().catch((err) => console.warn('SW update check failed', err));
