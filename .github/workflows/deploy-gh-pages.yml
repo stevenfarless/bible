@@ -3,10 +3,10 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - dev
+      - '**'
 
 concurrency:
-  group: gh-pages-dev
+  group: gh-pages-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -24,6 +24,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Derive destination directory
+        id: dest
+        run: |
+          # Replace every / with - so branch names like refactor/split-app-js
+          # become a valid directory slug: refactor-split-app-js
+          DEST="${GITHUB_REF_NAME//\//-}"
+          echo "dir=$DEST" >> "$GITHUB_OUTPUT"
+
       - name: Inject build info
         run: |
           BRANCH="${GITHUB_REF_NAME}"
@@ -33,15 +41,15 @@ jobs:
           echo "Injecting: $INFO"
           sed -i "s|__BUILD_INFO__|${INFO}|g" index.html
           sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" sw.js index.html
-          sed -i "s|\(<script[^>]* src=\"\)\([^?\"]*\)\(\.js\)\(\"\)|\1\2\3?v=${GITHUB_SHA}\4|g" index.html
+          sed -i "s|\(<script[^>]* src=\"\)\([^?\"]*\)\(\.js\)\(\"\\)|\1\2\3?v=${GITHUB_SHA}\4|g" index.html
 
-      - name: Deploy to GitHub Pages (dev)
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./
-          destination_dir: dev
+          destination_dir: ${{ steps.dest.outputs.dir }}
           keep_files: true
           force_orphan: false
           enable_jekyll: false
