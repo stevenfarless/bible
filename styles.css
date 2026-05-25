@@ -1,3 +1,6 @@
+body { transition: opacity 220ms ease; }
+body.initializing { opacity: 0; }
+
 /* ================================
    ESV Bible Reader - Styles
 

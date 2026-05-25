@@ -153,11 +153,13 @@ class BibleApp {
     // ================================
 
     async init() {
-        await this._loadTranslationRegistry();
-        try { await registerServiceWorker(this); } catch (_) { console.warn('Service worker unavailable:', _); }
+        document.body.classList.add('initializing');
+        try {
+            await this._loadTranslationRegistry();
+            try { await registerServiceWorker(this); } catch (_) { console.warn('Service worker unavailable:', _); }
 
-        cacheElements(this);
-        loadTheme(this);
+            cacheElements(this);
+            loadTheme(this);
 
         const themeSelector   = document.getElementById('themeSelector');
         const lightModeToggle = document.getElementById('lightModeToggle');
@@ -178,23 +180,26 @@ class BibleApp {
 
         document.body.classList.remove('initializing');
 
-        if (!this.auth || !this.database) {
-            console.error('Firebase auth/database not ready when app initialized.');
-            setTimeout(() => this.showToast('Sign in is temporarily unavailable. Please refresh the page.'), 500);
-            return;
-        }
-
-        this.auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                this.currentUser = user;
-                await withTimeout(this.loadUserData(), 5000);
-                this.applySettings();
-                await this._loadSavedPositionIfChanged();
-            } else {
-                this.currentUser = null;
-                this.checkApiKey();
+            if (!this.auth || !this.database) {
+                console.error('Firebase auth/database not ready when app initialized.');
+                setTimeout(() => this.showToast('Sign in is temporarily unavailable. Please refresh the page.'), 500);
+                return;
             }
-        });
+
+            this.auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    this.currentUser = user;
+                    await withTimeout(this.loadUserData(), 5000);
+                    this.applySettings();
+                    await this._loadSavedReadingPositionIfChanged();
+                } else {
+                    this.currentUser = null;
+                    this.checkApiKey();
+                }
+            });
+        } finally {
+            document.body.classList.remove('initializing');
+        }
     }
 
     async _loadTranslationRegistry() {
@@ -263,6 +268,7 @@ class BibleApp {
             return;
         }
 
+        this.updateNavigationState();
         this.updateNavigationState();
         this.passageTitle.textContent = book === 'Psalm'
             ? `Psalm ${chapter}`
