@@ -1,9 +1,12 @@
 const BUILD_ID = "__BUILD_ID__";
 const CACHE_NAME = `esv-bible-${BUILD_ID}`;
 
-// App shell JS modules — always fetched from the network so a refresh
-// always runs the latest deployed code. Never serve these from cache.
-const APP_SHELL_PATTERN = /\.(js|mjs)$/;
+// App shell JS modules (everything under the root except vendor/):
+// network-first, bypass the browser HTTP cache entirely so refreshes
+// always run the latest deployed code.
+// vendor/ files are third-party SDKs that never change for a given
+// version — they go through the cache-first path below.
+const APP_SHELL_PATTERN = /^(?!.*\/vendor\/).*\.(js|mjs)$/;
 
 self.addEventListener('install', () => {
   self.skipWaiting();
@@ -11,17 +14,18 @@ self.addEventListener('install', () => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    // Delete any caches from previous versions.
+    // Delete caches from previous builds.
     const keys = await caches.keys();
     await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
     await self.clients.claim();
 
-    // Notify all controlled clients to reload so they pick up the new
-    // build immediately. This is the primary fix for iOS Safari PWA
-    // home screen shortcuts that otherwise serve stale cached content.
+    // Only broadcast RELOAD when this SW is replacing a *different* build.
+    // If BUILD_ID hasn't changed (e.g. same deploy, page refresh), skip the
+    // reload — otherwise every refresh triggers a redundant page reload.
     const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: false });
     for (const client of allClients) {
-      client.postMessage({ type: 'RELOAD' });
+      // Pass the new BUILD_ID so the client can decide whether to reload.
+      client.postMessage({ type: 'NEW_BUILD', buildId: BUILD_ID });
     }
   })());
 });
@@ -42,12 +46,9 @@ self.addEventListener('fetch', (event) => {
   }
 
   // App shell JS: network-first, bypass the browser HTTP cache entirely.
-  // cache: 'no-store' prevents the browser's memory/disk cache from
-  // satisfying the fetch before it reaches the network.
   if (APP_SHELL_PATTERN.test(url.pathname)) {
     event.respondWith(
       fetch(new Request(event.request, { cache: 'no-store' })).catch(async () => {
-        // Offline fallback only — return cached copy if network is unreachable.
         const cached = await caches.match(event.request);
         return cached || new Response('Offline', { status: 503 });
       })
@@ -60,9 +61,6 @@ self.addEventListener('fetch', (event) => {
   if (isRoot) {
     event.respondWith((async () => {
       try {
-        // cache: 'no-store' bypasses Brave iOS shields and the browser HTTP
-        // cache so the fresh HTML (with the updated ?v=<SHA> script src) is
-        // always fetched from the network on every load.
         const resp = await fetch(new Request(event.request, { cache: 'no-store' }));
         const cache = await caches.open(CACHE_NAME);
         cache.put(event.request, resp.clone());
@@ -75,7 +73,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Everything else (JSON data files, CSS, fonts, images): cache-first.
+  // Everything else (vendor JS, JSON data files, CSS, fonts, images): cache-first.
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(event.request);
