@@ -1,4 +1,4 @@
-const BUILD_ID = "61a91ddd35062d03ca0db924521861f438352f31";
+const BUILD_ID = "2bfb7bfa99ba4f2bdd9775539cc46e1c23c39ae9";
 const CACHE_NAME = `esv-bible-${BUILD_ID}`;
 
 // App shell JS modules (everything under the root except vendor/):
@@ -6,7 +6,22 @@ const CACHE_NAME = `esv-bible-${BUILD_ID}`;
 // always run the latest deployed code.
 // vendor/ files are third-party SDKs that never change for a given
 // version — they go through the cache-first path below.
-const APP_SHELL_PATTERN = /^(?!.*\/vendor\/).*\.(js|mjs)$/;
+const APP_SHELL_PATTERN = /^(?!\..*\/vendor\/).*\.(js|mjs)$/;
+
+// Firebase RTDB paths that are safe to cache indefinitely.
+// Bible text, translation index, and search index never change for a given
+// translation. Only user-specific paths (/users/) must always be live.
+function isFirebaseCacheable(url) {
+  if (!url.hostname.endsWith('.firebaseio.com')) return false;
+  const p = url.pathname;
+  // Never cache user account data.
+  if (p.startsWith('/users/')) return false;
+  // Cache Bible text, translation index, and search index.
+  if (p.startsWith('/translations/')) return true;
+  if (p.startsWith('/translationIndex')) return true;
+  if (p.startsWith('/searchIndex/')) return true;
+  return false;
+}
 
 self.addEventListener('install', () => {
   self.skipWaiting();
@@ -24,7 +39,6 @@ self.addEventListener('activate', (event) => {
     // reload — otherwise every refresh triggers a redundant page reload.
     const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: false });
     for (const client of allClients) {
-      // Pass the new BUILD_ID so the client can decide whether to reload.
       client.postMessage({ type: 'NEW_BUILD', buildId: BUILD_ID });
     }
   })());
@@ -39,9 +53,27 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Never cache Firebase RTDB requests — always fetch live data.
+  // Firebase RTDB — cacheable Bible data goes cache-first;
+  // everything else (user data, auth) bypasses the cache entirely.
   if (url.hostname.endsWith('.firebaseio.com')) {
-    event.respondWith(fetch(event.request));
+    if (isFirebaseCacheable(url)) {
+      event.respondWith((async () => {
+        const cache = await caches.open(CACHE_NAME);
+        const cached = await cache.match(event.request);
+        if (cached) return cached;
+        try {
+          const resp = await fetch(event.request);
+          if (event.request.method === 'GET' && resp && resp.status === 200) {
+            cache.put(event.request, resp.clone());
+          }
+          return resp;
+        } catch {
+          return new Response('Offline', { status: 503 });
+        }
+      })());
+    } else {
+      event.respondWith(fetch(event.request));
+    }
     return;
   }
 
