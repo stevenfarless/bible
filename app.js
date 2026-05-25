@@ -10,12 +10,7 @@ import {
     scrollToVerse as scrollVerse,
     applyVerseGlow as glowVerse,
 } from './reading-state.js';
-import {
-    cacheElements,
-    loadTheme,
-    toggleTheme,
-    changeColorTheme,
-} from './ui.js';
+import { cacheElements, loadTheme, toggleTheme, changeColorTheme } from './ui.js';
 import {
     initializeBibleStructure,
     getAllBooks,
@@ -23,69 +18,33 @@ import {
     getTestament,
     getDisplayName,
 } from './bible-structure.js';
+import { updateNavigationState, navigateToNextVerse, navigateToPreviousVerse } from './navigation.js';
 import {
-    updateNavigationState,
-    navigateToNextVerse,
-    navigateToPreviousVerse,
-} from './navigation.js';
-import {
-    toggleSearch,
-    closeSearch,
-    handleSearch,
-    handleSearchKeydown,
-    refreshSearchResultItems,
-    setSearchSelectedIndex,
-    activateSelectedSearchResult,
-    isPassageReference,
-    handlePassageReference,
-    fetchAllSearchResults,
-    groupSearchResultsByCanon,
-    performKeywordSearch,
-    displaySearchResults,
-    parseReference,
-    loadPassageFromReference,
-    escapeRegExp,
-    highlightSearchTerm,
-    stripHTML,
+    toggleSearch, closeSearch, handleSearch, handleSearchKeydown,
+    refreshSearchResultItems, setSearchSelectedIndex, activateSelectedSearchResult,
+    isPassageReference, handlePassageReference, fetchAllSearchResults,
+    groupSearchResultsByCanon, performKeywordSearch, displaySearchResults,
+    parseReference, loadPassageFromReference, escapeRegExp, highlightSearchTerm, stripHTML,
 } from './search.js';
 import {
-    loadSavedPositionIfChanged,
-    loadSavedReadingPosition,
-    saveReadingPosition,
-    checkApiKey,
-    handleUserButtonClick,
-    handleLogin,
-    handleSignup,
-    handleLogout,
-    loadUserData,
+    loadSavedPositionIfChanged, loadSavedReadingPosition, saveReadingPosition,
+    checkApiKey, handleUserButtonClick, handleLogin, handleSignup, handleLogout, loadUserData,
 } from './auth.js';
 import {
-    openModal,
-    closeModal,
-    openBookModal,
-    populateBookModal,
-    openChapterModal,
-    populateChapterModal,
-    openVerseModal,
-    populateVerseModal,
-    getCurrentVerseCount,
-    attachDragToResize,
+    openModal, closeModal,
+    openBookModal, populateBookModal,
+    openChapterModal, populateChapterModal,
+    openVerseModal, populateVerseModal,
+    getCurrentVerseCount, attachDragToResize,
 } from './modals.js';
 import {
-    loadLocalSettings,
-    applySettings,
-    toggleSetting,
-    toggleVerseByVerse,
-    updateFontSize,
-    changeTranslation,
-    updateCopyright,
+    loadLocalSettings, applySettings, toggleSetting,
+    toggleVerseByVerse, updateFontSize, changeTranslation, updateCopyright,
 } from './settings.js';
+import { handleKeyboardShortcuts } from './keyboard.js';
 
 const TRANSLATION_ALIASES = { NRSVue: 'NRSVUE' };
-
-function normalizeTranslation(t) {
-    return TRANSLATION_ALIASES[t] || t;
-}
+function normalizeTranslation(t) { return TRANSLATION_ALIASES[t] || t; }
 
 function withTimeout(promise, ms, fallback = null) {
     return Promise.race([
@@ -161,17 +120,12 @@ class BibleApp {
                 const delta = y - this.chromeScrollLastY;
                 const modalOpen  = !!document.querySelector('.modal.active');
                 const searchOpen = !!this.searchContainer?.classList.contains('active');
-
                 if (y <= 0 || modalOpen || searchOpen) {
                     this.showChrome();
-                    this.chromeScrollLastY = y;
-                    this.chromeScrollTicking = false;
-                    return;
+                } else {
+                    if (delta > this.chromeDelta)  this.hideChrome();
+                    if (delta < -this.chromeDelta) this.showChrome();
                 }
-
-                if (delta > this.chromeDelta)  this.hideChrome();
-                if (delta < -this.chromeDelta) this.showChrome();
-
                 this.chromeScrollLastY = y;
                 this.chromeScrollTicking = false;
             });
@@ -204,17 +158,14 @@ class BibleApp {
         cacheElements(this);
         loadTheme(this);
 
-        const themeSelector  = document.getElementById('themeSelector');
+        const themeSelector   = document.getElementById('themeSelector');
         const lightModeToggle = document.getElementById('lightModeToggle');
-
         if (themeSelector) {
             let saved = 'dracula';
             try { saved = localStorage.getItem('colorTheme') || 'dracula'; } catch (_) {}
             themeSelector.value = saved;
         }
-        if (lightModeToggle) {
-            lightModeToggle.checked = document.body.classList.contains('light-mode');
-        }
+        if (lightModeToggle) lightModeToggle.checked = document.body.classList.contains('light-mode');
 
         this.attachEventListeners();
         this.initializeAccordion();
@@ -256,16 +207,13 @@ class BibleApp {
             }
         }
         this._copyrightMap = {};
-        for (const t of translations) {
-            this._copyrightMap[t.id] = t.copyright || '';
-        }
+        for (const t of translations) this._copyrightMap[t.id] = t.copyright || '';
     }
 
     initializeAccordion() {
         document.querySelectorAll('.accordion-header').forEach((header) => {
             header.addEventListener('click', () => header.closest('.accordion-section').classList.toggle('active'));
         });
-
         const openAccountBtn = document.getElementById('openAccountBtn');
         if (openAccountBtn) {
             openAccountBtn.addEventListener('click', () => {
@@ -277,19 +225,19 @@ class BibleApp {
 
     attachEventListeners() {
         this.searchToggleBtn?.addEventListener('click', () => this.toggleSearch());
-        this.helpBtn?.addEventListener('click', () => this.openModal(this.helpModal));
+        this.helpBtn?.addEventListener('click',     () => this.openModal(this.helpModal));
         this.settingsBtn?.addEventListener('click', () => this.openModal(this.settingsModal));
 
         this.closeSearchBtn?.addEventListener('click', () => this.closeSearch());
-        this.searchInput?.addEventListener('input', (e) => this.handleSearch(e.target.value));
+        this.searchInput?.addEventListener('input',   (e) => this.handleSearch(e.target.value));
         this.searchInput?.addEventListener('keydown', (e) => this.handleSearchKeydown(e));
 
         this.prevChapterBtn?.addEventListener('click', () => this.navigateChapter(-1));
         this.nextChapterBtn?.addEventListener('click', () => this.navigateChapter(1));
-        this.bookSelector?.addEventListener('click', () => this.openBookModal());
-        this.chapterSelector?.addEventListener('click', () => this.openChapterModal());
-        this.verseSelector?.addEventListener('click', () => this.openVerseModal());
-        this.closeVerseModal?.addEventListener('click', () => this.closeModal(this.verseModal));
+        this.bookSelector?.addEventListener('click',   () => this.openBookModal());
+        this.chapterSelector?.addEventListener('click',() => this.openChapterModal());
+        this.verseSelector?.addEventListener('click',  () => this.openVerseModal());
+        this.closeVerseModal?.addEventListener('click',() => this.closeModal(this.verseModal));
 
         this.referencesModal        = document.getElementById('referencesModal');
         this.closeReferencesModal   = document.getElementById('closeReferencesModal');
@@ -307,10 +255,10 @@ class BibleApp {
             modal.addEventListener('click', (e) => { if (e.target === modal) this.closeModal(modal); });
         });
 
-        this.closeBookModal?.addEventListener('click',     () => this.closeModal(this.bookModal));
-        this.closeChapterModal?.addEventListener('click',  () => this.closeModal(this.chapterModal));
-        this.closeHelpModal?.addEventListener('click',     () => this.closeModal(this.helpModal));
-        this.closeSettingsModal?.addEventListener('click', () => this.closeModal(this.settingsModal));
+        this.closeBookModal?.addEventListener('click',       () => this.closeModal(this.bookModal));
+        this.closeChapterModal?.addEventListener('click',    () => this.closeModal(this.chapterModal));
+        this.closeHelpModal?.addEventListener('click',       () => this.closeModal(this.helpModal));
+        this.closeSettingsModal?.addEventListener('click',   () => this.closeModal(this.settingsModal));
         this.closeReferencesModal?.addEventListener('click', () => this.closeModal(this.referencesModal));
 
         attachDragToResize(this);
@@ -323,11 +271,11 @@ class BibleApp {
         this.crossReferencesToggle?.addEventListener('change', () => this.toggleSetting('showCrossReferences'));
 
         this.verseByVerseToggle?.addEventListener('change', () => this.toggleVerseByVerse());
-        this.fontSizeSlider?.addEventListener('input', (e) => this.updateFontSize(e.target.value));
+        this.fontSizeSlider?.addEventListener('input',  (e) => this.updateFontSize(e.target.value));
         this.translationSelector?.addEventListener('change', async (e) => this.changeTranslation(e.target.value));
 
         this.themeToggleBtn?.addEventListener('click', () => toggleTheme(this));
-        document.getElementById('themeSelector')?.addEventListener('change', (e) => changeColorTheme(this, e.target.value));
+        document.getElementById('themeSelector')?.addEventListener('change',   (e) => changeColorTheme(this, e.target.value));
         document.getElementById('lightModeToggle')?.addEventListener('change', () => toggleTheme(this));
 
         this.userBtn?.addEventListener('click', () => this.handleUserButtonClick());
@@ -342,7 +290,7 @@ class BibleApp {
             this.closeModal(this.signupModal);
             this.openModal(this.loginModal);
         });
-        document.getElementById('loginForm')?.addEventListener('submit', (e) => { e.preventDefault(); this.handleLogin(); });
+        document.getElementById('loginForm')?.addEventListener('submit',  (e) => { e.preventDefault(); this.handleLogin(); });
         document.getElementById('signupForm')?.addEventListener('submit', (e) => { e.preventDefault(); this.handleSignup(); });
         document.getElementById('logoutBtn')?.addEventListener('click', () => this.handleLogout());
 
@@ -400,8 +348,8 @@ class BibleApp {
         this.passageTitle.textContent = book === 'Psalm'
             ? `Psalm ${chapter}`
             : `${this.getDisplayName(book)} ${chapter}`;
-        this.passageText.innerHTML  = data.passages[0];
-        this.originalPassageHtml    = this.passageText.innerHTML;
+        this.passageText.innerHTML = data.passages[0];
+        this.originalPassageHtml   = this.passageText.innerHTML;
         this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
 
         this.updateCopyright();
@@ -409,7 +357,6 @@ class BibleApp {
         this.chromeSuspend = true;
         document.body.classList.add('chrome-no-transition');
         this.showChrome();
-
         window.scrollTo(0, restoreScroll ? (this.lastScrollPosition || 0) : 0);
 
         requestAnimationFrame(() => {
@@ -425,10 +372,10 @@ class BibleApp {
     // Navigation (delegated)
     // ================================
 
-    navigateChapter(direction)  { navChapter(this, direction); }
-    updateNavigationState()     { updateNavigationState(this); }
-    navigateToNextVerse()       { navigateToNextVerse(this); }
-    navigateToPreviousVerse()   { navigateToPreviousVerse(this); }
+    navigateChapter(direction) { navChapter(this, direction); }
+    updateNavigationState()    { updateNavigationState(this); }
+    navigateToNextVerse()      { navigateToNextVerse(this); }
+    navigateToPreviousVerse()  { navigateToPreviousVerse(this); }
 
     // ================================
     // Search (delegated)
@@ -457,29 +404,35 @@ class BibleApp {
     // Modals (delegated)
     // ================================
 
-    openModal(modal)          { openModal(this, modal); }
-    closeModal(modal)         { closeModal(this, modal); }
-    openBookModal()           { openBookModal(this); }
-    populateBookModal()       { populateBookModal(this); }
-    openChapterModal()        { openChapterModal(this); }
-    populateChapterModal()    { populateChapterModal(this); }
-    openVerseModal()          { openVerseModal(this); }
-    populateVerseModal()      { populateVerseModal(this); }
-    getCurrentVerseCount()    { return getCurrentVerseCount(this); }
-    scrollToVerse(n)          { scrollVerse(this, n); }
-    applyVerseGlow()          { glowVerse(this); }
+    openModal(modal)       { openModal(this, modal); }
+    closeModal(modal)      { closeModal(this, modal); }
+    openBookModal()        { openBookModal(this); }
+    populateBookModal()    { populateBookModal(this); }
+    openChapterModal()     { openChapterModal(this); }
+    populateChapterModal() { populateChapterModal(this); }
+    openVerseModal()       { openVerseModal(this); }
+    populateVerseModal()   { populateVerseModal(this); }
+    getCurrentVerseCount() { return getCurrentVerseCount(this); }
+    scrollToVerse(n)       { scrollVerse(this, n); }
+    applyVerseGlow()       { glowVerse(this); }
 
     // ================================
     // Settings (delegated)
     // ================================
 
-    loadLocalSettings()                    { loadLocalSettings(this); }
-    applySettings()                        { applySettings(this); }
-    async toggleSetting(s)                 { await toggleSetting(this, s); }
-    async toggleVerseByVerse()             { await toggleVerseByVerse(this); }
-    async updateFontSize(size)             { await updateFontSize(this, size); }
-    async changeTranslation(t)             { await changeTranslation(this, t); }
-    updateCopyright()                      { updateCopyright(this); }
+    loadLocalSettings()          { loadLocalSettings(this); }
+    applySettings()              { applySettings(this); }
+    async toggleSetting(s)       { await toggleSetting(this, s); }
+    async toggleVerseByVerse()   { await toggleVerseByVerse(this); }
+    async updateFontSize(size)   { await updateFontSize(this, size); }
+    async changeTranslation(t)   { await changeTranslation(this, t); }
+    updateCopyright()            { updateCopyright(this); }
+
+    // ================================
+    // Keyboard (delegated)
+    // ================================
+
+    handleKeyboardShortcuts(e)   { handleKeyboardShortcuts(this, e); }
 
     // ================================
     // Utilities
@@ -495,9 +448,7 @@ class BibleApp {
             .catch((err) => { console.error('Failed to copy:', err); this.showToast('Failed to copy passage'); });
     }
 
-    showError(message) {
-        this.passageText.innerHTML = `<div class="error">${message}</div>`;
-    }
+    showError(message) { this.passageText.innerHTML = `<div class="error">${message}</div>`; }
 
     showToast(message) {
         if (!this.toast) return;
@@ -506,48 +457,15 @@ class BibleApp {
         setTimeout(() => this.toast.classList.remove('show'), 3000);
     }
 
-    handleKeyboardShortcuts(e) {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-            e.preventDefault();
-            this.toggleSearch();
-        }
-
-        if (e.key === 'Escape') {
-            const modals = [
-                this.bookModal, this.chapterModal, this.helpModal,
-                this.settingsModal, this.loginModal, this.signupModal,
-                this.userMenuModal, this.verseModal, this.referencesModal,
-            ];
-            modals.forEach((m) => { if (m?.classList.contains('active')) this.closeModal(m); });
-            if (this.searchContainer?.classList.contains('active')) this.closeSearch();
-        }
-
-        if (!document.querySelector('.modal.active') && !this.searchContainer?.classList.contains('active')) {
-            if      (e.key === 'ArrowLeft'  || e.key === 'h') { e.preventDefault(); this.navigateChapter(-1); }
-            else if (e.key === 'ArrowRight' || e.key === 'l') { e.preventDefault(); this.navigateChapter(1); }
-            else if (e.key === 'ArrowUp'    || e.key === 'k') { e.preventDefault(); this.navigateToPreviousVerse(); }
-            else if (e.key === 'ArrowDown'  || e.key === 'j') { e.preventDefault(); this.navigateToNextVerse(); }
-            else if (e.key === 'v') {
-                e.preventDefault();
-                this.verseByVerseToggle.checked = !this.verseByVerseToggle.checked;
-                this.toggleVerseByVerse();
-            } else if (e.key === 's' && this.headingsToggle) {
-                e.preventDefault();
-                this.headingsToggle.checked = !this.headingsToggle.checked;
-                this.toggleSetting('showHeadings');
-            }
-        }
-    }
-
     // ================================
     // Firebase Auth (delegated)
     // ================================
 
-    handleUserButtonClick()  { handleUserButtonClick(this); }
-    async handleLogin()      { await handleLogin(this); }
-    async handleSignup()     { await handleSignup(this); }
-    async handleLogout()     { await handleLogout(this); }
-    async loadUserData()     { await loadUserData(this, normalizeTranslation); }
+    handleUserButtonClick() { handleUserButtonClick(this); }
+    async handleLogin()     { await handleLogin(this); }
+    async handleSignup()    { await handleSignup(this); }
+    async handleLogout()    { await handleLogout(this); }
+    async loadUserData()    { await loadUserData(this, normalizeTranslation); }
 }
 
 
@@ -557,14 +475,11 @@ async function registerServiceWorker(appInstance) {
     if (!('serviceWorker' in navigator)) return;
     try {
         const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
-        const buildMeta = document.querySelector('meta[name="build-id"]')?.content || '__BUILD_ID__';
-        console.info('[BUILD_ID]', buildMeta);
-
+        console.info('[BUILD_ID]', document.querySelector('meta[name="build-id"]')?.content || '__BUILD_ID__');
         navigator.serviceWorker.addEventListener('message', (e) => {
             if (e.data?.type === 'NEW_VERSION') showUpdateToast(appInstance);
             if (e.data?.type === 'RELOAD') window.location.reload();
         });
-
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible')
                 reg.update().catch((err) => console.warn('SW update check failed', err));
@@ -578,16 +493,12 @@ function showUpdateToast(appInstance) {
     const toast = document.getElementById('toast');
     if (!toast) return;
     toast.innerHTML = '';
-
-    const text = Object.assign(document.createElement('span'), { textContent: 'A new version is available.' });
+    const text    = Object.assign(document.createElement('span'),  { textContent: 'A new version is available.' });
+    const action  = Object.assign(document.createElement('button'),{ textContent: 'Refresh',  className: 'toast-action' });
+    const dismiss = Object.assign(document.createElement('button'),{ textContent: '\u00d7', className: 'toast-dismiss' });
     text.style.flex = '1';
-
-    const action = Object.assign(document.createElement('button'), { textContent: 'Refresh', className: 'toast-action' });
-    action.addEventListener('click', () => location.reload());
-
-    const dismiss = Object.assign(document.createElement('button'), { textContent: '\u00d7', className: 'toast-dismiss' });
+    action.addEventListener('click',  () => location.reload());
     dismiss.addEventListener('click', () => toast.classList.remove('show'));
-
     toast.append(text, action, dismiss);
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 30000);
