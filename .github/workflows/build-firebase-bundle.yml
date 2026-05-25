@@ -1,10 +1,10 @@
 name: Build Firebase Bundle
 
 # Runs on every push to dev (and any non-main branch).
-# Uses esbuild to bundle config/firebase-config.js into
-# config/firebase-config.bundle.js — a single self-contained ESM file
-# with no external imports. Brave (and any browser) can load it without
-# making cross-origin requests to gstatic.com.
+# 1. Uses esbuild to bundle config/firebase-config.js into
+#    config/firebase-config.bundle.js (no external imports).
+# 2. Patches app.js to import the bundle instead of the source,
+#    so Brave never makes cross-origin requests to gstatic.com.
 
 on:
   push:
@@ -13,6 +13,7 @@ on:
       - '!main'
     paths:
       - 'config/firebase-config.js'
+      - 'app.js'
       - '.github/workflows/build-firebase-bundle.yml'
   workflow_dispatch:
 
@@ -46,12 +47,21 @@ jobs:
             --outfile=config/firebase-config.bundle.js
           echo "Bundle size: $(wc -c < config/firebase-config.bundle.js) bytes"
 
-      - name: Commit bundle
+      - name: Patch app.js to import bundle
+        run: |
+          if grep -q "firebase-config.js'" app.js; then
+            sed -i "s|firebase-config.js'|firebase-config.bundle.js'|g" app.js
+            echo "Patched app.js to use bundle"
+          else
+            echo "app.js already points at bundle, no patch needed"
+          fi
+
+      - name: Commit changes
         run: |
           git config user.name "stevenfarless"
           git config user.email "125781365+stevenfarless@users.noreply.github.com"
-          git add config/firebase-config.bundle.js
+          git add config/firebase-config.bundle.js app.js
           git diff --cached --quiet && echo "No changes" && exit 0
-          git commit -m "build: regenerate firebase-config.bundle.js"
+          git commit -m "build: regenerate firebase bundle and patch app.js"
           git pull --rebase origin ${{ github.ref_name }}
           git push origin ${{ github.ref_name }}
