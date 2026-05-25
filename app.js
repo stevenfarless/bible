@@ -161,7 +161,7 @@ class BibleApp {
             cacheElements(this);
             loadTheme(this);
 
-            const themeSelector   = document.getElementById('themeSelector');
+            const themeSelector = document.getElementById('themeSelector');
             const lightModeToggle = document.getElementById('lightModeToggle');
             if (themeSelector) {
                 let saved = 'dracula';
