@@ -455,7 +455,7 @@ function showUpdateToast(appInstance) {
         if (document.readyState !== 'loading') return resolve();
         document.addEventListener('DOMContentLoaded', resolve, { once: true });
     });
-    try { await import('./config/firebase-config.js'); }
+    try { await import('./config/firebase-config.bundle.js'); }
     catch (err) { console.error('Firebase config module failed to load:', err); }
     new BibleApp();
 })();
