@@ -10,7 +10,6 @@ import {
     scrollToVerse as scrollVerse,
     applyVerseGlow as glowVerse,
 } from './reading-state.js';
-import { loadUserData as loadUserDataFromFirebase } from './config/firebase-config.js';
 import {
     cacheElements,
     loadTheme,
@@ -50,6 +49,17 @@ import {
     highlightSearchTerm,
     stripHTML,
 } from './search.js';
+import {
+    loadSavedPositionIfChanged,
+    loadSavedReadingPosition,
+    saveReadingPosition,
+    checkApiKey,
+    handleUserButtonClick,
+    handleLogin,
+    handleSignup,
+    handleLogout,
+    loadUserData,
+} from './auth.js';
 
 function readBool(key, defaultValue) {
     try {
@@ -543,85 +553,16 @@ class BibleApp {
     // ==========================================
 
     async _loadSavedPositionIfChanged() {
-        if (!this.currentUser || !this.database) return;
-
-        let targetBook = this.state.currentBook;
-        let targetChapter = this.state.currentChapter;
-        let targetScrollY = 0;
-
-        try {
-            const snapshot = await withTimeout(
-                this.database.ref(`users/${this.currentUser.uid}/readingPosition`).once('value'),
-                5000
-            );
-
-            if (snapshot) {
-                const pos = snapshot.val();
-                if (pos && pos.book && pos.chapter) {
-                    targetBook = pos.book;
-                    targetChapter = pos.chapter;
-                    targetScrollY = pos.scrollY || 0;
-                }
-            } else {
-                console.warn('_loadSavedPositionIfChanged: timed out, keeping current passage');
-            }
-        } catch (err) {
-            console.error('_loadSavedPositionIfChanged: Firebase read failed', err);
-        }
-
-        if (targetBook !== this.state.currentBook || targetChapter !== this.state.currentChapter) {
-            this.state.currentBook = targetBook;
-            this.state.currentChapter = targetChapter;
-            this.lastScrollPosition = targetScrollY;
-            await this.loadPassage(targetBook, targetChapter, !!targetScrollY);
-        } else if (targetScrollY) {
-            window.scrollTo(0, targetScrollY);
-        }
+        await loadSavedPositionIfChanged(this, withTimeout);
     }
 
     /** @deprecated Use _loadSavedPositionIfChanged for the auth flow. */
     async loadSavedReadingPosition() {
-        if (!this.currentUser || !this.database) {
-            await this.loadPassage(this.state.currentBook, this.state.currentChapter);
-            return;
-        }
-
-        try {
-            const snapshot = await withTimeout(
-                this.database.ref(`users/${this.currentUser.uid}/readingPosition`).once('value'),
-                5000
-            );
-
-            if (snapshot) {
-                const pos = snapshot.val();
-                if (pos && pos.book && pos.chapter) {
-                    this.state.currentBook = pos.book;
-                    this.state.currentChapter = pos.chapter;
-                    this.lastScrollPosition = pos.scrollY || 0;
-                }
-            } else {
-                console.warn('loadSavedReadingPosition: timed out, loading from local state');
-            }
-        } catch (err) {
-            console.error('loadSavedReadingPosition: failed to read Firebase', err);
-        }
-
-        await this.loadPassage(this.state.currentBook, this.state.currentChapter, !!this.lastScrollPosition);
+        await loadSavedReadingPosition(this, withTimeout);
     }
 
     saveReadingPosition() {
-        if (!this.currentUser || !this.database) return;
-
-        const pos = {
-            book: this.state.currentBook,
-            chapter: this.state.currentChapter,
-            scrollY: window.scrollY || 0,
-        };
-
-        this.database
-            .ref(`users/${this.currentUser.uid}/readingPosition`)
-            .set(pos)
-            .catch((err) => console.error('saveReadingPosition: Firebase write failed', err));
+        saveReadingPosition(this);
     }
 
     async loadPassage(book, chapter, restoreScroll = false) {
@@ -857,9 +798,7 @@ class BibleApp {
     // ================================
 
     checkApiKey() {
-        setTimeout(() => {
-            this.showToast('Sign in to sync your reading position across devices.');
-        }, 500);
+        checkApiKey(this);
     }
 
     loadLocalSettings() {
@@ -1056,124 +995,23 @@ class BibleApp {
     // ================================
 
     handleUserButtonClick() {
-        if (this.currentUser) {
-            document.getElementById('userEmail').textContent = this.currentUser.email;
-            const isLight = document.body.classList.contains('light-mode');
-            let colorTheme = this.state?.colorTheme || 'dracula';
-
-            try { colorTheme = this.state?.colorTheme || localStorage.getItem('colorTheme') || 'dracula'; } catch (_) {}
-            const themeNameMap = {
-                dracula: isLight ? 'Alucard (Light)' : 'Dracula (Dark)',
-                steel:   `Steel (${isLight ? 'Light' : 'Dark'})`,
-                onyx:    `Onyx (${isLight ? 'Light' : 'Dark'})`,
-                reader:  `Reader (${isLight ? 'Parchment' : 'Night'})`,
-            };
-            document.getElementById('userTheme').textContent =
-                themeNameMap[colorTheme] || (isLight ? 'Alucard (Light)' : 'Dracula (Dark)');
-            this.openModal(this.userMenuModal);
-        } else {
-            this.openModal(this.loginModal);
-        }
+        handleUserButtonClick(this);
     }
 
     async handleLogin() {
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-
-        if (!email || !password) {
-            this.showToast('Please enter valid credentials');
-            return;
-        }
-
-        try {
-            await this.auth.signInWithEmailAndPassword(email, password);
-            this.showToast('Signed in successfully!');
-            this.closeModal(this.loginModal);
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-        } catch (error) {
-            console.error('Login error:', error);
-            if (error.code === 'auth/user-not-found') {
-                if (confirm('No account found with this email. Sign up instead?')) {
-                    this.closeModal(this.loginModal);
-                    this.openModal(this.signupModal);
-                    document.getElementById('signupEmail').value = email;
-                }
-            } else if (error.code === 'auth/wrong-password') {
-                this.showToast('Incorrect password');
-            } else {
-                this.showToast(`Login failed: ${error.message}`);
-            }
-        }
+        await handleLogin(this);
     }
 
     async handleSignup() {
-        const email = document.getElementById('signupEmail').value;
-        const password = document.getElementById('signupPassword').value;
-
-        if (!email || !password) {
-            this.showToast('Please fill in all fields');
-            return;
-        }
-
-        if (password.length < 6) {
-            this.showToast('Password must be at least 6 characters');
-            return;
-        }
-
-        try {
-            const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
-            const user = userCredential.user;
-
-            await this.database.ref(`users/${user.uid}/settings`).set({
-                fontSize: this.state.fontSize,
-                showVerseNumbers: this.state.showVerseNumbers,
-                showHeadings: this.state.showHeadings,
-                showFootnotes: this.state.showFootnotes,
-                showCrossReferences: this.state.showCrossReferences,
-                verseByVerse: this.state.verseByVerse,
-                colorTheme: this.state.colorTheme,
-                lightMode: this.state.lightMode,
-                translation: this.state.translation || 'ESV',
-            });
-
-            this.showToast('Account created successfully!');
-            this.closeModal(this.signupModal);
-        } catch (error) {
-            console.error('Signup error:', error);
-            if (error.code === 'auth/email-already-in-use') {
-                this.showToast('An account with this email already exists');
-            } else {
-                this.showToast(`Signup failed: ${error.message}`);
-            }
-        }
+        await handleSignup(this);
     }
 
     async handleLogout() {
-        try {
-            await this.auth.signOut();
-            this.showToast('Signed out successfully');
-            this.closeModal(this.userMenuModal);
-        } catch (error) {
-            console.error('Logout error:', error);
-            this.showToast('Failed to sign out');
-        }
+        await handleLogout(this);
     }
 
     async loadUserData() {
-        if (!this.currentUser) return;
-        const data = await loadUserDataFromFirebase(this.currentUser.uid);
-        if (!data) return;
-        const s = data.settings;
-        this.state.fontSize             = s.fontSize;
-        this.state.showVerseNumbers     = s.showVerseNumbers;
-        this.state.showHeadings         = s.showHeadings;
-        this.state.showFootnotes        = s.showFootnotes;
-        this.state.showCrossReferences  = s.showCrossReferences;
-        this.state.verseByVerse         = s.verseByVerse;
-        this.state.colorTheme           = s.colorTheme;
-        this.state.lightMode            = s.lightMode;
-        this.state.translation          = normalizeTranslation(s.translation || 'ESV');
+        await loadUserData(this, normalizeTranslation);
     }
 }
 
