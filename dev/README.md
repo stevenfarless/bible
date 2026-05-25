@@ -1,11 +1,11 @@
 ## Branch Hierarchy & Merge Order
 
-> **This is the `dev` branch** — the integration branch. All feature branches merge here before anything goes to `main`.
+> **This is the `search` branch** — branched from `dev`. Contains the full-text search feature.
 >
 > ```
 > main
-> └── dev                         ← YOU ARE HERE
->     └── search                  ← full-text search feature; merges into dev
+> └── dev
+>     └── search                  ← YOU ARE HERE
 >         └── refactor/split-app-js  ← breaks app.js into modules; merges into search
 > ```
 >
@@ -14,7 +14,7 @@
 > 2. `search` → `dev`
 > 3. `dev` → `main`
 >
-> Do not skip steps or merge out of order. Each child branch must be fully tested and reviewed before moving up the chain.
+> Do not skip steps or merge out of order. Complete and merge `refactor/split-app-js` into this branch before merging `search` into `dev`.
 
 # Bible Reader
 
