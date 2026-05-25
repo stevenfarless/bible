@@ -155,7 +155,6 @@ class BibleApp {
     async init() {
         document.body.classList.add('initializing');
         try {
-            await this._loadTranslationRegistry();
             try { await registerServiceWorker(this); } catch (_) { console.warn('Service worker unavailable:', _); }
 
             cacheElements(this);
@@ -181,7 +180,15 @@ class BibleApp {
                 console.warn('Firebase not available — sign-in disabled.');
             }
 
-            await this.loadPassage(this.state.currentBook, this.state.currentChapter);
+            // Run translation registry and passage fetch concurrently.
+            // _copyrightMap is initialized to {} so updateCopyright() inside
+            // loadPassage() is safe to call before the registry resolves.
+            // If the registry loses the race, copyright text renders empty
+            // briefly and then updates when _loadTranslationRegistry settles.
+            await Promise.all([
+                this._loadTranslationRegistry(),
+                this.loadPassage(this.state.currentBook, this.state.currentChapter),
+            ]);
             revealApp();
 
             if (this.auth && this.database) {
@@ -217,6 +224,9 @@ class BibleApp {
         }
         this._copyrightMap = {};
         for (const t of translations) this._copyrightMap[t.id] = t.copyright || '';
+        // Re-render copyright now that the map is populated, in case loadPassage
+        // completed first and rendered with an empty map.
+        this.updateCopyright?.();
     }
 
     initializeAccordion() {
