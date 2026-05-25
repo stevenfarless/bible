@@ -428,7 +428,7 @@ function showUpdateToast(appInstance) {
 
 (async () => {
     await new Promise(resolve => {
-        if document.readyState !== 'loading') return resolve();
+        if (document.readyState !== 'loading') return resolve();
         document.addEventListener('DOMContentLoaded', resolve, { once: true });
     });
     try { await import('./config/firebase-config.js'); }
