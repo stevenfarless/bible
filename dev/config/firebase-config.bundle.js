@@ -1,20 +1,22 @@
-// config/firebase-config.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+// config/firebase-config.bundle.js
+// Loads Firebase SDK from vendored same-origin files (vendor/firebase/)
+// so Brave and other privacy browsers cannot block gstatic.com imports.
+import { initializeApp } from "../vendor/firebase/app.js";
 import {
   getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+} from "../vendor/firebase/auth.js";
 import {
   getDatabase,
   ref,
   get,
-  set,
-  onValue
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-var firebaseConfig = {
+  set
+} from "../vendor/firebase/database.js";
+
+const firebaseConfig = {
   apiKey: "AIzaSyCGVPqbTZCQ3Hrs9sFIJm_PR32FP_CVXSw",
   authDomain: "esv-bible-6dffb.firebaseapp.com",
   databaseURL: "https://esv-bible-6dffb-default-rtdb.firebaseio.com",
@@ -23,33 +25,33 @@ var firebaseConfig = {
   messagingSenderId: "824462651620",
   appId: "1:824462651620:web:5f46fe033ac46d2329bcf1"
 };
-var FIREBASE_DB_URL = firebaseConfig.databaseURL;
-var app = initializeApp(firebaseConfig);
-var _auth = getAuth(app);
-var _db = getDatabase(app);
-function makeRef(path) {
-  const dbRef = ref(_db, path);
-  return {
-    once: (_event) => get(dbRef).then((snap) => snap),
-    set: (value) => set(dbRef, value),
-    ref: (subpath) => makeRef(path ? `${path}/${subpath}` : subpath)
-  };
-}
-var dbShim = {
-  ref: (path) => makeRef(path)
-};
-var authShim = {
+
+const app = initializeApp(firebaseConfig);
+const _auth = getAuth(app);
+const _db = getDatabase(app);
+
+window.firebaseAuth = {
   onAuthStateChanged: (cb) => onAuthStateChanged(_auth, cb),
   signInWithEmailAndPassword: (e, p) => signInWithEmailAndPassword(_auth, e, p),
   createUserWithEmailAndPassword: (e, p) => createUserWithEmailAndPassword(_auth, e, p),
   signOut: () => signOut(_auth),
-  get currentUser() {
-    return _auth.currentUser;
+  get currentUser() { return _auth.currentUser; }
+};
+
+window.firebaseDatabase = {
+  ref: (path) => {
+    const dbRef = ref(_db, path);
+    return {
+      once: () => get(dbRef).then((snap) => snap),
+      set: (value) => set(dbRef, value),
+      ref: (subpath) => window.firebaseDatabase.ref(path ? `${path}/${subpath}` : subpath)
+    };
   }
 };
-window.firebaseAuth = authShim;
-window.firebaseDatabase = dbShim;
-async function loadUserData(userId) {
+
+export const FIREBASE_DB_URL = firebaseConfig.databaseURL;
+
+export async function loadUserData(userId) {
   try {
     const snap = await get(ref(_db, `users/${userId}`));
     const userData = snap.val();
@@ -73,7 +75,3 @@ async function loadUserData(userId) {
     return null;
   }
 }
-export {
-  FIREBASE_DB_URL,
-  loadUserData
-};

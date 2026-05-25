@@ -54,10 +54,6 @@ function withTimeout(promise, ms, fallback = null) {
     ]);
 }
 
-/**
- * Remove the `initializing` class in a double-rAF so Safari commits the
- * opacity:0 paint before the transition fires.
- */
 function revealApp() {
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -151,18 +147,10 @@ class BibleApp {
         this.init();
     }
 
-    // ================================
-    // Bible Structure (delegated)
-    // ================================
-
     getAllBooks()          { return getAllBooks(this); }
     getChapterCount(book) { return getChapterCount(this, book); }
     getTestament(book)    { return getTestament(this, book); }
     getDisplayName(book)  { return getDisplayName(this, book); }
-
-    // ================================
-    // Initialization
-    // ================================
 
     async init() {
         document.body.classList.add('initializing');
@@ -190,17 +178,10 @@ class BibleApp {
             this.applySettings();
 
             if (!this.auth || !this.database) {
-                console.error('Firebase auth/database not ready when app initialized.');
-                this.passageText?.insertAdjacentHTML('beforeend',
-                    '<p class="help-text" style="margin-top:0.5rem">Sign-in unavailable — please refresh.</p>'
-                );
+                console.warn('Firebase not available — sign-in disabled.');
             }
 
             await this.loadPassage(this.state.currentBook, this.state.currentChapter);
-
-            // Reveal the page as soon as passage text is rendered.
-            // The Firebase auth listener runs after this — its WebSocket connection
-            // to firebaseio.com must never block page visibility.
             revealApp();
 
             if (this.auth && this.database) {
@@ -218,7 +199,6 @@ class BibleApp {
             }
         } catch (err) {
             console.error('BibleApp init error:', err);
-            // Reveal on error so the page is never permanently invisible.
             revealApp();
         }
     }
@@ -252,12 +232,7 @@ class BibleApp {
         }
     }
 
-    // ==========================================
-    // Passage Loading
-    // ==========================================
-
     async _loadSavedPositionIfChanged() { await loadSavedPositionIfChanged(this, withTimeout); }
-    /** @deprecated Use _loadSavedPositionIfChanged for the auth flow. */
     async loadSavedReadingPosition()    { await loadSavedReadingPosition(this, withTimeout); }
     saveReadingPosition()               { saveReadingPosition(this); }
 
@@ -313,18 +288,10 @@ class BibleApp {
         this.saveReadingPosition?.();
     }
 
-    // ================================
-    // Navigation (delegated)
-    // ================================
-
     navigateChapter(direction) { navChapter(this, direction); }
     updateNavigationState()    { updateNavigationState(this); }
     navigateToNextVerse()      { navigateToNextVerse(this); }
     navigateToPreviousVerse()  { navigateToPreviousVerse(this); }
-
-    // ================================
-    // Search (delegated)
-    // ================================
 
     toggleSearch()                          { toggleSearch(this); }
     closeSearch()                           { closeSearch(this); }
@@ -345,10 +312,6 @@ class BibleApp {
     highlightSearchTerm(text, term)         { return highlightSearchTerm(text, term); }
     stripHTML(html)                         { return stripHTML(html); }
 
-    // ================================
-    // Modals (delegated)
-    // ================================
-
     openModal(modal)       { openModal(this, modal); }
     closeModal(modal)      { closeModal(this, modal); }
     openBookModal()        { openBookModal(this); }
@@ -361,10 +324,6 @@ class BibleApp {
     scrollToVerse(n)       { scrollVerse(this, n); }
     applyVerseGlow()       { glowVerse(this); }
 
-    // ================================
-    // Settings (delegated)
-    // ================================
-
     loadLocalSettings()          { loadLocalSettings(this); }
     applySettings()              { applySettings(this); }
     async toggleSetting(s)       { await toggleSetting(this, s); }
@@ -373,15 +332,7 @@ class BibleApp {
     async changeTranslation(t)   { await changeTranslation(this, t); }
     updateCopyright()            { updateCopyright(this); }
 
-    // ================================
-    // Keyboard (delegated)
-    // ================================
-
     handleKeyboardShortcuts(e)   { handleKeyboardShortcuts(this, e); }
-
-    // ================================
-    // Utilities
-    // ================================
 
     checkApiKey() { checkApiKey(this); }
 
@@ -402,10 +353,6 @@ class BibleApp {
         setTimeout(() => this.toast.classList.remove('show'), 3000);
     }
 
-    // ================================
-    // Firebase Auth (delegated)
-    // ================================
-
     handleUserButtonClick() { handleUserButtonClick(this); }
     async handleLogin()     { await handleLogin(this); }
     async handleSignup()    { await handleSignup(this); }
@@ -422,21 +369,13 @@ async function registerServiceWorker(appInstance) {
         const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
         const pageBuildId = document.querySelector('meta[name="build-id"]')?.content || '';
         console.info('[BUILD_ID]', pageBuildId || '__BUILD_ID__');
-
         navigator.serviceWorker.addEventListener('message', (e) => {
-            if (e.data?.type === 'NEW_VERSION') {
-                showUpdateToast(appInstance);
-            } else if (e.data?.type === 'NEW_BUILD') {
-                // Only reload if the SW's build differs from the page's build.
-                // This prevents a reload loop when the same build is re-activated
-                // (e.g. normal page refresh with an unchanged SW).
+            if (e.data?.type === 'NEW_VERSION') showUpdateToast(appInstance);
+            if (e.data?.type === 'NEW_BUILD') {
                 const swBuildId = e.data.buildId || '';
-                if (pageBuildId && swBuildId && pageBuildId !== swBuildId) {
-                    window.location.reload();
-                }
+                if (pageBuildId && swBuildId && pageBuildId !== swBuildId) window.location.reload();
             }
         });
-
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible')
                 reg.update().catch((err) => console.warn('SW update check failed', err));
@@ -451,7 +390,7 @@ function showUpdateToast(appInstance) {
     if (!toast) return;
     toast.innerHTML = '';
     const text    = Object.assign(document.createElement('span'),  { textContent: 'A new version is available.' });
-    const action  = Object.assign(document.createElement('button'),{ textContent: 'Refresh',  className: 'toast-action' });
+    const action  = Object.assign(document.createElement('button'),{ textContent: 'Refresh', className: 'toast-action' });
     const dismiss = Object.assign(document.createElement('button'),{ textContent: '\u00d7', className: 'toast-dismiss' });
     text.style.flex = '1';
     action.addEventListener('click',  () => location.reload());
@@ -466,7 +405,10 @@ function showUpdateToast(appInstance) {
         if (document.readyState !== 'loading') return resolve();
         document.addEventListener('DOMContentLoaded', resolve, { once: true });
     });
-    try { await import('./config/firebase-config.bundle.js'); }
-    catch (err) { console.error('Firebase config module failed to load:', err); }
+    // Fire-and-forget: Firebase auth loads in the background.
+    // BibleApp constructs immediately regardless of whether auth succeeds.
+    import('./config/firebase-config.bundle.js').catch(
+        (err) => console.warn('Firebase bundle failed to load — sign-in unavailable:', err)
+    );
     new BibleApp();
 })();
