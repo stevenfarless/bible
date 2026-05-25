@@ -35,13 +35,14 @@ import {
     openBookModal, populateBookModal,
     openChapterModal, populateChapterModal,
     openVerseModal, populateVerseModal,
-    getCurrentVerseCount, attachDragToResize,
+    getCurrentVerseCount,
 } from './modals.js';
 import {
     loadLocalSettings, applySettings, toggleSetting,
     toggleVerseByVerse, updateFontSize, changeTranslation, updateCopyright,
 } from './settings.js';
 import { handleKeyboardShortcuts } from './keyboard.js';
+import { attachEventListeners } from './events.js';
 
 const TRANSLATION_ALIASES = { NRSVue: 'NRSVUE' };
 function normalizeTranslation(t) { return TRANSLATION_ALIASES[t] || t; }
@@ -116,7 +117,7 @@ class BibleApp {
                 return;
             }
             window.requestAnimationFrame(() => {
-                const y = window.scrollY || window.pageYOffset || 0;
+                const y     = window.scrollY || window.pageYOffset || 0;
                 const delta = y - this.chromeScrollLastY;
                 const modalOpen  = !!document.querySelector('.modal.active');
                 const searchOpen = !!this.searchContainer?.classList.contains('active');
@@ -167,7 +168,7 @@ class BibleApp {
         }
         if (lightModeToggle) lightModeToggle.checked = document.body.classList.contains('light-mode');
 
-        this.attachEventListeners();
+        attachEventListeners(this);
         this.initializeAccordion();
         document.body.setAttribute('data-app-ready', 'true');
 
@@ -221,90 +222,6 @@ class BibleApp {
                 this.openModal(this.currentUser ? this.userMenuModal : this.loginModal);
             });
         }
-    }
-
-    attachEventListeners() {
-        this.searchToggleBtn?.addEventListener('click', () => this.toggleSearch());
-        this.helpBtn?.addEventListener('click',     () => this.openModal(this.helpModal));
-        this.settingsBtn?.addEventListener('click', () => this.openModal(this.settingsModal));
-
-        this.closeSearchBtn?.addEventListener('click', () => this.closeSearch());
-        this.searchInput?.addEventListener('input',   (e) => this.handleSearch(e.target.value));
-        this.searchInput?.addEventListener('keydown', (e) => this.handleSearchKeydown(e));
-
-        this.prevChapterBtn?.addEventListener('click', () => this.navigateChapter(-1));
-        this.nextChapterBtn?.addEventListener('click', () => this.navigateChapter(1));
-        this.bookSelector?.addEventListener('click',   () => this.openBookModal());
-        this.chapterSelector?.addEventListener('click',() => this.openChapterModal());
-        this.verseSelector?.addEventListener('click',  () => this.openVerseModal());
-        this.closeVerseModal?.addEventListener('click',() => this.closeModal(this.verseModal));
-
-        this.referencesModal        = document.getElementById('referencesModal');
-        this.closeReferencesModal   = document.getElementById('closeReferencesModal');
-        this.footnotesSection       = document.getElementById('footnotesSection');
-        this.footnotesContent       = document.getElementById('footnotesContent');
-        this.crossReferencesSection = document.getElementById('crossReferencesSection');
-        this.crossReferencesContent = document.getElementById('crossReferencesContent');
-
-        [
-            this.bookModal, this.chapterModal, this.verseModal,
-            this.settingsModal, this.helpModal, this.loginModal,
-            this.signupModal, this.userMenuModal, this.referencesModal,
-        ].forEach((modal) => {
-            if (!modal) return;
-            modal.addEventListener('click', (e) => { if (e.target === modal) this.closeModal(modal); });
-        });
-
-        this.closeBookModal?.addEventListener('click',       () => this.closeModal(this.bookModal));
-        this.closeChapterModal?.addEventListener('click',    () => this.closeModal(this.chapterModal));
-        this.closeHelpModal?.addEventListener('click',       () => this.closeModal(this.helpModal));
-        this.closeSettingsModal?.addEventListener('click',   () => this.closeModal(this.settingsModal));
-        this.closeReferencesModal?.addEventListener('click', () => this.closeModal(this.referencesModal));
-
-        attachDragToResize(this);
-
-        this.verseNumbersToggle?.addEventListener('change', () => this.toggleSetting('showVerseNumbers'));
-        this.headingsToggle?.addEventListener('change',     () => this.toggleSetting('showHeadings'));
-        this.footnotesToggle?.addEventListener('change',    () => this.toggleSetting('showFootnotes'));
-
-        this.crossReferencesToggle = document.getElementById('crossReferencesToggle');
-        this.crossReferencesToggle?.addEventListener('change', () => this.toggleSetting('showCrossReferences'));
-
-        this.verseByVerseToggle?.addEventListener('change', () => this.toggleVerseByVerse());
-        this.fontSizeSlider?.addEventListener('input',  (e) => this.updateFontSize(e.target.value));
-        this.translationSelector?.addEventListener('change', async (e) => this.changeTranslation(e.target.value));
-
-        this.themeToggleBtn?.addEventListener('click', () => toggleTheme(this));
-        document.getElementById('themeSelector')?.addEventListener('change',   (e) => changeColorTheme(this, e.target.value));
-        document.getElementById('lightModeToggle')?.addEventListener('change', () => toggleTheme(this));
-
-        this.userBtn?.addEventListener('click', () => this.handleUserButtonClick());
-
-        document.getElementById('showSignupLink')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.closeModal(this.loginModal);
-            this.openModal(this.signupModal);
-        });
-        document.getElementById('showLoginLink')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.closeModal(this.signupModal);
-            this.openModal(this.loginModal);
-        });
-        document.getElementById('loginForm')?.addEventListener('submit',  (e) => { e.preventDefault(); this.handleLogin(); });
-        document.getElementById('signupForm')?.addEventListener('submit', (e) => { e.preventDefault(); this.handleSignup(); });
-        document.getElementById('logoutBtn')?.addEventListener('click', () => this.handleLogout());
-
-        this.closeLoginModal?.addEventListener('click',    () => this.closeModal(this.loginModal));
-        this.closeSignupModal?.addEventListener('click',   () => this.closeModal(this.signupModal));
-        this.closeUserMenuModal?.addEventListener('click', () => this.closeModal(this.userMenuModal));
-
-        window.addEventListener('scroll', () => {
-            this.handleChromeScroll();
-            clearTimeout(this.scrollTimeout);
-            this.scrollTimeout = setTimeout(() => this.saveReadingPosition(), 500);
-        }, { passive: true });
-
-        document.addEventListener('keydown', (e) => this.handleKeyboardShortcuts(e));
     }
 
     // ==========================================
