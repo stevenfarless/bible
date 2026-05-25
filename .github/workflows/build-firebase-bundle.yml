@@ -1,0 +1,57 @@
+name: Build Firebase Bundle
+
+# Runs on every push to dev (and any non-main branch).
+# Uses esbuild to bundle config/firebase-config.js into
+# config/firebase-config.bundle.js — a single self-contained ESM file
+# with no external imports. Brave (and any browser) can load it without
+# making cross-origin requests to gstatic.com.
+
+on:
+  push:
+    branches:
+      - '**'
+      - '!main'
+    paths:
+      - 'config/firebase-config.js'
+      - '.github/workflows/build-firebase-bundle.yml'
+  workflow_dispatch:
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install esbuild
+        run: npm install --global esbuild
+
+      - name: Bundle Firebase
+        run: |
+          esbuild config/firebase-config.js \
+            --bundle \
+            --format=esm \
+            --platform=browser \
+            --outfile=config/firebase-config.bundle.js
+          echo "Bundle size: $(wc -c < config/firebase-config.bundle.js) bytes"
+
+      - name: Commit bundle
+        run: |
+          git config user.name "stevenfarless"
+          git config user.email "125781365+stevenfarless@users.noreply.github.com"
+          git add config/firebase-config.bundle.js
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "build: regenerate firebase-config.bundle.js"
+          git pull --rebase origin ${{ github.ref_name }}
+          git push origin ${{ github.ref_name }}
