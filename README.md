@@ -1,15 +1,3 @@
-## Branch Hierarchy & Merge Order
-
-> **This is the `appsplit` branch** — branched from `dev`. Splits `app.js` into focused modules.
->
-> ```
-> main
-> └── dev
->     └── appsplit    ← YOU ARE HERE
-> ```
->
-> **Merge order:** `appsplit` → `dev` → `main`
-
 # Bible Reader
 
 A fast, offline-capable Bible reading app built with vanilla JavaScript, served via GitHub Pages.
@@ -45,6 +33,7 @@ A fast, offline-capable Bible reading app built with vanilla JavaScript, served 
 ├── bible-structure.js      # Book/chapter/testament lookup tables
 ├── bsb-structure.js        # Heading/paragraph scaffold loader (BSB)
 ├── ui.js                   # Theme, element caching, icon updates
+├── firebase-config.js      # Root stub — re-exports from config/firebase-config.js
 ├── sw.js                   # Service worker
 ├── styles.css              # All styles
 ├── cross_references.txt    # Cross-reference source data (8 MB)
@@ -56,6 +45,7 @@ A fast, offline-capable Bible reading app built with vanilla JavaScript, served 
 ├── data/
 │   ├── bsb-usfm/           # BSB USFM source files (67 books)
 │   └── known_absent_verses.json
+├── js/                     # Additional JS modules
 ├── translations/           # Per-translation Bible JSON files
 ├── scripts/                # Build and conversion scripts
 ├── tests/                  # Unit (Vitest) and E2E (Playwright) tests
