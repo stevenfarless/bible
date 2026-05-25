@@ -56,8 +56,7 @@ function withTimeout(promise, ms, fallback = null) {
 
 /**
  * Remove the `initializing` class in a double-rAF so Safari commits the
- * opacity:0 paint before the transition fires, and Brave (which may stall
- * on Firebase) never leaves the page invisible.
+ * opacity:0 paint before the transition fires.
  */
 function revealApp() {
     requestAnimationFrame(() => {
@@ -192,14 +191,17 @@ class BibleApp {
 
             if (!this.auth || !this.database) {
                 console.error('Firebase auth/database not ready when app initialized.');
-                // Show the page anyway so it isn't a black screen — passage will
-                // still load from RTDB; only auth features are affected.
                 this.passageText?.insertAdjacentHTML('beforeend',
                     '<p class="help-text" style="margin-top:0.5rem">Sign-in unavailable — please refresh.</p>'
                 );
             }
 
             await this.loadPassage(this.state.currentBook, this.state.currentChapter);
+
+            // Reveal the page as soon as passage text is rendered.
+            // The Firebase auth listener runs after this — its WebSocket connection
+            // to firebaseio.com must never block page visibility.
+            revealApp();
 
             if (this.auth && this.database) {
                 this.auth.onAuthStateChanged(async (user) => {
@@ -216,10 +218,7 @@ class BibleApp {
             }
         } catch (err) {
             console.error('BibleApp init error:', err);
-        } finally {
-            // Double-rAF: guarantees the opacity:0 frame is committed before
-            // the class removal triggers the CSS transition (fixes Safari),
-            // and ensures the page is never left invisible on error (fixes Brave).
+            // Reveal on error so the page is never permanently invisible.
             revealApp();
         }
     }
@@ -455,7 +454,7 @@ function showUpdateToast(appInstance) {
         if (document.readyState !== 'loading') return resolve();
         document.addEventListener('DOMContentLoaded', resolve, { once: true });
     });
-    try { await import('./config/firebase-config.js'); }
+    try { await import('./config/firebase-config.bundle.js'); }
     catch (err) { console.error('Firebase config module failed to load:', err); }
     new BibleApp();
 })();
