@@ -30,6 +30,26 @@ import {
     navigateToNextVerse,
     navigateToPreviousVerse,
 } from './navigation.js';
+import {
+    toggleSearch,
+    closeSearch,
+    handleSearch,
+    handleSearchKeydown,
+    refreshSearchResultItems,
+    setSearchSelectedIndex,
+    activateSelectedSearchResult,
+    isPassageReference,
+    handlePassageReference,
+    fetchAllSearchResults,
+    groupSearchResultsByCanon,
+    performKeywordSearch,
+    displaySearchResults,
+    parseReference,
+    loadPassageFromReference,
+    escapeRegExp,
+    highlightSearchTerm,
+    stripHTML,
+} from './search.js';
 
 function readBool(key, defaultValue) {
     try {
@@ -687,387 +707,27 @@ class BibleApp {
     }
 
     // ================================
-    // Search
+    // Search (delegated)
     // ================================
 
-    toggleSearch() {
-        this.searchContainer.classList.toggle('active');
-        if (this.searchContainer.classList.contains('active')) {
-            this.searchInput.focus();
-        } else {
-            this.searchInput.value = '';
-            this.searchResults.innerHTML = '';
-            this.searchSelectedIndex = -1;
-            this.searchResultItems = [];
-        }
-    }
-
-    closeSearch() {
-        this.searchContainer.classList.remove('active');
-        this.searchInput.value = '';
-        this.searchResults.innerHTML = '';
-        this.searchSelectedIndex = -1;
-        this.searchResultItems = [];
-    }
-
-    handleSearch(query) {
-        clearTimeout(this.searchTimeout);
-        this.searchLastQuery = query;
-        this.currentSearchResults = [];
-
-        if (!query.trim()) {
-            this.searchResults.innerHTML = '';
-            this.searchSelectedIndex = -1;
-            this.searchResultItems = null;
-            return;
-        }
-
-        this.searchTimeout = setTimeout(async () => {
-            if (this.isPassageReference(query)) {
-                await this.handlePassageReference(query);
-            } else {
-                await this.performKeywordSearch(query);
-            }
-        }, 300);
-    }
-
-    handleSearchKeydown(e) {
-        if (e.key === 'Escape') {
-            e.preventDefault();
-            this.closeSearch();
-            return;
-        }
-
-        if (!this.searchResultItems || this.searchResultItems.length === 0) return;
-
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            this.setSearchSelectedIndex(Math.min(this.searchSelectedIndex + 1, this.searchResultItems.length - 1), true);
-            return;
-        }
-
-        if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            this.setSearchSelectedIndex(Math.max(this.searchSelectedIndex - 1, 0), true);
-            return;
-        }
-
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            this.activateSelectedSearchResult();
-        }
-    }
-
-    refreshSearchResultItems(autoSelectFirst = false) {
-        this.searchResultItems = Array.from(
-            this.searchResults.querySelectorAll('.search-result-item')
-        );
-
-        if (!this.searchResultItems.length) {
-            this.searchSelectedIndex = -1;
-            return;
-        }
-
-        if (autoSelectFirst) {
-            this.setSearchSelectedIndex(0, false);
-        } else {
-            if (this.searchSelectedIndex < 0 || this.searchSelectedIndex >= this.searchResultItems.length) {
-                this.searchSelectedIndex = -1;
-            } else {
-                this.setSearchSelectedIndex(this.searchSelectedIndex, false);
-            }
-        }
-    }
-
-    setSearchSelectedIndex(index, scrollIntoView = false) {
-        if (!this.searchResultItems || this.searchResultItems.length === 0) {
-            this.searchSelectedIndex = -1;
-            return;
-        }
-
-        const clamped = Math.max(0, Math.min(index, this.searchResultItems.length - 1));
-        this.searchSelectedIndex = clamped;
-
-        this.searchResultItems.forEach((el, i) => {
-            el.classList.toggle('selected', i === clamped);
-        });
-
-        if (scrollIntoView) {
-            this.searchResultItems[clamped]?.scrollIntoView({ block: 'nearest' });
-        }
-    }
-
-    activateSelectedSearchResult() {
-        if (!this.searchResultItems || this.searchSelectedIndex < 0 || this.searchSelectedIndex >= this.searchResultItems.length) return;
-        this.searchResultItems[this.searchSelectedIndex]?.click();
-    }
-
-    isPassageReference(query) {
-        const patterns = [
-            /^[1-3]?\s*[a-z]+\s+\d+/i,
-            /^[1-3]?\s*[a-z]+\s+\d+:\d+/i,
-        ];
-        return patterns.some((p) => p.test(query.trim()));
-    }
-
-    async handlePassageReference(reference) {
-        const data = await this.bibleApi.fetchPassage(reference);
-
-        if (data && data.passages && data.passages.length > 0) {
-            const safeCanonical = String(data.canonical || '').replace(/"/g, '&quot;');
-            const preview = this.stripHTML(data.passages[0]).substring(0, 200);
-
-            this.searchResults.innerHTML =
-                '<div class="search-result-item" data-reference="' + safeCanonical + '">' +
-                '<div class="search-result-reference">' + safeCanonical + '</div>' +
-                '<div class="search-result-content">' + preview + '...</div>' +
-                '</div>';
-
-            const item = this.searchResults.querySelector('.search-result-item');
-            if (item) {
-                item.addEventListener('click', async () => {
-                    await this.loadPassageFromReference(item.dataset.reference);
-                    this.closeSearch();
-                });
-            }
-
-            this.refreshSearchResultItems(true);
-        } else {
-            this.searchResults.innerHTML = '<div class="search-no-results">No passage found</div>';
-            this.refreshSearchResultItems(false);
-        }
-    }
-
-    async fetchAllSearchResults(query, onBatch) {
-        this.currentSearchResults = [];
-        await this.bibleApi.searchPassages(query, (batchResults) => {
-            this.currentSearchResults.push(...batchResults);
-            if (typeof onBatch === 'function') onBatch(this.currentSearchResults.slice());
-        });
-        return this.currentSearchResults;
-    }
-
-    groupSearchResultsByCanon(results) {
-        if (!Array.isArray(results)) return [];
-
-        const otBooks = Object.keys(this.bibleBooks['Old Testament']);
-        const ntBooks = Object.keys(this.bibleBooks['New Testament']);
-        const otGroups = new Map();
-        const ntGroups = new Map();
-
-        for (const result of results) {
-            const parsed = this.parseReference?.(result.reference);
-            if (!parsed) continue;
-            const { book } = parsed;
-            const testament = this.getTestament?.(book);
-
-            if (testament === 'Old Testament') {
-                if (!otGroups.has(book)) otGroups.set(book, []);
-                otGroups.get(book).push(result);
-            } else if (testament === 'New Testament') {
-                if (!ntGroups.has(book)) ntGroups.set(book, []);
-                ntGroups.get(book).push(result);
-            }
-        }
-
-        const grouped = [];
-
-        if (otGroups.size) {
-            grouped.push({
-                heading: 'Old Testament',
-                books: otBooks.filter((b) => otGroups.has(b)).map((book) => ({ book, results: otGroups.get(book) })),
-            });
-        }
-
-        if (ntGroups.size) {
-            grouped.push({
-                heading: 'New Testament',
-                books: ntBooks.filter((b) => ntGroups.has(b)).map((book) => ({ book, results: ntGroups.get(book) })),
-            });
-        }
-
-        return grouped;
-    }
-
-    async performKeywordSearch(query) {
-        this.searchResults.innerHTML = '<div class="loading" style="min-height: 100px">Searching...</div>';
-        this.searchSelectedIndex = -1;
-        this.searchResultItems = [];
-
-        this.searchExpandedTestaments?.clear();
-        this.searchExpandedBooks?.clear();
-
-        await this.fetchAllSearchResults(query, (accumulatedResults) => {
-            if (accumulatedResults.length > 0) {
-                this.displaySearchResults(accumulatedResults, query);
-            }
-        });
-
-        if (this.currentSearchResults.length > 0) {
-            this.displaySearchResults(this.currentSearchResults, query);
-        } else {
-            this.searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
-            this.refreshSearchResultItems(false);
-        }
-    }
-
-    displaySearchResults(results, query) {
-        const groups = this.groupSearchResultsByCanon(results);
-
-        if (!groups.length) {
-            this.searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
-            this.refreshSearchResultItems(false);
-            return;
-        }
-
-        if (this.searchExpandedTestaments.size === 0 && this.searchExpandedBooks.size === 0) {
-            const firstGroup = groups[0];
-            if (firstGroup) {
-                this.searchExpandedTestaments.add(firstGroup.heading);
-                const firstBook = firstGroup.books && firstGroup.books[0];
-                if (firstBook) this.searchExpandedBooks.add(firstBook.book);
-            }
-        }
-
-        const esc = (str) =>
-            String(str || '')
-                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-
-        const parts = [];
-
-        for (const group of groups) {
-            const testName = group.heading;
-            const testamentExpanded = this.searchExpandedTestaments.has(testName);
-
-            parts.push(`
-      <div class="search-group-heading" data-testament="${esc(testName)}">
-        <span class="search-group-title">${esc(testName)}</span>
-        <span class="search-group-chevron ${testamentExpanded ? 'expanded' : ''}">&#9662;</span>
-      </div>
-    `);
-
-            if (!testamentExpanded) continue;
-
-            for (const bookBlock of group.books) {
-                const bookName = bookBlock.book;
-                const bookExpanded = this.searchExpandedBooks.has(bookName);
-
-                parts.push(`
-        <div class="search-book-heading" data-book="${esc(bookName)}">
-          <span class="search-book-title">${esc(this.getDisplayName(bookName))}</span>
-          <span class="search-book-chevron ${bookExpanded ? 'expanded' : ''}">&#9662;</span>
-        </div>
-      `);
-
-                if (!bookExpanded) continue;
-
-                for (const result of bookBlock.results) {
-                    let highlighted = result.content;
-                    try {
-                        highlighted = this.highlightSearchTerm(result.content, query);
-                    } catch (err) {
-                        console.warn('highlight failed', err);
-                    }
-
-                    parts.push(`
-          <div class="search-result-item" data-reference="${esc(result.reference)}">
-            <div class="search-result-reference">${esc(result.reference)}</div>
-            <div class="search-result-content">${highlighted}</div>
-          </div>
-        `);
-                }
-            }
-        }
-
-        this.searchResults.innerHTML = parts.join('');
-
-        this.searchResults.querySelectorAll('.search-group-heading').forEach((el) => {
-            el.addEventListener('click', () => {
-                const testament = el.getAttribute('data-testament');
-                if (!testament) return;
-                if (this.searchExpandedTestaments.has(testament)) {
-                    this.searchExpandedTestaments.delete(testament);
-                } else {
-                    this.searchExpandedTestaments.add(testament);
-                }
-                this.displaySearchResults(results, query);
-            });
-        });
-
-        this.searchResults.querySelectorAll('.search-book-heading').forEach((el) => {
-            el.addEventListener('click', () => {
-                const book = el.getAttribute('data-book');
-                if (!book) return;
-                if (this.searchExpandedBooks.has(book)) {
-                    this.searchExpandedBooks.delete(book);
-                } else {
-                    this.searchExpandedBooks.add(book);
-                }
-                this.displaySearchResults(results, query);
-            });
-        });
-
-        this.searchResults.querySelectorAll('.search-result-item').forEach((item) => {
-            item.addEventListener('click', async () => {
-                await this.loadPassageFromReference(item.dataset.reference);
-                this.closeSearch();
-            });
-        });
-
-        this.refreshSearchResultItems(true);
-    }
-
-    parseReference(reference) {
-        const cleaned = String(reference || '').trim();
-        const match = cleaned.match(/^((?:\d\s+)?[A-Za-z][A-Za-z ]*?)\s+(\d+)(?::(\d+))?$/);
-        if (!match) return null;
-
-        const book = match[1].trim();
-        const chapter = parseInt(match[2], 10);
-        const verse = match[3] ? parseInt(match[3], 10) : null;
-
-        if (!book || !Number.isFinite(chapter)) return null;
-        if (verse !== null && !Number.isFinite(verse)) return null;
-
-        return { book, chapter, verse };
-    }
-
-    async loadPassageFromReference(reference) {
-        const parsed = this.parseReference(reference);
-        if (!parsed) return;
-
-        const { book, chapter, verse } = parsed;
-        this.state.selectedVerse = verse || null;
-        await this.loadPassage(book, chapter);
-
-        if (verse) this.scrollToVerse(verse);
-    }
-
-    escapeRegExp(str) {
-        return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
-
-    highlightSearchTerm(text, term) {
-        if (text == null) return '';
-        const safeText = String(text);
-        const rawTerm = term == null ? '' : String(term).trim();
-        if (!rawTerm) return safeText;
-
-        try {
-            const regex = new RegExp(this.escapeRegExp(rawTerm), 'gi');
-            return safeText.replace(regex, (match) => `<strong>${match}</strong>`);
-        } catch (err) {
-            console.warn('highlightSearchTerm failed', err);
-            return safeText;
-        }
-    }
-
-    stripHTML(html) {
-        const tmp = document.createElement('div');
-        tmp.innerHTML = html;
-        return tmp.textContent || tmp.innerText || '';
-    }
+    toggleSearch() { toggleSearch(this); }
+    closeSearch() { closeSearch(this); }
+    handleSearch(query) { handleSearch(this, query); }
+    handleSearchKeydown(e) { handleSearchKeydown(this, e); }
+    refreshSearchResultItems(autoSelectFirst) { refreshSearchResultItems(this, autoSelectFirst); }
+    setSearchSelectedIndex(index, scrollIntoView) { setSearchSelectedIndex(this, index, scrollIntoView); }
+    activateSelectedSearchResult() { activateSelectedSearchResult(this); }
+    isPassageReference(query) { return isPassageReference(query); }
+    async handlePassageReference(reference) { await handlePassageReference(this, reference); }
+    async fetchAllSearchResults(query, onBatch) { return fetchAllSearchResults(this, query, onBatch); }
+    groupSearchResultsByCanon(results) { return groupSearchResultsByCanon(this, results); }
+    async performKeywordSearch(query) { await performKeywordSearch(this, query); }
+    displaySearchResults(results, query) { displaySearchResults(this, results, query); }
+    parseReference(reference) { return parseReference(reference); }
+    async loadPassageFromReference(reference) { await loadPassageFromReference(this, reference); }
+    escapeRegExp(str) { return escapeRegExp(str); }
+    highlightSearchTerm(text, term) { return highlightSearchTerm(text, term); }
+    stripHTML(html) { return stripHTML(html); }
 
     // ================================
     // Modals
