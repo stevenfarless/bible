@@ -1346,4 +1346,304 @@ class BibleApp {
     async toggleVerseByVerse() {
         this.state.verseByVerse = this.verseByVerseToggle.checked;
         if (this.currentUser) {
-            await this.database.ref(`users/${this.currentUser.uid}/settings/verseByVerse`).
+            await this.database.ref(`users/${this.currentUser.uid}/settings/verseByVerse`).set(this.state.verseByVerse);
+        } else {
+            try { localStorage.setItem('verseByVerse', String(this.state.verseByVerse)); } catch (_) {}
+        }
+        this.passageText.classList.toggle('verse-by-verse', this.state.verseByVerse);
+    }
+
+    async updateFontSize(size) {
+        this.state.fontSize = parseInt(size, 10);
+        this.fontSizeValue.textContent = `${size}px`;
+        this.passageText.style.fontSize = `${size}px`;
+        if (this.currentUser) {
+            await this.database.ref(`users/${this.currentUser.uid}/settings/fontSize`).set(parseInt(size, 10));
+        } else {
+            try { localStorage.setItem('fontSize', size); } catch (_) {}
+        }
+    }
+
+    async changeTranslation(translation) {
+        this.state.translation = translation;
+        this.bibleApi.setTranslation(translation);
+
+        if (this.currentUser) {
+            await this.database.ref(`users/${this.currentUser.uid}/settings/translation`).set(translation);
+        } else {
+            try { localStorage.setItem('translation', translation); } catch (_) {}
+        }
+
+        this.updateCopyright();
+        await this.loadPassage(this.state.currentBook, this.state.currentChapter);
+    }
+
+    updateCopyright() {
+        if (this.copyright) {
+            this.copyright.textContent = this._copyrightMap[this.state.translation] || '';
+        }
+    }
+
+    // ================================
+    // Utilities
+    // ================================
+
+    copyPassage() {
+        const textContent = this.stripHTML(this.passageText.innerHTML);
+        const reference = this.passageTitle.textContent;
+        const fullText = `${reference}\n\n${textContent}\n\n${this.copyright?.textContent ?? ''}`;
+
+        navigator.clipboard.writeText(fullText)
+            .then(() => this.showToast('Passage copied to clipboard!'))
+            .catch((err) => {
+                console.error('Failed to copy:', err);
+                this.showToast('Failed to copy passage');
+            });
+    }
+
+    showError(message) {
+        this.passageText.innerHTML = `<div class="error">${message}</div>`;
+    }
+
+    showToast(message) {
+        if (!this.toast) return;
+        this.toast.textContent = message;
+        this.toast.classList.add('show');
+        setTimeout(() => this.toast.classList.remove('show'), 3000);
+    }
+
+    handleKeyboardShortcuts(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            this.toggleSearch();
+        }
+
+        if (e.key === 'Escape') {
+            if (this.bookModal?.classList.contains('active'))       this.closeModal(this.bookModal);
+            if (this.chapterModal?.classList.contains('active'))    this.closeModal(this.chapterModal);
+            if (this.helpModal?.classList.contains('active'))       this.closeModal(this.helpModal);
+            if (this.settingsModal?.classList.contains('active'))   this.closeModal(this.settingsModal);
+            if (this.loginModal?.classList.contains('active'))      this.closeModal(this.loginModal);
+            if (this.signupModal?.classList.contains('active'))     this.closeModal(this.signupModal);
+            if (this.userMenuModal?.classList.contains('active'))   this.closeModal(this.userMenuModal);
+            if (this.searchContainer?.classList.contains('active')) this.closeSearch();
+            if (this.verseModal?.classList.contains('active'))      this.closeModal(this.verseModal);
+            if (this.referencesModal?.classList.contains('active')) this.closeModal(this.referencesModal);
+        }
+
+        if (!document.querySelector('.modal.active') && !this.searchContainer?.classList.contains('active')) {
+            if (e.key === 'ArrowLeft' || e.key === 'h') {
+                e.preventDefault();
+                this.navigateChapter(-1);
+            } else if (e.key === 'ArrowRight' || e.key === 'l') {
+                e.preventDefault();
+                this.navigateChapter(1);
+            } else if (e.key === 'ArrowUp' || e.key === 'k') {
+                e.preventDefault();
+                this.navigateToPreviousVerse();
+            } else if (e.key === 'ArrowDown' || e.key === 'j') {
+                e.preventDefault();
+                this.navigateToNextVerse();
+            } else if (e.key === 'v') {
+                e.preventDefault();
+                this.verseByVerseToggle.checked = !this.verseByVerseToggle.checked;
+                this.toggleVerseByVerse();
+            } else if (e.key === 's') {
+                e.preventDefault();
+                if (this.headingsToggle) {
+                    this.headingsToggle.checked = !this.headingsToggle.checked;
+                    this.toggleSetting('showHeadings');
+                }
+            }
+        }
+    }
+
+    // ================================
+    // Firebase Authentication
+    // ================================
+
+    handleUserButtonClick() {
+        if (this.currentUser) {
+            document.getElementById('userEmail').textContent = this.currentUser.email;
+            const isLight = document.body.classList.contains('light-mode');
+            let colorTheme = this.state?.colorTheme || 'dracula';
+
+            try { colorTheme = this.state?.colorTheme || localStorage.getItem('colorTheme') || 'dracula'; } catch (_) {}
+            const themeNameMap = {
+                dracula: isLight ? 'Alucard (Light)' : 'Dracula (Dark)',
+                steel:   `Steel (${isLight ? 'Light' : 'Dark'})`,
+                onyx:    `Onyx (${isLight ? 'Light' : 'Dark'})`,
+                reader:  `Reader (${isLight ? 'Parchment' : 'Night'})`,
+            };
+            document.getElementById('userTheme').textContent =
+                themeNameMap[colorTheme] || (isLight ? 'Alucard (Light)' : 'Dracula (Dark)');
+            this.openModal(this.userMenuModal);
+        } else {
+            this.openModal(this.loginModal);
+        }
+    }
+
+    async handleLogin() {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+
+        if (!email || !password) {
+            this.showToast('Please enter valid credentials');
+            return;
+        }
+
+        try {
+            await this.auth.signInWithEmailAndPassword(email, password);
+            this.showToast('Signed in successfully!');
+            this.closeModal(this.loginModal);
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+        } catch (error) {
+            console.error('Login error:', error);
+            if (error.code === 'auth/user-not-found') {
+                if (confirm('No account found with this email. Sign up instead?')) {
+                    this.closeModal(this.loginModal);
+                    this.openModal(this.signupModal);
+                    document.getElementById('signupEmail').value = email;
+                }
+            } else if (error.code === 'auth/wrong-password') {
+                this.showToast('Incorrect password');
+            } else {
+                this.showToast(`Login failed: ${error.message}`);
+            }
+        }
+    }
+
+    async handleSignup() {
+        const email = document.getElementById('signupEmail').value;
+        const password = document.getElementById('signupPassword').value;
+
+        if (!email || !password) {
+            this.showToast('Please fill in all fields');
+            return;
+        }
+
+        if (password.length < 6) {
+            this.showToast('Password must be at least 6 characters');
+            return;
+        }
+
+        try {
+            const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+
+            await this.database.ref(`users/${user.uid}/settings`).set({
+                fontSize: this.state.fontSize,
+                showVerseNumbers: this.state.showVerseNumbers,
+                showHeadings: this.state.showHeadings,
+                showFootnotes: this.state.showFootnotes,
+                showCrossReferences: this.state.showCrossReferences,
+                verseByVerse: this.state.verseByVerse,
+                colorTheme: this.state.colorTheme,
+                lightMode: this.state.lightMode,
+                translation: this.state.translation || 'ESV',
+            });
+
+            this.showToast('Account created successfully!');
+            this.closeModal(this.signupModal);
+        } catch (error) {
+            console.error('Signup error:', error);
+            if (error.code === 'auth/email-already-in-use') {
+                this.showToast('An account with this email already exists');
+            } else {
+                this.showToast(`Signup failed: ${error.message}`);
+            }
+        }
+    }
+
+    async handleLogout() {
+        try {
+            await this.auth.signOut();
+            this.showToast('Signed out successfully');
+            this.closeModal(this.userMenuModal);
+        } catch (error) {
+            console.error('Logout error:', error);
+            this.showToast('Failed to sign out');
+        }
+    }
+
+    async loadUserData() {
+        if (!this.currentUser) return;
+        const data = await loadUserDataFromFirebase(this.currentUser.uid);
+        if (!data) return;
+        const s = data.settings;
+        this.state.fontSize             = s.fontSize;
+        this.state.showVerseNumbers     = s.showVerseNumbers;
+        this.state.showHeadings         = s.showHeadings;
+        this.state.showFootnotes        = s.showFootnotes;
+        this.state.showCrossReferences  = s.showCrossReferences;
+        this.state.verseByVerse         = s.verseByVerse;
+        this.state.colorTheme           = s.colorTheme;
+        this.state.lightMode            = s.lightMode;
+        this.state.translation          = normalizeTranslation(s.translation || 'ESV');
+    }
+}
+
+
+/* ─── Service Worker & Update Toast ─── */
+async function registerServiceWorker(appInstance) {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+
+    const buildMeta = document.querySelector('meta[name="build-id"]')?.content || '__BUILD_ID__';
+    console.info('[BUILD_ID]', buildMeta);
+
+    navigator.serviceWorker.addEventListener('message', (e) => {
+      if (e.data?.type === 'NEW_VERSION') showUpdateToast(appInstance);
+      if (e.data?.type === 'RELOAD') window.location.reload();
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        reg.update().catch((err) => console.warn('SW update check failed', err));
+      }
+    });
+  } catch (err) {
+    console.warn('SW registration failed', err);
+  }
+}
+
+function showUpdateToast(appInstance) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.innerHTML = '';
+
+  const text = document.createElement('span');
+  text.textContent = 'A new version is available.';
+  text.style.flex = '1';
+
+  const action = document.createElement('button');
+  action.textContent = 'Refresh';
+  action.className = 'toast-action';
+  action.addEventListener('click', () => location.reload());
+
+  const dismiss = document.createElement('button');
+  dismiss.textContent = '\u00d7';
+  dismiss.className = 'toast-dismiss';
+  dismiss.addEventListener('click', () => toast.classList.remove('show'));
+
+  toast.appendChild(text);
+  toast.appendChild(action);
+  toast.appendChild(dismiss);
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 30000);
+}
+
+(async () => {
+    await new Promise(resolve => {
+        if (document.readyState !== 'loading') return resolve();
+        document.addEventListener('DOMContentLoaded', resolve, { once: true });
+    });
+    try {
+        await import('./config/firebase-config.js');
+    } catch (err) {
+        console.error('Firebase config module failed to load:', err);
+    }
+    new BibleApp();
+})();
