@@ -54,6 +54,19 @@ function withTimeout(promise, ms, fallback = null) {
     ]);
 }
 
+/**
+ * Remove the `initializing` class in a double-rAF so Safari commits the
+ * opacity:0 paint before the transition fires, and Brave (which may stall
+ * on Firebase) never leaves the page invisible.
+ */
+function revealApp() {
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            document.body.classList.remove('initializing');
+        });
+    });
+}
+
 class BibleApp {
     constructor() {
         this.auth     = window.firebaseAuth;
@@ -176,27 +189,38 @@ class BibleApp {
 
             this.loadLocalSettings();
             this.applySettings();
-            await this.loadPassage(this.state.currentBook, this.state.currentChapter);
 
             if (!this.auth || !this.database) {
                 console.error('Firebase auth/database not ready when app initialized.');
-                setTimeout(() => this.showToast('Sign in is temporarily unavailable. Please refresh the page.'), 500);
-                return;
+                // Show the page anyway so it isn't a black screen — passage will
+                // still load from RTDB; only auth features are affected.
+                this.passageText?.insertAdjacentHTML('beforeend',
+                    '<p class="help-text" style="margin-top:0.5rem">Sign-in unavailable — please refresh.</p>'
+                );
             }
 
-            this.auth.onAuthStateChanged(async (user) => {
-                if (user) {
-                    this.currentUser = user;
-                    await withTimeout(this.loadUserData(), 5000);
-                    this.applySettings();
-                    await this._loadSavedPositionIfChanged();
-                } else {
-                    this.currentUser = null;
-                    this.checkApiKey();
-                }
-            });
+            await this.loadPassage(this.state.currentBook, this.state.currentChapter);
+
+            if (this.auth && this.database) {
+                this.auth.onAuthStateChanged(async (user) => {
+                    if (user) {
+                        this.currentUser = user;
+                        await withTimeout(this.loadUserData(), 5000);
+                        this.applySettings();
+                        await this._loadSavedPositionIfChanged();
+                    } else {
+                        this.currentUser = null;
+                        this.checkApiKey();
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('BibleApp init error:', err);
         } finally {
-            document.body.classList.remove('initializing');
+            // Double-rAF: guarantees the opacity:0 frame is committed before
+            // the class removal triggers the CSS transition (fixes Safari),
+            // and ensures the page is never left invisible on error (fixes Brave).
+            revealApp();
         }
     }
 
