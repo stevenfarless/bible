@@ -1,19 +1,19 @@
 // config/firebase-config.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { initializeApp } from "../vendor/firebase/app.js";
 import {
   getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+} from "../vendor/firebase/auth.js";
 import {
   getDatabase,
   ref,
   get,
   set,
   onValue
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+} from "../vendor/firebase/database.js";
 var firebaseConfig = {
   apiKey: "AIzaSyCGVPqbTZCQ3Hrs9sFIJm_PR32FP_CVXSw",
   authDomain: "esv-bible-6dffb.firebaseapp.com",
