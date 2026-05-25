@@ -95,6 +95,35 @@ See [docs/CHANGELOG.md](docs/CHANGELOG.md) for version history.
 
 See [docs/SECURITY.md](docs/SECURITY.md) for the security policy.
 
+## Translations
+
+The app loads Bible translations from JSON files in `translations/`. Translations fall into two categories based on copyright.
+
+### Public-domain / CC0 (safe to ship as JSON in a public repo)
+
+| Translation | Text Base | Style | Apocrypha | Closest Mainstream Twin |
+|---|---|---|---|---|
+| **WEB** — World English Bible | Byzantine/Majority Text | Formal, modern English | Yes (separate edition) | NKJV / ESV |
+| **BSB** — Berean Standard Bible | NA28 / BHS | Balanced formal-dynamic | No | CSB / ESV |
+| **NHEB** — New Heart English Bible | Byzantine (WEB-derived) | Slightly smoother than WEB | No | NIV / CSB |
+| **OEB** — Open English Bible | Westcott-Hort | Dynamic, contemporary | No (pair with PD Apocrypha) | NIV / NRSV |
+| **KJV** | Textus Receptus | Archaic Early Modern English | Yes | NKJV |
+| **RV (1895)** — Revised Version | Westcott-Hort | Formal, slightly archaic | Yes | RSV / NRSV |
+| **Douay-Rheims** | Latin Vulgate | Latinate, formal | Yes (Catholic deuterocanon) | NABRE / NRSV-CE |
+| **ASV** | Westcott-Hort | Rigorous, mildly archaic | No | NASB |
+| **YLT** — Young's Literal | Hebrew / Greek direct | Hyper-literal; study only | No | Interlinear |
+
+**WEB** is the only PD modern-English option that also ships a Deuterocanon/Apocrypha edition. **BSB** is the strongest all-around PD modern translation for evangelical study use. For text-critically aware users: WEB, NHEB, and KJV follow the Byzantine/Majority Text NT; WEB/BSB differ at a handful of contested verses (e.g., 1 John 5:7–8, Mark 16:9–20).
+
+### Copyrighted with permissive licenses (API or private storage only)
+
+| Translation | License Summary | Style | Closest Mainstream Twin |
+|---|---|---|---|
+| **LEB** — Lexham English Bible | Free to give away; commercial bundling allowed if LEB < 25% of work | Very literal; NT highly regarded | NASB / ESV |
+| **NET** — New English Translation | Non-commercial free use permitted in apps with NET tag and attribution | Natural modern English; 60k+ translator notes | NIV / CSB |
+
+All other copyrighted translations bundled in this app (ESV, NASB, CSB, NIV, NKJV, NLT, NRSVue, MEV, ISV) must not be stored as full JSON in a public repository. They are loaded via API or private Firebase storage. See [NOTICE](NOTICE) for per-translation copyright information and issue [#136](https://github.com/stevenfarless/esv-bible/issues/136) for full licensing and scholarly notes.
+
 ## License
 
 See [LICENSE](LICENSE).
