@@ -314,26 +314,40 @@ export class BibleApi {
         const searchIndex = await this._loadSearchIndex(this._translation);
 
         if (searchIndex !== null) {
-            const results = [];
+            // Collect matching refs first, then fetch original-cased text from
+            // the book cache in batches. _loadBook is cached so subsequent
+            // passage loads for the same translation are free.
+            const matches = [];
             for (const [ref, normalizedText] of Object.entries(searchIndex)) {
                 if (!normalizedText.includes(q)) continue;
-                // Parse "Book Chapter:Verse" from the ref key.
                 const colonIdx = ref.lastIndexOf(':');
                 const spaceIdx = ref.lastIndexOf(' ', colonIdx);
-                const book    = ref.slice(0, spaceIdx);
-                const chapter = Number(ref.slice(spaceIdx + 1, colonIdx));
-                const verse   = Number(ref.slice(colonIdx + 1));
-                results.push({
-                    reference: ref,
-                    content:   normalizedText,
-                    book,
-                    chapter,
-                    verse,
-                    text:      normalizedText,
+                matches.push({
+                    ref,
+                    book:    ref.slice(0, spaceIdx),
+                    chapter: Number(ref.slice(spaceIdx + 1, colonIdx)),
+                    verse:   Number(ref.slice(colonIdx + 1)),
                 });
             }
-            // Fire onBatchResults once with all results so callers that
-            // depend on the callback for rendering still work correctly.
+
+            // Fetch all required books concurrently (cached after first load).
+            const uniqueBooks = [...new Set(matches.map((m) => m.book))];
+            const bookDataMap = new Map(
+                await Promise.all(
+                    uniqueBooks.map(async (book) => [book, await this._loadBook(this._translation, book)])
+                )
+            );
+
+            const results = [];
+            for (const { ref, book, chapter, verse } of matches) {
+                const bookData = bookDataMap.get(book);
+                const resolvedKey = bookData ? _resolveBookKey(bookData, book) : null;
+                const resolvedBookData = resolvedKey ? bookData[resolvedKey] ?? bookData : bookData;
+                const originalText = resolvedBookData?.[String(chapter)]?.[String(verse)];
+                const text = originalText != null ? String(originalText) : searchIndex[ref];
+                results.push({ reference: ref, content: text, book, chapter, verse, text });
+            }
+
             if (results.length > 0 && typeof onBatchResults === 'function') {
                 onBatchResults(results);
             }
