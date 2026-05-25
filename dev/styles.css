@@ -372,11 +372,7 @@ body {
     background-color: var(--bg-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transition: background-color var(--transition-normal), color var(--transition-normal), opacity 220ms ease;
-}
-
-body.initializing {
-    opacity: 0;
+    transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
 ::selection {
