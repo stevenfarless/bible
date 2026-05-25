@@ -2,27 +2,23 @@
 // Firebase Configuration — modular SDK v9 with compat shim
 // app.js uses compat-style .ref().once()/.set() and auth.signIn* methods.
 // We wrap the modular SDK to preserve that contract without loading compat.
-//
-// SDK files are vendored locally in vendor/firebase/ to avoid Brave's
-// cross-site tracker blocking of gstatic.com (Google CDN).
-// Run .github/workflows/vendor-firebase.yml to update them.
 // ================================
 
-import { initializeApp } from '../vendor/firebase/app.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
 import {
     getAuth,
     onAuthStateChanged,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     signOut,
-} from '../vendor/firebase/auth.js';
+} from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 import {
     getDatabase,
     ref,
     get,
     set,
     onValue,
-} from '../vendor/firebase/database.js';
+} from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyCGVPqbTZCQ3Hrs9sFIJm_PR32FP_CVXSw",
@@ -40,7 +36,7 @@ const app = initializeApp(firebaseConfig);
 const _auth = getAuth(app);
 const _db   = getDatabase(app);
 
-// ── Database shim ──────────────────────────────────────────────────────────────────────
+// ── Database shim ──────────────────────────────────────────────────────────
 // Returns a ref-like object whose .once() and .set() match the compat API.
 function makeRef(path) {
     const dbRef = ref(_db, path);
@@ -55,7 +51,7 @@ const dbShim = {
     ref: (path) => makeRef(path),
 };
 
-// ── Auth shim ──────────────────────────────────────────────────────────────────────────
+// ── Auth shim ──────────────────────────────────────────────────────────────
 const authShim = {
     onAuthStateChanged: (cb)         => onAuthStateChanged(_auth, cb),
     signInWithEmailAndPassword: (e, p) => signInWithEmailAndPassword(_auth, e, p),
@@ -68,7 +64,7 @@ const authShim = {
 window.firebaseAuth     = authShim;
 window.firebaseDatabase = dbShim;
 
-// ── loadUserData export ──────────────────────────────────────────────────────────────────
+// ── loadUserData export ────────────────────────────────────────────────────
 export async function loadUserData(userId) {
     try {
         const snap = await get(ref(_db, `users/${userId}`));
