@@ -176,6 +176,8 @@ class BibleApp {
         this.applySettings();
         await this.loadPassage(this.state.currentBook, this.state.currentChapter);
 
+        document.body.classList.remove('initializing');
+
         if (!this.auth || !this.database) {
             console.error('Firebase auth/database not ready when app initialized.');
             setTimeout(() => this.showToast('Sign in is temporarily unavailable. Please refresh the page.'), 500);
@@ -238,7 +240,6 @@ class BibleApp {
 
         this.state.currentBook    = book;
         this.state.currentChapter = chapter;
-        this.updateNavigationState();
 
         this.passageText.innerHTML = '<p class="loading">Loading passage...</p>';
 
@@ -262,6 +263,7 @@ class BibleApp {
             return;
         }
 
+        this.updateNavigationState();
         this.passageTitle.textContent = book === 'Psalm'
             ? `Psalm ${chapter}`
             : `${this.getDisplayName(book)} ${chapter}`;
