@@ -25,6 +25,11 @@ import {
     getTestament,
     getDisplayName,
 } from './bible-structure.js';
+import {
+    updateNavigationState,
+    navigateToNextVerse,
+    navigateToPreviousVerse,
+} from './navigation.js';
 
 function readBool(key, defaultValue) {
     try {
@@ -662,7 +667,7 @@ class BibleApp {
     }
 
     // ================================
-    // Navigation
+    // Navigation (delegated)
     // ================================
 
     navigateChapter(direction) {
@@ -670,18 +675,15 @@ class BibleApp {
     }
 
     updateNavigationState() {
-        const book = this.state.currentBook;
-        const abbr = this.bookAbbreviations[book] || book;
-        this.currentBookSpan.textContent = abbr;
-        this.currentChapterSpan.textContent = this.state.currentChapter;
+        updateNavigationState(this);
+    }
 
-        const books = this.getAllBooks();
-        const currentBookIndex = books.indexOf(book);
-        const isFirstChapter = this.state.currentChapter === 1;
-        const isLastChapter = this.state.currentChapter === this.getChapterCount(book);
+    navigateToNextVerse() {
+        navigateToNextVerse(this);
+    }
 
-        if (this.prevChapterBtn) this.prevChapterBtn.disabled = currentBookIndex === 0 && isFirstChapter;
-        if (this.nextChapterBtn) this.nextChapterBtn.disabled = currentBookIndex === books.length - 1 && isLastChapter;
+    navigateToPreviousVerse() {
+        navigateToPreviousVerse(this);
     }
 
     // ================================
@@ -1184,42 +1186,6 @@ class BibleApp {
 
     scrollToVerse(verseNumber) {
         scrollVerse(this, verseNumber);
-    }
-
-    navigateToNextVerse() {
-        const currentVerse = this.state.selectedVerse || 1;
-        const maxVerse = this.getCurrentVerseCount();
-
-        if (currentVerse < maxVerse) {
-            this.scrollToVerse(currentVerse + 1);
-        } else {
-            this.navigateChapter(1);
-        }
-    }
-
-    navigateToPreviousVerse() {
-        const currentVerse = this.state.selectedVerse || 1;
-
-        if (currentVerse > 1) {
-            this.scrollToVerse(currentVerse - 1);
-        } else {
-            const books = this.getAllBooks();
-            const currentBookIndex = books.indexOf(this.state.currentBook);
-            const isFirstChapter = this.state.currentChapter === 1;
-
-            if (currentBookIndex === 0 && isFirstChapter) return;
-
-            let newChapter = this.state.currentChapter - 1;
-            let newBook = this.state.currentBook;
-
-            if (newChapter < 1) {
-                newBook = books[currentBookIndex - 1];
-                newChapter = this.getChapterCount(newBook);
-            }
-
-            this.state.selectedVerse = null;
-            this.loadPassage(newBook, newChapter);
-        }
     }
 
     applyVerseGlow() {
