@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - '**'
+      - '!main'
 
 concurrency:
   group: gh-pages-${{ github.ref_name }}
