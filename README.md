@@ -1,3 +1,23 @@
+## Branch Hierarchy & Merge Order
+
+> **This is the `main` branch** — production-only. Never commit directly here.
+>
+> All work flows through the following hierarchy before reaching `main`:
+>
+> ```
+> main
+> └── dev                         ← integration branch; all features merge here first
+>     └── search                  ← full-text search feature; merges into dev
+>         └── refactor/split-app-js  ← breaks app.js into modules; merges into search
+> ```
+>
+> **Merge order (bottom-up):**
+> 1. `refactor/split-app-js` → `search`
+> 2. `search` → `dev`
+> 3. `dev` → `main`
+>
+> Do not skip steps or merge out of order. Each child branch must be fully tested and reviewed before moving up the chain.
+
 # Bible Reader
 
 A fast, offline-capable Bible reading app built with vanilla JavaScript, served via GitHub Pages.
