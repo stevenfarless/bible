@@ -18,6 +18,13 @@ import {
     updateThemeIcon,
     changeColorTheme,
 } from './ui.js';
+import {
+    initializeBibleStructure,
+    getAllBooks,
+    getChapterCount,
+    getTestament,
+    getDisplayName,
+} from './bible-structure.js';
 
 function readBool(key, defaultValue) {
     try {
@@ -52,7 +59,7 @@ class BibleApp {
 
         this._copyrightMap = {};
 
-        this.bibleBooks = this.initializeBibleStructure();
+        this.bibleBooks = initializeBibleStructure();
 
         this.bookAbbreviations = {
             Genesis: 'Gen', Exodus: 'Exod', Leviticus: 'Lev', Numbers: 'Num', Deuteronomy: 'Deut',
@@ -138,56 +145,23 @@ class BibleApp {
     }
 
     // ================================
-    // Bible Structure
+    // Bible Structure (delegated)
     // ================================
 
-    initializeBibleStructure() {
-        return {
-            'Old Testament': {
-                Genesis: 50, Exodus: 40, Leviticus: 27, Numbers: 36, Deuteronomy: 34,
-                Joshua: 24, Judges: 21, Ruth: 4, '1 Samuel': 31, '2 Samuel': 24,
-                '1 Kings': 22, '2 Kings': 25, '1 Chronicles': 29, '2 Chronicles': 36,
-                Ezra: 10, Nehemiah: 13, Esther: 10, Job: 42, Psalm: 150, Proverbs: 31,
-                Ecclesiastes: 12, 'Song of Solomon': 8, Isaiah: 66, Jeremiah: 52,
-                Lamentations: 5, Ezekiel: 48, Daniel: 12, Hosea: 14, Joel: 3, Amos: 9,
-                Obadiah: 1, Jonah: 4, Micah: 7, Nahum: 3, Habakkuk: 3, Zephaniah: 3,
-                Haggai: 2, Zechariah: 14, Malachi: 4,
-            },
-            'New Testament': {
-                Matthew: 28, Mark: 16, Luke: 24, John: 21, Acts: 28, Romans: 16,
-                '1 Corinthians': 16, '2 Corinthians': 13, Galatians: 6, Ephesians: 6,
-                Philippians: 4, Colossians: 4, '1 Thessalonians': 5, '2 Thessalonians': 3,
-                '1 Timothy': 6, '2 Timothy': 4, Titus: 3, Philemon: 1, Hebrews: 13,
-                James: 5, '1 Peter': 5, '2 Peter': 3, '1 John': 5, '2 John': 1,
-                '3 John': 1, Jude: 1, Revelation: 22,
-            },
-        };
-    }
-
     getAllBooks() {
-        return [
-            ...Object.keys(this.bibleBooks['Old Testament']),
-            ...Object.keys(this.bibleBooks['New Testament']),
-        ];
+        return getAllBooks(this);
     }
 
     getChapterCount(book) {
-        for (const testament in this.bibleBooks) {
-            if (this.bibleBooks[testament][book]) {
-                return this.bibleBooks[testament][book];
-            }
-        }
-        return 0;
+        return getChapterCount(this, book);
     }
 
     getTestament(book) {
-        if (this.bibleBooks['Old Testament'][book]) return 'Old Testament';
-        if (this.bibleBooks['New Testament'][book]) return 'New Testament';
-        return null;
+        return getTestament(this, book);
     }
 
     getDisplayName(book) {
-        return this.bookDisplayNames[book] || book;
+        return getDisplayName(this, book);
     }
 
     // ================================
@@ -862,10 +836,6 @@ class BibleApp {
         }
     }
 
-    /**
-     * Runs a full-Bible keyword search, streaming results into the UI as each
-     * batch of books resolves. Returns the complete result array when done.
-     */
     async fetchAllSearchResults(query, onBatch) {
         this.currentSearchResults = [];
         await this.bibleApi.searchPassages(query, (batchResults) => {
@@ -925,15 +895,12 @@ class BibleApp {
         this.searchExpandedTestaments?.clear();
         this.searchExpandedBooks?.clear();
 
-        // Stream results into the UI as each batch of books resolves.
         await this.fetchAllSearchResults(query, (accumulatedResults) => {
             if (accumulatedResults.length > 0) {
                 this.displaySearchResults(accumulatedResults, query);
             }
         });
 
-        // Final render — ensures the completed result set is shown even if the
-        // last batch produced no new matches (callback would not have fired).
         if (this.currentSearchResults.length > 0) {
             this.displaySearchResults(this.currentSearchResults, query);
         } else {
