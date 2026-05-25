@@ -36,4 +36,5 @@ jobs:
           git add vendor/firebase/
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "vendor: add Firebase 9.23.0 ESM bundles for same-origin loading"
+          git pull --rebase origin dev
           git push origin dev
