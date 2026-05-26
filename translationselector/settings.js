@@ -70,6 +70,10 @@ export function applySettings(app) {
     if (app.translationSelector && app.state.translation) {
         app.translationSelector.value = app.state.translation;
     }
+    // Sync nav translation badge label
+    if (app.currentTranslationSpan && app.state.translation) {
+        app.currentTranslationSpan.textContent = app.state.translation;
+    }
     app.bibleApi.setTranslation(app.state.translation || DEFAULTS.translation);
 
     document.body.classList.toggle('light-mode', !!app.state.lightMode);
@@ -155,6 +159,10 @@ export async function updateFontSize(app, size) {
 export async function changeTranslation(app, translation) {
     app.state.translation = translation;
     app.bibleApi.setTranslation(translation);
+
+    // Sync both the settings <select> and the nav badge
+    if (app.translationSelector) app.translationSelector.value = translation;
+    if (app.currentTranslationSpan) app.currentTranslationSpan.textContent = translation;
 
     lsSet('translation', translation);
 
