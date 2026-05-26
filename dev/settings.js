@@ -41,6 +41,20 @@ export function loadLocalSettings(app) {
 
     try { app.state.translation = app._normalizeTranslation(localStorage.getItem('translation') || DEFAULTS.translation); }
     catch (_) { app.state.translation = DEFAULTS.translation; }
+
+    // Restore last reading position for logged-out users.
+    // Signed-in users get their position from Firebase in loadSavedPositionIfChanged.
+    try {
+        const raw = localStorage.getItem('readingPosition');
+        if (raw) {
+            const pos = JSON.parse(raw);
+            if (pos && pos.book && pos.chapter) {
+                app.state.currentBook    = pos.book;
+                app.state.currentChapter = parseInt(pos.chapter, 10);
+                app.lastScrollPosition   = pos.scrollY || 0;
+            }
+        }
+    } catch (_) { /* malformed entry — leave state at defaults */ }
 }
 
 export function applySettings(app) {
