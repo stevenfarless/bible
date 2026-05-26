@@ -22,6 +22,9 @@ export function attachEventListeners(app) {
     app.chapterSelector?.addEventListener('click', () => app.openChapterModal());
     app.verseSelector?.addEventListener('click',   () => app.openVerseModal());
 
+    // ── Translation badge (nav) ──────────────────────────────────
+    app.translationSelectorBtn?.addEventListener('click', () => app.openTranslationModal());
+
     // ── Modals: late-cached elements ─────────────────────────────────
     app.referencesModal        = document.getElementById('referencesModal');
     app.closeReferencesModal   = document.getElementById('closeReferencesModal');
@@ -35,6 +38,7 @@ export function attachEventListeners(app) {
         app.bookModal, app.chapterModal, app.verseModal,
         app.settingsModal, app.helpModal, app.loginModal,
         app.signupModal, app.userMenuModal, app.referencesModal,
+        app.translationModal,
     ].forEach((modal) => {
         if (!modal) return;
         modal.addEventListener('click', (e) => { if (e.target === modal) app.closeModal(modal); });
@@ -48,6 +52,7 @@ export function attachEventListeners(app) {
     app.closeHelpModal?.addEventListener('click',     () => app.closeModal(app.helpModal));
     app.closeSettingsModal?.addEventListener('click', () => app.closeModal(app.settingsModal));
     app.closeReferencesModal?.addEventListener('click', () => app.closeModal(app.referencesModal));
+    app.closeTranslationModal?.addEventListener('click', () => app.closeModal(app.translationModal));
 
     attachDragToResize(app);
 
@@ -61,6 +66,7 @@ export function attachEventListeners(app) {
 
     app.verseByVerseToggle?.addEventListener('change', () => app.toggleVerseByVerse());
     app.fontSizeSlider?.addEventListener('input',  (e) => app.updateFontSize(e.target.value));
+    // Settings <select> still works as a secondary route
     app.translationSelector?.addEventListener('change', async (e) => app.changeTranslation(e.target.value));
 
     // ── Theme ────────────────────────────────────────────────────

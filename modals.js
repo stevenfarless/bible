@@ -120,6 +120,55 @@ export function getCurrentVerseCount(app) {
     return app.passageText.querySelectorAll('.verse-num').length;
 }
 
+// ─── Translation modal ────────────────────────────────────────────────────────
+
+export function openTranslationModal(app) {
+    populateTranslationModal(app);
+    openModal(app, app.translationModal);
+}
+
+export function populateTranslationModal(app) {
+    if (!app.translationList) return;
+    app.translationList.innerHTML = '';
+
+    // _translationRegistry is populated by _loadTranslationRegistry() in app.js.
+    // Fall back gracefully if it hasn't loaded yet.
+    const registry = app._translationRegistry || [];
+
+    if (registry.length === 0) {
+        const msg = document.createElement('li');
+        msg.textContent = 'No translations available.';
+        msg.style.padding = 'var(--spacing-md)';
+        msg.style.color = 'var(--text-muted)';
+        app.translationList.appendChild(msg);
+        return;
+    }
+
+    for (const t of registry) {
+        const li = document.createElement('li');
+        li.className = 'translation-modal-item';
+        if (t.id === app.state.translation) li.classList.add('translation-modal-item--active');
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'translation-modal-item__name';
+        nameSpan.textContent = t.id;
+
+        const descSpan = document.createElement('span');
+        descSpan.className = 'translation-modal-item__desc';
+        descSpan.textContent = t.name || '';
+
+        li.appendChild(nameSpan);
+        li.appendChild(descSpan);
+
+        li.addEventListener('click', () => {
+            app.changeTranslation(t.id);
+            app.closeModal(app.translationModal);
+        });
+
+        app.translationList.appendChild(li);
+    }
+}
+
 // ─── Drag-to-resize ───────────────────────────────────────────────────────────
 
 /**
