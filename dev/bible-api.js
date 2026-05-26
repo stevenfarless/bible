@@ -58,6 +58,15 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
+/**
+ * Build a whole-word RegExp for `q` (already lowercased).
+ * Falls back to a plain substring test regex if q is empty.
+ */
+function _buildWordRegex(q) {
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`\\b${escaped}\\b`, 'i');
+}
+
 export async function loadTranslationIndex() {
     const url = `${FIREBASE_DB_URL}/translationIndex.json`;
     try {
@@ -295,12 +304,15 @@ export class BibleApi {
      *
      * Fast path: if a prebuilt flat ref->text index exists in RTDB at
      * /searchIndex/{translation}, fetch it once (cached after first call)
-     * and search via Object.entries + String.includes. Single round trip,
+     * and search via Object.entries + word-boundary regex. Single round trip,
      * instant on repeat searches.
      *
      * Fallback path: if the index is absent or the fetch fails, fetch books
      * in batches of SEARCH_CONCURRENCY and search as they arrive. Results
      * stream incrementally via onBatchResults.
+     *
+     * Word-boundary matching (\b) prevents false positives where short terms
+     * appear as substrings inside longer words (e.g. "hate" inside "whatever").
      *
      * @param {string} query
      * @param {function(Array):void} [onBatchResults]  - called with new results after each batch
@@ -309,6 +321,8 @@ export class BibleApi {
     async searchPassages(query, onBatchResults = null) {
         const q = String(query || '').toLowerCase().trim();
         if (!q) return { results: [], total_results: 0, page_size: PAGE_SIZE };
+
+        const wordRegex = _buildWordRegex(q);
 
         // ── Fast path: prebuilt search index ──────────────────────────────
         const searchIndex = await this._loadSearchIndex(this._translation);
@@ -319,7 +333,7 @@ export class BibleApi {
             // passage loads for the same translation are free.
             const matches = [];
             for (const [ref, normalizedText] of Object.entries(searchIndex)) {
-                if (!normalizedText.includes(q)) continue;
+                if (!wordRegex.test(normalizedText)) continue;
                 const colonIdx = ref.lastIndexOf(':');
                 const spaceIdx = ref.lastIndexOf(' ', colonIdx);
                 matches.push({
@@ -385,7 +399,7 @@ export class BibleApi {
 
                     for (const [verseStr, text] of verseEntries) {
                         const verseText = String(text || '');
-                        if (!verseText.toLowerCase().includes(q)) continue;
+                        if (!wordRegex.test(verseText)) continue;
                         batchResults.push({
                             reference: `${book} ${chapterStr}:${verseStr}`,
                             content:   verseText,
