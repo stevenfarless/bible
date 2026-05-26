@@ -65,7 +65,7 @@ function revealApp() {
 }
 
 // ── Debug panel ────────────────────────────────────────────────────────────
-// Triple-tap the app title to open. Tap the panel to copy. Tap outside to close.
+// Triple-tap the header bar to open. Tap the panel to copy. Tap outside to close.
 // REMOVE BEFORE MERGING TO MAIN.
 
 function buildDebugReport(app) {
@@ -183,14 +183,38 @@ function showDebugPanel(app) {
 }
 
 function initDebugTrigger(app) {
-    const logo = document.querySelector('.logo');
-    if (!logo) return;
+    // Use the full header element — larger tap target than just the logo h1.
+    // Listen on touchend so iOS Safari doesn't swallow the third tap as a
+    // double-tap zoom gesture before the click event fires.
+    const target = document.querySelector('.header') || document.querySelector('.logo');
+    if (!target) return;
+
     let taps = 0;
     let timer = null;
-    logo.addEventListener('click', () => {
+
+    target.addEventListener('touchend', (e) => {
+        // Only count taps that land on the logo or the header background,
+        // not on the icon buttons in header-controls.
+        if (e.target.closest('.header-controls')) return;
+        e.preventDefault(); // suppress double-tap zoom
         taps++;
         clearTimeout(timer);
-        timer = setTimeout(() => { taps = 0; }, 600);
+        timer = setTimeout(() => { taps = 0; }, 700);
+        if (taps >= 3) {
+            taps = 0;
+            clearTimeout(timer);
+            showDebugPanel(app);
+        }
+    }, { passive: false });
+
+    // Keep click as fallback for desktop/DevTools testing.
+    target.addEventListener('click', (e) => {
+        if (e.target.closest('.header-controls')) return;
+        // Skip if this click was synthesized from a touch (already counted above).
+        if (e.sourceCapabilities?.firesTouchEvents) return;
+        taps++;
+        clearTimeout(timer);
+        timer = setTimeout(() => { taps = 0; }, 700);
         if (taps >= 3) {
             taps = 0;
             clearTimeout(timer);
