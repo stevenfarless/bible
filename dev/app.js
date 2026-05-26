@@ -68,24 +68,31 @@ function revealApp() {
 // Triple-tap the header bar to open. Tap the panel to copy. Tap outside to close.
 // REMOVE BEFORE MERGING TO MAIN.
 
+// ms since page navigation start (covers SW boot time unlike Date.now())
+function ms() { return Math.round(performance.now()); }
+function ts(t) { return t == null ? 'n/a' : `+${t}ms`; }
+
 function buildDebugReport(app) {
+    const dbg = app._dbg || {};
+    const now = ms();
+
+    // ── localStorage snapshot ──
     const LS_KEYS = [
         'readingPosition', 'passageCache',
         'translation', 'colorTheme', 'lightMode',
         'fontSize', 'showVerseNumbers', 'showHeadings',
         'showFootnotes', 'showCrossReferences', 'verseByVerse',
     ];
-
     const ls = {};
     for (const k of LS_KEYS) {
         try {
             const raw = localStorage.getItem(k);
             if (k === 'passageCache' && raw) {
-                const parsed = JSON.parse(raw);
-                ls[k] = `book=${parsed.book} ch=${parsed.chapter} translation=${parsed.translation} (html ${parsed.html?.length ?? 0} chars)`;
+                const p = JSON.parse(raw);
+                ls[k] = `book=${p.book} ch=${p.chapter} translation=${p.translation} (html ${p.html?.length ?? 0} chars)`;
             } else if (k === 'readingPosition' && raw) {
-                const parsed = JSON.parse(raw);
-                ls[k] = `book=${parsed.book} ch=${parsed.chapter} scrollY=${parsed.scrollY}`;
+                const p = JSON.parse(raw);
+                ls[k] = `book=${p.book} ch=${p.chapter} scrollY=${p.scrollY}`;
             } else {
                 ls[k] = raw ?? '(not set)';
             }
@@ -94,41 +101,90 @@ function buildDebugReport(app) {
         }
     }
 
-    // Cache match check — same logic as _restorePassageCache
+    // ── Passage cache match ──
     let cacheMatch = 'N/A';
     try {
         const raw = localStorage.getItem(PASSAGE_CACHE_KEY);
         if (raw) {
             const { book, chapter, translation } = JSON.parse(raw);
-            const stateBook        = app?.state?.currentBook;
-            const stateChapter     = app?.state?.currentChapter;
-            const stateTranslation = app?.state?.translation || 'ESV';
-            const match = book === stateBook && chapter === stateChapter && translation === stateTranslation;
-            cacheMatch = match
-                ? 'HIT ✓'
-                : `MISS ✗ cache=(${book} ${chapter} ${translation}) state=(${stateBook} ${stateChapter} ${stateTranslation})`;
+            const sb = app?.state?.currentBook;
+            const sc = app?.state?.currentChapter;
+            const st = app?.state?.translation || 'KJV';
+            const hit = book === sb && chapter === sc && translation === st;
+            cacheMatch = hit ? 'HIT ✓' : `MISS ✗ cache=(${book} ${chapter} ${translation}) state=(${sb} ${sc} ${st})`;
         } else {
             cacheMatch = 'MISS ✗ (no cache entry)';
         }
-    } catch (_) {
-        cacheMatch = 'MISS ✗ (parse error)';
+    } catch (_) { cacheMatch = 'MISS ✗ (parse error)'; }
+
+    // ── State-vs-load diff ──
+    const snap = dbg.stateAtLoad || {};
+    const diffs = [];
+    const cur = {
+        book:        app?.state?.currentBook,
+        chapter:     app?.state?.currentChapter,
+        translation: app?.state?.translation,
+        colorTheme:  app?.state?.colorTheme,
+        lightMode:   app?.state?.lightMode,
+        fontSize:    app?.state?.fontSize,
+        scrollY:     window.scrollY,
+    };
+    for (const [k, v] of Object.entries(cur)) {
+        const was = snap[k];
+        if (was !== undefined && String(was) !== String(v)) diffs.push(`  ${k}: ${was} → ${v}`);
     }
 
+    // ── API memory cache stats ──
+    const api = app?.bibleApi;
+    const bookCacheKeys  = api?._bookCache  ? [...api._bookCache.keys()]  : [];
+    const searchCacheKeys = api?._searchIndexCache ? [...api._searchIndexCache.keys()] : [];
+
+    // ── Timings ──
+    const timings = [
+        `  scriptStart:          ${ts(dbg.t_script_start)}`,
+        `  domReady:             ${ts(dbg.t_dom_ready)}`,
+        `  swRegistered:         ${ts(dbg.t_sw_registered)}`,
+        `  settingsLoaded:       ${ts(dbg.t_settings_loaded)}`,
+        `  cacheRestoreResult:   ${dbg.cacheRestoreResult ?? 'n/a'} at ${ts(dbg.t_cache_restore)}`,
+        `  revealApp (1st):      ${ts(dbg.t_reveal_first)}`,
+        `  passageFetchStart:    ${ts(dbg.t_passage_fetch_start)}`,
+        `  passageFetchEnd:      ${ts(dbg.t_passage_fetch_end)}  (${dbg.passageFetchMs != null ? dbg.passageFetchMs + 'ms RTDB' : 'n/a'})`,
+        `  revealApp (2nd):      ${ts(dbg.t_reveal_second)}`,
+        `  authStateChanged:     ${ts(dbg.t_auth_state)} (${dbg.authStateUser ?? 'n/a'})`,
+        `  userDataLoaded:       ${ts(dbg.t_user_data_loaded)}`,
+        `  firebasePositionEnd:  ${ts(dbg.t_firebase_position_end)} (${dbg.firebasePositionChanged ? 'changed passage' : 'no change'})`,
+        `  panelOpened:          +${now}ms (session age)`,
+    ];
+
     const lines = [
-        '=== localStorage debug ===',
-        ...Object.entries(ls).map(([k, v]) => `${k}: ${v}`),
+        '=== timings (ms since navigation start) ===',
+        ...timings,
         '',
-        `=== passage cache match ===`,
-        cacheMatch,
+        '=== state changes since load ===',
+        diffs.length ? diffs.join('\n') : '  (none)',
         '',
-        `=== app state ===`,
-        `currentBook: ${app?.state?.currentBook}`,
-        `currentChapter: ${app?.state?.currentChapter}`,
-        `translation: ${app?.state?.translation}`,
-        `colorTheme: ${app?.state?.colorTheme}`,
-        `lightMode: ${app?.state?.lightMode}`,
-        `fontSize: ${app?.state?.fontSize}`,
-        `currentUser: ${app?.currentUser?.email ?? 'not signed in'}`,
+        '=== localStorage ===',
+        ...Object.entries(ls).map(([k, v]) => `  ${k}: ${v}`),
+        '',
+        '=== passage cache match (now) ===',
+        `  ${cacheMatch}`,
+        '',
+        '=== session event log ===',
+        ...(dbg.events?.length ? dbg.events.map(e => `  ${ts(e.t)}  ${e.msg}`) : ['  (none)']),
+        '',
+        '=== API memory cache ===',
+        `  bookCache (${bookCacheKeys.length}): ${bookCacheKeys.join(', ') || '(empty)'}`,
+        `  searchIndexCache (${searchCacheKeys.length}): ${searchCacheKeys.join(', ') || '(empty)'}`,
+        '',
+        '=== app state (now) ===',
+        `  currentBook: ${app?.state?.currentBook}`,
+        `  currentChapter: ${app?.state?.currentChapter}`,
+        `  translation: ${app?.state?.translation}`,
+        `  colorTheme: ${app?.state?.colorTheme}`,
+        `  lightMode: ${app?.state?.lightMode}`,
+        `  fontSize: ${app?.state?.fontSize}`,
+        `  scrollY: ${window.scrollY}`,
+        `  currentUser: ${app?.currentUser?.email ?? 'not signed in'}`,
     ];
     return lines.join('\n');
 }
@@ -183,9 +239,6 @@ function showDebugPanel(app) {
 }
 
 function initDebugTrigger(app) {
-    // Use the full header element — larger tap target than just the logo h1.
-    // Listen on touchend so iOS Safari doesn't swallow the third tap as a
-    // double-tap zoom gesture before the click event fires.
     const target = document.querySelector('.header') || document.querySelector('.logo');
     if (!target) return;
 
@@ -193,10 +246,8 @@ function initDebugTrigger(app) {
     let timer = null;
 
     target.addEventListener('touchend', (e) => {
-        // Only count taps that land on the logo or the header background,
-        // not on the icon buttons in header-controls.
         if (e.target.closest('.header-controls')) return;
-        e.preventDefault(); // suppress double-tap zoom
+        e.preventDefault();
         taps++;
         clearTimeout(timer);
         timer = setTimeout(() => { taps = 0; }, 700);
@@ -207,10 +258,8 @@ function initDebugTrigger(app) {
         }
     }, { passive: false });
 
-    // Keep click as fallback for desktop/DevTools testing.
     target.addEventListener('click', (e) => {
         if (e.target.closest('.header-controls')) return;
-        // Skip if this click was synthesized from a touch (already counted above).
         if (e.sourceCapabilities?.firesTouchEvents) return;
         taps++;
         clearTimeout(timer);
@@ -230,6 +279,13 @@ class BibleApp {
         this.currentUser = null;
         this._copyrightMap = {};
         this._normalizeTranslation = normalizeTranslation;
+
+        // Debug instrumentation — records milestone timestamps and session events.
+        // REMOVE BEFORE MERGING TO MAIN.
+        this._dbg = {
+            t_script_start: ms(),
+            events: [],
+        };
 
         this.bibleBooks = initializeBibleStructure();
 
@@ -304,8 +360,12 @@ class BibleApp {
         this.originalPassageHtml = null;
         this.searchExpandedTestaments = new Set();
         this.searchExpandedBooks = new Set();
-        this.bibleApi = new BibleApi(this.state.translation || 'ESV');
+        this.bibleApi = new BibleApi(this.state.translation || 'KJV');
         this.init();
+    }
+
+    _dbgEvent(msg) {
+        this._dbg.events.push({ t: ms(), msg });
     }
 
     getAllBooks()          { return getAllBooks(this); }
@@ -331,7 +391,7 @@ class BibleApp {
             if (
                 book        !== this.state.currentBook    ||
                 chapter     !== this.state.currentChapter ||
-                translation !== (this.state.translation || 'ESV')
+                translation !== (this.state.translation || 'KJV')
             ) return false;
 
             if (this.passageTitle) this.passageTitle.textContent = title || '';
@@ -350,7 +410,16 @@ class BibleApp {
     async init() {
         document.body.classList.add('initializing');
         try {
-            try { await registerServiceWorker(this); } catch (_) { console.warn('Service worker unavailable:', _); }
+            this._dbg.t_dom_ready = ms();
+
+            try {
+                await registerServiceWorker(this);
+                this._dbg.t_sw_registered = ms();
+            } catch (_) {
+                console.warn('Service worker unavailable:', _);
+                this._dbg.t_sw_registered = ms();
+                this._dbgEvent('SW registration failed');
+            }
 
             cacheElements(this);
             loadTheme(this);
@@ -370,30 +439,71 @@ class BibleApp {
 
             this.loadLocalSettings();
             this.applySettings();
+            this._dbg.t_settings_loaded = ms();
+
+            // Snapshot state immediately after settings load — used for diff at panel open.
+            this._dbg.stateAtLoad = {
+                book:        this.state.currentBook,
+                chapter:     this.state.currentChapter,
+                translation: this.state.translation,
+                colorTheme:  this.state.colorTheme,
+                lightMode:   this.state.lightMode,
+                fontSize:    this.state.fontSize,
+                scrollY:     window.scrollY,
+            };
 
             if (!this.auth || !this.database) {
                 console.warn('Firebase not available — sign-in disabled.');
+                this._dbgEvent('Firebase unavailable');
             }
 
             const cacheHit = this._restorePassageCache();
-            if (cacheHit) revealApp();
+            this._dbg.t_cache_restore = ms();
+            this._dbg.cacheRestoreResult = cacheHit ? 'HIT' : 'MISS';
+            this._dbgEvent(`cache restore: ${cacheHit ? 'HIT' : 'MISS'}`);
+
+            if (cacheHit) {
+                this._dbg.t_reveal_first = ms();
+                revealApp();
+            }
 
             initDebugTrigger(this);
 
+            this._dbg.t_passage_fetch_start = ms();
             await Promise.all([
                 this._loadTranslationRegistry(),
                 this.loadPassage(this.state.currentBook, this.state.currentChapter),
             ]);
-            if (!cacheHit) revealApp();
+            this._dbg.t_passage_fetch_end = ms();
+            this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
+
+            if (!cacheHit) {
+                this._dbg.t_reveal_second = ms();
+                revealApp();
+            }
 
             if (this.auth && this.database) {
                 this.auth.onAuthStateChanged(async (user) => {
+                    this._dbg.t_auth_state = ms();
                     if (user) {
+                        this._dbg.authStateUser = user.email;
+                        this._dbgEvent(`auth: signed in as ${user.email}`);
                         this.currentUser = user;
                         await withTimeout(this.loadUserData(), 5000);
+                        this._dbg.t_user_data_loaded = ms();
                         this.applySettings();
+                        const bookBefore = this.state.currentBook;
+                        const chBefore   = this.state.currentChapter;
                         await this._loadSavedPositionIfChanged();
+                        this._dbg.t_firebase_position_end = ms();
+                        this._dbg.firebasePositionChanged =
+                            this.state.currentBook !== bookBefore || this.state.currentChapter !== chBefore;
+                        if (this._dbg.firebasePositionChanged) {
+                            this._dbgEvent(`Firebase position changed: ${bookBefore} → ${this.state.currentBook} ${this.state.currentChapter}`);
+                        }
                     } else {
+                        this._dbg.authStateUser = 'signed out';
+                        this._dbgEvent('auth: signed out');
                         this.currentUser = null;
                         this.checkApiKey();
                     }
@@ -401,6 +511,7 @@ class BibleApp {
             }
         } catch (err) {
             console.error('BibleApp init error:', err);
+            this._dbgEvent(`init error: ${err.message}`);
             revealApp();
         }
     }
@@ -468,6 +579,7 @@ class BibleApp {
         );
 
         if (!data) {
+            this._dbgEvent(`loadPassage: no data for ${book} ${chapter}`);
             this.chromeSuspend = false;
             document.body.classList.remove('chrome-no-transition');
             return;
@@ -495,8 +607,9 @@ class BibleApp {
             document.body.classList.remove('chrome-no-transition');
         });
 
+        this._dbgEvent(`loadPassage: rendered ${book} ${chapter} (${this.state.translation})`);
         this.saveReadingPosition?.();
-        this._savePassageCache(book, chapter, this.state.translation || 'ESV', title, this.passageText.innerHTML);
+        this._savePassageCache(book, chapter, this.state.translation || 'KJV', title, this.passageText.innerHTML);
     }
 
     navigateChapter(direction) { navChapter(this, direction); }
