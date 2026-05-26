@@ -1,0 +1,210 @@
+// modals.js
+// Modal open/close, population, and drag-to-resize for BibleApp.
+
+// ─── Open / close ─────────────────────────────────────────────────────────────
+
+export function openModal(app, modal) {
+    if (!modal) return;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+export function closeModal(app, modal) {
+    if (!modal) return;
+    if (modal === app.settingsModal || modal === app.referencesModal) {
+        const content = modal.querySelector('.modal-content');
+        content.style.animation = 'slideDownToBottom 250ms ease';
+        setTimeout(() => {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            content.style.animation = '';
+        }, 250);
+    } else {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+// ─── Book modal ───────────────────────────────────────────────────────────────
+
+export function openBookModal(app) {
+    populateBookModal(app);
+    openModal(app, app.bookModal);
+}
+
+export function populateBookModal(app) {
+    const createBookButton = (book) => {
+        const btn = document.createElement('button');
+        btn.className = 'book-item';
+        btn.textContent = app.bookAbbreviations[book] || book;
+        btn.addEventListener('click', () => {
+            app.state.selectedVerse = null;
+            app.loadPassage(book, 1);
+            app.closeModal(app.bookModal);
+        });
+        return btn;
+    };
+
+    app.oldTestamentBooks.innerHTML = '';
+    Object.keys(app.bibleBooks['Old Testament']).forEach((book) => {
+        app.oldTestamentBooks.appendChild(createBookButton(book));
+    });
+
+    app.newTestamentBooks.innerHTML = '';
+    Object.keys(app.bibleBooks['New Testament']).forEach((book) => {
+        app.newTestamentBooks.appendChild(createBookButton(book));
+    });
+}
+
+// ─── Chapter modal ────────────────────────────────────────────────────────────
+
+export function openChapterModal(app) {
+    populateChapterModal(app);
+    openModal(app, app.chapterModal);
+}
+
+export function populateChapterModal(app) {
+    app.chapterModalBook.textContent = app.getDisplayName(app.state.currentBook);
+    app.chapterGrid.innerHTML = '';
+
+    const chapterCount = app.getChapterCount(app.state.currentBook);
+
+    for (let i = 1; i <= chapterCount; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'chapter-item';
+        btn.textContent = i;
+        btn.addEventListener('click', () => {
+            app.state.selectedVerse = null;
+            app.loadPassage(app.state.currentBook, i);
+            app.closeModal(app.chapterModal);
+        });
+        app.chapterGrid.appendChild(btn);
+    }
+}
+
+// ─── Verse modal ──────────────────────────────────────────────────────────────
+
+export function openVerseModal(app) {
+    populateVerseModal(app);
+    openModal(app, app.verseModal);
+}
+
+export function populateVerseModal(app) {
+    const book = app.state.currentBook;
+    const displayBook = book === 'Psalm'
+        ? `Psalm ${app.state.currentChapter}`
+        : `${app.getDisplayName(book)} ${app.state.currentChapter}`;
+    app.verseModalBook.textContent = displayBook;
+    app.verseGrid.innerHTML = '';
+
+    const verseCount = getCurrentVerseCount(app);
+
+    if (verseCount === 0) {
+        app.verseGrid.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-secondary);">No verses found in current passage</p>';
+        return;
+    }
+
+    for (let i = 1; i <= verseCount; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'chapter-item';
+        btn.textContent = i;
+        btn.addEventListener('click', () => {
+            app.scrollToVerse(i);
+            app.closeModal(app.verseModal);
+        });
+        app.verseGrid.appendChild(btn);
+    }
+}
+
+export function getCurrentVerseCount(app) {
+    return app.passageText.querySelectorAll('.verse-num').length;
+}
+
+// ─── Drag-to-resize ───────────────────────────────────────────────────────────
+
+/**
+ * Attaches touch + mouse drag-to-resize handlers to a bottom-sheet modal.
+ * @param {object} app        - BibleApp instance
+ * @param {Element} modal     - the modal root element
+ * @param {boolean} [dismissOnDrag=true] - close modal when dragged down far enough
+ */
+function attachDragHandlers(app, modal, dismissOnDrag = true) {
+    const content = modal.querySelector('.modal-content');
+    const header  = modal.querySelector('.modal-header');
+    const body    = modal.querySelector('.modal-body');
+
+    if (!content || !header) return;
+
+    // ── touch ──
+    let isTouchDragging = false;
+    let touchStartY = 0;
+    let touchStartHeight = 0;
+    let touchStartScrollTop = 0;
+
+    header.addEventListener('touchstart', (e) => {
+        if (!header.contains(e.target)) return;
+        isTouchDragging = true;
+        touchStartY = e.touches[0].clientY;
+        touchStartHeight = content.offsetHeight;
+        touchStartScrollTop = body?.scrollTop ?? 0;
+        content.classList.add('dragging');
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!isTouchDragging) return;
+        const deltaY = touchStartY - e.touches[0].clientY;
+        const newH = Math.max(200, Math.min(window.innerHeight * 0.9, touchStartHeight + deltaY));
+        content.style.height = `${newH}px`;
+        e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchend', (e) => {
+        if (!isTouchDragging) return;
+        isTouchDragging = false;
+        content.classList.remove('dragging');
+        const totalDrag = e.changedTouches[0].clientY - touchStartY;
+        if (dismissOnDrag && totalDrag > 150 && touchStartScrollTop === 0) {
+            app.closeModal(modal);
+            setTimeout(() => { content.style.height = '50vh'; }, 300);
+        }
+    }, { passive: true });
+
+    // ── mouse ──
+    let isMouseDragging = false;
+    let mouseStartY = 0;
+    let mouseStartHeight = 0;
+
+    header.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.close-btn')) return;
+        isMouseDragging = true;
+        mouseStartY = e.clientY;
+        mouseStartHeight = content.offsetHeight;
+        content.classList.add('dragging');
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isMouseDragging) return;
+        const newH = Math.max(200, Math.min(window.innerHeight * 0.9, mouseStartHeight + (mouseStartY - e.clientY)));
+        content.style.height = `${newH}px`;
+    });
+
+    document.addEventListener('mouseup', (e) => {
+        if (!isMouseDragging) return;
+        isMouseDragging = false;
+        content.classList.remove('dragging');
+        if (dismissOnDrag && e.clientY - mouseStartY > 150) {
+            app.closeModal(modal);
+            setTimeout(() => { content.style.height = '50vh'; }, 300);
+        }
+    });
+}
+
+/**
+ * Call once from attachEventListeners to wire drag-to-resize on all
+ * bottom-sheet modals (settings + references).
+ */
+export function attachDragToResize(app) {
+    if (app.settingsModal)   attachDragHandlers(app, app.settingsModal);
+    if (app.referencesModal) attachDragHandlers(app, app.referencesModal);
+}
