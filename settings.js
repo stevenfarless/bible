@@ -1,5 +1,5 @@
 // settings.js
-// Reading preferences: load from storage, apply to DOM, persist to Firebase or localStorage.
+// Reading preferences: load from storage, apply to DOM, persist to Firebase and localStorage.
 
 import { changeColorTheme, updateThemeIcon } from './ui.js';
 
@@ -25,6 +25,10 @@ function readBool(key, defaultValue) {
     } catch { return defaultValue; }
 }
 
+function lsSet(key, value) {
+    try { localStorage.setItem(key, String(value)); } catch (_) {}
+}
+
 export function loadLocalSettings(app) {
     try { app.state.fontSize = parseInt(localStorage.getItem('fontSize') || String(DEFAULTS.fontSize), 10); }
     catch (_) { app.state.fontSize = DEFAULTS.fontSize; }
@@ -42,8 +46,9 @@ export function loadLocalSettings(app) {
     try { app.state.translation = app._normalizeTranslation(localStorage.getItem('translation') || DEFAULTS.translation); }
     catch (_) { app.state.translation = DEFAULTS.translation; }
 
-    // Restore last reading position for logged-out users.
-    // Signed-in users get their position from Firebase in loadSavedPositionIfChanged.
+    // Restore last reading position.
+    // Signed-in users may get an updated position from Firebase later in
+    // loadSavedPositionIfChanged, but localStorage gives instant first paint.
     try {
         const raw = localStorage.getItem('readingPosition');
         if (raw) {
@@ -73,9 +78,9 @@ export function applySettings(app) {
     updateThemeIcon(app.state.lightMode);
 
     document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
-    if (app.verseNumbersToggle)   app.verseNumbersToggle.checked   = !!app.state.showVerseNumbers;
-    if (app.headingsToggle)       app.headingsToggle.checked       = !!app.state.showHeadings;
-    if (app.footnotesToggle)      app.footnotesToggle.checked      = !!app.state.showFootnotes;
+    if (app.verseNumbersToggle)    app.verseNumbersToggle.checked    = !!app.state.showVerseNumbers;
+    if (app.headingsToggle)        app.headingsToggle.checked        = !!app.state.showHeadings;
+    if (app.footnotesToggle)       app.footnotesToggle.checked       = !!app.state.showFootnotes;
     if (app.crossReferencesToggle) app.crossReferencesToggle.checked = !!app.state.showCrossReferences;
 
     if (app.passageText) app.passageText.classList.toggle('verse-by-verse', !!app.state.verseByVerse);
@@ -101,12 +106,14 @@ export async function toggleSetting(app, setting) {
     if (!el) return;
     app.state[setting] = el.checked;
 
+    // Always write to localStorage so cold loads get the correct value
+    // immediately without waiting on Firebase.
+    lsSet(setting, el.checked);
+
     if (app.currentUser) {
         await app.database
             .ref(`users/${app.currentUser.uid}/settings/${setting}`)
             .set(el.checked);
-    } else {
-        try { localStorage.setItem(setting, String(el.checked)); } catch (_) {}
     }
 
     if (setting === 'showHeadings') {
@@ -119,13 +126,15 @@ export async function toggleSetting(app, setting) {
 
 export async function toggleVerseByVerse(app) {
     app.state.verseByVerse = app.verseByVerseToggle.checked;
+
+    lsSet('verseByVerse', app.state.verseByVerse);
+
     if (app.currentUser) {
         await app.database
             .ref(`users/${app.currentUser.uid}/settings/verseByVerse`)
             .set(app.state.verseByVerse);
-    } else {
-        try { localStorage.setItem('verseByVerse', String(app.state.verseByVerse)); } catch (_) {}
     }
+
     app.passageText.classList.toggle('verse-by-verse', app.state.verseByVerse);
 }
 
@@ -133,12 +142,13 @@ export async function updateFontSize(app, size) {
     app.state.fontSize = parseInt(size, 10);
     app.fontSizeValue.textContent = `${size}px`;
     app.passageText.style.fontSize = `${size}px`;
+
+    lsSet('fontSize', size);
+
     if (app.currentUser) {
         await app.database
             .ref(`users/${app.currentUser.uid}/settings/fontSize`)
             .set(parseInt(size, 10));
-    } else {
-        try { localStorage.setItem('fontSize', size); } catch (_) {}
     }
 }
 
@@ -146,12 +156,12 @@ export async function changeTranslation(app, translation) {
     app.state.translation = translation;
     app.bibleApi.setTranslation(translation);
 
+    lsSet('translation', translation);
+
     if (app.currentUser) {
         await app.database
             .ref(`users/${app.currentUser.uid}/settings/translation`)
             .set(translation);
-    } else {
-        try { localStorage.setItem('translation', translation); } catch (_) {}
     }
 
     updateCopyright(app);
