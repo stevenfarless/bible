@@ -266,6 +266,18 @@ function initDebugTrigger(app) {
     });
 }
 
+// Read readingPosition from localStorage without mutating app state.
+// Returns { book, chapter } or null.
+function _readSavedPosition() {
+    try {
+        const raw = localStorage.getItem('readingPosition');
+        if (!raw) return null;
+        const pos = JSON.parse(raw);
+        if (pos?.book && pos?.chapter) return { book: pos.book, chapter: parseInt(pos.chapter, 10) };
+    } catch (_) {}
+    return null;
+}
+
 class BibleApp {
     constructor() {
         this.auth     = window.firebaseAuth;
@@ -405,8 +417,6 @@ class BibleApp {
         try {
             this._dbg.t_dom_ready = ms();
 
-            // SW registration is fire-and-forget — it has no dependencies on the
-            // critical render path. Awaiting it was blocking first paint by ~1100ms.
             registerServiceWorker(this)
                 .then(() => { this._dbg.t_sw_registered = ms(); })
                 .catch((err) => {
@@ -454,22 +464,54 @@ class BibleApp {
             this._dbg.cacheRestoreResult = cacheHit ? 'HIT' : 'MISS';
             this._dbgEvent(`cache restore: ${cacheHit ? 'HIT' : 'MISS'}`);
 
-            if (cacheHit) {
-                this._dbg.t_reveal_first = ms();
-                revealApp();
-            }
-
             initDebugTrigger(this);
 
-            this._dbg.t_passage_fetch_start = ms();
-            await Promise.all([
-                this._loadTranslationRegistry(),
-                this.loadPassage(this.state.currentBook, this.state.currentChapter),
-            ]);
-            this._dbg.t_passage_fetch_end = ms();
-            this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
+            // Decide what to load on startup:
+            //
+            // 1. Cache HIT and readingPosition agrees with the cache — nothing to
+            //    fetch. Reveal immediately and run translation registry in background.
+            //
+            // 2. Cache HIT but readingPosition points somewhere different (stale cache
+            //    from a previous session's last chapter before reload) — reveal the
+            //    cached content immediately so the user sees something, then load the
+            //    correct position in the background.
+            //
+            // 3. Cache MISS — load the target passage and reveal when done.
 
-            if (!cacheHit) {
+            const savedPos = _readSavedPosition();
+            const posMatchesCache = !savedPos ||
+                (savedPos.book === this.state.currentBook && savedPos.chapter === this.state.currentChapter);
+
+            if (cacheHit && posMatchesCache) {
+                // Fast path: cache is current. No RTDB fetch needed.
+                this._dbg.t_reveal_first = ms();
+                this._dbg.t_passage_fetch_start = null;
+                this._dbg.t_passage_fetch_end   = null;
+                this._dbg.passageFetchMs         = null;
+                revealApp();
+                this._dbgEvent('init: cache hit + position match — skipping RTDB fetch');
+                this._loadTranslationRegistry();
+            } else if (cacheHit && !posMatchesCache) {
+                // Reveal stale cache immediately for fast paint, then fix the position.
+                this._dbg.t_reveal_first = ms();
+                revealApp();
+                this._dbgEvent(`init: cache hit but position mismatch — loading ${savedPos.book} ${savedPos.chapter}`);
+                this._dbg.t_passage_fetch_start = ms();
+                await Promise.all([
+                    this._loadTranslationRegistry(),
+                    this.loadPassage(savedPos.book, savedPos.chapter),
+                ]);
+                this._dbg.t_passage_fetch_end = ms();
+                this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
+            } else {
+                // Cache miss: fetch and then reveal.
+                this._dbg.t_passage_fetch_start = ms();
+                await Promise.all([
+                    this._loadTranslationRegistry(),
+                    this.loadPassage(this.state.currentBook, this.state.currentChapter),
+                ]);
+                this._dbg.t_passage_fetch_end = ms();
+                this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
                 this._dbg.t_reveal_second = ms();
                 revealApp();
             }
