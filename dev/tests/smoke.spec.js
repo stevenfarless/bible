@@ -13,6 +13,25 @@ async function waitForApp(page) {
 }
 
 // ---------------------------------------------------------------------------
+// Helper — waits until the initial passage load has settled.
+// data-app-ready fires before the RTDB fetch completes on a cache miss.
+// Interacting with the book/chapter modal before the fetch finishes causes
+// the RTDB response to overwrite the selection. Wait for the loading
+// indicator to clear and passageTitle to contain text before proceeding.
+// ---------------------------------------------------------------------------
+async function waitForPassage(page) {
+	await waitForApp(page);
+	await page.waitForFunction(
+		() => {
+			const title = document.getElementById('passageTitle');
+			const loading = document.querySelector('#passageText .loading');
+			return title?.textContent?.trim().length > 0 && !loading;
+		},
+		{ timeout: 10000 }
+	);
+}
+
+// ---------------------------------------------------------------------------
 // 1. Page load — app loads without JS errors, key UI elements visible
 // ---------------------------------------------------------------------------
 test('page load: main UI elements are visible', async ({ page }) => {
@@ -37,7 +56,7 @@ test('page load: main UI elements are visible', async ({ page }) => {
 // ---------------------------------------------------------------------------
 test('book navigation: selecting a book loads its first chapter', async ({ page }) => {
 	await page.goto('/');
-	await waitForApp(page);
+	await waitForPassage(page);
 
 	// Open book modal
 	await page.locator('#bookSelector').click();
@@ -57,7 +76,7 @@ test('book navigation: selecting a book loads its first chapter', async ({ page 
 // ---------------------------------------------------------------------------
 test('chapter navigation: selecting a chapter loads passage text', async ({ page }) => {
 	await page.goto('/');
-	await waitForApp(page);
+	await waitForPassage(page);
 
 	// First navigate to Matthew via book modal
 	await page.locator('#bookSelector').click();
@@ -82,7 +101,7 @@ test('chapter navigation: selecting a chapter loads passage text', async ({ page
 // ---------------------------------------------------------------------------
 test('verse navigation: selecting a verse closes the verse modal', async ({ page }) => {
 	await page.goto('/');
-	await waitForApp(page);
+	await waitForPassage(page);
 
 	// Navigate to John 3 (book button text is 'John')
 	await page.locator('#bookSelector').click();
