@@ -42,8 +42,6 @@ export async function loadSavedPositionIfChanged(app, withTimeout) {
         app.state.currentBook = targetBook;
         app.state.currentChapter = targetChapter;
         app.lastScrollPosition = targetScrollY;
-        // Write the authoritative Firebase position to localStorage so the
-        // next cold load starts at the correct passage without a network wait.
         lsSetJSON('readingPosition', { book: targetBook, chapter: targetChapter, scrollY: targetScrollY });
         await app.loadPassage(targetBook, targetChapter, !!targetScrollY);
     } else if (targetScrollY) {
@@ -94,7 +92,6 @@ export function saveReadingPosition(app) {
     lsSetJSON('readingPosition', pos);
 
     if (app.currentUser && app.database) {
-        // Also sync to Firebase for cross-device position.
         app.database
             .ref(`users/${app.currentUser.uid}/readingPosition`)
             .set(pos)
@@ -202,6 +199,17 @@ export async function handleSignup(app) {
     }
 }
 
+export async function handleLogout(app) {
+    try {
+        await app.auth.signOut();
+        app.showToast('Signed out successfully');
+        app.closeModal(app.userMenuModal);
+    } catch (error) {
+        console.error('Logout error:', error);
+        app.showToast('Failed to sign out');
+    }
+}
+
 export async function loadUserData(app, normalizeTranslation) {
     if (!app.currentUser) return;
     const data = await loadUserDataFromFirebase(app.currentUser.uid);
@@ -218,9 +226,6 @@ export async function loadUserData(app, normalizeTranslation) {
     app.state.lightMode            = s.lightMode;
     app.state.translation          = normalizeTranslation(s.translation || 'ESV');
 
-    // Write Firebase values back to localStorage so the next cold load reads
-    // the correct values before Firebase resolves. Without this, applySettings
-    // causes a visible re-render every reload as Firebase overwrites defaults.
     if (s.fontSize            != null) lsSet('fontSize',             s.fontSize);
     if (s.showVerseNumbers    != null) lsSet('showVerseNumbers',     s.showVerseNumbers);
     if (s.showHeadings        != null) lsSet('showHeadings',         s.showHeadings);
