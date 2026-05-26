@@ -107,7 +107,7 @@ function buildDebugReport(app) {
             const sb = app?.state?.currentBook;
             const sc = app?.state?.currentChapter;
             const st = app?.state?.translation || 'KJV';
-            const hit = book === sb && chapter === sc && translation === st;
+            const hit = book === sb && parseInt(chapter, 10) === sc && translation === st;
             cacheMatch = hit ? 'HIT ✓' : `MISS ✗ cache=(${book} ${chapter} ${translation}) state=(${sb} ${sc} ${st})`;
         } else {
             cacheMatch = 'MISS ✗ (no cache entry)';
@@ -383,7 +383,11 @@ class BibleApp {
     _savePassageCache(book, chapter, translation, title, html) {
         try {
             localStorage.setItem(PASSAGE_CACHE_KEY, JSON.stringify({
-                book, chapter, translation, title, html,
+                book,
+                chapter: parseInt(chapter, 10),
+                translation: translation || 'KJV',
+                title,
+                html,
             }));
         } catch (_) {}
     }
@@ -393,11 +397,23 @@ class BibleApp {
             const raw = localStorage.getItem(PASSAGE_CACHE_KEY);
             if (!raw) return false;
             const { book, chapter, translation, title, html } = JSON.parse(raw);
+
+            const stateBook    = this.state.currentBook;
+            const stateChapter = this.state.currentChapter;
+            const stateTrans   = this.state.translation || 'KJV';
+
+            // parseInt on both sides guards against older cache entries
+            // that stored chapter as a string.
             if (
-                book        !== this.state.currentBook    ||
-                chapter     !== this.state.currentChapter ||
-                translation !== (this.state.translation || 'KJV')
-            ) return false;
+                book                    !== stateBook    ||
+                parseInt(chapter, 10)  !== stateChapter ||
+                translation            !== stateTrans
+            ) {
+                this._dbgEvent(
+                    `cache MISS: cache=(${book} ${chapter} ${translation}) state=(${stateBook} ${stateChapter} ${stateTrans})`
+                );
+                return false;
+            }
 
             if (this.passageTitle) this.passageTitle.textContent = title || '';
             if (this.passageText) {
@@ -462,7 +478,7 @@ class BibleApp {
             const cacheHit = this._restorePassageCache();
             this._dbg.t_cache_restore = ms();
             this._dbg.cacheRestoreResult = cacheHit ? 'HIT' : 'MISS';
-            this._dbgEvent(`cache restore: ${cacheHit ? 'HIT' : 'MISS'}`);
+            if (cacheHit) this._dbgEvent('cache restore: HIT');
 
             initDebugTrigger(this);
 
