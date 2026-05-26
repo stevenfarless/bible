@@ -14,7 +14,7 @@ export function initializeState() {
         verseByVerse: false,
         colorTheme: 'dracula',
         lightMode: false,
-        translation: 'ESV'
+        translation: 'KJV'
     };
 }
 

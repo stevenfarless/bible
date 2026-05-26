@@ -12,7 +12,7 @@ const DEFAULTS = {
     verseByVerse:        false,
     lightMode:           false,
     colorTheme:          'dracula',
-    translation:         'ESV',
+    translation:         'KJV',
 };
 
 function readBool(key, defaultValue) {
