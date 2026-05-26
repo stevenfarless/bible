@@ -971,6 +971,19 @@ body.light-mode .crossref-item {
     transform: translateY(2px);
 }
 
+/* Translation badge — visually distinguishes from book/chapter/verse */
+.selector-btn--translation {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+
+.selector-btn--translation:hover {
+    background-color: var(--primary-color);
+    color: var(--bg-primary);
+}
+
 .nav-btn {
     display: flex;
     align-items: center;
@@ -1502,6 +1515,66 @@ body.hide-verse-numbers .verse .verse-num {
     background-color: var(--text-muted);
     border-radius: 2px;
     opacity: 0.5;
+}
+
+/* Translation modal — small centered dialog */
+#translationModal .modal-content {
+    max-width: 380px;
+}
+
+.modal-content--sm {
+    max-width: 380px;
+}
+
+/* Translation list */
+.translation-modal-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.translation-modal-item {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+    border: 1px solid transparent;
+}
+
+.translation-modal-item:hover {
+    background-color: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+.translation-modal-item--active {
+    background-color: color-mix(in srgb, var(--primary-color) 14%, transparent);
+    border-color: var(--primary-color);
+}
+
+.translation-modal-item__name {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--primary-color);
+    min-width: 3.5rem;
+}
+
+.translation-modal-item--active .translation-modal-item__name {
+    color: var(--primary-light);
+}
+
+.translation-modal-item__desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* References Modal (Bottom Sheet) */
