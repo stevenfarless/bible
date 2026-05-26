@@ -131,10 +131,11 @@ export async function toggleTheme(app) {
 
 	const isLightMode = document.body.classList.contains('light-mode');
 
+	// Always write locally so cold loads get the correct value immediately.
+	try { localStorage.setItem('lightMode', isLightMode); } catch (_) {}
+
 	if (app.currentUser) {
 		await app.database.ref(`users/${app.currentUser.uid}/settings/lightMode`).set(isLightMode);
-	} else {
-		try { localStorage.setItem('lightMode', isLightMode); } catch (_) {}
 	}
 
 	updateThemeIcon(isLightMode);
@@ -177,17 +178,18 @@ export function updateThemeIcon(isLightMode) {
 }
 
 export async function changeColorTheme(app, theme) {
-	document.body.classList.remove("steel-theme", "onyx-theme", "reader-theme");
+	document.body.classList.remove('steel-theme', 'onyx-theme', 'reader-theme');
 
-	if (theme === "steel") document.body.classList.add("steel-theme");
-	else if (theme === "onyx") document.body.classList.add("onyx-theme");
-	else if (theme === "reader") document.body.classList.add("reader-theme");
+	if (theme === 'steel')  document.body.classList.add('steel-theme');
+	else if (theme === 'onyx')   document.body.classList.add('onyx-theme');
+	else if (theme === 'reader') document.body.classList.add('reader-theme');
+
+	// Always write locally so cold loads get the correct value immediately.
+	try { localStorage.setItem('colorTheme', theme); } catch (_) {}
 
 	if (app.currentUser) {
 		await app.database
 			.ref(`users/${app.currentUser.uid}/settings/colorTheme`)
 			.set(theme);
-	} else {
-		localStorage.setItem("colorTheme", theme);
 	}
 }
