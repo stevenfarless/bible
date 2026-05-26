@@ -47,6 +47,8 @@ import { attachEventListeners } from './events.js';
 const TRANSLATION_ALIASES = { NRSVue: 'NRSVUE' };
 function normalizeTranslation(t) { return TRANSLATION_ALIASES[t] || t; }
 
+const PASSAGE_CACHE_KEY = 'passageCache';
+
 function withTimeout(promise, ms, fallback = null) {
     return Promise.race([
         promise.catch(() => fallback),
@@ -152,6 +154,46 @@ class BibleApp {
     getTestament(book)    { return getTestament(this, book); }
     getDisplayName(book)  { return getDisplayName(this, book); }
 
+    // ── Passage cache ──────────────────────────────────────────────────────
+    // Persists the last successfully rendered passage HTML to localStorage so
+    // repeat visits can paint content before the first network round-trip.
+
+    _savePassageCache(book, chapter, translation, title, html) {
+        try {
+            localStorage.setItem(PASSAGE_CACHE_KEY, JSON.stringify({
+                book, chapter, translation, title, html,
+            }));
+        } catch (_) { /* quota exceeded or private browsing — ignore */ }
+    }
+
+    // Returns true if a cache hit was rendered, false otherwise.
+    _restorePassageCache() {
+        try {
+            const raw = localStorage.getItem(PASSAGE_CACHE_KEY);
+            if (!raw) return false;
+            const { book, chapter, translation, title, html } = JSON.parse(raw);
+            // Only paint if the cache matches what will actually load this session.
+            // State has already been initialised from localStorage by loadLocalSettings
+            // at this point, so this.state.translation reflects the user's saved choice.
+            if (
+                book        !== this.state.currentBook    ||
+                chapter     !== this.state.currentChapter ||
+                translation !== (this.state.translation || 'ESV')
+            ) return false;
+
+            if (this.passageTitle) this.passageTitle.textContent = title || '';
+            if (this.passageText)  {
+                this.passageText.innerHTML  = html;
+                this.originalPassageHtml    = html;
+                this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
+            }
+            this.updateNavigationState();
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+
     async init() {
         document.body.classList.add('initializing');
         try {
@@ -180,6 +222,11 @@ class BibleApp {
                 console.warn('Firebase not available — sign-in disabled.');
             }
 
+            // Paint cached passage immediately — no network needed.
+            // loadPassage() below will overwrite it when the live fetch lands.
+            const cacheHit = this._restorePassageCache();
+            if (cacheHit) revealApp();
+
             // Run translation registry and passage fetch concurrently.
             // _copyrightMap is initialized to {} so updateCopyright() inside
             // loadPassage() is safe to call before the registry resolves.
@@ -189,7 +236,7 @@ class BibleApp {
                 this._loadTranslationRegistry(),
                 this.loadPassage(this.state.currentBook, this.state.currentChapter),
             ]);
-            revealApp();
+            if (!cacheHit) revealApp();
 
             if (this.auth && this.database) {
                 this.auth.onAuthStateChanged(async (user) => {
@@ -252,7 +299,15 @@ class BibleApp {
         this.state.currentBook    = book;
         this.state.currentChapter = chapter;
 
-        this.passageText.innerHTML = '<p class="loading">Loading passage...</p>';
+        // Only show the loading spinner if there is no cached content already
+        // in the DOM for this exact passage (cache hit paints before this runs).
+        const alreadyCached =
+            this.passageText &&
+            this.passageText.querySelector('.loading') === null &&
+            this.passageText.innerHTML.trim() !== '';
+        if (!alreadyCached) {
+            this.passageText.innerHTML = '<p class="loading">Loading passage...</p>';
+        }
 
         let scaffoldEvents = [];
         try {
@@ -275,9 +330,10 @@ class BibleApp {
         }
 
         this.updateNavigationState();
-        this.passageTitle.textContent = book === 'Psalm'
+        const title = book === 'Psalm'
             ? `Psalm ${chapter}`
             : `${this.getDisplayName(book)} ${chapter}`;
+        this.passageTitle.textContent = title;
         this.passageText.innerHTML = data.passages[0];
         this.originalPassageHtml   = this.passageText.innerHTML;
         this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
@@ -296,6 +352,9 @@ class BibleApp {
         });
 
         this.saveReadingPosition?.();
+
+        // Persist the freshly rendered HTML for the next cold start.
+        this._savePassageCache(book, chapter, this.state.translation || 'ESV', title, this.passageText.innerHTML);
     }
 
     navigateChapter(direction) { navChapter(this, direction); }
