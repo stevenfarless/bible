@@ -71,18 +71,22 @@ export async function loadSavedReadingPosition(app, withTimeout) {
 }
 
 export function saveReadingPosition(app) {
-    if (!app.currentUser || !app.database) return;
-
     const pos = {
-        book: app.state.currentBook,
+        book:    app.state.currentBook,
         chapter: app.state.currentChapter,
         scrollY: window.scrollY || 0,
     };
 
-    app.database
-        .ref(`users/${app.currentUser.uid}/readingPosition`)
-        .set(pos)
-        .catch((err) => console.error('saveReadingPosition: Firebase write failed', err));
+    if (app.currentUser && app.database) {
+        // Signed-in: sync to Firebase.
+        app.database
+            .ref(`users/${app.currentUser.uid}/readingPosition`)
+            .set(pos)
+            .catch((err) => console.error('saveReadingPosition: Firebase write failed', err));
+    } else {
+        // Logged-out: persist locally so position survives page refresh.
+        try { localStorage.setItem('readingPosition', JSON.stringify(pos)); } catch (_) {}
+    }
 }
 
 export function checkApiKey(app) {
