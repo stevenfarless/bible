@@ -108,6 +108,14 @@
 							<polyline points="6 9 12 15 18 9"></polyline>
 						</svg>
 					</button>
+
+					<button id="translationSelectorBtn" class="selector-btn selector-btn--translation" title="Change translation">
+						<span id="currentTranslation">KJV</span>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+							stroke-width="2">
+							<polyline points="6 9 12 15 18 9"></polyline>
+						</svg>
+					</button>
 				</div>
 
 				<button id="nextChapter" class="nav-btn">
@@ -188,6 +196,19 @@
 			</div>
 			<div class="modal-body">
 				<div id="verseGrid" class="chapter-grid"></div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Translation picker modal -->
+	<div id="translationModal" class="modal">
+		<div class="modal-content modal-content--sm">
+			<div class="modal-header">
+				<h3>Translation</h3>
+				<button class="close-btn" id="closeTranslationModal">×</button>
+			</div>
+			<div class="modal-body">
+				<ul id="translationList" class="translation-modal-list"></ul>
 			</div>
 		</div>
 	</div>
