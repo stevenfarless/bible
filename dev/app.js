@@ -64,6 +64,141 @@ function revealApp() {
     });
 }
 
+// ── Debug panel ────────────────────────────────────────────────────────────
+// Triple-tap the app title to open. Tap the panel to copy. Tap outside to close.
+// REMOVE BEFORE MERGING TO MAIN.
+
+function buildDebugReport(app) {
+    const LS_KEYS = [
+        'readingPosition', 'passageCache',
+        'translation', 'colorTheme', 'lightMode',
+        'fontSize', 'showVerseNumbers', 'showHeadings',
+        'showFootnotes', 'showCrossReferences', 'verseByVerse',
+    ];
+
+    const ls = {};
+    for (const k of LS_KEYS) {
+        try {
+            const raw = localStorage.getItem(k);
+            if (k === 'passageCache' && raw) {
+                const parsed = JSON.parse(raw);
+                ls[k] = `book=${parsed.book} ch=${parsed.chapter} translation=${parsed.translation} (html ${parsed.html?.length ?? 0} chars)`;
+            } else if (k === 'readingPosition' && raw) {
+                const parsed = JSON.parse(raw);
+                ls[k] = `book=${parsed.book} ch=${parsed.chapter} scrollY=${parsed.scrollY}`;
+            } else {
+                ls[k] = raw ?? '(not set)';
+            }
+        } catch (_) {
+            ls[k] = '(error reading)';
+        }
+    }
+
+    // Cache match check — same logic as _restorePassageCache
+    let cacheMatch = 'N/A';
+    try {
+        const raw = localStorage.getItem(PASSAGE_CACHE_KEY);
+        if (raw) {
+            const { book, chapter, translation } = JSON.parse(raw);
+            const stateBook        = app?.state?.currentBook;
+            const stateChapter     = app?.state?.currentChapter;
+            const stateTranslation = app?.state?.translation || 'ESV';
+            const match = book === stateBook && chapter === stateChapter && translation === stateTranslation;
+            cacheMatch = match
+                ? 'HIT ✓'
+                : `MISS ✗ cache=(${book} ${chapter} ${translation}) state=(${stateBook} ${stateChapter} ${stateTranslation})`;
+        } else {
+            cacheMatch = 'MISS ✗ (no cache entry)';
+        }
+    } catch (_) {
+        cacheMatch = 'MISS ✗ (parse error)';
+    }
+
+    const lines = [
+        '=== localStorage debug ===',
+        ...Object.entries(ls).map(([k, v]) => `${k}: ${v}`),
+        '',
+        `=== passage cache match ===`,
+        cacheMatch,
+        '',
+        `=== app state ===`,
+        `currentBook: ${app?.state?.currentBook}`,
+        `currentChapter: ${app?.state?.currentChapter}`,
+        `translation: ${app?.state?.translation}`,
+        `colorTheme: ${app?.state?.colorTheme}`,
+        `lightMode: ${app?.state?.lightMode}`,
+        `fontSize: ${app?.state?.fontSize}`,
+        `currentUser: ${app?.currentUser?.email ?? 'not signed in'}`,
+    ];
+    return lines.join('\n');
+}
+
+function showDebugPanel(app) {
+    const existing = document.getElementById('debugPanel');
+    if (existing) { existing.remove(); return; }
+
+    const report = buildDebugReport(app);
+
+    const overlay = document.createElement('div');
+    overlay.id = 'debugPanel';
+    Object.assign(overlay.style, {
+        position: 'fixed', inset: '0', background: 'rgba(0,0,0,0.85)',
+        zIndex: '99999', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '1rem', boxSizing: 'border-box',
+    });
+
+    const box = document.createElement('div');
+    Object.assign(box.style, {
+        background: '#1e1e2e', color: '#cdd6f4', fontFamily: 'monospace',
+        fontSize: '13px', lineHeight: '1.6', padding: '1.25rem',
+        borderRadius: '12px', maxWidth: '100%', width: '100%',
+        maxHeight: '80vh', overflowY: 'auto', whiteSpace: 'pre-wrap',
+        wordBreak: 'break-all', userSelect: 'text',
+        border: '1px solid #45475a',
+    });
+    box.textContent = report;
+
+    const hint = document.createElement('div');
+    Object.assign(hint.style, {
+        marginTop: '0.75rem', textAlign: 'center', color: '#a6e3a1',
+        fontSize: '14px', fontFamily: 'monospace',
+    });
+    hint.textContent = 'Tap to copy  ·  Tap outside to close';
+
+    const wrapper = document.createElement('div');
+    Object.assign(wrapper.style, { maxWidth: '600px', width: '100%' });
+    wrapper.appendChild(box);
+    wrapper.appendChild(hint);
+    overlay.appendChild(wrapper);
+
+    box.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(report)
+            .then(() => { hint.textContent = 'Copied! ✓'; })
+            .catch(() => { hint.textContent = 'Copy failed — select text manually'; });
+    });
+
+    overlay.addEventListener('click', () => overlay.remove());
+    document.body.appendChild(overlay);
+}
+
+function initDebugTrigger(app) {
+    const logo = document.querySelector('.logo');
+    if (!logo) return;
+    let taps = 0;
+    let timer = null;
+    logo.addEventListener('click', () => {
+        taps++;
+        clearTimeout(timer);
+        timer = setTimeout(() => { taps = 0; }, 600);
+        if (taps >= 3) {
+            taps = 0;
+            clearTimeout(timer);
+            showDebugPanel(app);
+        }
+    });
+}
+
 class BibleApp {
     constructor() {
         this.auth     = window.firebaseAuth;
@@ -155,26 +290,20 @@ class BibleApp {
     getDisplayName(book)  { return getDisplayName(this, book); }
 
     // ── Passage cache ──────────────────────────────────────────────────────
-    // Persists the last successfully rendered passage HTML to localStorage so
-    // repeat visits can paint content before the first network round-trip.
 
     _savePassageCache(book, chapter, translation, title, html) {
         try {
             localStorage.setItem(PASSAGE_CACHE_KEY, JSON.stringify({
                 book, chapter, translation, title, html,
             }));
-        } catch (_) { /* quota exceeded or private browsing — ignore */ }
+        } catch (_) {}
     }
 
-    // Returns true if a cache hit was rendered, false otherwise.
     _restorePassageCache() {
         try {
             const raw = localStorage.getItem(PASSAGE_CACHE_KEY);
             if (!raw) return false;
             const { book, chapter, translation, title, html } = JSON.parse(raw);
-            // Only paint if the cache matches what will actually load this session.
-            // State has already been initialised from localStorage by loadLocalSettings
-            // at this point, so this.state.translation reflects the user's saved choice.
             if (
                 book        !== this.state.currentBook    ||
                 chapter     !== this.state.currentChapter ||
@@ -182,9 +311,9 @@ class BibleApp {
             ) return false;
 
             if (this.passageTitle) this.passageTitle.textContent = title || '';
-            if (this.passageText)  {
-                this.passageText.innerHTML  = html;
-                this.originalPassageHtml    = html;
+            if (this.passageText) {
+                this.passageText.innerHTML = html;
+                this.originalPassageHtml   = html;
                 this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
             }
             this.updateNavigationState();
@@ -222,16 +351,11 @@ class BibleApp {
                 console.warn('Firebase not available — sign-in disabled.');
             }
 
-            // Paint cached passage immediately — no network needed.
-            // loadPassage() below will overwrite it when the live fetch lands.
             const cacheHit = this._restorePassageCache();
             if (cacheHit) revealApp();
 
-            // Run translation registry and passage fetch concurrently.
-            // _copyrightMap is initialized to {} so updateCopyright() inside
-            // loadPassage() is safe to call before the registry resolves.
-            // If the registry loses the race, copyright text renders empty
-            // briefly and then updates when _loadTranslationRegistry settles.
+            initDebugTrigger(this);
+
             await Promise.all([
                 this._loadTranslationRegistry(),
                 this.loadPassage(this.state.currentBook, this.state.currentChapter),
@@ -271,8 +395,6 @@ class BibleApp {
         }
         this._copyrightMap = {};
         for (const t of translations) this._copyrightMap[t.id] = t.copyright || '';
-        // Re-render copyright now that the map is populated, in case loadPassage
-        // completed first and rendered with an empty map.
         this.updateCopyright?.();
     }
 
@@ -299,8 +421,6 @@ class BibleApp {
         this.state.currentBook    = book;
         this.state.currentChapter = chapter;
 
-        // Only show the loading spinner if there is no cached content already
-        // in the DOM for this exact passage (cache hit paints before this runs).
         const alreadyCached =
             this.passageText &&
             this.passageText.querySelector('.loading') === null &&
@@ -352,8 +472,6 @@ class BibleApp {
         });
 
         this.saveReadingPosition?.();
-
-        // Persist the freshly rendered HTML for the next cold start.
         this._savePassageCache(book, chapter, this.state.translation || 'ESV', title, this.passageText.innerHTML);
     }
 
@@ -474,8 +592,6 @@ function showUpdateToast(appInstance) {
         if (document.readyState !== 'loading') return resolve();
         document.addEventListener('DOMContentLoaded', resolve, { once: true });
     });
-    // Fire-and-forget: Firebase auth loads in the background.
-    // BibleApp constructs immediately regardless of whether auth succeeds.
     import('./config/firebase-config.bundle.js').catch(
         (err) => console.warn('Firebase bundle failed to load — sign-in unavailable:', err)
     );
