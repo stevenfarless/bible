@@ -68,7 +68,6 @@ function revealApp() {
 // Triple-tap the header bar to open. Tap the panel to copy. Tap outside to close.
 // REMOVE BEFORE MERGING TO MAIN.
 
-// ms since page navigation start (covers SW boot time unlike Date.now())
 function ms() { return Math.round(performance.now()); }
 function ts(t) { return t == null ? 'n/a' : `+${t}ms`; }
 
@@ -76,7 +75,6 @@ function buildDebugReport(app) {
     const dbg = app._dbg || {};
     const now = ms();
 
-    // ── localStorage snapshot ──
     const LS_KEYS = [
         'readingPosition', 'passageCache',
         'translation', 'colorTheme', 'lightMode',
@@ -101,7 +99,6 @@ function buildDebugReport(app) {
         }
     }
 
-    // ── Passage cache match ──
     let cacheMatch = 'N/A';
     try {
         const raw = localStorage.getItem(PASSAGE_CACHE_KEY);
@@ -117,7 +114,6 @@ function buildDebugReport(app) {
         }
     } catch (_) { cacheMatch = 'MISS ✗ (parse error)'; }
 
-    // ── State-vs-load diff ──
     const snap = dbg.stateAtLoad || {};
     const diffs = [];
     const cur = {
@@ -134,16 +130,14 @@ function buildDebugReport(app) {
         if (was !== undefined && String(was) !== String(v)) diffs.push(`  ${k}: ${was} → ${v}`);
     }
 
-    // ── API memory cache stats ──
     const api = app?.bibleApi;
-    const bookCacheKeys  = api?._bookCache  ? [...api._bookCache.keys()]  : [];
-    const searchCacheKeys = api?._searchIndexCache ? [...api._searchIndexCache.keys()] : [];
+    const bookCacheKeys   = api?._bookCache         ? [...api._bookCache.keys()]         : [];
+    const searchCacheKeys = api?._searchIndexCache  ? [...api._searchIndexCache.keys()]  : [];
 
-    // ── Timings ──
     const timings = [
         `  scriptStart:          ${ts(dbg.t_script_start)}`,
         `  domReady:             ${ts(dbg.t_dom_ready)}`,
-        `  swRegistered:         ${ts(dbg.t_sw_registered)}`,
+        `  swRegistered:         ${ts(dbg.t_sw_registered)} (background)`,
         `  settingsLoaded:       ${ts(dbg.t_settings_loaded)}`,
         `  cacheRestoreResult:   ${dbg.cacheRestoreResult ?? 'n/a'} at ${ts(dbg.t_cache_restore)}`,
         `  revealApp (1st):      ${ts(dbg.t_reveal_first)}`,
@@ -280,8 +274,7 @@ class BibleApp {
         this._copyrightMap = {};
         this._normalizeTranslation = normalizeTranslation;
 
-        // Debug instrumentation — records milestone timestamps and session events.
-        // REMOVE BEFORE MERGING TO MAIN.
+        // Debug instrumentation — REMOVE BEFORE MERGING TO MAIN.
         this._dbg = {
             t_script_start: ms(),
             events: [],
@@ -412,14 +405,14 @@ class BibleApp {
         try {
             this._dbg.t_dom_ready = ms();
 
-            try {
-                await registerServiceWorker(this);
-                this._dbg.t_sw_registered = ms();
-            } catch (_) {
-                console.warn('Service worker unavailable:', _);
-                this._dbg.t_sw_registered = ms();
-                this._dbgEvent('SW registration failed');
-            }
+            // SW registration is fire-and-forget — it has no dependencies on the
+            // critical render path. Awaiting it was blocking first paint by ~1100ms.
+            registerServiceWorker(this)
+                .then(() => { this._dbg.t_sw_registered = ms(); })
+                .catch((err) => {
+                    this._dbg.t_sw_registered = ms();
+                    this._dbgEvent(`SW registration failed: ${err?.message}`);
+                });
 
             cacheElements(this);
             loadTheme(this);
@@ -441,7 +434,6 @@ class BibleApp {
             this.applySettings();
             this._dbg.t_settings_loaded = ms();
 
-            // Snapshot state immediately after settings load — used for diff at panel open.
             this._dbg.stateAtLoad = {
                 book:        this.state.currentBook,
                 chapter:     this.state.currentChapter,
