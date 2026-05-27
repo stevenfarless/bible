@@ -132,6 +132,7 @@ export function closeSearch(app) {
 
 export function handleSearch(app, query) {
     clearTimeout(app.searchTimeout);
+    clearTimeout(app.searchBlurTimeout);
     app.searchLastQuery = query;
     app.currentSearchResults = [];
 
@@ -141,6 +142,13 @@ export function handleSearch(app, query) {
         app.searchResultItems = null;
         return;
     }
+
+    // Dismiss the system keyboard 800 ms after the user stops typing.
+    // The input stays focused (and can be re-tapped) but the keyboard retracts
+    // so search results are visible without manual dismissal.
+    app.searchBlurTimeout = setTimeout(() => {
+        app.searchInput?.blur();
+    }, 800);
 
     app.searchTimeout = setTimeout(async () => {
         if (isPassageReference(query)) {
@@ -331,19 +339,16 @@ export async function performKeywordSearch(app, query) {
     }
 
     // ── Cross-translation supplemental search (megasearch) ───────────────────
-    // Only runs for queries >= 3 chars. Silently skips uncached translations.
-    // Appends unique verse references not found in the active translation.
-    if (query.trim().length >= 3) {
-        // Snapshot the current query so a stale background pass doesn't
-        // stomp results if the user has typed something new.
-        const queryAtLaunch = query;
+    // Only runs when the "Search all translations" toggle is on AND the query
+    // is at least 3 characters. Silently skips uncached translations.
+    const megasearchToggle = document.getElementById('megasearchToggle');
+    const megasearchEnabled = megasearchToggle?.checked ?? false;
 
-        // Build a Set of refs already shown so the merge is O(1) per lookup.
+    if (megasearchEnabled && query.trim().length >= 3) {
+        const queryAtLaunch = query;
         const knownRefs = new Set(app.currentSearchResults.map((r) => r.reference));
 
-        // Run in the background — do not await here so the UI stays responsive.
         app.bibleApi.searchPassagesAllTranslations(query, knownRefs).then((supplemental) => {
-            // Abort if the user has moved on to a different query.
             if (app.searchLastQuery !== queryAtLaunch) return;
             if (!supplemental || supplemental.length === 0) return;
 
