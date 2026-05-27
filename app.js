@@ -72,6 +72,35 @@ function revealApp() {
 function ms() { return Math.round(performance.now()); }
 function ts(t) { return t == null ? 'n/a' : `+${t}ms`; }
 
+// ── Network fetch interceptor ──────────────────────────────────────────────
+// Installed once at module load. Records every fetch with timing, status,
+// and whether it hit a local file or Firebase.
+
+const _fetchLog = [];
+const _originalFetch = window.fetch.bind(window);
+window.fetch = async function patchedFetch(input, init) {
+    const url   = typeof input === 'string' ? input : (input?.url ?? String(input));
+    const start = ms();
+    let status  = '?';
+    let ok      = false;
+    try {
+        const res = await _originalFetch(input, init);
+        status = res.status;
+        ok     = res.ok;
+        return res;
+    } catch (err) {
+        status = `ERR(${err.message})`;
+        throw err;
+    } finally {
+        const dur = ms() - start;
+        const src = url.includes('firebaseio.com') ? 'firebase'
+                  : url.includes('_bible.json')    ? 'local'
+                  : url.includes('translations/')  ? 'local'
+                  : 'other';
+        _fetchLog.push({ t: start, dur, url, status, ok, src });
+    }
+};
+
 function buildDebugReport(app) {
     const dbg = app._dbg || {};
     const now = ms();
@@ -135,6 +164,26 @@ function buildDebugReport(app) {
     const bookCacheKeys   = api?._bookCache         ? [...api._bookCache.keys()]         : [];
     const searchCacheKeys = api?._searchIndexCache  ? [...api._searchIndexCache.keys()]  : [];
 
+    // ── Network log: group by source ──────────────────────────────────────
+    const localFetches    = _fetchLog.filter(f => f.src === 'local');
+    const firebaseFetches = _fetchLog.filter(f => f.src === 'firebase');
+    const otherFetches    = _fetchLog.filter(f => f.src === 'other');
+    const errorFetches    = _fetchLog.filter(f => !f.ok);
+
+    const fmtFetch = (f) => {
+        const shortUrl = f.url.replace(/^https?:\/\/[^/]+/, '').replace(/\.json(\?.*)?$/, '.json');
+        return `  ${ts(f.t)}  [${f.status}] ${f.dur}ms  ${shortUrl}`;
+    };
+
+    // ── Verse count in current passage ────────────────────────────────────
+    const verseCount = app?.passageText
+        ? app.passageText.querySelectorAll('.verse').length
+        : 'n/a';
+
+    // ── SW cache keys ─────────────────────────────────────────────────────
+    // Populated async after panel opens — placeholder shown immediately.
+    const swCacheLines = ['  (loading...)'];
+
     const timings = [
         `  scriptStart:          ${ts(dbg.t_script_start)}`,
         `  domReady:             ${ts(dbg.t_dom_ready)}`,
@@ -164,12 +213,32 @@ function buildDebugReport(app) {
         '=== passage cache match (now) ===',
         `  ${cacheMatch}`,
         '',
+        `=== current passage ===`,
+        `  verses rendered: ${verseCount}`,
+        `  title: ${app?.passageTitle?.textContent ?? 'n/a'}`,
+        `  translation: ${app?.state?.translation ?? 'n/a'}`,
+        '',
         '=== session event log ===',
         ...(dbg.events?.length ? dbg.events.map(e => `  ${ts(e.t)}  ${e.msg}`) : ['  (none)']),
+        '',
+        '=== network: local file fetches ===',
+        localFetches.length ? localFetches.map(fmtFetch).join('\n') : '  (none)',
+        '',
+        '=== network: firebase fetches ===',
+        firebaseFetches.length ? firebaseFetches.map(fmtFetch).join('\n') : '  (none — local routing working ✓)',
+        '',
+        '=== network: other fetches ===',
+        otherFetches.length ? otherFetches.map(fmtFetch).join('\n') : '  (none)',
+        '',
+        '=== network: errors ===',
+        errorFetches.length ? errorFetches.map(fmtFetch).join('\n') : '  (none ✓)',
         '',
         '=== API memory cache ===',
         `  bookCache (${bookCacheKeys.length}): ${bookCacheKeys.join(', ') || '(empty)'}`,
         `  searchIndexCache (${searchCacheKeys.length}): ${searchCacheKeys.join(', ') || '(empty)'}`,
+        '',
+        '=== service worker cache ===',
+        ...swCacheLines,
         '',
         '=== app state (now) ===',
         `  currentBook: ${app?.state?.currentBook}`,
@@ -181,14 +250,14 @@ function buildDebugReport(app) {
         `  scrollY: ${window.scrollY}`,
         `  currentUser: ${app?.currentUser?.email ?? 'not signed in'}`,
     ];
-    return lines.join('\n');
+    return { text: lines.join('\n'), swCacheLines };
 }
 
 function showDebugPanel(app) {
     const existing = document.getElementById('debugPanel');
     if (existing) { existing.remove(); return; }
 
-    const report = buildDebugReport(app);
+    const { text, swCacheLines } = buildDebugReport(app);
 
     const overlay = document.createElement('div');
     overlay.id = 'debugPanel';
@@ -207,7 +276,7 @@ function showDebugPanel(app) {
         wordBreak: 'break-all', userSelect: 'text',
         border: '1px solid #45475a',
     });
-    box.textContent = report;
+    box.textContent = text;
 
     const hint = document.createElement('div');
     Object.assign(hint.style, {
@@ -222,9 +291,37 @@ function showDebugPanel(app) {
     wrapper.appendChild(hint);
     overlay.appendChild(wrapper);
 
+    // Async: fill in SW cache keys and update the box text.
+    if ('caches' in window) {
+        caches.keys().then(async (cacheNames) => {
+            const allKeys = [];
+            for (const name of cacheNames) {
+                const cache = await caches.open(name);
+                const keys  = await cache.keys();
+                allKeys.push(`  [${name}] ${keys.length} entries`);
+                for (const req of keys.slice(0, 20)) {
+                    const shortUrl = req.url.replace(/^https?:\/\/[^/]+/, '');
+                    allKeys.push(`    ${shortUrl}`);
+                }
+                if (keys.length > 20) allKeys.push(`    ... and ${keys.length - 20} more`);
+            }
+            if (!allKeys.length) allKeys.push('  (no SW caches)');
+            // Rebuild report with SW cache populated.
+            const fullText = box.textContent.replace(
+                /=== service worker cache ===\n  \(loading\.\.\.\)/,
+                `=== service worker cache ===\n${allKeys.join('\n')}`
+            );
+            box.textContent = fullText;
+        }).catch(() => {
+            box.textContent = box.textContent.replace('  (loading...)', '  (cache API unavailable)');
+        });
+    } else {
+        box.textContent = box.textContent.replace('  (loading...)', '  (not supported)');
+    }
+
     box.addEventListener('click', (e) => {
         e.stopPropagation();
-        navigator.clipboard.writeText(report)
+        navigator.clipboard.writeText(box.textContent)
             .then(() => { hint.textContent = 'Copied! ✓'; })
             .catch(() => { hint.textContent = 'Copy failed — select text manually'; });
     });
