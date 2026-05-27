@@ -32,21 +32,6 @@ export function highlightSearchTerm(text, term) {
 
 // ─── Reference parsing ────────────────────────────────────────────────────────────────────
 
-/**
- * Parses a Bible reference string into { book, chapter, verse }.
- *
- * 1. normaliseBookAlias() maps abbreviations/variants to canonical names.
- * 2. When bookList is provided, tries each name longest-first as a
- *    case-insensitive prefix match.
- * 3. Lazy regex fallback for callers without a book list.
- *
- * Accepts both ":" and " " as the chapter/verse delimiter so
- * "jn 3 16" and "John 3:16" both resolve correctly.
- *
- * @param {string} reference
- * @param {string[]} [bookList]
- * @returns {{ book: string, chapter: number, verse: number|null } | null}
- */
 export function parseReference(reference, bookList) {
     const raw = String(reference || '').trim();
     const cleaned = normaliseBookAlias(raw);
@@ -71,7 +56,6 @@ export function parseReference(reference, bookList) {
         return null;
     }
 
-    // Regex fallback for callers without a book list.
     const match = cleaned.match(/^((?:\d\s+)?[A-Za-z][A-Za-z ]*?)\s+([\d]+)(?:[:\s]([\d]+))?$/);
     if (!match) return null;
 
@@ -106,11 +90,106 @@ export async function loadPassageFromReference(app, reference) {
     }
 }
 
+// ─── Delegated event handler ───────────────────────────────────────────────────────────
+
+// Attached once when search opens. Handles all taps inside the results
+// container via delegation so iOS Safari scroll-container click suppression
+// is not an issue. touchend fires reliably; click is a desktop fallback.
+//
+// The handler reads app.searchLastQuery at dispatch time so it always
+// operates on the current query even after megasearch updates results.
+
+export function initSearchResultsDelegate(app) {
+    if (app._searchDelegateAttached) return;
+    app._searchDelegateAttached = true;
+
+    function handleTap(e) {
+        // On touch devices, ignore the synthetic click that follows touchend.
+        if (e.type === 'click' && app._searchTouchHandled) {
+            app._searchTouchHandled = false;
+            return;
+        }
+        if (e.type === 'touchend') app._searchTouchHandled = true;
+
+        const target = e.target;
+        const query = app.searchLastQuery || '';
+
+        // ── Expand / collapse all ─────────────────────────────────────────
+        const expandBtn = target.closest('.search-expand-collapse-btn');
+        if (expandBtn) {
+            e.preventDefault();
+            const action = expandBtn.dataset.action;
+            const liveGroups = groupSearchResultsByCanon(app, app.currentSearchResults);
+            if (action === 'expand') {
+                for (const g of liveGroups) {
+                    app.searchExpandedTestaments.add(g.heading);
+                    for (const b of g.books) app.searchExpandedBooks.add(b.book);
+                }
+            } else {
+                app.searchExpandedTestaments.clear();
+                app.searchExpandedBooks.clear();
+            }
+            displaySearchResults(app, app.currentSearchResults, query);
+            return;
+        }
+
+        // ── Testament heading ────────────────────────────────────────────
+        const groupHeading = target.closest('.search-group-heading');
+        if (groupHeading) {
+            e.preventDefault();
+            const testament = groupHeading.getAttribute('data-testament');
+            if (!testament) return;
+            if (app.searchExpandedTestaments.has(testament)) {
+                app.searchExpandedTestaments.delete(testament);
+            } else {
+                app.searchExpandedTestaments.add(testament);
+            }
+            displaySearchResults(app, app.currentSearchResults, query);
+            return;
+        }
+
+        // ── Book heading ───────────────────────────────────────────────
+        const bookHeading = target.closest('.search-book-heading');
+        if (bookHeading) {
+            e.preventDefault();
+            const book = bookHeading.getAttribute('data-book');
+            if (!book) return;
+            if (app.searchExpandedBooks.has(book)) {
+                app.searchExpandedBooks.delete(book);
+            } else {
+                app.searchExpandedBooks.add(book);
+            }
+            displaySearchResults(app, app.currentSearchResults, query);
+            return;
+        }
+
+        // ── Result item ────────────────────────────────────────────────
+        const resultItem = target.closest('.search-result-item');
+        if (resultItem) {
+            e.preventDefault();
+            const sourceTrans = resultItem.dataset.sourceTranslation;
+            const ref = resultItem.dataset.reference;
+            (async () => {
+                if (sourceTrans && sourceTrans !== app.bibleApi.translation) {
+                    await app.changeTranslation(sourceTrans);
+                }
+                await loadPassageFromReference(app, ref);
+                closeSearch(app);
+            })();
+            return;
+        }
+    }
+
+    app.searchResults.addEventListener('touchend', handleTap, { passive: false });
+    app.searchResults.addEventListener('click', handleTap);
+}
+
 // ─── UI state ────────────────────────────────────────────────────────────────────────────────
 
 export function toggleSearch(app) {
     app.searchContainer.classList.toggle('active');
     if (app.searchContainer.classList.contains('active')) {
+        initSearchResultsDelegate(app);
         app.searchInput.focus();
     } else {
         app.searchInput.value = '';
@@ -174,8 +253,6 @@ export function handleSearchKeydown(app, e) {
 
     if (e.key === 'Enter') {
         e.preventDefault();
-        // Navigate if the query looks like a direct passage reference (e.g. "John 3:16").
-        // Otherwise just dismiss the keyboard so results are visible.
         if (isPassageReference(app.searchInput?.value || '')) {
             activateSelectedSearchResult(app);
         } else {
@@ -245,19 +322,8 @@ export async function handlePassageReference(app, reference) {
             '<div class="search-result-content">' + preview + '...</div>' +
             '</div>';
 
-        const item = app.searchResults.querySelector('.search-result-item');
-        if (item) {
-            item.addEventListener('click', async () => {
-                await loadPassageFromReference(app, item.dataset.reference);
-                closeSearch(app);
-            });
-        }
-
         refreshSearchResultItems(app, true);
     } else {
-        // fetchPassage returned null — the input looked like a reference but
-        // didn't resolve. Fall back to keyword search so the user still gets
-        // results rather than a dead-end "No passage found".
         await performKeywordSearch(app, reference);
     }
 }
@@ -271,17 +337,8 @@ export async function fetchAllSearchResults(app, query, onBatch) {
     return app.currentSearchResults;
 }
 
-// ─── Megasearch: run supplemental cross-translation search ───────────────────────────────
+// ─── Megasearch ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Runs the supplemental cross-translation search against whatever translations
- * are currently in the book cache. Safe to call at any time — if nothing new is
- * found, or the query has changed, it exits silently.
- *
- * Called automatically at the end of performKeywordSearch when the toggle is on,
- * and also wired to the megasearchToggle `change` event so turning the toggle on
- * after results are already showing triggers an immediate supplemental pass.
- */
 export async function runMegasearch(app, query) {
     const q = (query || '').trim();
     if (q.length < 3) return;
@@ -297,7 +354,6 @@ export async function runMegasearch(app, query) {
         return;
     }
 
-    // Bail if the user has since typed something else.
     if (app.searchLastQuery !== query) return;
     if (!supplemental || supplemental.length === 0) return;
 
@@ -371,8 +427,6 @@ export async function performKeywordSearch(app, query) {
         refreshSearchResultItems(app, false);
     }
 
-    // ── Cross-translation supplemental search (megasearch) ───────────────────
-    // Only runs when the toggle is on AND query is at least 3 characters.
     const megasearchToggle = document.getElementById('megasearchToggle');
     if ((megasearchToggle?.checked ?? false) && query.trim().length >= 3) {
         runMegasearch(app, query);
@@ -402,7 +456,6 @@ export function displaySearchResults(app, results, query) {
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-    // ── Results summary bar ────────────────────────────────────────────────
     const totalVerses = results.length;
     const totalBooks = groups.reduce((acc, g) => acc + g.books.length, 0);
     const countLabel = `${totalVerses} verse${totalVerses !== 1 ? 's' : ''} in ${totalBooks} book${totalBooks !== 1 ? 's' : ''}`;
@@ -452,7 +505,6 @@ export function displaySearchResults(app, results, query) {
                     console.warn('highlight failed', err);
                 }
 
-                // Show source translation badge for supplemental results.
                 const badge = result.sourceTranslation
                     ? ` <span class="search-result-translation-badge">${esc(result.sourceTranslation)}</span>`
                     : '';
@@ -468,65 +520,5 @@ export function displaySearchResults(app, results, query) {
     }
 
     app.searchResults.innerHTML = parts.join('');
-
-    // ── Expand / collapse all buttons ─────────────────────────────────────
-    app.searchResults.querySelectorAll('.search-expand-collapse-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            const action = btn.dataset.action;
-            // Rebuild groups from the live result set so any books added by
-            // megasearch after the initial render are included.
-            const liveGroups = groupSearchResultsByCanon(app, app.currentSearchResults);
-            if (action === 'expand') {
-                for (const g of liveGroups) {
-                    app.searchExpandedTestaments.add(g.heading);
-                    for (const b of g.books) app.searchExpandedBooks.add(b.book);
-                }
-            } else {
-                app.searchExpandedTestaments.clear();
-                app.searchExpandedBooks.clear();
-            }
-            displaySearchResults(app, app.currentSearchResults, query);
-        });
-    });
-
-    app.searchResults.querySelectorAll('.search-group-heading').forEach((el) => {
-        el.addEventListener('click', () => {
-            const testament = el.getAttribute('data-testament');
-            if (!testament) return;
-            if (app.searchExpandedTestaments.has(testament)) {
-                app.searchExpandedTestaments.delete(testament);
-            } else {
-                app.searchExpandedTestaments.add(testament);
-            }
-            displaySearchResults(app, app.currentSearchResults, query);
-        });
-    });
-
-    app.searchResults.querySelectorAll('.search-book-heading').forEach((el) => {
-        el.addEventListener('click', () => {
-            const book = el.getAttribute('data-book');
-            if (!book) return;
-            if (app.searchExpandedBooks.has(book)) {
-                app.searchExpandedBooks.delete(book);
-            } else {
-                app.searchExpandedBooks.add(book);
-            }
-            displaySearchResults(app, app.currentSearchResults, query);
-        });
-    });
-
-    app.searchResults.querySelectorAll('.search-result-item').forEach((item) => {
-        item.addEventListener('click', async () => {
-            // For supplemental results, switch to the source translation before
-            // navigating so the passage the user sees matches the text they found.
-            const sourceTrans = item.dataset.sourceTranslation;
-            if (sourceTrans && sourceTrans !== app.bibleApi.translation) {
-                await app.changeTranslation(sourceTrans);
-            }
-            await loadPassageFromReference(app, item.dataset.reference);
-            closeSearch(app);
-        });
-    });
-
     refreshSearchResultItems(app, true);
 }
