@@ -132,7 +132,6 @@ export function closeSearch(app) {
 
 export function handleSearch(app, query) {
     clearTimeout(app.searchTimeout);
-    clearTimeout(app.searchBlurTimeout);
     app.searchLastQuery = query;
     app.currentSearchResults = [];
 
@@ -142,13 +141,6 @@ export function handleSearch(app, query) {
         app.searchResultItems = null;
         return;
     }
-
-    // Dismiss the system keyboard 800 ms after the user stops typing.
-    // The input stays focused (and can be re-tapped) but the keyboard retracts
-    // so search results are visible without manual dismissal.
-    app.searchBlurTimeout = setTimeout(() => {
-        app.searchInput?.blur();
-    }, 800);
 
     app.searchTimeout = setTimeout(async () => {
         if (isPassageReference(query)) {
@@ -182,7 +174,13 @@ export function handleSearchKeydown(app, e) {
 
     if (e.key === 'Enter') {
         e.preventDefault();
-        activateSelectedSearchResult(app);
+        // Navigate if the query looks like a direct passage reference (e.g. "John 3:16").
+        // Otherwise just dismiss the keyboard so results are visible.
+        if (isPassageReference(app.searchInput?.value || '')) {
+            activateSelectedSearchResult(app);
+        } else {
+            app.searchInput?.blur();
+        }
     }
 }
 
@@ -464,7 +462,7 @@ export function displaySearchResults(app, results, query) {
                 app.searchExpandedTestaments.clear();
                 app.searchExpandedBooks.clear();
             }
-            displaySearchResults(app, results, query);
+            displaySearchResults(app, app.currentSearchResults, query);
         });
     });
 
@@ -477,7 +475,7 @@ export function displaySearchResults(app, results, query) {
             } else {
                 app.searchExpandedTestaments.add(testament);
             }
-            displaySearchResults(app, results, query);
+            displaySearchResults(app, app.currentSearchResults, query);
         });
     });
 
@@ -490,7 +488,7 @@ export function displaySearchResults(app, results, query) {
             } else {
                 app.searchExpandedBooks.add(book);
             }
-            displaySearchResults(app, results, query);
+            displaySearchResults(app, app.currentSearchResults, query);
         });
     });
 
