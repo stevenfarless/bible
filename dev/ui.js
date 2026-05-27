@@ -22,6 +22,9 @@ const REQUIRED_IDS = [
 	'footnotesSection', 'footnotesContent',
 	'crossReferencesSection', 'crossReferencesContent',
 	'toast',
+	// Nav translation badge
+	'translationSelectorBtn', 'currentTranslation',
+	'translationModal', 'closeTranslationModal', 'translationList',
 ];
 
 export function cacheElements(app) {
@@ -50,6 +53,15 @@ export function cacheElements(app) {
 	app.currentBookSpan = document.getElementById('currentBook');
 	app.currentChapterSpan = document.getElementById('currentChapter');
 	app.currentVerseSpan = document.getElementById('currentVerse');
+
+	// Nav translation badge
+	app.translationSelectorBtn = document.getElementById('translationSelectorBtn');
+	app.currentTranslationSpan = document.getElementById('currentTranslation');
+
+	// Translation picker modal
+	app.translationModal = document.getElementById('translationModal');
+	app.closeTranslationModal = document.getElementById('closeTranslationModal');
+	app.translationList = document.getElementById('translationList');
 
 	// Search
 	app.searchContainer = document.getElementById('searchContainer');
