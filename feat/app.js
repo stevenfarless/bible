@@ -2,7 +2,7 @@
 // Bible Reader App
 // ====================
 
-import { BibleApi } from './bible-api.js';
+import { BibleApi, LOCAL_TRANSLATIONS } from './bible-api.js';
 import { loadStructure, eventsForChapter } from './bsb-structure.js';
 import {
     initializeState,
@@ -590,6 +590,26 @@ class BibleApp {
         }
     }
 
+    // ── Background translation prefetch ───────────────────────────────────
+    // Called once after first paint. Fetches every local translation except
+    // the active one, sequentially, with a 500 ms idle gap between each.
+    // Warms both the in-memory bookCache and the service worker cache so
+    // subsequent translation switches are instant.
+    _prefetchTranslations() {
+        const active = this.state.translation;
+        const queue = [...LOCAL_TRANSLATIONS].filter(t => t !== active);
+        let i = 0;
+        const next = () => {
+            if (i >= queue.length) return;
+            const t = queue[i++];
+            this.bibleApi._ensureLocalTranslationLoaded(t)
+                .catch(() => {})
+                .finally(() => setTimeout(next, 500));
+        };
+        // Initial delay of 2 s gives the first paint and auth check time to settle.
+        setTimeout(next, 2000);
+    }
+
     async init() {
         document.body.classList.add('initializing');
         try {
@@ -671,6 +691,7 @@ class BibleApp {
                 revealApp();
                 this._dbgEvent('init: cache hit + position match — skipping fetch');
                 this._loadTranslationRegistry();
+                this._prefetchTranslations();
             } else if (cacheHit && !posMatchesCache) {
                 this._dbg.t_reveal_first = ms();
                 revealApp();
@@ -682,6 +703,7 @@ class BibleApp {
                 ]);
                 this._dbg.t_passage_fetch_end = ms();
                 this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
+                this._prefetchTranslations();
             } else {
                 this._dbg.t_passage_fetch_start = ms();
                 await Promise.all([
@@ -692,6 +714,7 @@ class BibleApp {
                 this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
                 this._dbg.t_reveal_second = ms();
                 revealApp();
+                this._prefetchTranslations();
             }
 
             if (this.auth && this.database) {
