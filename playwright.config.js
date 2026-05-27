@@ -6,12 +6,14 @@ export default defineConfig({
 		baseURL: process.env.BASE_URL || 'http://localhost:8080',
 		headless: true,
 		viewport: { width: 1280, height: 720 },
-		permissions: ['clipboard-read', 'clipboard-write'],
 	},
 	projects: [
 		{
 			name: 'chromium',
-			use: { ...devices['Desktop Chrome'] },
+			use: {
+				...devices['Desktop Chrome'],
+				permissions: ['clipboard-read', 'clipboard-write'],
+			},
 		},
 	],
 	// Scope to smoke tests only — prevents Playwright from scanning
