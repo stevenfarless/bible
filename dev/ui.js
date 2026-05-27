@@ -190,11 +190,11 @@ export function updateThemeIcon(isLightMode) {
 }
 
 export async function changeColorTheme(app, theme) {
-	document.body.classList.remove('steel-theme', 'onyx-theme', 'reader-theme');
+	document.body.classList.remove('steel-theme', 'onyx-theme', 'parchment-theme');
 
-	if (theme === 'steel')  document.body.classList.add('steel-theme');
-	else if (theme === 'onyx')   document.body.classList.add('onyx-theme');
-	else if (theme === 'reader') document.body.classList.add('reader-theme');
+	if (theme === 'steel')     document.body.classList.add('steel-theme');
+	else if (theme === 'onyx')      document.body.classList.add('onyx-theme');
+	else if (theme === 'parchment') document.body.classList.add('parchment-theme');
 
 	// Always write locally so cold loads get the correct value immediately.
 	try { localStorage.setItem('colorTheme', theme); } catch (_) {}

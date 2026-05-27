@@ -208,9 +208,9 @@ body.light-mode {
 /* Alucard — official Dracula light mode (https://spec.draculatheme.com)
    Targets Dracula (default theme, no theme class) in light mode only.
    Higher specificity than the generic .light-mode block above. */
-:root.light-mode:not(.steel-theme):not(.onyx-theme):not(.reader-theme),
-html.light-mode:not(.steel-theme):not(.onyx-theme):not(.reader-theme),
-body.light-mode:not(.steel-theme):not(.onyx-theme):not(.reader-theme) {
+:root.light-mode:not(.steel-theme):not(.onyx-theme):not(.parchment-theme),
+html.light-mode:not(.steel-theme):not(.onyx-theme):not(.parchment-theme),
+body.light-mode:not(.steel-theme):not(.onyx-theme):not(.parchment-theme) {
     --bg-base:    var(--alucard-bg);
     --bg-card:    var(--alucard-bg-lighter);
     --bg-raised:  var(--alucard-bg-light);
@@ -362,10 +362,10 @@ body.onyx-theme.light-mode {
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.12);
 }
 
-/* Reader theme (semantic; long-session, low-fatigue) */
-:root.reader-theme,
-html.reader-theme,
-body.reader-theme {
+/* Parchment theme (semantic; long-session, low-fatigue) */
+:root.parchment-theme,
+html.parchment-theme,
+body.parchment-theme {
     --bg-base: hsl(30, 20%, 10%);
     --bg-card: hsl(30, 18%, 14%);
     --bg-raised: hsl(30, 16%, 18%);
@@ -388,9 +388,9 @@ body.reader-theme {
     --error-color: hsl(4, 65%, 58%);
 }
 
-:root.reader-theme.light-mode,
-html.reader-theme.light-mode,
-body.reader-theme.light-mode {
+:root.parchment-theme.light-mode,
+html.parchment-theme.light-mode,
+body.parchment-theme.light-mode {
     --bg-base: hsl(40, 32%, 96%);
     --bg-card: hsl(40, 28%, 94%);
     --bg-raised: hsl(40, 26%, 99%);
