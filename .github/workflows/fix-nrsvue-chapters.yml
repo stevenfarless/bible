@@ -39,7 +39,7 @@ jobs:
       INPUT_CHAPTERS_LIST: ${{ github.event.inputs.chapters_list }}
     steps:
       - name: Checkout json-ver
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v6
         with:
           ref: json-ver
           token: ${{ secrets.GITHUB_TOKEN }}
