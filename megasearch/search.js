@@ -177,12 +177,15 @@ export function initSearchResultsDelegate(app) {
             e.preventDefault();
             const sourceTrans = resultItem.dataset.sourceTranslation;
             const ref = resultItem.dataset.reference;
+            // Close the panel immediately — before any awaits — so the iOS
+            // synthetic click (~350ms after touchend) lands on nothing and
+            // cannot re-trigger this handler.
+            closeSearch(app);
             (async () => {
                 if (sourceTrans && sourceTrans !== app.bibleApi.translation) {
                     await app.changeTranslation(sourceTrans);
                 }
                 await loadPassageFromReference(app, ref);
-                closeSearch(app);
             })();
             return;
         }
