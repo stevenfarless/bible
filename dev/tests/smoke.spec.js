@@ -398,23 +398,33 @@ test('theme switch: toggling light mode changes body class', async ({ page }) =>
 // ---------------------------------------------------------------------------
 // 17. Copy passage — clipboard receives book/chapter content
 //
-// copyPassage() (app.js) calls navigator.clipboard.writeText(...).then(...)
-// — the write is async. Reading the clipboard immediately after clicking
-// #copyBtn races the Promise. Wait for the success toast (#toast.show) to
-// appear before evaluating the clipboard, which guarantees the write has
-// resolved. clipboard-read/write permissions are set in playwright.config.js
-// on the chromium project's use block.
+// copyPassage() (app.js) calls navigator.clipboard.writeText(...).then(...).
+// navigator.clipboard.readText() returns empty in headless Chromium because
+// the page lacks document focus inside page.evaluate(). Instead, intercept
+// writeText before the click and capture the written text in
+// window.__clipboardText, then assert on that value after the toast confirms
+// the Promise resolved.
 // ---------------------------------------------------------------------------
 test('copy passage: clipboard receives book/chapter content', async ({ page }) => {
 	await page.goto('/');
 	await waitForPassage(page);
+
+	// Intercept clipboard.writeText before clicking so the headless page
+	// doesn't need clipboard-read permission in the evaluate context.
+	await page.evaluate(() => {
+		window.__clipboardText = '';
+		navigator.clipboard.writeText = (text) => {
+			window.__clipboardText = text;
+			return Promise.resolve();
+		};
+	});
 
 	await page.locator('#copyBtn').click();
 
 	// Wait for the toast to confirm the clipboard write resolved
 	await expect(page.locator('#toast')).toHaveClass(/show/, { timeout: 5000 });
 
-	const clip = await page.evaluate(() => navigator.clipboard.readText());
+	const clip = await page.evaluate(() => window.__clipboardText);
 	expect(clip.length).toBeGreaterThan(0);
 	const title = await page.locator('#passageTitle').textContent();
 	expect(clip).toContain(title.trim());
