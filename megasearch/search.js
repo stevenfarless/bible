@@ -264,7 +264,7 @@ export function handleSearchKeydown(app, e) {
 
     if (e.key === 'Enter') {
         e.preventDefault();
-        if (isPassageReference(app.searchInput?.value || '')) {
+        if (app.searchSelectedIndex >= 0) {
             activateSelectedSearchResult(app);
         } else {
             app.searchInput?.blur();
