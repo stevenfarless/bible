@@ -71,6 +71,23 @@ body::-webkit-scrollbar {
     --dracula-bg-light: #343746;
     --dracula-bg-lighter: #424450;
 
+    /* Alucard palette constants (official Dracula light mode) */
+    --alucard-bg:         #FFFBEB;
+    --alucard-bg-lighter: #ECE9DF;
+    --alucard-bg-light:   #DEDCCF;
+    --alucard-bg-dark:    #CECCC0;
+    --alucard-bg-darker:  #BCBAB3;
+    --alucard-fg:         #1F1F1F;
+    --alucard-comment:    #6C664B;
+    --alucard-selection:  #CFCFDE;
+    --alucard-red:        #CB3A2A;
+    --alucard-orange:     #A34D14;
+    --alucard-yellow:     #846E15;
+    --alucard-green:      #14710A;
+    --alucard-cyan:       #036A96;
+    --alucard-purple:     #644AC9;
+    --alucard-pink:       #A3144D;
+
     /* Typography */
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-serif: 'Crimson Text', Georgia, serif;
@@ -158,7 +175,7 @@ body::-webkit-scrollbar {
    3. THEME OVERRIDES
    ================================ */
 
-/* Light mode (semantic, neutral) */
+/* Light mode (semantic, neutral) — fallback for any theme without its own light block */
 :root.light-mode,
 html.light-mode,
 body.light-mode {
@@ -186,6 +203,40 @@ body.light-mode {
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Alucard — official Dracula light mode (https://spec.draculatheme.com)
+   Targets Dracula (default theme, no theme class) in light mode only.
+   Higher specificity than the generic .light-mode block above. */
+:root.light-mode:not(.steel-theme):not(.onyx-theme):not(.reader-theme),
+html.light-mode:not(.steel-theme):not(.onyx-theme):not(.reader-theme),
+body.light-mode:not(.steel-theme):not(.onyx-theme):not(.reader-theme) {
+    --bg-base:    var(--alucard-bg);
+    --bg-card:    var(--alucard-bg-lighter);
+    --bg-raised:  var(--alucard-bg-light);
+
+    --text-heading: var(--alucard-fg);
+    --text-body:    var(--alucard-comment);
+    --text-muted-2: #9A9580;
+
+    --border-neutral:   var(--alucard-bg-dark);
+    --highlight-border: var(--alucard-selection);
+
+    --primary-color:   var(--alucard-purple);
+    --primary-dark:    #4D38A8;
+    --primary-light:   var(--alucard-pink);
+    --secondary-color: var(--alucard-orange);
+    --accent-color:    var(--alucard-cyan);
+
+    --success-color: var(--alucard-green);
+    --warning-color: var(--alucard-yellow);
+    --error-color:   var(--alucard-red);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--alucard-purple) 14%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(108, 102, 75, 0.12);
+    --shadow-md: 0 4px 6px rgba(108, 102, 75, 0.14);
+    --shadow-lg: 0 10px 15px rgba(108, 102, 75, 0.18);
 }
 
 /* Steel theme (semantic HSL) */
