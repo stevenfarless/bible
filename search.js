@@ -271,6 +271,41 @@ export async function fetchAllSearchResults(app, query, onBatch) {
     return app.currentSearchResults;
 }
 
+// ─── Megasearch: run supplemental cross-translation search ───────────────────────────────
+
+/**
+ * Runs the supplemental cross-translation search against whatever translations
+ * are currently in the book cache. Safe to call at any time — if nothing new is
+ * found, or the query has changed, it exits silently.
+ *
+ * Called automatically at the end of performKeywordSearch when the toggle is on,
+ * and also wired to the megasearchToggle `change` event so turning the toggle on
+ * after results are already showing triggers an immediate supplemental pass.
+ */
+export async function runMegasearch(app, query) {
+    const q = (query || '').trim();
+    if (q.length < 3) return;
+    if (app.searchLastQuery !== query) return;
+
+    const knownRefs = new Set(app.currentSearchResults.map((r) => r.reference));
+
+    let supplemental;
+    try {
+        supplemental = await app.bibleApi.searchPassagesAllTranslations(query, knownRefs);
+    } catch (err) {
+        console.warn('megasearch failed', err);
+        return;
+    }
+
+    // Bail if the user has since typed something else.
+    if (app.searchLastQuery !== query) return;
+    if (!supplemental || supplemental.length === 0) return;
+
+    const combined = [...app.currentSearchResults, ...supplemental];
+    app.currentSearchResults = combined;
+    displaySearchResults(app, combined, query);
+}
+
 // ─── Grouping & display ───────────────────────────────────────────────────────────────────
 
 export function groupSearchResultsByCanon(app, results) {
@@ -337,25 +372,10 @@ export async function performKeywordSearch(app, query) {
     }
 
     // ── Cross-translation supplemental search (megasearch) ───────────────────
-    // Only runs when the "Search all translations" toggle is on AND the query
-    // is at least 3 characters. Silently skips uncached translations.
+    // Only runs when the toggle is on AND query is at least 3 characters.
     const megasearchToggle = document.getElementById('megasearchToggle');
-    const megasearchEnabled = megasearchToggle?.checked ?? false;
-
-    if (megasearchEnabled && query.trim().length >= 3) {
-        const queryAtLaunch = query;
-        const knownRefs = new Set(app.currentSearchResults.map((r) => r.reference));
-
-        app.bibleApi.searchPassagesAllTranslations(query, knownRefs).then((supplemental) => {
-            if (app.searchLastQuery !== queryAtLaunch) return;
-            if (!supplemental || supplemental.length === 0) return;
-
-            const combined = [...app.currentSearchResults, ...supplemental];
-            app.currentSearchResults = combined;
-            displaySearchResults(app, combined, query);
-        }).catch((err) => {
-            console.warn('megasearch background pass failed', err);
-        });
+    if ((megasearchToggle?.checked ?? false) && query.trim().length >= 3) {
+        runMegasearch(app, query);
     }
 }
 
@@ -453,8 +473,11 @@ export function displaySearchResults(app, results, query) {
     app.searchResults.querySelectorAll('.search-expand-collapse-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
             const action = btn.dataset.action;
+            // Rebuild groups from the live result set so any books added by
+            // megasearch after the initial render are included.
+            const liveGroups = groupSearchResultsByCanon(app, app.currentSearchResults);
             if (action === 'expand') {
-                for (const g of groups) {
+                for (const g of liveGroups) {
                     app.searchExpandedTestaments.add(g.heading);
                     for (const b of g.books) app.searchExpandedBooks.add(b.book);
                 }

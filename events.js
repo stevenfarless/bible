@@ -4,6 +4,7 @@
 
 import { toggleTheme, changeColorTheme } from './ui.js';
 import { attachDragToResize } from './modals.js';
+import { runMegasearch } from './search.js';
 
 /**
  * @param {object} app - BibleApp instance
@@ -14,6 +15,17 @@ export function attachEventListeners(app) {
     app.closeSearchBtn?.addEventListener('click',  () => app.closeSearch());
     app.searchInput?.addEventListener('input',     (e) => app.handleSearch(e.target.value));
     app.searchInput?.addEventListener('keydown',   (e) => app.handleSearchKeydown(e));
+
+    // When the megasearch toggle is switched ON and there are already results
+    // showing, run a supplemental pass immediately against whatever translations
+    // are now in the cache — no need to retype the query.
+    document.getElementById('megasearchToggle')?.addEventListener('change', (e) => {
+        if (!e.target.checked) return;
+        const query = app.searchLastQuery || '';
+        if (query.trim().length >= 3 && app.currentSearchResults?.length > 0) {
+            runMegasearch(app, query);
+        }
+    });
 
     // ── Navigation ──────────────────────────────────────────────
     app.prevChapterBtn?.addEventListener('click',  () => app.navigateChapter(-1));
