@@ -516,4 +516,86 @@ export class BibleApi {
             page_size: PAGE_SIZE,
         };
     }
+
+    /**
+     * Search all LOCAL_TRANSLATIONS that are already loaded in memory,
+     * excluding the active translation. Returns only verse references not
+     * present in `knownRefs`. Each result is tagged with a `sourceTranslation`
+     * property identifying which translation surfaced it.
+     *
+     * Only runs if query.trim().length >= 3 to avoid expensive scans on
+     * short inputs. Translations not yet in the book cache are silently
+     * skipped — no network requests are made.
+     *
+     * @param {string} query
+     * @param {Set<string>} knownRefs  References already found in active translation.
+     * @returns {Promise<Array>}
+     */
+    async searchPassagesAllTranslations(query, knownRefs) {
+        const q = String(query || '').toLowerCase().trim();
+        if (q.length < 3) return [];
+
+        const wordRegex = _buildWordRegex(q);
+        const activeTranslation = this._translation;
+        const supplemental = [];
+
+        // Collect translations that are already fully cached (Genesis present = full load done).
+        const cachedTranslations = [];
+        for (const t of LOCAL_TRANSLATIONS) {
+            if (t === activeTranslation) continue;
+            if (this._bookCache.has(`${t}/Genesis`)) cachedTranslations.push(t);
+        }
+
+        if (cachedTranslations.length === 0) return [];
+
+        // Run all cached translations in parallel.
+        const translationResults = await Promise.all(
+            cachedTranslations.map(async (translation) => {
+                const found = [];
+                for (const book of BOOK_LOAD_ORDER) {
+                    const cacheKey = `${translation}/${book}`;
+                    const bookData = this._bookCache.get(cacheKey)
+                        ?? this._bookCache.get(`${translation}/${BOOK_KEY_ALIASES[book]}`);
+                    if (!bookData) continue;
+
+                    const resolvedKey = _resolveBookKey(bookData, book);
+                    const resolvedBookData = resolvedKey ? bookData[resolvedKey] ?? bookData : bookData;
+
+                    for (const [chapterStr, chapterData] of Object.entries(resolvedBookData)) {
+                        if (!chapterData || typeof chapterData !== 'object') continue;
+                        for (const [verseStr, text] of Object.entries(chapterData)) {
+                            if (Number(verseStr) <= 0) continue;
+                            const verseText = String(text || '');
+                            if (!wordRegex.test(verseText)) continue;
+                            const ref = `${book} ${chapterStr}:${verseStr}`;
+                            if (knownRefs.has(ref)) continue;
+                            found.push({
+                                reference:         ref,
+                                content:           verseText,
+                                book,
+                                chapter:           Number(chapterStr),
+                                verse:             Number(verseStr),
+                                text:              verseText,
+                                sourceTranslation: translation,
+                            });
+                        }
+                    }
+                }
+                return found;
+            })
+        );
+
+        // Merge: deduplicate across supplemental translations too. First
+        // translation to surface a ref wins (arbitrary but consistent).
+        const seen = new Set(knownRefs);
+        for (const results of translationResults) {
+            for (const result of results) {
+                if (seen.has(result.reference)) continue;
+                seen.add(result.reference);
+                supplemental.push(result);
+            }
+        }
+
+        return supplemental;
+    }
 }

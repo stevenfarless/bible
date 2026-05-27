@@ -4,7 +4,7 @@
 
 import { normaliseBookAlias } from './book-aliases.js';
 
-// ─── Utilities ────────────────────────────────────────────────────────────────
+// ─── Utilities ──────────────────────────────────────────────────────────────────────────────
 
 export function escapeRegExp(str) {
     return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -30,7 +30,7 @@ export function highlightSearchTerm(text, term) {
     }
 }
 
-// ─── Reference parsing ────────────────────────────────────────────────────────
+// ─── Reference parsing ────────────────────────────────────────────────────────────────────
 
 /**
  * Parses a Bible reference string into { book, chapter, verse }.
@@ -106,7 +106,7 @@ export async function loadPassageFromReference(app, reference) {
     }
 }
 
-// ─── UI state ─────────────────────────────────────────────────────────────────
+// ─── UI state ────────────────────────────────────────────────────────────────────────────────
 
 export function toggleSearch(app) {
     app.searchContainer.classList.toggle('active');
@@ -128,7 +128,7 @@ export function closeSearch(app) {
     app.searchResultItems = [];
 }
 
-// ─── Input handling ───────────────────────────────────────────────────────────
+// ─── Input handling ─────────────────────────────────────────────────────────────────────
 
 export function handleSearch(app, query) {
     clearTimeout(app.searchTimeout);
@@ -178,7 +178,7 @@ export function handleSearchKeydown(app, e) {
     }
 }
 
-// ─── Result list selection ────────────────────────────────────────────────────
+// ─── Result list selection ─────────────────────────────────────────────────────────────────
 
 export function refreshSearchResultItems(app, autoSelectFirst = false) {
     app.searchResultItems = Array.from(
@@ -224,7 +224,7 @@ export function activateSelectedSearchResult(app) {
     app.searchResultItems[app.searchSelectedIndex]?.click();
 }
 
-// ─── API calls ────────────────────────────────────────────────────────────────
+// ─── API calls ───────────────────────────────────────────────────────────────────────────────
 
 export async function handlePassageReference(app, reference) {
     const data = await app.bibleApi.fetchPassage(reference);
@@ -265,7 +265,7 @@ export async function fetchAllSearchResults(app, query, onBatch) {
     return app.currentSearchResults;
 }
 
-// ─── Grouping & display ───────────────────────────────────────────────────────
+// ─── Grouping & display ───────────────────────────────────────────────────────────────────
 
 export function groupSearchResultsByCanon(app, results) {
     if (!Array.isArray(results)) return [];
@@ -329,6 +329,31 @@ export async function performKeywordSearch(app, query) {
         app.searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
         refreshSearchResultItems(app, false);
     }
+
+    // ── Cross-translation supplemental search (megasearch) ───────────────────
+    // Only runs for queries >= 3 chars. Silently skips uncached translations.
+    // Appends unique verse references not found in the active translation.
+    if (query.trim().length >= 3) {
+        // Snapshot the current query so a stale background pass doesn't
+        // stomp results if the user has typed something new.
+        const queryAtLaunch = query;
+
+        // Build a Set of refs already shown so the merge is O(1) per lookup.
+        const knownRefs = new Set(app.currentSearchResults.map((r) => r.reference));
+
+        // Run in the background — do not await here so the UI stays responsive.
+        app.bibleApi.searchPassagesAllTranslations(query, knownRefs).then((supplemental) => {
+            // Abort if the user has moved on to a different query.
+            if (app.searchLastQuery !== queryAtLaunch) return;
+            if (!supplemental || supplemental.length === 0) return;
+
+            const combined = [...app.currentSearchResults, ...supplemental];
+            app.currentSearchResults = combined;
+            displaySearchResults(app, combined, query);
+        }).catch((err) => {
+            console.warn('megasearch background pass failed', err);
+        });
+    }
 }
 
 export function displaySearchResults(app, results, query) {
@@ -390,9 +415,14 @@ export function displaySearchResults(app, results, query) {
                     console.warn('highlight failed', err);
                 }
 
+                // Show source translation badge for supplemental results.
+                const badge = result.sourceTranslation
+                    ? ` <span class="search-result-translation-badge">${esc(result.sourceTranslation)}</span>`
+                    : '';
+
                 parts.push(`
-          <div class="search-result-item" data-reference="${esc(result.reference)}">
-            <div class="search-result-reference">${esc(result.reference)}</div>
+          <div class="search-result-item" data-reference="${esc(result.reference)}" ${result.sourceTranslation ? `data-source-translation="${esc(result.sourceTranslation)}"` : ''}>
+            <div class="search-result-reference">${esc(result.reference)}${badge}</div>
             <div class="search-result-content">${highlighted}</div>
           </div>
         `);
@@ -430,6 +460,12 @@ export function displaySearchResults(app, results, query) {
 
     app.searchResults.querySelectorAll('.search-result-item').forEach((item) => {
         item.addEventListener('click', async () => {
+            // For supplemental results, temporarily switch to the source
+            // translation so the navigated passage matches what was shown.
+            const sourceTrans = item.dataset.sourceTranslation;
+            if (sourceTrans && sourceTrans !== app.bibleApi.translation) {
+                app.setTranslation(sourceTrans);
+            }
             await loadPassageFromReference(app, item.dataset.reference);
             closeSearch(app);
         });
