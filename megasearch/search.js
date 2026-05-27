@@ -56,7 +56,7 @@ export function parseReference(reference, bookList) {
         for (const name of sorted) {
             const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const prefixRe = new RegExp(
-                '^(' + escapedName + ')\\s+(\\d+)(?:[:\\s](\\d+))?$',
+                '^(' + escapedName + ')\\s+([\\d]+)(?:[:\\s]([\\d]+))?$',
                 'i'
             );
             const m = cleaned.match(prefixRe);
@@ -72,7 +72,7 @@ export function parseReference(reference, bookList) {
     }
 
     // Regex fallback for callers without a book list.
-    const match = cleaned.match(/^((?:\d\s+)?[A-Za-z][A-Za-z ]*?)\s+(\d+)(?:[:\s](\d+))?$/);
+    const match = cleaned.match(/^((?:\d\s+)?[A-Za-z][A-Za-z ]*?)\s+([\d]+)(?:[:\s]([\d]+))?$/);
     if (!match) return null;
 
     const book = match[1].trim();
@@ -384,7 +384,21 @@ export function displaySearchResults(app, results, query) {
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-    const parts = [];
+    // ── Results summary bar ────────────────────────────────────────────────
+    const totalVerses = results.length;
+    const totalBooks = groups.reduce((acc, g) => acc + g.books.length, 0);
+    const countLabel = `${totalVerses} verse${totalVerses !== 1 ? 's' : ''} in ${totalBooks} book${totalBooks !== 1 ? 's' : ''}`;
+
+    const parts = [
+        `<div class="search-results-summary">
+          <span class="search-results-count">${countLabel}</span>
+          <span class="search-results-actions">
+            <button class="search-expand-collapse-btn" data-action="expand">expand all</button>
+            <span class="search-results-divider">·</span>
+            <button class="search-expand-collapse-btn" data-action="collapse">collapse all</button>
+          </span>
+        </div>`,
+    ];
 
     for (const group of groups) {
         const testName = group.heading;
@@ -436,6 +450,23 @@ export function displaySearchResults(app, results, query) {
     }
 
     app.searchResults.innerHTML = parts.join('');
+
+    // ── Expand / collapse all buttons ─────────────────────────────────────
+    app.searchResults.querySelectorAll('.search-expand-collapse-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const action = btn.dataset.action;
+            if (action === 'expand') {
+                for (const g of groups) {
+                    app.searchExpandedTestaments.add(g.heading);
+                    for (const b of g.books) app.searchExpandedBooks.add(b.book);
+                }
+            } else {
+                app.searchExpandedTestaments.clear();
+                app.searchExpandedBooks.clear();
+            }
+            displaySearchResults(app, results, query);
+        });
+    });
 
     app.searchResults.querySelectorAll('.search-group-heading').forEach((el) => {
         el.addEventListener('click', () => {
