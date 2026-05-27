@@ -398,30 +398,36 @@ test('theme switch: toggling light mode changes body class', async ({ page }) =>
 // ---------------------------------------------------------------------------
 // 17. Copy passage — clipboard receives book/chapter content
 //
-// copyPassage() (app.js) calls navigator.clipboard.writeText(...).then(...).
-// navigator.clipboard.readText() returns empty in headless Chromium because
-// the page lacks document focus inside page.evaluate(). Instead, intercept
-// writeText before the click and capture the written text in
-// window.__clipboardText, then assert on that value after the toast confirms
-// the Promise resolved.
+// copyPassage() (app.js) calls navigator.clipboard.writeText(...).
+// navigator.clipboard.readText() returns empty in headless Chromium even with
+// clipboard-read permission because the page lacks document focus inside
+// page.evaluate(). page.evaluate() after goto() also cannot override
+// ClipboardAPI.writeText — the native property descriptor is non-writable.
+//
+// Fix: addInitScript installs the mock before any page JS runs, and
+// Object.defineProperty forces the override on the non-configurable descriptor.
+// The stub captures the written text in window.__clipboardText; the toast
+// confirms the Promise resolved before we read it back.
 // ---------------------------------------------------------------------------
 test('copy passage: clipboard receives book/chapter content', async ({ page }) => {
+	// Must be registered before goto() so it runs before BibleApp initialises.
+	await page.addInitScript(() => {
+		window.__clipboardText = '';
+		Object.defineProperty(navigator.clipboard, 'writeText', {
+			configurable: true,
+			value: (text) => {
+				window.__clipboardText = text;
+				return Promise.resolve();
+			},
+		});
+	});
+
 	await page.goto('/');
 	await waitForPassage(page);
 
-	// Intercept clipboard.writeText before clicking so the headless page
-	// doesn't need clipboard-read permission in the evaluate context.
-	await page.evaluate(() => {
-		window.__clipboardText = '';
-		navigator.clipboard.writeText = (text) => {
-			window.__clipboardText = text;
-			return Promise.resolve();
-		};
-	});
-
 	await page.locator('#copyBtn').click();
 
-	// Wait for the toast to confirm the clipboard write resolved
+	// Toast confirms the .then() callback ran (Promise resolved)
 	await expect(page.locator('#toast')).toHaveClass(/show/, { timeout: 5000 });
 
 	const clip = await page.evaluate(() => window.__clipboardText);
