@@ -2,6 +2,8 @@
 // All search-related logic for BibleApp.
 // Every function accepts an `app` instance as its first argument.
 
+import { normaliseBookAlias } from './book-aliases.js';
+
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
 export function escapeRegExp(str) {
@@ -30,9 +32,47 @@ export function highlightSearchTerm(text, term) {
 
 // ─── Reference parsing ────────────────────────────────────────────────────────
 
-export function parseReference(reference) {
-    const cleaned = String(reference || '').trim();
-    const match = cleaned.match(/^((?:\d\s+)?[A-Za-z][A-Za-z ]*?)\s+(\d+)(?::(\d+))?$/);
+/**
+ * Parses a Bible reference string into { book, chapter, verse }.
+ *
+ * 1. normaliseBookAlias() maps abbreviations/variants to canonical names.
+ * 2. When bookList is provided, tries each name longest-first as a
+ *    case-insensitive prefix match.
+ * 3. Lazy regex fallback for callers without a book list.
+ *
+ * Accepts both ":" and " " as the chapter/verse delimiter so
+ * "jn 3 16" and "John 3:16" both resolve correctly.
+ *
+ * @param {string} reference
+ * @param {string[]} [bookList]
+ * @returns {{ book: string, chapter: number, verse: number|null } | null}
+ */
+export function parseReference(reference, bookList) {
+    const raw = String(reference || '').trim();
+    const cleaned = normaliseBookAlias(raw);
+
+    if (Array.isArray(bookList) && bookList.length > 0) {
+        const sorted = [...bookList].sort((a, b) => b.length - a.length);
+        for (const name of sorted) {
+            const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const prefixRe = new RegExp(
+                '^(' + escapedName + ')\\s+(\\d+)(?:[:\\s](\\d+))?$',
+                'i'
+            );
+            const m = cleaned.match(prefixRe);
+            if (m) {
+                const chapter = parseInt(m[2], 10);
+                const verse = m[3] ? parseInt(m[3], 10) : null;
+                if (!Number.isFinite(chapter)) continue;
+                if (verse !== null && !Number.isFinite(verse)) continue;
+                return { book: name, chapter, verse };
+            }
+        }
+        return null;
+    }
+
+    // Regex fallback for callers without a book list.
+    const match = cleaned.match(/^((?:\d\s+)?[A-Za-z][A-Za-z ]*?)\s+(\d+)(?:[:\s](\d+))?$/);
     if (!match) return null;
 
     const book = match[1].trim();
@@ -54,12 +94,16 @@ export function isPassageReference(query) {
 }
 
 export async function loadPassageFromReference(app, reference) {
-    const parsed = parseReference(reference);
+    const allBooks = app.getAllBooks();
+    const parsed = parseReference(reference, allBooks);
     if (!parsed) return;
     const { book, chapter, verse } = parsed;
+
     app.state.selectedVerse = verse || null;
     await app.loadPassage(book, chapter);
-    if (verse) app.scrollToVerse(verse);
+    if (verse) {
+        requestAnimationFrame(() => app.scrollToVerse(verse));
+    }
 }
 
 // ─── UI state ─────────────────────────────────────────────────────────────────
@@ -205,8 +249,10 @@ export async function handlePassageReference(app, reference) {
 
         refreshSearchResultItems(app, true);
     } else {
-        app.searchResults.innerHTML = '<div class="search-no-results">No passage found</div>';
-        refreshSearchResultItems(app, false);
+        // fetchPassage returned null — the input looked like a reference but
+        // didn't resolve. Fall back to keyword search so the user still gets
+        // results rather than a dead-end "No passage found".
+        await performKeywordSearch(app, reference);
     }
 }
 
