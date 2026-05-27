@@ -460,11 +460,11 @@ export function displaySearchResults(app, results, query) {
 
     app.searchResults.querySelectorAll('.search-result-item').forEach((item) => {
         item.addEventListener('click', async () => {
-            // For supplemental results, temporarily switch to the source
-            // translation so the navigated passage matches what was shown.
+            // For supplemental results, switch to the source translation before
+            // navigating so the passage the user sees matches the text they found.
             const sourceTrans = item.dataset.sourceTranslation;
             if (sourceTrans && sourceTrans !== app.bibleApi.translation) {
-                app.setTranslation(sourceTrans);
+                await app.changeTranslation(sourceTrans);
             }
             await loadPassageFromReference(app, item.dataset.reference);
             closeSearch(app);
