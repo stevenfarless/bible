@@ -70,12 +70,15 @@ function escapeHtml(value) {
 }
 
 /**
- * Build a whole-word RegExp for `q` (already lowercased).
- * Falls back to a plain substring test regex if q is empty.
+ * Build a prefix-match RegExp for `q` (already lowercased).
+ * The leading \b requires the match to start at a word boundary, so
+ * mid-word occurrences are excluded (e.g. "whatever" does not match "hate").
+ * The absence of a trailing \b means "hate" matches "hated", "hateful",
+ * "hateth", etc.
  */
 function _buildWordRegex(q) {
     const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return new RegExp(`\\b${escaped}\\b`, 'i');
+    return new RegExp(`\\b${escaped}`, 'i');
 }
 
 export async function loadTranslationIndex() {
