@@ -978,16 +978,15 @@ body.light-mode .crossref-item {
     transform: translateY(2px);
 }
 
-/* Translation badge — visually distinguishes from book/chapter/verse */
+/* Translation badge — same idle style as book/chapter/verse; accent only on hover */
 .selector-btn--translation {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
     font-weight: 600;
     letter-spacing: 0.03em;
 }
 
 .selector-btn--translation:hover {
     background-color: var(--primary-color);
+    border-color: var(--primary-color);
     color: var(--bg-primary);
 }
 
@@ -1017,6 +1016,16 @@ body.light-mode .crossref-item {
 .nav-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+}
+
+/* Suppress focus ring on mouse click; show for keyboard navigation only */
+.nav-btn:focus:not(:focus-visible) {
+    outline: none;
+}
+
+.nav-btn:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
 }
 
 /* Passage Content */
