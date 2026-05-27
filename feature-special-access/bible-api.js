@@ -1,12 +1,13 @@
 // bible-api.js
-// Serves Bible text from Firebase Realtime Database.
+// Serves Bible text from Firebase Realtime Database (Firebase translations)
+// or from local repo files (local translations).
 //
-// RTDB path for verse text:  /translations/{translation}/{book}
+// LOCAL translations load the full {T}_bible.json once, then serve books
+// from an in-memory cache — no Firebase calls at all.
+//
+// FIREBASE translations load per-book from RTDB:
+//   /translations/{translation}/{book}
 //   Returns: { "1": { "1": "verse text", ... }, ... }  (chapter → verse → text)
-//
-// RTDB path for translation index: /translations
-//   Returns: { BSB: {...}, NRSVUE: {...}, ... }
-//   The index is a separate node — see loadTranslationIndex().
 //
 // RTDB path for search index: /searchIndex/{translation}
 //   Returns: { "Genesis 1:1": "in the beginning...", ... }  (ref → lowercased text)
@@ -22,6 +23,10 @@ import { normaliseBookAlias } from './book-aliases.js';
 const PAGE_SIZE = 100;
 // Max concurrent RTDB book fetches during search (fallback path only).
 const SEARCH_CONCURRENCY = 5;
+
+// Translations served from ./translations/{T}/{T}_bible.json.
+// These never hit Firebase.
+const LOCAL_TRANSLATIONS = new Set(['ASV', 'BLB', 'LEB', 'NET', 'WEB']);
 
 const BOOK_LOAD_ORDER = [
     'Genesis','Exodus','Leviticus','Numbers','Deuteronomy',
@@ -94,6 +99,9 @@ export class BibleApi {
         this._shallowIndexCache = new Map();
         // Cache for flat ref->text search indexes, keyed by translation.
         this._searchIndexCache = new Map();
+        // Tracks in-flight local translation fetches so concurrent calls
+        // don't trigger duplicate network requests.
+        this._localFetchPromise = new Map();
     }
 
     setTranslation(translation) {
@@ -103,6 +111,38 @@ export class BibleApi {
     get translation() {
         return this._translation;
     }
+
+    // ── Local file loading ────────────────────────────────────────────────
+
+    async _ensureLocalTranslationLoaded(translation) {
+        // Already cached — all books present.
+        if (this._bookCache.has(`${translation}/Genesis`)) return;
+
+        // Deduplicate concurrent fetches for the same translation.
+        if (this._localFetchPromise.has(translation)) {
+            return this._localFetchPromise.get(translation);
+        }
+
+        const promise = (async () => {
+            const url = `./translations/${translation}/${translation}_bible.json`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`);
+            const data = await res.json();
+            // Populate per-book cache entries so _loadBook hits immediately.
+            for (const [book, chapters] of Object.entries(data)) {
+                this._bookCache.set(`${translation}/${book}`, chapters);
+            }
+        })();
+
+        this._localFetchPromise.set(translation, promise);
+        try {
+            await promise;
+        } finally {
+            this._localFetchPromise.delete(translation);
+        }
+    }
+
+    // ── Firebase loading ──────────────────────────────────────────────────
 
     async _getShallowIndex(translation) {
         if (this._shallowIndexCache.has(translation)) {
@@ -133,6 +173,31 @@ export class BibleApi {
             return this._bookCache.get(cacheKey);
         }
 
+        // ── Local path ────────────────────────────────────────────────────
+        if (LOCAL_TRANSLATIONS.has(translation)) {
+            try {
+                await this._ensureLocalTranslationLoaded(translation);
+                // Try canonical name first, then alias.
+                if (this._bookCache.has(cacheKey)) {
+                    return this._bookCache.get(cacheKey);
+                }
+                const alias = BOOK_KEY_ALIASES[book];
+                if (alias) {
+                    const aliasKey = `${translation}/${alias}`;
+                    if (this._bookCache.has(aliasKey)) {
+                        return this._bookCache.get(aliasKey);
+                    }
+                }
+                console.error(`BibleApi: book "${this._sanitizeForLog(book)}" not found in local ${translation}`);
+                return null;
+            } catch (err) {
+                console.error(`BibleApi: failed to load local translation ${translation}`, err);
+                this._bookCache.set(cacheKey, null);
+                return null;
+            }
+        }
+
+        // ── Firebase path ─────────────────────────────────────────────────
         const fetchNode = async (nodeKey) => {
             const url = `${FIREBASE_DB_URL}/translations/${encodeURIComponent(translation)}/${encodeURIComponent(nodeKey)}.json`;
             const res = await fetch(url);
@@ -167,6 +232,11 @@ export class BibleApi {
     async _loadSearchIndex(translation) {
         if (this._searchIndexCache.has(translation)) {
             return this._searchIndexCache.get(translation);
+        }
+        // Local translations don't have a Firebase search index.
+        if (LOCAL_TRANSLATIONS.has(translation)) {
+            this._searchIndexCache.set(translation, null);
+            return null;
         }
         try {
             const url = `${FIREBASE_DB_URL}/searchIndex/${encodeURIComponent(translation)}.json`;
@@ -374,7 +444,17 @@ export class BibleApi {
             return { results, total_results: results.length, page_size: PAGE_SIZE };
         }
 
-        // ── Fallback path: batched per-book RTDB fetches ──────────────────
+        // ── Fallback path: batched per-book fetches ───────────────────────────
+        // For local translations, pre-load the whole file first so the per-book
+        // loop hits the in-memory cache instead of issuing 66 fetch calls.
+        if (LOCAL_TRANSLATIONS.has(this._translation)) {
+            try {
+                await this._ensureLocalTranslationLoaded(this._translation);
+            } catch (err) {
+                console.error(`BibleApi: failed to preload local translation ${this._translation} for search`, err);
+            }
+        }
+
         const allResults = [];
 
         for (let i = 0; i < BOOK_LOAD_ORDER.length; i += SEARCH_CONCURRENCY) {
