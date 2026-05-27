@@ -199,8 +199,16 @@ test('search: entering a keyword returns results', async ({ page }) => {
 
 // ---------------------------------------------------------------------------
 // 8. Search — reference query navigates to correct passage
-// The search is async and fires loadPassage which fetches from RTDB.
-// Wait for passageTitle to update (not just to become visible).
+//
+// handlePassageReference() (search.js) fetches a preview via bibleApi and
+// renders a single .search-result-item card — it does NOT call loadPassage
+// itself. The Enter key activates the first selected result item via
+// activateSelectedSearchResult → item.click(), which then calls
+// loadPassageFromReference → loadPassage.
+//
+// Strategy: fill the input, wait for the result card to appear (confirming
+// the 300 ms debounce + RTDB fetch completed), then click the card and wait
+// for the passage title to update.
 // ---------------------------------------------------------------------------
 test('search: reference query navigates to correct passage', async ({ page }) => {
 	await page.goto('/');
@@ -210,9 +218,15 @@ test('search: reference query navigates to correct passage', async ({ page }) =>
 	await expect(page.locator('#searchContainer')).toBeVisible();
 
 	await page.locator('#searchInput').fill('John 3:16');
-	await page.locator('#searchInput').press('Enter');
 
-	// Wait for the passage to finish loading (no .loading spinner) then check title
+	// Wait for handlePassageReference to render the result card
+	const resultCard = page.locator('#searchResults .search-result-item').first();
+	await expect(resultCard).toBeVisible({ timeout: 10000 });
+
+	// Click the card — this triggers loadPassageFromReference → loadPassage
+	await resultCard.click();
+
+	// Wait for the passage to finish loading
 	await page.waitForFunction(
 		() => {
 			const title = document.getElementById('passageTitle');
@@ -383,15 +397,22 @@ test('theme switch: toggling light mode changes body class', async ({ page }) =>
 
 // ---------------------------------------------------------------------------
 // 17. Copy passage — clipboard receives book/chapter content
-// clipboard-read/write permissions are granted via playwright.config.js
-// on the chromium project's use block (not the global use block, which is
-// overridden when ...devices['Desktop Chrome'] spreads).
+//
+// copyPassage() (app.js) calls navigator.clipboard.writeText(...).then(...)
+// — the write is async. Reading the clipboard immediately after clicking
+// #copyBtn races the Promise. Wait for the success toast (#toast.show) to
+// appear before evaluating the clipboard, which guarantees the write has
+// resolved. clipboard-read/write permissions are set in playwright.config.js
+// on the chromium project's use block.
 // ---------------------------------------------------------------------------
 test('copy passage: clipboard receives book/chapter content', async ({ page }) => {
 	await page.goto('/');
 	await waitForPassage(page);
 
 	await page.locator('#copyBtn').click();
+
+	// Wait for the toast to confirm the clipboard write resolved
+	await expect(page.locator('#toast')).toHaveClass(/show/, { timeout: 5000 });
 
 	const clip = await page.evaluate(() => navigator.clipboard.readText());
 	expect(clip.length).toBeGreaterThan(0);
