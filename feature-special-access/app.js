@@ -101,9 +101,54 @@ window.fetch = async function patchedFetch(input, init) {
     }
 };
 
+// ── JS error log ──────────────────────────────────────────────────────────
+// Captures uncaught exceptions and unhandled promise rejections so they
+// appear in the debug panel even if DevTools isn't open.
+
+const _errorLog = [];
+window.addEventListener('error', (e) => {
+    _errorLog.push({
+        t: ms(),
+        msg: `${e.message}`,
+        src: `${e.filename?.replace(/^https?:\/\/[^/]+/, '') ?? '?'}:${e.lineno}`,
+    });
+});
+window.addEventListener('unhandledrejection', (e) => {
+    const msg = e.reason?.message ?? String(e.reason ?? 'unhandled rejection');
+    _errorLog.push({ t: ms(), msg, src: 'promise' });
+});
+
+// ── User action log ───────────────────────────────────────────────────────
+// Tracks meaningful UI interactions: translation changes, navigation,
+// modal opens, search queries. Wired via _dbgUserAction() on the app instance.
+
+const _userActionLog = [];
+function _logUserAction(msg) {
+    _userActionLog.push({ t: ms(), msg });
+}
+
 function buildDebugReport(app) {
     const dbg = app._dbg || {};
     const now = ms();
+
+    // ── Device / browser ──────────────────────────────────────────────────
+    const ua        = navigator.userAgent;
+    const platform  = navigator.platform || 'unknown';
+    const vw        = window.innerWidth;
+    const vh        = window.innerHeight;
+    const dpr       = window.devicePixelRatio ?? 1;
+    const touchDev  = ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 'yes' : 'no';
+    const online    = navigator.onLine ? 'online' : 'OFFLINE';
+    const connType  = navigator.connection?.effectiveType ?? 'unknown';
+    const connDown  = navigator.connection?.downlink != null ? `${navigator.connection.downlink} Mbps` : 'unknown';
+    const buildId   = document.querySelector('meta[name="build-id"]')?.content || '__BUILD_ID__';
+
+    // ── Firebase connectivity ─────────────────────────────────────────────
+    // We check the .info/connected path that Firebase RTDB exposes.
+    // _dbg.firebaseConnected is set by the onValue listener installed in init().
+    const fbConnected = dbg.firebaseConnected === true  ? 'connected ✓'
+                      : dbg.firebaseConnected === false ? 'DISCONNECTED ✗'
+                      : 'unknown (listener not yet fired)';
 
     const LS_KEYS = [
         'readingPosition', 'passageCache',
@@ -201,6 +246,14 @@ function buildDebugReport(app) {
     ];
 
     const lines = [
+        '=== environment ===',
+        `  buildId: ${buildId}`,
+        `  userAgent: ${ua}`,
+        `  platform: ${platform}`,
+        `  viewport: ${vw}x${vh}  dpr: ${dpr}  touch: ${touchDev}`,
+        `  network: ${online}  type: ${connType}  downlink: ${connDown}`,
+        `  firebase: ${fbConnected}`,
+        '',
         '=== timings (ms since navigation start) ===',
         ...timings,
         '',
@@ -213,13 +266,21 @@ function buildDebugReport(app) {
         '=== passage cache match (now) ===',
         `  ${cacheMatch}`,
         '',
-        `=== current passage ===`,
+        '=== current passage ===',
         `  verses rendered: ${verseCount}`,
         `  title: ${app?.passageTitle?.textContent ?? 'n/a'}`,
         `  translation: ${app?.state?.translation ?? 'n/a'}`,
         '',
+        '=== user actions ===',
+        _userActionLog.length ? _userActionLog.map(e => `  ${ts(e.t)}  ${e.msg}`).join('\n') : '  (none)',
+        '',
         '=== session event log ===',
         ...(dbg.events?.length ? dbg.events.map(e => `  ${ts(e.t)}  ${e.msg}`) : ['  (none)']),
+        '',
+        '=== JS errors ===',
+        _errorLog.length
+            ? _errorLog.map(e => `  ${ts(e.t)}  [${e.src}] ${e.msg}`).join('\n')
+            : '  (none ✓)',
         '',
         '=== network: local file fetches ===',
         localFetches.length ? localFetches.map(fmtFetch).join('\n') : '  (none)',
@@ -306,7 +367,6 @@ function showDebugPanel(app) {
                 if (keys.length > 20) allKeys.push(`    ... and ${keys.length - 20} more`);
             }
             if (!allKeys.length) allKeys.push('  (no SW caches)');
-            // Rebuild report with SW cache populated.
             const fullText = box.textContent.replace(
                 /=== service worker cache ===\n  \(loading\.\.\.\)/,
                 `=== service worker cache ===\n${allKeys.join('\n')}`
@@ -389,6 +449,7 @@ class BibleApp {
         this._dbg = {
             t_script_start: ms(),
             events: [],
+            firebaseConnected: null,
         };
 
         this.bibleBooks = initializeBibleStructure();
@@ -470,6 +531,10 @@ class BibleApp {
 
     _dbgEvent(msg) {
         this._dbg.events.push({ t: ms(), msg });
+    }
+
+    _dbgUserAction(msg) {
+        _logUserAction(msg);
     }
 
     getAllBooks()          { return getAllBooks(this); }
@@ -570,6 +635,21 @@ class BibleApp {
             if (!this.auth || !this.database) {
                 console.warn('Firebase not available — sign-in disabled.');
                 this._dbgEvent('Firebase unavailable');
+                this._dbg.firebaseConnected = false;
+            }
+
+            // ── Firebase connectivity listener ─────────────────────────────
+            if (this.database) {
+                try {
+                    const { ref: fbRef, onValue } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js');
+                    onValue(fbRef(this.database, '.info/connected'), (snap) => {
+                        const connected = !!snap.val();
+                        this._dbg.firebaseConnected = connected;
+                        this._dbgEvent(`firebase: ${connected ? 'connected' : 'disconnected'}`);
+                    });
+                } catch (_) {
+                    // Firebase SDK not available via dynamic import — connectivity stays 'unknown'.
+                }
             }
 
             const cacheHit = this._restorePassageCache();
@@ -755,14 +835,23 @@ class BibleApp {
         this._savePassageCache(book, chapter, this.state.translation || 'KJV', title, this.passageText.innerHTML);
     }
 
-    navigateChapter(direction) { navChapter(this, direction); }
+    navigateChapter(direction) {
+        _logUserAction(`navigateChapter: ${direction > 0 ? 'next' : 'prev'} (${this.state.currentBook} ${this.state.currentChapter})`);
+        navChapter(this, direction);
+    }
     updateNavigationState()    { updateNavigationState(this); }
     navigateToNextVerse()      { navigateToNextVerse(this); }
     navigateToPreviousVerse()  { navigateToPreviousVerse(this); }
 
-    toggleSearch()                          { toggleSearch(this); }
+    toggleSearch() {
+        _logUserAction('toggleSearch');
+        toggleSearch(this);
+    }
     closeSearch()                           { closeSearch(this); }
-    handleSearch(query)                     { handleSearch(this, query); }
+    handleSearch(query) {
+        _logUserAction(`search: "${query}"`);
+        handleSearch(this, query);
+    }
     handleSearchKeydown(e)                  { handleSearchKeydown(this, e); }
     refreshSearchResultItems(autoSelect)    { refreshSearchResultItems(this, autoSelect); }
     setSearchSelectedIndex(i, scroll)       { setSearchSelectedIndex(this, i, scroll); }
@@ -779,7 +868,10 @@ class BibleApp {
     highlightSearchTerm(text, term)         { return highlightSearchTerm(text, term); }
     stripHTML(html)                         { return stripHTML(html); }
 
-    openModal(modal)           { openModal(this, modal); }
+    openModal(modal) {
+        _logUserAction(`openModal: ${modal?.id ?? 'unknown'}`);
+        openModal(this, modal);
+    }
     closeModal(modal)          { closeModal(this, modal); }
     openBookModal()            { openBookModal(this); }
     populateBookModal()        { populateBookModal(this); }
@@ -793,12 +885,24 @@ class BibleApp {
     scrollToVerse(n)           { scrollVerse(this, n); }
     applyVerseGlow()           { glowVerse(this); }
 
-    loadLocalSettings()          { loadLocalSettings(this); }
-    applySettings()              { applySettings(this); }
-    async toggleSetting(s)       { await toggleSetting(this, s); }
-    async toggleVerseByVerse()   { await toggleVerseByVerse(this); }
-    async updateFontSize(size)   { await updateFontSize(this, size); }
-    async changeTranslation(t)   { await changeTranslation(this, t); }
+    loadLocalSettings()        { loadLocalSettings(this); }
+    applySettings()            { applySettings(this); }
+    async toggleSetting(s) {
+        _logUserAction(`toggleSetting: ${s}`);
+        await toggleSetting(this, s);
+    }
+    async toggleVerseByVerse() {
+        _logUserAction('toggleVerseByVerse');
+        await toggleVerseByVerse(this);
+    }
+    async updateFontSize(size) {
+        _logUserAction(`updateFontSize: ${size}`);
+        await updateFontSize(this, size);
+    }
+    async changeTranslation(t) {
+        _logUserAction(`changeTranslation: ${t}`);
+        await changeTranslation(this, t);
+    }
     updateCopyright()            { updateCopyright(this); }
 
     handleKeyboardShortcuts(e)   { handleKeyboardShortcuts(this, e); }
