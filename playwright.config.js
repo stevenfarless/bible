@@ -6,6 +6,7 @@ export default defineConfig({
 		baseURL: process.env.BASE_URL || 'http://localhost:8080',
 		headless: true,
 		viewport: { width: 1280, height: 720 },
+		permissions: ['clipboard-read', 'clipboard-write'],
 	},
 	projects: [
 		{
