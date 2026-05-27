@@ -275,10 +275,10 @@ body.onyx-theme {
     --shadow-lg: 0 10px 15px rgba(255, 255, 255, 0.15);
 }
 
-/* Onyx: force passage-container to pure OLED black in dark mode */
-:root.onyx-theme .passage-container,
-html.onyx-theme .passage-container,
-body.onyx-theme .passage-container {
+/* Onyx: force passage-container to pure OLED black in dark mode only */
+:root.onyx-theme:not(.light-mode) .passage-container,
+html.onyx-theme:not(.light-mode) .passage-container,
+body.onyx-theme:not(.light-mode) .passage-container {
     background-color: #000;
 }
 
