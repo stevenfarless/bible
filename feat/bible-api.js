@@ -26,7 +26,7 @@ const SEARCH_CONCURRENCY = 5;
 
 // Translations served from ./translations/{T}/{T}_bible.json.
 // These never hit Firebase.
-const LOCAL_TRANSLATIONS = new Set(['ASV', 'BLB', 'LEB', 'NET', 'WEB']);
+const LOCAL_TRANSLATIONS = new Set(['ASV', 'BLB', 'BSB', 'KJV', 'LEB', 'MSB', 'NET', 'WEB']);
 
 const BOOK_LOAD_ORDER = [
     'Genesis','Exodus','Leviticus','Numbers','Deuteronomy',
