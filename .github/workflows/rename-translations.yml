@@ -1,0 +1,41 @@
+name: Rename Translation Files
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rename:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout feature/special-access
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: feature/special-access
+
+      - name: Rename translation files to {ID}_bible.json
+        run: |
+          cd translations
+          for dir in */; do
+            id="${dir%/}"
+            src="${id}/${id}.json"
+            dst="${id}/${id}_bible.json"
+            if [ -f "$src" ] && [ ! -f "$dst" ]; then
+              git mv "$src" "$dst"
+              echo "Renamed $src -> $dst"
+            elif [ -f "$dst" ]; then
+              echo "Already correct: $dst"
+            else
+              echo "No file to rename in $id"
+            fi
+          done
+
+      - name: Commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --cached --quiet && echo "Nothing to commit" || \
+            git commit -m "fix: rename translation files to {ID}_bible.json for upload compatibility"
+          git push origin feature/special-access
