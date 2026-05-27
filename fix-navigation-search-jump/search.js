@@ -56,10 +56,27 @@ export function isPassageReference(query) {
 export async function loadPassageFromReference(app, reference) {
     const parsed = parseReference(reference);
     if (!parsed) return;
-    const { book, chapter, verse } = parsed;
+    let { book, chapter, verse } = parsed;
+
+    // Normalise: find the internal canonical book name that matches the parsed
+    // book string (case-insensitive). API-returned names (e.g. "Psalms" vs
+    // "Psalm", "Song of Songs" vs "Song of Solomon") can differ from the keys
+    // in getAllBooks(), causing indexOf to return -1 and breaking navigateChapter.
+    const allBooks = app.getAllBooks();
+    const normalised = allBooks.find(
+        (b) => b.toLowerCase() === book.toLowerCase()
+    ) || book;
+    book = normalised;
+
     app.state.selectedVerse = verse || null;
     await app.loadPassage(book, chapter);
-    if (verse) app.scrollToVerse(verse);
+    if (verse) {
+        // Defer the DOM mutation until after the browser has committed the new
+        // passage innerHTML to layout. Calling scrollToVerse synchronously
+        // after loadPassage can fire applyVerseGlow while the scaffold nodes
+        // are still being laid out, corrupting BSB heading/structure markup.
+        requestAnimationFrame(() => app.scrollToVerse(verse));
+    }
 }
 
 // ─── UI state ─────────────────────────────────────────────────────────────────
