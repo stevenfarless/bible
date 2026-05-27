@@ -33,18 +33,20 @@ async function waitForPassage(page) {
 
 // ---------------------------------------------------------------------------
 // Helper — opens the settings modal and expands the named accordion section.
-// Avoids repeating the same accordion-open preamble in every settings test.
+// The accordion toggles 'active' on the parent .accordion-section element;
+// panels are visible when the section has that class.
 // ---------------------------------------------------------------------------
-async function openSettingsSection(page, sectionLabel) {
+async function openSettingsSection(page, sectionDataValue) {
 	await page.locator('#settingsBtn').click();
 	await expect(page.locator('#settingsModal')).toBeVisible();
 
-	const header = page.locator('.accordion-header').filter({ hasText: sectionLabel });
-	const panel = header.locator('xpath=following-sibling::div[contains(@class,"accordion-panel")]');
-	if (!(await panel.isVisible())) {
-		await header.click();
-		await expect(panel).toBeVisible();
+	const section = page.locator(`.accordion-section[data-section="${sectionDataValue}"]`);
+	const isActive = await section.evaluate(el => el.classList.contains('active'));
+	if (!isActive) {
+		await section.locator('.accordion-header').click();
+		await expect(section).toHaveClass(/active/);
 	}
+	await expect(section.locator('.accordion-panel')).toBeVisible();
 }
 
 // ---------------------------------------------------------------------------
@@ -67,21 +69,16 @@ test('page load: main UI elements are visible', async ({ page }) => {
 
 // ---------------------------------------------------------------------------
 // 2. Book navigation — open book modal, pick a book, passage updates
-// Book buttons render abbreviations (e.g. "Matt"), not full names.
-// Selecting a book loads passage directly — it does NOT open a chapter modal.
 // ---------------------------------------------------------------------------
 test('book navigation: selecting a book loads its first chapter', async ({ page }) => {
 	await page.goto('/');
 	await waitForPassage(page);
 
-	// Open book modal
 	await page.locator('#bookSelector').click();
 	await expect(page.locator('#bookModal')).toBeVisible();
 
-	// Pick Matthew — rendered as "Matt"
 	await page.locator('#newTestamentBooks button', { hasText: 'Matt' }).first().click();
 
-	// Book modal should close and passage title should update to Matthew 1
 	await expect(page.locator('#bookModal')).not.toHaveClass(/active/);
 	await expect(page.locator('#passageTitle')).toContainText('Matthew 1');
 	await expect(page.locator('#passageText')).not.toBeEmpty();
@@ -94,17 +91,14 @@ test('chapter navigation: selecting a chapter loads passage text', async ({ page
 	await page.goto('/');
 	await waitForPassage(page);
 
-	// First navigate to Matthew via book modal
 	await page.locator('#bookSelector').click();
 	await page.locator('#newTestamentBooks button', { hasText: 'Matt' }).first().click();
 	await expect(page.locator('#passageTitle')).toContainText('Matthew 1');
 
-	// Now open the chapter modal and select chapter 5
 	await page.locator('#chapterSelector').click();
 	await expect(page.locator('#chapterModal')).toBeVisible();
 	await page.locator('#chapterGrid button', { hasText: '5' }).first().click();
 
-	// Passage should update to Matthew 5, no lingering loading spinner
 	await expect(page.locator('#passageTitle')).toContainText('Matthew 5');
 	await expect(page.locator('#passageText')).not.toBeEmpty();
 	await expect(page.locator('#passageText .loading')).toHaveCount(0);
@@ -112,31 +106,24 @@ test('chapter navigation: selecting a chapter loads passage text', async ({ page
 
 // ---------------------------------------------------------------------------
 // 4. Verse navigation — open verse modal, select a verse, modal closes
-// Note: scrollToVerse scrolls and applies glow; #currentVerse is reset to
-// "1" on each loadPassage so we verify the modal closes, not the span value.
 // ---------------------------------------------------------------------------
 test('verse navigation: selecting a verse closes the verse modal', async ({ page }) => {
 	await page.goto('/');
 	await waitForPassage(page);
 
-	// Navigate to John 3 (book button text is 'John')
 	await page.locator('#bookSelector').click();
-	// Use exact match to avoid matching '1 John', '2 John', '3 John'
 	await page.locator('#newTestamentBooks button').filter({ hasText: /^John$/ }).click();
 	await expect(page.locator('#passageTitle')).toContainText('John 1');
 
-	// Go to chapter 3
 	await page.locator('#chapterSelector').click();
 	await expect(page.locator('#chapterModal')).toBeVisible();
 	await page.locator('#chapterGrid button', { hasText: '3' }).first().click();
 	await expect(page.locator('#passageTitle')).toContainText('John 3');
 
-	// Open verse modal and pick verse 16
 	await page.locator('#verseSelector').click();
 	await expect(page.locator('#verseModal')).toBeVisible();
 	await page.locator('#verseGrid button', { hasText: '16' }).first().click();
 
-	// Modal should close after verse selection
 	await expect(page.locator('#verseModal')).not.toHaveClass(/active/);
 });
 
@@ -147,7 +134,6 @@ test('chapter buttons: prev and next navigate correctly', async ({ page }) => {
 	await page.goto('/');
 	await waitForPassage(page);
 
-	// Navigate to Matthew 5
 	await page.locator('#bookSelector').click();
 	await page.locator('#newTestamentBooks button', { hasText: 'Matt' }).first().click();
 	await expect(page.locator('#passageTitle')).toContainText('Matthew 1');
@@ -155,37 +141,43 @@ test('chapter buttons: prev and next navigate correctly', async ({ page }) => {
 	await page.locator('#chapterGrid button', { hasText: '5' }).first().click();
 	await expect(page.locator('#passageTitle')).toContainText('Matthew 5');
 
-	// Next chapter
 	await page.locator('#nextChapter').click();
 	await expect(page.locator('#passageTitle')).toContainText('Matthew 6');
 
-	// Previous chapter
 	await page.locator('#prevChapter').click();
 	await expect(page.locator('#passageTitle')).toContainText('Matthew 5');
 });
 
 // ---------------------------------------------------------------------------
 // 6. Translation — switching translation reloads passage in new translation
-// #translationSelector lives inside the Display accordion in settings modal.
+// #translationSelector is inside the Display accordion and its options are
+// populated asynchronously from RTDB via _loadTranslationRegistry().
+// Option values are uppercase IDs (e.g. 'KJV', 'BSB').
 // ---------------------------------------------------------------------------
 test('translation: switching translation reloads passage in new translation', async ({ page }) => {
 	await page.goto('/');
 	await waitForPassage(page);
 
-	// Open settings and expand Display accordion so #translationSelector is visible
-	await openSettingsSection(page, 'Display');
+	// Open settings and expand the Display accordion
+	await openSettingsSection(page, 'display');
 
 	const selector = page.locator('#translationSelector');
+
+	// Wait for options to be populated by _loadTranslationRegistry()
+	await page.waitForFunction(
+		() => document.getElementById('translationSelector')?.options.length > 0,
+		{ timeout: 10000 }
+	);
 	await expect(selector).toBeVisible();
 
-	// Pick KJV if not already selected, otherwise pick ASV
+	// Pick BSB if KJV is selected, otherwise pick KJV
 	const current = await selector.inputValue();
-	const next = current === 'kjv' ? 'asv' : 'kjv';
+	const next = current === 'KJV' ? 'BSB' : 'KJV';
 	await selector.selectOption(next);
 
-	// Close settings and confirm translation label updated
+	// Close settings and confirm the nav badge updated
 	await page.locator('#closeSettingsModal').click();
-	await expect(page.locator('#currentTranslation')).toContainText(next.toUpperCase());
+	await expect(page.locator('#currentTranslation')).toContainText(next, { timeout: 10000 });
 });
 
 // ---------------------------------------------------------------------------
@@ -195,11 +187,9 @@ test('search: entering a keyword returns results', async ({ page }) => {
 	await page.goto('/');
 	await waitForApp(page);
 
-	// Open search
 	await page.locator('#searchToggle').click();
 	await expect(page.locator('#searchContainer')).toBeVisible();
 
-	// Type a query and wait for async results (up to 10 s for network)
 	await page.locator('#searchInput').fill('covenant');
 	await page.locator('#searchInput').press('Enter');
 
@@ -209,10 +199,12 @@ test('search: entering a keyword returns results', async ({ page }) => {
 
 // ---------------------------------------------------------------------------
 // 8. Search — reference query navigates to correct passage
+// The search is async and fires loadPassage which fetches from RTDB.
+// Wait for passageTitle to update (not just to become visible).
 // ---------------------------------------------------------------------------
 test('search: reference query navigates to correct passage', async ({ page }) => {
 	await page.goto('/');
-	await waitForApp(page);
+	await waitForPassage(page);
 
 	await page.locator('#searchToggle').click();
 	await expect(page.locator('#searchContainer')).toBeVisible();
@@ -220,7 +212,15 @@ test('search: reference query navigates to correct passage', async ({ page }) =>
 	await page.locator('#searchInput').fill('John 3:16');
 	await page.locator('#searchInput').press('Enter');
 
-	await expect(page.locator('#passageTitle')).toContainText('John 3', { timeout: 10000 });
+	// Wait for the passage to finish loading (no .loading spinner) then check title
+	await page.waitForFunction(
+		() => {
+			const title = document.getElementById('passageTitle');
+			const loading = document.querySelector('#passageText .loading');
+			return !loading && title?.textContent?.includes('John 3');
+		},
+		{ timeout: 15000 }
+	);
 });
 
 // ---------------------------------------------------------------------------
@@ -263,22 +263,26 @@ test('reading position: localStorage updated after chapter navigation', async ({
 });
 
 // ---------------------------------------------------------------------------
-// 11. Passage cache — navigating back to a visited passage writes cache
+// 11. Passage cache — navigating to a new passage writes to passageCache
+// app.js uses a single localStorage key 'passageCache' (not 'passage_*').
+// After navigation the cache entry's book/chapter should match the new passage.
 // ---------------------------------------------------------------------------
 test('passage cache: navigating back to a visited passage writes cache', async ({ page }) => {
 	await page.goto('/');
 	await waitForPassage(page);
 
+	const titleBefore = await page.locator('#passageTitle').textContent();
+
 	await page.locator('#nextChapter').click();
-	await expect(page.locator('#passageTitle')).not.toBeEmpty();
+	// Wait for the title to change, confirming loadPassage ran and wrote the cache
+	await expect(page.locator('#passageTitle')).not.toHaveText(titleBefore, { timeout: 10000 });
 
-	await page.locator('#prevChapter').click();
-	await expect(page.locator('#passageTitle')).not.toBeEmpty();
-
-	const cacheKeys = await page.evaluate(() =>
-		Object.keys(localStorage).filter((k) => k.startsWith('passage_'))
-	);
-	expect(cacheKeys.length).toBeGreaterThan(0);
+	const raw = await page.evaluate(() => localStorage.getItem('passageCache'));
+	expect(raw).not.toBeNull();
+	const cache = JSON.parse(raw);
+	expect(cache).toHaveProperty('book');
+	expect(cache).toHaveProperty('chapter');
+	expect(cache).toHaveProperty('html');
 });
 
 // ---------------------------------------------------------------------------
@@ -288,7 +292,7 @@ test('settings: toggling verse numbers checkbox changes its state', async ({ pag
 	await page.goto('/');
 	await waitForApp(page);
 
-	await openSettingsSection(page, 'Display');
+	await openSettingsSection(page, 'display');
 
 	const toggle = page.locator('#verseNumbersToggle');
 	const before = await toggle.isChecked();
@@ -303,7 +307,7 @@ test('settings: verse-by-verse mode toggles passage layout class', async ({ page
 	await page.goto('/');
 	await waitForPassage(page);
 
-	await openSettingsSection(page, 'Display');
+	await openSettingsSection(page, 'display');
 
 	const toggle = page.locator('#verseByVerseToggle');
 	const before = await toggle.isChecked();
@@ -323,7 +327,7 @@ test('settings: font size change updates passage font size', async ({ page }) =>
 	await page.goto('/');
 	await waitForApp(page);
 
-	await openSettingsSection(page, 'Display');
+	await openSettingsSection(page, 'display');
 
 	const slider = page.locator('#fontSizeSlider');
 	await slider.fill('24');
@@ -337,20 +341,19 @@ test('settings: font size change updates passage font size', async ({ page }) =>
 
 // ---------------------------------------------------------------------------
 // 15. Settings — color theme selector applies theme to body
-// #themeSelector lives inside the Theme accordion in settings modal.
+// #themeSelector is inside the Theme accordion. Options: dracula, steel, onyx, parchment.
 // ---------------------------------------------------------------------------
 test('settings: color theme selector applies theme to body', async ({ page }) => {
 	await page.goto('/');
 	await waitForApp(page);
 
-	// Open settings and expand Theme accordion so #themeSelector is visible
-	await openSettingsSection(page, 'Theme');
+	await openSettingsSection(page, 'theme');
 
 	const selector = page.locator('#themeSelector');
 	await expect(selector).toBeVisible();
 
 	const current = await selector.inputValue();
-	const next = current === 'dracula' ? 'mocha' : 'dracula';
+	const next = current === 'dracula' ? 'steel' : 'dracula';
 	await selector.selectOption(next);
 
 	const stored = await page.evaluate(() => localStorage.getItem('colorTheme'));
@@ -364,7 +367,7 @@ test('theme switch: toggling light mode changes body class', async ({ page }) =>
 	await page.goto('/');
 	await waitForApp(page);
 
-	await openSettingsSection(page, 'Theme');
+	await openSettingsSection(page, 'theme');
 
 	const lightToggle = page.locator('#lightModeToggle');
 	const before = await lightToggle.isChecked();
@@ -380,7 +383,9 @@ test('theme switch: toggling light mode changes body class', async ({ page }) =>
 
 // ---------------------------------------------------------------------------
 // 17. Copy passage — clipboard receives book/chapter content
-// Requires clipboard-read/write permissions (set in playwright.config.js).
+// clipboard-read/write permissions are granted via playwright.config.js
+// on the chromium project's use block (not the global use block, which is
+// overridden when ...devices['Desktop Chrome'] spreads).
 // ---------------------------------------------------------------------------
 test('copy passage: clipboard receives book/chapter content', async ({ page }) => {
 	await page.goto('/');
@@ -390,7 +395,6 @@ test('copy passage: clipboard receives book/chapter content', async ({ page }) =
 
 	const clip = await page.evaluate(() => navigator.clipboard.readText());
 	expect(clip.length).toBeGreaterThan(0);
-	// Should contain the passage title text
 	const title = await page.locator('#passageTitle').textContent();
 	expect(clip).toContain(title.trim());
 });
@@ -414,7 +418,6 @@ test('keyboard: ArrowLeft goes to previous chapter', async ({ page }) => {
 	await page.goto('/');
 	await waitForPassage(page);
 
-	// Advance first so we have somewhere to go back to
 	await page.keyboard.press('ArrowRight');
 	const mid = await page.locator('#currentChapter').textContent();
 
