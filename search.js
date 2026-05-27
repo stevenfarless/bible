@@ -92,119 +92,104 @@ export async function loadPassageFromReference(app, reference) {
 
 // ─── Delegated event handler ───────────────────────────────────────────────────────────
 
-// Attached once when search opens. Uses touchstart + touchend to distinguish
-// a tap (finger barely moves) from a scroll gesture (finger moves >10px).
-// A plain click listener handles desktop/mouse. On touch devices the synthetic
-// click that follows touchend is suppressed via _searchTouchHandled.
-
-const TAP_MOVE_THRESHOLD = 10; // px — above this we treat the gesture as a scroll
+// Attached once when search opens. Records the container's scrollTop at
+// touchstart. If scrollTop changed by the time touchend fires, the touch
+// was a scroll gesture and the action is skipped. This correctly handles
+// both slow drags and fast flicks, since both move scrollTop.
 
 export function initSearchResultsDelegate(app) {
     if (app._searchDelegateAttached) return;
     app._searchDelegateAttached = true;
 
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchStartTarget = null;
+    let scrollTopAtTouchStart = 0;
 
-    app.searchResults.addEventListener('touchstart', (e) => {
-        const t = e.touches[0];
-        touchStartX = t.clientX;
-        touchStartY = t.clientY;
-        touchStartTarget = e.target;
+    app.searchResults.addEventListener('touchstart', () => {
+        scrollTopAtTouchStart = app.searchResults.scrollTop;
     }, { passive: true });
 
-    app.searchResults.addEventListener('touchend', (e) => {
-        const t = e.changedTouches[0];
-        const dx = Math.abs(t.clientX - touchStartX);
-        const dy = Math.abs(t.clientY - touchStartY);
+    function handleTap(e) {
+        if (e.type === 'touchend') {
+            // If the container scrolled during this touch, ignore.
+            if (Math.abs(app.searchResults.scrollTop - scrollTopAtTouchStart) > 2) return;
+            app._searchTouchHandled = true;
+        }
 
-        // Finger moved too far — this was a scroll, not a tap. Let the browser
-        // handle it normally and suppress the synthetic click.
-        if (dx > TAP_MOVE_THRESHOLD || dy > TAP_MOVE_THRESHOLD) {
+        if (e.type === 'click' && app._searchTouchHandled) {
             app._searchTouchHandled = false;
             return;
         }
 
-        app._searchTouchHandled = true;
-        e.preventDefault(); // suppress synthetic click for true taps
-        dispatchSearchAction(app, e.target);
-    }, { passive: false });
+        const target = e.target;
+        const query = app.searchLastQuery || '';
 
-    // Desktop / mouse fallback — also fires on iOS when touchend didn't
-    // preventDefault (i.e. the gesture was a scroll and we let it through).
-    app.searchResults.addEventListener('click', (e) => {
-        if (app._searchTouchHandled) {
-            app._searchTouchHandled = false;
+        // ── Expand / collapse all ─────────────────────────────────────────
+        const expandBtn = target.closest('.search-expand-collapse-btn');
+        if (expandBtn) {
+            e.preventDefault();
+            const action = expandBtn.dataset.action;
+            const liveGroups = groupSearchResultsByCanon(app, app.currentSearchResults);
+            if (action === 'expand') {
+                for (const g of liveGroups) {
+                    app.searchExpandedTestaments.add(g.heading);
+                    for (const b of g.books) app.searchExpandedBooks.add(b.book);
+                }
+            } else {
+                app.searchExpandedTestaments.clear();
+                app.searchExpandedBooks.clear();
+            }
+            displaySearchResults(app, app.currentSearchResults, query);
             return;
         }
-        dispatchSearchAction(app, e.target);
-    });
-}
 
-function dispatchSearchAction(app, target) {
-    const query = app.searchLastQuery || '';
-
-    // ── Expand / collapse all ─────────────────────────────────────────
-    const expandBtn = target.closest('.search-expand-collapse-btn');
-    if (expandBtn) {
-        const action = expandBtn.dataset.action;
-        const liveGroups = groupSearchResultsByCanon(app, app.currentSearchResults);
-        if (action === 'expand') {
-            for (const g of liveGroups) {
-                app.searchExpandedTestaments.add(g.heading);
-                for (const b of g.books) app.searchExpandedBooks.add(b.book);
+        // ── Testament heading ────────────────────────────────────────────
+        const groupHeading = target.closest('.search-group-heading');
+        if (groupHeading) {
+            e.preventDefault();
+            const testament = groupHeading.getAttribute('data-testament');
+            if (!testament) return;
+            if (app.searchExpandedTestaments.has(testament)) {
+                app.searchExpandedTestaments.delete(testament);
+            } else {
+                app.searchExpandedTestaments.add(testament);
             }
-        } else {
-            app.searchExpandedTestaments.clear();
-            app.searchExpandedBooks.clear();
+            displaySearchResults(app, app.currentSearchResults, query);
+            return;
         }
-        displaySearchResults(app, app.currentSearchResults, query);
-        return;
-    }
 
-    // ── Testament heading ────────────────────────────────────────────
-    const groupHeading = target.closest('.search-group-heading');
-    if (groupHeading) {
-        const testament = groupHeading.getAttribute('data-testament');
-        if (!testament) return;
-        if (app.searchExpandedTestaments.has(testament)) {
-            app.searchExpandedTestaments.delete(testament);
-        } else {
-            app.searchExpandedTestaments.add(testament);
-        }
-        displaySearchResults(app, app.currentSearchResults, query);
-        return;
-    }
-
-    // ── Book heading ───────────────────────────────────────────────
-    const bookHeading = target.closest('.search-book-heading');
-    if (bookHeading) {
-        const book = bookHeading.getAttribute('data-book');
-        if (!book) return;
-        if (app.searchExpandedBooks.has(book)) {
-            app.searchExpandedBooks.delete(book);
-        } else {
-            app.searchExpandedBooks.add(book);
-        }
-        displaySearchResults(app, app.currentSearchResults, query);
-        return;
-    }
-
-    // ── Result item ────────────────────────────────────────────────
-    const resultItem = target.closest('.search-result-item');
-    if (resultItem) {
-        const sourceTrans = resultItem.dataset.sourceTranslation;
-        const ref = resultItem.dataset.reference;
-        (async () => {
-            if (sourceTrans && sourceTrans !== app.bibleApi.translation) {
-                await app.changeTranslation(sourceTrans);
+        // ── Book heading ───────────────────────────────────────────────
+        const bookHeading = target.closest('.search-book-heading');
+        if (bookHeading) {
+            e.preventDefault();
+            const book = bookHeading.getAttribute('data-book');
+            if (!book) return;
+            if (app.searchExpandedBooks.has(book)) {
+                app.searchExpandedBooks.delete(book);
+            } else {
+                app.searchExpandedBooks.add(book);
             }
-            await loadPassageFromReference(app, ref);
-            closeSearch(app);
-        })();
-        return;
+            displaySearchResults(app, app.currentSearchResults, query);
+            return;
+        }
+
+        // ── Result item ────────────────────────────────────────────────
+        const resultItem = target.closest('.search-result-item');
+        if (resultItem) {
+            e.preventDefault();
+            const sourceTrans = resultItem.dataset.sourceTranslation;
+            const ref = resultItem.dataset.reference;
+            (async () => {
+                if (sourceTrans && sourceTrans !== app.bibleApi.translation) {
+                    await app.changeTranslation(sourceTrans);
+                }
+                await loadPassageFromReference(app, ref);
+                closeSearch(app);
+            })();
+            return;
+        }
     }
+
+    app.searchResults.addEventListener('touchend', handleTap, { passive: false });
+    app.searchResults.addEventListener('click', handleTap);
 }
 
 // ─── UI state ────────────────────────────────────────────────────────────────────────────────
