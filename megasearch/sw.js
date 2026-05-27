@@ -1,4 +1,4 @@
-const BUILD_ID = "19df1ea5876b2371f487b2f3b228afd3eef51a0d";
+const BUILD_ID = "45269d649b7c48683d01c963af01c5bd254c0930";
 const CACHE_NAME = `esv-bible-${BUILD_ID}`;
 
 // App shell JS modules (everything under the root except vendor/):
