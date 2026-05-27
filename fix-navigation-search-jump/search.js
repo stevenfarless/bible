@@ -30,8 +30,45 @@ export function highlightSearchTerm(text, term) {
 
 // ─── Reference parsing ────────────────────────────────────────────────────────
 
-export function parseReference(reference) {
+/**
+ * Parses a Bible reference string into { book, chapter, verse }.
+ *
+ * When `bookList` is provided (an ordered array of canonical book name strings),
+ * the function tries each book name as a case-insensitive prefix match against
+ * the cleaned input — longest names first — before falling back to the regex.
+ * This correctly handles multi-word names like "Song of Solomon" and
+ * "2 Thessalonians" that the lazy regex cannot reliably split from the chapter.
+ *
+ * @param {string} reference
+ * @param {string[]} [bookList] - optional canonical book names from getAllBooks()
+ * @returns {{ book: string, chapter: number, verse: number|null } | null}
+ */
+export function parseReference(reference, bookList) {
     const cleaned = String(reference || '').trim();
+
+    // Book-list path: try every known name (longest first) as a prefix.
+    if (Array.isArray(bookList) && bookList.length > 0) {
+        const sorted = [...bookList].sort((a, b) => b.length - a.length);
+        for (const name of sorted) {
+            const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const prefixRe = new RegExp(
+                '^(' + escapedName + ')\\s+(\\d+)(?::(\\d+))?$',
+                'i'
+            );
+            const m = cleaned.match(prefixRe);
+            if (m) {
+                const chapter = parseInt(m[2], 10);
+                const verse = m[3] ? parseInt(m[3], 10) : null;
+                if (!Number.isFinite(chapter)) continue;
+                if (verse !== null && !Number.isFinite(verse)) continue;
+                // Use the canonical casing from the book list, not the user's input.
+                return { book: name, chapter, verse };
+            }
+        }
+        return null;
+    }
+
+    // Regex fallback for callers without a book list.
     const match = cleaned.match(/^((?:\d\s+)?[A-Za-z][A-Za-z ]*?)\s+(\d+)(?::(\d+))?$/);
     if (!match) return null;
 
@@ -54,19 +91,15 @@ export function isPassageReference(query) {
 }
 
 export async function loadPassageFromReference(app, reference) {
-    const parsed = parseReference(reference);
+    // Pass the canonical book list so parseReference can correctly identify
+    // multi-word book names like "Song of Solomon" that the regex mishandles.
+    const allBooks = app.getAllBooks();
+    const parsed = parseReference(reference, allBooks);
     if (!parsed) return;
     let { book, chapter, verse } = parsed;
 
-    // Normalise: find the internal canonical book name that matches the parsed
-    // book string (case-insensitive). API-returned names (e.g. "Psalms" vs
-    // "Psalm", "Song of Songs" vs "Song of Solomon") can differ from the keys
-    // in getAllBooks(), causing indexOf to return -1 and breaking navigateChapter.
-    const allBooks = app.getAllBooks();
-    const normalised = allBooks.find(
-        (b) => b.toLowerCase() === book.toLowerCase()
-    ) || book;
-    book = normalised;
+    // parseReference already returns the canonical name from the book list
+    // when bookList is provided, so no separate normalisation step is needed.
 
     app.state.selectedVerse = verse || null;
     await app.loadPassage(book, chapter);
