@@ -35,6 +35,7 @@ import {
     openBookModal, populateBookModal,
     openChapterModal, populateChapterModal,
     openVerseModal, populateVerseModal,
+    openTranslationModal, populateTranslationModal,
     getCurrentVerseCount,
 } from './modals.js';
 import {
@@ -284,6 +285,7 @@ class BibleApp {
         this.database = window.firebaseDatabase;
         this.currentUser = null;
         this._copyrightMap = {};
+        this._translationRegistry = [];
         this._normalizeTranslation = normalizeTranslation;
 
         // Debug instrumentation — REMOVE BEFORE MERGING TO MAIN.
@@ -568,6 +570,8 @@ class BibleApp {
 
     async _loadTranslationRegistry() {
         const translations = await loadTranslationIndex();
+        // Save to instance so populateTranslationModal can read it.
+        this._translationRegistry = translations.map(t => ({ id: t.id, name: t.label }));
         const select = document.getElementById('translationSelector');
         if (select && translations.length > 0) {
             select.innerHTML = '';
@@ -686,17 +690,19 @@ class BibleApp {
     highlightSearchTerm(text, term)         { return highlightSearchTerm(text, term); }
     stripHTML(html)                         { return stripHTML(html); }
 
-    openModal(modal)       { openModal(this, modal); }
-    closeModal(modal)      { closeModal(this, modal); }
-    openBookModal()        { openBookModal(this); }
-    populateBookModal()    { populateBookModal(this); }
-    openChapterModal()     { openChapterModal(this); }
-    populateChapterModal() { populateChapterModal(this); }
-    openVerseModal()       { openVerseModal(this); }
-    populateVerseModal()   { populateVerseModal(this); }
-    getCurrentVerseCount() { return getCurrentVerseCount(this); }
-    scrollToVerse(n)       { scrollVerse(this, n); }
-    applyVerseGlow()       { glowVerse(this); }
+    openModal(modal)           { openModal(this, modal); }
+    closeModal(modal)          { closeModal(this, modal); }
+    openBookModal()            { openBookModal(this); }
+    populateBookModal()        { populateBookModal(this); }
+    openChapterModal()         { openChapterModal(this); }
+    populateChapterModal()     { populateChapterModal(this); }
+    openVerseModal()           { openVerseModal(this); }
+    populateVerseModal()       { populateVerseModal(this); }
+    openTranslationModal()     { openTranslationModal(this); }
+    populateTranslationModal() { populateTranslationModal(this); }
+    getCurrentVerseCount()     { return getCurrentVerseCount(this); }
+    scrollToVerse(n)           { scrollVerse(this, n); }
+    applyVerseGlow()           { glowVerse(this); }
 
     loadLocalSettings()          { loadLocalSettings(this); }
     applySettings()              { applySettings(this); }
