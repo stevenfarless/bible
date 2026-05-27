@@ -2,6 +2,8 @@
 // All search-related logic for BibleApp.
 // Every function accepts an `app` instance as its first argument.
 
+import { normaliseBookAlias } from './book-aliases.js';
+
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
 export function escapeRegExp(str) {
@@ -33,26 +35,28 @@ export function highlightSearchTerm(text, term) {
 /**
  * Parses a Bible reference string into { book, chapter, verse }.
  *
- * When `bookList` is provided (an ordered array of canonical book name strings),
- * the function tries each book name as a case-insensitive prefix match against
- * the cleaned input — longest names first — before falling back to the regex.
- * This correctly handles multi-word names like "Song of Solomon" and
- * "2 Thessalonians" that the lazy regex cannot reliably split from the chapter.
+ * 1. normaliseBookAlias() maps abbreviations/variants to canonical names.
+ * 2. When bookList is provided, tries each name longest-first as a
+ *    case-insensitive prefix match.
+ * 3. Lazy regex fallback for callers without a book list.
+ *
+ * Accepts both ":" and " " as the chapter/verse delimiter so
+ * "jn 3 16" and "John 3:16" both resolve correctly.
  *
  * @param {string} reference
- * @param {string[]} [bookList] - optional canonical book names from getAllBooks()
+ * @param {string[]} [bookList]
  * @returns {{ book: string, chapter: number, verse: number|null } | null}
  */
 export function parseReference(reference, bookList) {
-    const cleaned = String(reference || '').trim();
+    const raw = String(reference || '').trim();
+    const cleaned = normaliseBookAlias(raw);
 
-    // Book-list path: try every known name (longest first) as a prefix.
     if (Array.isArray(bookList) && bookList.length > 0) {
         const sorted = [...bookList].sort((a, b) => b.length - a.length);
         for (const name of sorted) {
             const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const prefixRe = new RegExp(
-                '^(' + escapedName + ')\\s+(\\d+)(?::(\\d+))?$',
+                '^(' + escapedName + ')\\s+(\\d+)(?:[:\\s](\\d+))?$',
                 'i'
             );
             const m = cleaned.match(prefixRe);
@@ -61,7 +65,6 @@ export function parseReference(reference, bookList) {
                 const verse = m[3] ? parseInt(m[3], 10) : null;
                 if (!Number.isFinite(chapter)) continue;
                 if (verse !== null && !Number.isFinite(verse)) continue;
-                // Use the canonical casing from the book list, not the user's input.
                 return { book: name, chapter, verse };
             }
         }
@@ -69,7 +72,7 @@ export function parseReference(reference, bookList) {
     }
 
     // Regex fallback for callers without a book list.
-    const match = cleaned.match(/^((?:\d\s+)?[A-Za-z][A-Za-z ]*?)\s+(\d+)(?::(\d+))?$/);
+    const match = cleaned.match(/^((?:\d\s+)?[A-Za-z][A-Za-z ]*?)\s+(\d+)(?:[:\s](\d+))?$/);
     if (!match) return null;
 
     const book = match[1].trim();
@@ -91,23 +94,14 @@ export function isPassageReference(query) {
 }
 
 export async function loadPassageFromReference(app, reference) {
-    // Pass the canonical book list so parseReference can correctly identify
-    // multi-word book names like "Song of Solomon" that the regex mishandles.
     const allBooks = app.getAllBooks();
     const parsed = parseReference(reference, allBooks);
     if (!parsed) return;
-    let { book, chapter, verse } = parsed;
-
-    // parseReference already returns the canonical name from the book list
-    // when bookList is provided, so no separate normalisation step is needed.
+    const { book, chapter, verse } = parsed;
 
     app.state.selectedVerse = verse || null;
     await app.loadPassage(book, chapter);
     if (verse) {
-        // Defer the DOM mutation until after the browser has committed the new
-        // passage innerHTML to layout. Calling scrollToVerse synchronously
-        // after loadPassage can fire applyVerseGlow while the scaffold nodes
-        // are still being laid out, corrupting BSB heading/structure markup.
         requestAnimationFrame(() => app.scrollToVerse(verse));
     }
 }
@@ -255,8 +249,10 @@ export async function handlePassageReference(app, reference) {
 
         refreshSearchResultItems(app, true);
     } else {
-        app.searchResults.innerHTML = '<div class="search-no-results">No passage found</div>';
-        refreshSearchResultItems(app, false);
+        // fetchPassage returned null — the input looked like a reference but
+        // didn't resolve. Fall back to keyword search so the user still gets
+        // results rather than a dead-end "No passage found".
+        await performKeywordSearch(app, reference);
     }
 }
 
