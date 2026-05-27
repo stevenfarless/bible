@@ -1,13 +1,11 @@
 // bsb-structure.js
-// Loads pre-computed BSB structure scaffold data from Firebase Realtime Database.
+// Loads pre-computed BSB structure scaffold data from local repo files.
 // Each record is a flat array of events: { ch, v, type, text? }
 // type is 'heading' or 'para_break'.
 // Events fire BEFORE the verse they reference.
 //
 // Only used at runtime when the active translation is BSB.
-// RTDB path: /structure/BSB/{bookName}
-
-import { FIREBASE_DB_URL } from './config/firebase-config.js';
+// Local path: ./translations/BSB/BSB_structure/{bookName}.json
 
 const _cache = new Map();
 
@@ -19,19 +17,18 @@ function sanitizeForLog(value) {
  * Returns the scaffold event array for the given book name.
  * Results are cached in memory for the session.
  *
- * @param {string} bookName - Exact book name matching the RTDB key,
+ * @param {string} bookName - Exact book name matching the file key,
  *   e.g. 'John', '1 Corinthians', 'Song of Solomon'.
  * @returns {Promise<Array>} Flat array of structure events, or [] on failure.
  */
 export async function loadStructure(bookName) {
     if (_cache.has(bookName)) return _cache.get(bookName);
 
-    const url = `${FIREBASE_DB_URL}/structure/BSB/${encodeURIComponent(bookName)}.json`;
+    const url = `./translations/BSB/BSB_structure/${encodeURIComponent(bookName)}.json`;
     try {
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        // RTDB returns null for missing keys.
         const events = Array.isArray(data) ? data : [];
         _cache.set(bookName, events);
         return events;
