@@ -38,6 +38,10 @@ const BOOK_LOAD_ORDER = [
     '1 John','2 John','3 John','Jude','Revelation',
 ];
 
+// Sorted longest-first once at module load so _parseReference doesn't re-sort
+// on every call.
+const BOOK_LOAD_ORDER_BY_LENGTH = [...BOOK_LOAD_ORDER].sort((a, b) => b.length - a.length);
+
 const BOOK_KEY_ALIASES = {
     'Song of Solomon': 'Song Of Solomon',
 };
@@ -187,15 +191,46 @@ export class BibleApi {
         }
     }
 
+    /**
+     * Parse a reference string into its components.
+     *
+     * Tries each canonical book name (longest first) as a case-insensitive
+     * prefix match before falling back to the lazy regex. This correctly
+     * handles multi-word names like "Song of Solomon", "1 Chronicles", and
+     * "2 Thessalonians" that the regex cannot reliably split from the chapter.
+     *
+     * @param {string} reference
+     * @returns {{ book: string, chapter: number, verseStart: number|null, verseEnd: number|null } | null}
+     */
     _parseReference(reference) {
         const str = String(reference || '').trim();
+
+        // Book-list path: try every known name longest-first as a prefix.
+        for (const name of BOOK_LOAD_ORDER_BY_LENGTH) {
+            const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const re = new RegExp(
+                '^(' + escaped + ')\\s+(\\d+)(?::(\\d+)(?:-(\\d+))?)?$',
+                'i'
+            );
+            const m = str.match(re);
+            if (m) {
+                return {
+                    book:       name,   // canonical casing from BOOK_LOAD_ORDER
+                    chapter:    parseInt(m[2], 10),
+                    verseStart: m[3] ? parseInt(m[3], 10) : null,
+                    verseEnd:   m[4] ? parseInt(m[4], 10) : null,
+                };
+            }
+        }
+
+        // Regex fallback for any reference not in the canonical list.
         const m = str.match(/^((?:[1-3]\s+)?[A-Za-z ]+?)\s+(\d+)(?::(\d+)(?:-(\d+))?)?$/);
         if (!m) return null;
         return {
-            book: m[1].trim(),
-            chapter: parseInt(m[2], 10),
+            book:       m[1].trim(),
+            chapter:    parseInt(m[2], 10),
             verseStart: m[3] ? parseInt(m[3], 10) : null,
-            verseEnd: m[4] ? parseInt(m[4], 10) : null,
+            verseEnd:   m[4] ? parseInt(m[4], 10) : null,
         };
     }
 
@@ -324,13 +359,10 @@ export class BibleApi {
 
         const wordRegex = _buildWordRegex(q);
 
-        // ── Fast path: prebuilt search index ──────────────────────────────
+        // ── Fast path: prebuilt search index ──────────────────────────────────
         const searchIndex = await this._loadSearchIndex(this._translation);
 
         if (searchIndex !== null) {
-            // Collect matching refs first, then fetch original-cased text from
-            // the book cache in batches. _loadBook is cached so subsequent
-            // passage loads for the same translation are free.
             const matches = [];
             for (const [ref, normalizedText] of Object.entries(searchIndex)) {
                 if (!wordRegex.test(normalizedText)) continue;
@@ -344,7 +376,6 @@ export class BibleApi {
                 });
             }
 
-            // Fetch all required books concurrently (cached after first load).
             const uniqueBooks = [...new Set(matches.map((m) => m.book))];
             const bookDataMap = new Map(
                 await Promise.all(
