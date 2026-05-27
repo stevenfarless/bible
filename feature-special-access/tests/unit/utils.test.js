@@ -197,8 +197,8 @@ describe('buildVerseId', () => {
 // buildBiblePath — API URL / path construction
 // ---------------------------------------------------------------------------
 describe('buildBiblePath', () => {
-    it('constructs the correct relative path for ESV', () => {
-        expect(buildBiblePath('ESV')).toBe('./translations/ESV/ESV_bible.json');
+    it('constructs the correct relative path for KJV', () => {
+        expect(buildBiblePath('KJV')).toBe('./translations/KJV/KJV_bible.json');
     });
 
     it('constructs the correct relative path for BSB', () => {
@@ -225,8 +225,8 @@ describe('initializeState', () => {
         expect(initializeState().selectedVerse).toBeNull();
     });
 
-    it('defaults to ESV translation', () => {
-        expect(initializeState().translation).toBe('ESV');
+    it('defaults to KJV translation', () => {
+        expect(initializeState().translation).toBe('KJV');
     });
 
     it('defaults fontSize to 18', () => {
