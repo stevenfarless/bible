@@ -17,6 +17,7 @@
 // section headings and paragraph breaks into the rendered HTML.
 
 import { FIREBASE_DB_URL } from './config/firebase-config.js';
+import { normaliseBookAlias } from './book-aliases.js';
 
 const PAGE_SIZE = 100;
 // Max concurrent RTDB book fetches during search (fallback path only).
@@ -37,6 +38,10 @@ const BOOK_LOAD_ORDER = [
     'Titus','Philemon','Hebrews','James','1 Peter','2 Peter',
     '1 John','2 John','3 John','Jude','Revelation',
 ];
+
+// Sorted longest-first once at module load so _parseReference doesn't re-sort
+// on every call.
+const BOOK_LOAD_ORDER_BY_LENGTH = [...BOOK_LOAD_ORDER].sort((a, b) => b.length - a.length);
 
 const BOOK_KEY_ALIASES = {
     'Song of Solomon': 'Song Of Solomon',
@@ -159,14 +164,6 @@ export class BibleApi {
         }
     }
 
-    /**
-     * Attempt to load the prebuilt flat search index for a translation.
-     * Returns null if the index hasn't been built yet or the fetch fails.
-     * Result is cached in _searchIndexCache so subsequent calls are free.
-     *
-     * @param {string} translation
-     * @returns {Promise<Object|null>}  { "Genesis 1:1": "in the beginning...", ... }
-     */
     async _loadSearchIndex(translation) {
         if (this._searchIndexCache.has(translation)) {
             return this._searchIndexCache.get(translation);
@@ -176,7 +173,6 @@ export class BibleApi {
             const res = await fetch(url);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
-            // RTDB returns null for nodes that don't exist.
             const index = (data && typeof data === 'object') ? data : null;
             this._searchIndexCache.set(translation, index);
             return index;
@@ -187,15 +183,48 @@ export class BibleApi {
         }
     }
 
+    /**
+     * Parse a reference string into its components.
+     *
+     * 1. normaliseBookAlias() maps abbreviations/variants to canonical names.
+     * 2. Prefix loop against BOOK_LOAD_ORDER_BY_LENGTH for exact canonical matching.
+     * 3. Lazy regex fallback for anything not in the canonical list.
+     *
+     * Chapter/verse delimiter accepts both ":" and " " so "jn 3 16" and
+     * "John 3:16" both parse to { book: 'John', chapter: 3, verse: 16 }.
+     *
+     * @param {string} reference
+     * @returns {{ book, chapter, verseStart, verseEnd } | null}
+     */
     _parseReference(reference) {
-        const str = String(reference || '').trim();
-        const m = str.match(/^((?:[1-3]\s+)?[A-Za-z ]+?)\s+(\d+)(?::(\d+)(?:-(\d+))?)?$/);
+        const raw = String(reference || '').trim();
+        const str = normaliseBookAlias(raw);
+
+        for (const name of BOOK_LOAD_ORDER_BY_LENGTH) {
+            const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const re = new RegExp(
+                '^(' + escaped + ')\\s+(\\d+)(?:[:\\s](\\d+)(?:-(\\d+))?)?$',
+                'i'
+            );
+            const m = str.match(re);
+            if (m) {
+                return {
+                    book:       name,
+                    chapter:    parseInt(m[2], 10),
+                    verseStart: m[3] ? parseInt(m[3], 10) : null,
+                    verseEnd:   m[4] ? parseInt(m[4], 10) : null,
+                };
+            }
+        }
+
+        // Regex fallback for any reference not in the canonical list.
+        const m = str.match(/^((?:[1-3]\s+)?[A-Za-z ]+?)\s+(\d+)(?:[:\s](\d+)(?:-(\d+))?)?$/);
         if (!m) return null;
         return {
-            book: m[1].trim(),
-            chapter: parseInt(m[2], 10),
+            book:       m[1].trim(),
+            chapter:    parseInt(m[2], 10),
             verseStart: m[3] ? parseInt(m[3], 10) : null,
-            verseEnd: m[4] ? parseInt(m[4], 10) : null,
+            verseEnd:   m[4] ? parseInt(m[4], 10) : null,
         };
     }
 
@@ -299,38 +328,16 @@ export class BibleApi {
         return { passages: [html], canonical };
     }
 
-    /**
-     * Search all verses for `query`.
-     *
-     * Fast path: if a prebuilt flat ref->text index exists in RTDB at
-     * /searchIndex/{translation}, fetch it once (cached after first call)
-     * and search via Object.entries + word-boundary regex. Single round trip,
-     * instant on repeat searches.
-     *
-     * Fallback path: if the index is absent or the fetch fails, fetch books
-     * in batches of SEARCH_CONCURRENCY and search as they arrive. Results
-     * stream incrementally via onBatchResults.
-     *
-     * Word-boundary matching (\b) prevents false positives where short terms
-     * appear as substrings inside longer words (e.g. "hate" inside "whatever").
-     *
-     * @param {string} query
-     * @param {function(Array):void} [onBatchResults]  - called with new results after each batch
-     * @returns {Promise<{results: Array, total_results: number, page_size: number}>}
-     */
     async searchPassages(query, onBatchResults = null) {
         const q = String(query || '').toLowerCase().trim();
         if (!q) return { results: [], total_results: 0, page_size: PAGE_SIZE };
 
         const wordRegex = _buildWordRegex(q);
 
-        // ── Fast path: prebuilt search index ──────────────────────────────
+        // ── Fast path: prebuilt search index ──────────────────────────────────
         const searchIndex = await this._loadSearchIndex(this._translation);
 
         if (searchIndex !== null) {
-            // Collect matching refs first, then fetch original-cased text from
-            // the book cache in batches. _loadBook is cached so subsequent
-            // passage loads for the same translation are free.
             const matches = [];
             for (const [ref, normalizedText] of Object.entries(searchIndex)) {
                 if (!wordRegex.test(normalizedText)) continue;
@@ -344,7 +351,6 @@ export class BibleApi {
                 });
             }
 
-            // Fetch all required books concurrently (cached after first load).
             const uniqueBooks = [...new Set(matches.map((m) => m.book))];
             const bookDataMap = new Map(
                 await Promise.all(
