@@ -144,8 +144,6 @@ function buildDebugReport(app) {
     const buildId   = document.querySelector('meta[name="build-id"]')?.content || '__BUILD_ID__';
 
     // ── Firebase connectivity ─────────────────────────────────────────────
-    // We check the .info/connected path that Firebase RTDB exposes.
-    // _dbg.firebaseConnected is set by the onValue listener installed in init().
     const fbConnected = dbg.firebaseConnected === true  ? 'connected ✓'
                       : dbg.firebaseConnected === false ? 'DISCONNECTED ✗'
                       : 'unknown (listener not yet fired)';
@@ -226,7 +224,6 @@ function buildDebugReport(app) {
         : 'n/a';
 
     // ── SW cache keys ─────────────────────────────────────────────────────
-    // Populated async after panel opens — placeholder shown immediately.
     const swCacheLines = ['  (loading...)'];
 
     const timings = [
@@ -526,6 +523,10 @@ class BibleApp {
         this.searchExpandedTestaments = new Set();
         this.searchExpandedBooks = new Set();
         this.bibleApi = new BibleApi(this.state.translation || 'KJV');
+
+        // Expose instance for Playwright debug log attachment — REMOVE BEFORE MERGING TO MAIN.
+        window._bibleApp = this;
+
         this.init();
     }
 
@@ -591,10 +592,6 @@ class BibleApp {
     }
 
     // ── Background translation prefetch ───────────────────────────────────
-    // Called once after first paint. Fetches every local translation except
-    // the active one, sequentially, with a 500 ms idle gap between each.
-    // Warms both the in-memory bookCache and the service worker cache so
-    // subsequent translation switches are instant.
     _prefetchTranslations() {
         const active = this.state.translation;
         const queue = [...LOCAL_TRANSLATIONS].filter(t => t !== active);
@@ -606,7 +603,6 @@ class BibleApp {
                 .catch(() => {})
                 .finally(() => setTimeout(next, 500));
         };
-        // Initial delay of 2 s gives the first paint and auth check time to settle.
         setTimeout(next, 2000);
     }
 
@@ -678,6 +674,8 @@ class BibleApp {
             if (cacheHit) this._dbgEvent('cache restore: HIT');
 
             initDebugTrigger(this);
+            // Expose debug report builder for Playwright test attachment — REMOVE BEFORE MERGING TO MAIN.
+            window._buildDebugReport = () => buildDebugReport(window._bibleApp).text;
 
             const savedPos = _readSavedPosition();
             const posMatchesCache = !savedPos ||
