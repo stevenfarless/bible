@@ -140,7 +140,7 @@ body::-webkit-scrollbar {
 
     /* Brand */
     --primary-color: var(--dracula-purple);
-    --primary-dark: #9D75D6;
+    --primary-dark: hsl(265, 89%, 64%);
     --primary-light: var(--dracula-pink);
     --secondary-color: var(--dracula-orange);
     --accent-color: var(--dracula-cyan);
