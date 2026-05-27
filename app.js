@@ -1,8 +1,8 @@
 // ====================
-// ESV Bible Reader App
+// Bible Reader App
 // ====================
 
-import { BibleApi, loadTranslationIndex } from './bible-api.js';
+import { BibleApi } from './bible-api.js';
 import { loadStructure, eventsForChapter } from './bsb-structure.js';
 import {
     initializeState,
@@ -143,7 +143,7 @@ function buildDebugReport(app) {
         `  cacheRestoreResult:   ${dbg.cacheRestoreResult ?? 'n/a'} at ${ts(dbg.t_cache_restore)}`,
         `  revealApp (1st):      ${ts(dbg.t_reveal_first)}`,
         `  passageFetchStart:    ${ts(dbg.t_passage_fetch_start)}`,
-        `  passageFetchEnd:      ${ts(dbg.t_passage_fetch_end)}  (${dbg.passageFetchMs != null ? dbg.passageFetchMs + 'ms RTDB' : 'n/a'})`,
+        `  passageFetchEnd:      ${ts(dbg.t_passage_fetch_end)}  (${dbg.passageFetchMs != null ? dbg.passageFetchMs + 'ms' : 'n/a'})`,
         `  revealApp (2nd):      ${ts(dbg.t_reveal_second)}`,
         `  authStateChanged:     ${ts(dbg.t_auth_state)} (${dbg.authStateUser ?? 'n/a'})`,
         `  userDataLoaded:       ${ts(dbg.t_user_data_loaded)}`,
@@ -404,8 +404,6 @@ class BibleApp {
             const stateChapter = this.state.currentChapter;
             const stateTrans   = this.state.translation || 'KJV';
 
-            // parseInt on both sides guards against older cache entries
-            // that stored chapter as a string.
             if (
                 book                    !== stateBook    ||
                 parseInt(chapter, 10)  !== stateChapter ||
@@ -484,33 +482,19 @@ class BibleApp {
 
             initDebugTrigger(this);
 
-            // Decide what to load on startup:
-            //
-            // 1. Cache HIT and readingPosition agrees with the cache — nothing to
-            //    fetch. Reveal immediately and run translation registry in background.
-            //
-            // 2. Cache HIT but readingPosition points somewhere different (stale cache
-            //    from a previous session's last chapter before reload) — reveal the
-            //    cached content immediately so the user sees something, then load the
-            //    correct position in the background.
-            //
-            // 3. Cache MISS — load the target passage and reveal when done.
-
             const savedPos = _readSavedPosition();
             const posMatchesCache = !savedPos ||
                 (savedPos.book === this.state.currentBook && savedPos.chapter === this.state.currentChapter);
 
             if (cacheHit && posMatchesCache) {
-                // Fast path: cache is current. No RTDB fetch needed.
                 this._dbg.t_reveal_first = ms();
                 this._dbg.t_passage_fetch_start = null;
                 this._dbg.t_passage_fetch_end   = null;
                 this._dbg.passageFetchMs         = null;
                 revealApp();
-                this._dbgEvent('init: cache hit + position match — skipping RTDB fetch');
+                this._dbgEvent('init: cache hit + position match — skipping fetch');
                 this._loadTranslationRegistry();
             } else if (cacheHit && !posMatchesCache) {
-                // Reveal stale cache immediately for fast paint, then fix the position.
                 this._dbg.t_reveal_first = ms();
                 revealApp();
                 this._dbgEvent(`init: cache hit but position mismatch — loading ${savedPos.book} ${savedPos.chapter}`);
@@ -522,7 +506,6 @@ class BibleApp {
                 this._dbg.t_passage_fetch_end = ms();
                 this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
             } else {
-                // Cache miss: fetch and then reveal.
                 this._dbg.t_passage_fetch_start = ms();
                 await Promise.all([
                     this._loadTranslationRegistry(),
@@ -569,22 +552,31 @@ class BibleApp {
     }
 
     async _loadTranslationRegistry() {
-        const translations = await loadTranslationIndex();
-        // Save to instance so populateTranslationModal can read it.
-        this._translationRegistry = translations.map(t => ({ id: t.id, name: t.label }));
-        const select = document.getElementById('translationSelector');
-        if (select && translations.length > 0) {
-            select.innerHTML = '';
-            for (const t of translations) {
-                const opt = document.createElement('option');
-                opt.value = t.id;
-                opt.textContent = t.label;
-                select.appendChild(opt);
+        try {
+            const res = await fetch('./translations/index.json');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            const translations = data.translations || [];
+
+            this._translationRegistry = translations.map(t => ({ id: t.id, name: t.label }));
+
+            const select = document.getElementById('translationSelector');
+            if (select && translations.length > 0) {
+                select.innerHTML = '';
+                for (const t of translations) {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = t.label;
+                    select.appendChild(opt);
+                }
             }
+
+            this._copyrightMap = {};
+            for (const t of translations) this._copyrightMap[t.id] = t.copyright || '';
+            this.updateCopyright?.();
+        } catch (err) {
+            console.error('BibleApp: failed to load translation index', err);
         }
-        this._copyrightMap = {};
-        for (const t of translations) this._copyrightMap[t.id] = t.copyright || '';
-        this.updateCopyright?.();
     }
 
     initializeAccordion() {
