@@ -1,8 +1,7 @@
 # Bible Reader
 
 A fast, offline-capable Bible reading web app built with vanilla JavaScript.
-Served via GitHub Pages with no backend required — Firebase handles auth and
-reading state sync only.
+Served via GitHub Pages. Firebase handles auth and reading state sync only.
 
 Live app: [stevenfarless.github.io/bible](https://stevenfarless.github.io/bible)
 
@@ -12,11 +11,11 @@ Live app: [stevenfarless.github.io/bible](https://stevenfarless.github.io/bible)
 
 | Translation | License |
 |---|---|
-| **BSB** — Berean Standard Bible | Public domain |
-| **KJV** — King James Version | Public domain |
-| **MSB** — Majority Standard Bible | Public domain |
-| **LEB** — Lexham English Bible | © 2012 Logos Bible Software — free use with attribution |
-| **NET** — New English Translation | © Biblical Studies Press — free non-commercial use with attribution |
+| **BSB** - Berean Standard Bible | Public domain |
+| **KJV** - King James Version | Public domain |
+| **MSB** - Majority Standard Bible | Public domain |
+| **LEB** - Lexham English Bible | (c) 2012 Logos Bible Software, free use with attribution |
+| **NET** - New English Translation | (c) Biblical Studies Press, free non-commercial use with attribution |
 
 Full copyright and attribution information is in [NOTICE](NOTICE).
 
@@ -32,13 +31,13 @@ Full copyright and attribution information is in [NOTICE](NOTICE).
 
 **Navigation**
 - Book, chapter, and verse picker modals
-- Keyboard shortcuts: `←` `→` chapter navigation, `↑` `↓` verse navigation, `Ctrl+K` search, `?` help
+- Keyboard shortcuts: `<-` `->` chapter navigation, `^` `v` verse navigation, `Ctrl+K` search, `?` help
 
 **Search**
 - Full-text search across all translations with results grouped by testament and book
 - Direct passage reference lookup (e.g. `John 3:16`, `Romans 8`)
 
-**Sync & Offline**
+**Sync and Offline**
 - Firebase Authentication (email/password)
 - Reading position and settings synced across devices via Firebase Realtime Database
 - Service worker for full offline use after first load
@@ -63,7 +62,7 @@ Full copyright and attribution information is in [NOTICE](NOTICE).
 ├── bible-structure.js      # Book/chapter/testament lookup tables
 ├── bsb-structure.js        # Heading/paragraph scaffold loader (BSB)
 ├── ui.js                   # Theme, element caching, icon updates
-├── firebase-config.js      # Root stub — re-exports from config/firebase-config.js
+├── firebase-config.js      # Root stub, re-exports from config/firebase-config.js
 ├── sw.js                   # Service worker
 ├── styles.css              # All styles
 ├── cross_references.txt    # Cross-reference source data (8 MB)
@@ -86,10 +85,9 @@ Full copyright and attribution information is in [NOTICE](NOTICE).
 
 ## Architecture
 
-`app.js` is a thin orchestrator. It owns `init`, `loadPassage`, the
-service-worker registration, and one-liner delegation methods for everything
-else. It should only change when you are modifying the app lifecycle or how
-passages are loaded.
+`app.js` is a thin orchestrator. It owns `init`, `loadPassage`, service-worker
+registration, and one-liner delegation methods for everything else. It should
+only change when modifying the app lifecycle or how passages are loaded.
 
 All other logic lives in single-responsibility modules. When adding a feature,
 touch only the modules relevant to that feature:
@@ -106,8 +104,8 @@ touch only the modules relevant to that feature:
 | New lifecycle step at startup | `app.js` (`init`) |
 | Change to how passages load | `app.js` (`loadPassage`) |
 
-`app.js` should not grow. If you find yourself adding logic directly to
-`app.js`, it belongs in one of the modules above.
+If you find yourself adding logic directly to `app.js`, it belongs in one of
+the modules above instead.
 
 ---
 
@@ -116,12 +114,12 @@ touch only the modules relevant to that feature:
 The app requires a Firebase project for auth and cross-device sync.
 
 1. Create a project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable **Authentication** → Email/Password provider
+2. Enable **Authentication** -> Email/Password provider
 3. Enable **Realtime Database** and set security rules to block unauthenticated writes
 4. Copy your config values into `config/firebase-config.js`
 
 `config/firebase-config.js` is tracked in the repository. Do not commit
-production credentials to a public repo — use environment variable injection
+production credentials to a public repo. Use environment variable injection
 or a CI secret for any public deployment.
 
 ---
