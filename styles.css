@@ -105,6 +105,7 @@ body::-webkit-scrollbar {
     --max-width: 800px;
     --header-height: 45px;
     --nav-height: 56px;
+    --chrome-height: calc(var(--header-height) + var(--nav-height));
 
     /* Transitions */
     --transition-fast: 150ms ease;
@@ -464,40 +465,32 @@ a:visited {
    5. LAYOUT COMPONENTS
    ================================ */
 
-/* Top Chrome (Header + Nav wrapper) */
+/* Top Chrome (Header + Nav wrapper)
+   Fixed so it never participates in document flow.
+   Revealed/hidden by toggling translateY(0) vs translateY(-100%).
+   No max-height, no overflow:hidden — just a plain slide. */
 .top-chrome {
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 100;
-    max-height: calc(var(--header-height) + var(--nav-height));
-    transition: max-height var(--transition-normal);
-}
-
-.top-chrome .header,
-.top-chrome .navigation {
     transform: translateY(0);
     transition: transform var(--transition-normal);
     will-change: transform;
 }
 
 body.chrome-hidden .top-chrome {
-    max-height: 0;
-    overflow: hidden;
-}
-
-body.chrome-hidden .top-chrome .header,
-body.chrome-hidden .top-chrome .navigation {
     transform: translateY(-100%);
 }
 
-/* Remove individual borders when chrome is hidden (no ghost lines) */
-body.chrome-hidden .top-chrome .header {
-    border-bottom: none;
-    box-shadow: none;
+body.chrome-no-transition .top-chrome {
+    transition: none !important;
 }
 
-body.chrome-hidden .top-chrome .navigation {
-    border-bottom: none;
+/* Push page content below the fixed chrome */
+.main-content {
+    padding-top: var(--chrome-height);
 }
 
 
@@ -506,7 +499,6 @@ body.chrome-hidden .top-chrome .navigation {
     background-color: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
     position: relative;
-    top: auto;
     z-index: 100;
     box-shadow: var(--shadow-sm);
 }
@@ -539,13 +531,7 @@ body.chrome-hidden .top-chrome .navigation {
     background-color: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
     position: relative;
-    top: auto;
     z-index: 99;
-}
-
-body.chrome-no-transition .header,
-body.chrome-no-transition .navigation {
-    transition: none !important;
 }
 
 .nav-content {
@@ -556,13 +542,6 @@ body.chrome-no-transition .navigation {
     justify-content: space-between;
     align-items: center;
     gap: var(--spacing-md);
-}
-
-/* Main Content */
-.main-content {
-    max-width: var(--max-width);
-    margin: 0 auto;
-    padding: var(--spacing-xl) var(--spacing-lg);
 }
 
 
@@ -2028,6 +2007,7 @@ body.light-mode .selected-verse-glow {
 
     .main-content {
         padding: 0;
+        padding-top: var(--chrome-height);
     }
 
     .passage-container {
