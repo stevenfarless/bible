@@ -19,7 +19,7 @@ import {
   ReCaptchaV3Provider
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check.js";
 var firebaseConfig = {
-  apiKey: "AIzaSyCGVPqbTZCQ3Hrs9sFIJm_PR32FP_CVXSw",
+  apiKey: "AIzaSyCHH_MNP89AsMlhzfjbcJEN3lJBebtdnKs",
   authDomain: "esv-bible-6dffb.firebaseapp.com",
   databaseURL: "https://esv-bible-6dffb-default-rtdb.firebaseio.com",
   projectId: "esv-bible-6dffb",
