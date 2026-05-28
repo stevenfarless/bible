@@ -2,42 +2,42 @@
   "translations": [
     {
       "id": "ASV",
-      "label": "ASV - American Standard Version",
+      "label": "American Standard Version",
       "copyright": "American Standard Version (ASV). Public domain."
     },
     {
       "id": "BLB",
-      "label": "BLB - Berean Literal Bible",
+      "label": "Berean Literal Bible",
       "copyright": "The Holy Bible, Berean Literal Bible, BLB is produced in cooperation with Bible Hub, Discovery Bible, OpenBible.com, and the Berean Bible Translation Committee. This text of God's Word has been dedicated to the public domain."
     },
     {
       "id": "BSB",
-      "label": "BSB - Berean Standard Bible",
+      "label": "Berean Standard Bible",
       "copyright": "The Holy Bible, Berean Standard Bible, BSB is produced in cooperation with Bible Hub, Discovery Bible, OpenBible.com, and the Berean Bible Translation Committee. This text of God's Word has been dedicated to the public domain."
     },
     {
       "id": "KJV",
-      "label": "KJV - King James Version",
+      "label": "King James Version",
       "copyright": "King James Version (KJV). Public domain."
     },
     {
       "id": "LEB",
-      "label": "LEB - Lexham English Bible",
+      "label": "Lexham English Bible",
       "copyright": "Scripture quotations marked LEB are from the Lexham English Bible. Copyright \u00a9 2012 Logos Bible Software. Lexham is a registered trademark of Logos Bible Software. https://lexhamenglishbible.com"
     },
     {
       "id": "MSB",
-      "label": "MSB - Majority Standard Bible",
+      "label": "Majority Standard Bible",
       "copyright": "The Holy Bible, Majority Standard Bible, MSB is produced in cooperation with Bible Hub, Discovery Bible, unfoldingWord, Bible Aquifer, OpenBible.com, and the Berean Bible Translation Committee. This text of God's Word has been dedicated to the public domain."
     },
     {
       "id": "NET",
-      "label": "NET - New English Translation",
+      "label": "New English Translation",
       "copyright": "Scripture quoted by permission. Quotations designated (NET) are from the NET Bible\u00ae copyright \u00a91996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved."
     },
     {
       "id": "WEB",
-      "label": "WEB - World English Bible",
+      "label": "World English Bible",
       "copyright": "World English Bible (WEB). Public domain."
     }
   ]
