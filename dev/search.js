@@ -207,6 +207,8 @@ export function toggleSearch(app) {
         app.searchResults.innerHTML = '';
         app.searchSelectedIndex = -1;
         app.searchResultItems = [];
+        if (app.searchResultsSummary) app.searchResultsSummary.remove();
+        app.searchResultsSummary = null;
     }
 }
 
@@ -216,6 +218,30 @@ export function closeSearch(app) {
     app.searchResults.innerHTML = '';
     app.searchSelectedIndex = -1;
     app.searchResultItems = [];
+    if (app.searchResultsSummary) app.searchResultsSummary.remove();
+    app.searchResultsSummary = null;
+}
+
+function ensureSearchSummaryHost(app) {
+    if (app.searchResultsSummary && app.searchResultsSummary.isConnected) return app.searchResultsSummary;
+
+    let summary = app.searchContainer.querySelector('.search-results-summary');
+    if (!summary) {
+        summary = document.createElement('div');
+        summary.className = 'search-results-summary';
+        summary.innerHTML = `
+            <span class="search-results-count"></span>
+            <span class="search-results-actions">
+                <button class="search-expand-collapse-btn" data-action="expand">expand all</button>
+                <span class="search-results-divider">·</span>
+                <button class="search-expand-collapse-btn" data-action="collapse">collapse all</button>
+            </span>
+        `;
+        app.searchContainer.insertBefore(summary, app.searchResults);
+    }
+
+    app.searchResultsSummary = summary;
+    return summary;
 }
 
 // ─── Input handling ─────────────────────────────────────────────────────────────────────
@@ -229,6 +255,8 @@ export function handleSearch(app, query) {
         app.searchResults.innerHTML = '';
         app.searchSelectedIndex = -1;
         app.searchResultItems = null;
+        if (app.searchResultsSummary) app.searchResultsSummary.remove();
+        app.searchResultsSummary = null;
         return;
     }
 
@@ -334,6 +362,9 @@ export async function handlePassageReference(app, reference) {
             '</div>';
 
         refreshSearchResultItems(app, true);
+        ensureSearchSummaryHost(app);
+        app.searchResultsSummary.querySelector('.search-results-count').textContent = '1 verse in 1 book';
+        app.searchResultsSummary.querySelector('.search-results-actions').style.display = 'none';
     } else {
         await performKeywordSearch(app, reference);
     }
@@ -435,6 +466,8 @@ export async function performKeywordSearch(app, query) {
         displaySearchResults(app, app.currentSearchResults, query);
     } else {
         app.searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
+        if (app.searchResultsSummary) app.searchResultsSummary.remove();
+        app.searchResultsSummary = null;
         refreshSearchResultItems(app, false);
     }
 
@@ -446,9 +479,12 @@ export async function performKeywordSearch(app, query) {
 
 export function displaySearchResults(app, results, query) {
     const groups = groupSearchResultsByCanon(app, results);
+    const isReferenceLookup = isPassageReference(query);
 
     if (!groups.length) {
         app.searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
+        if (app.searchResultsSummary) app.searchResultsSummary.remove();
+        app.searchResultsSummary = null;
         refreshSearchResultItems(app, false);
         return;
     }
@@ -471,16 +507,11 @@ export function displaySearchResults(app, results, query) {
     const totalBooks = groups.reduce((acc, g) => acc + g.books.length, 0);
     const countLabel = `${totalVerses} verse${totalVerses !== 1 ? 's' : ''} in ${totalBooks} book${totalBooks !== 1 ? 's' : ''}`;
 
-    const parts = [
-        `<div class="search-results-summary">
-          <span class="search-results-count">${countLabel}</span>
-          <span class="search-results-actions">
-            <button class="search-expand-collapse-btn" data-action="expand">expand all</button>
-            <span class="search-results-divider">·</span>
-            <button class="search-expand-collapse-btn" data-action="collapse">collapse all</button>
-          </span>
-        </div>`,
-    ];
+    const summary = ensureSearchSummaryHost(app);
+    summary.querySelector('.search-results-count').textContent = countLabel;
+    summary.querySelector('.search-results-actions').style.display = '';
+
+    const parts = [];
 
     for (const group of groups) {
         const testName = group.heading;
@@ -531,5 +562,5 @@ export function displaySearchResults(app, results, query) {
     }
 
     app.searchResults.innerHTML = parts.join('');
-    refreshSearchResultItems(app, true);
+    refreshSearchResultItems(app, isReferenceLookup);
 }
