@@ -1,12 +1,11 @@
-const BUILD_ID = "00e100bc0224dec2ca270f4bd874fcdbf913d603";
+const BUILD_ID = "fd74350e05ccc7bd3d0a4a8f61c0cb0a12e9c7dc";
 const CACHE_NAME = `bible-${BUILD_ID}`;
 
-// App shell JS modules (everything under the root except vendor/):
-// network-first, bypass the browser HTTP cache entirely so refreshes
-// always run the latest deployed code.
+// App shell assets (JS modules + CSS): network-first, bypass the browser
+// HTTP cache entirely so style and code changes deploy immediately.
 // vendor/ files are third-party SDKs that never change for a given
 // version — they go through the cache-first path below.
-const APP_SHELL_PATTERN = /^(?!\..*\/vendor\/).*\.(js|mjs)$/;
+const APP_SHELL_PATTERN = /^(?!\..*\/vendor\/).*\.(js|mjs|css)$/;
 
 // Firebase RTDB paths that are safe to cache indefinitely.
 // Bible text, translation index, and search index never change for a given
@@ -77,7 +76,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // App shell JS: network-first, bypass the browser HTTP cache entirely.
+  // App shell JS + CSS: network-first, bypass the browser HTTP cache entirely.
   if (APP_SHELL_PATTERN.test(url.pathname)) {
     event.respondWith(
       fetch(new Request(event.request, { cache: 'no-store' })).catch(async () => {
@@ -105,7 +104,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Everything else (vendor JS, JSON data files, CSS, fonts, images): cache-first.
+  // Everything else (vendor JS, JSON data files, fonts, images): cache-first.
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(event.request);
