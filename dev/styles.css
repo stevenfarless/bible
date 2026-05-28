@@ -2059,6 +2059,20 @@ body.light-mode .selected-verse-glow {
     }
 }
 
+/* ================================
+   Responsive book name in nav
+   .book-abbr  — short form (e.g. "Gen"), shown below 640 px
+   .book-full  — full name (e.g. "Genesis"), shown at 640 px and above
+   ================================ */
+
+/* Mobile default: show abbr, hide full */
+#currentBook .book-abbr { display: inline; }
+#currentBook .book-full { display: none; }
+
+@media (min-width: 640px) {
+    #currentBook .book-abbr { display: none; }
+    #currentBook .book-full { display: inline; }
+}
 
 
 /* ================================
