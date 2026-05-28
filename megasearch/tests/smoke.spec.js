@@ -384,7 +384,27 @@ test('settings: color theme selector applies theme to body', async ({ page }) =>
 // ---------------------------------------------------------------------------
 // 16. Theme switch — light mode toggle
 // ---------------------------------------------------------------------------
-test('theme switch: toggling light mode changes body class', async ({ page }) => {
+test('settings: verse-by-verse mode toggles passage layout class', async ({ page }) => {
+	await page.goto('/');
+	await waitForPassage(page);
+
+	await openSettingsSection(page, 'display');
+
+	const toggle = page.locator('#verseByVerseToggle');
+	const before = await toggle.isChecked();
+	await toggle.click();
+	await expect(toggle).toBeChecked({ checked: !before });
+
+	const hasClass = await page.evaluate(() =>
+		document.getElementById('passageText')?.classList.contains('verse-by-verse')
+	);
+	expect(hasClass).toBe(!before);
+});
+
+// ---------------------------------------------------------------------------
+// 14. Settings — font size change updates passage font size
+// ---------------------------------------------------------------------------
+test('settings: font size change updates passage font size', async ({ page }) => {
 	await page.goto('/');
 	await waitForApp(page);
 
@@ -433,4 +453,30 @@ test('keyboard: ArrowLeft goes to previous chapter', async ({ page }) => {
 
 	await page.locator('body').press('ArrowLeft');
 	await expect(page.locator('#passageTitle')).toContainText('Matthew 2', { timeout: 10000 });
+});
+
+// ---------------------------------------------------------------------------
+// 17. Keyboard — ArrowRight advances to next chapter
+// ---------------------------------------------------------------------------
+test('keyboard: ArrowRight advances to next chapter', async ({ page }) => {
+	await page.goto('/');
+	await waitForPassage(page);
+
+	const before = await page.locator('#currentChapter').textContent();
+	await page.keyboard.press('ArrowRight');
+	await expect(page.locator('#currentChapter')).not.toHaveText(before, { timeout: 5000 });
+});
+
+// ---------------------------------------------------------------------------
+// 18. Keyboard — ArrowLeft goes to previous chapter
+// ---------------------------------------------------------------------------
+test('keyboard: ArrowLeft goes to previous chapter', async ({ page }) => {
+	await page.goto('/');
+	await waitForPassage(page);
+
+	await page.keyboard.press('ArrowRight');
+	const mid = await page.locator('#currentChapter').textContent();
+
+	await page.keyboard.press('ArrowLeft');
+	await expect(page.locator('#currentChapter')).not.toHaveText(mid, { timeout: 5000 });
 });
