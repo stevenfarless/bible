@@ -501,9 +501,12 @@ body.chrome-no-transition .top-chrome {
     transition: none !important;
 }
 
-/* Push page content below the fixed chrome */
+/* Push page content below the fixed chrome, centered with gutters */
 .main-content {
-    padding-top: var(--chrome-height);
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: var(--spacing-xl) var(--spacing-lg);
+    padding-top: calc(var(--chrome-height) + var(--spacing-xl));
 }
 
 
