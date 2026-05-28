@@ -15,6 +15,9 @@ const DEFAULTS = {
     translation:         'KJV',
 };
 
+const RECAPTCHA_STYLE_ID = 'recaptcha-badge-style';
+const RECAPTCHA_DISCLOSURE_HTML = 'This site is protected by reCAPTCHA and the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a> apply.';
+
 function readBool(key, defaultValue) {
     try {
         const v = localStorage.getItem(key);
@@ -27,6 +30,24 @@ function readBool(key, defaultValue) {
 
 function lsSet(key, value) {
     try { localStorage.setItem(key, String(value)); } catch (_) {}
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function ensureRecaptchaBadgeHidden() {
+    if (document.getElementById(RECAPTCHA_STYLE_ID)) return;
+
+    const style = document.createElement('style');
+    style.id = RECAPTCHA_STYLE_ID;
+    style.textContent = '.grecaptcha-badge { visibility: hidden !important; }';
+    document.head.appendChild(style);
 }
 
 export function loadLocalSettings(app) {
@@ -63,6 +84,8 @@ export function loadLocalSettings(app) {
 }
 
 export function applySettings(app) {
+    ensureRecaptchaBadgeHidden();
+
     const themeSelector = document.getElementById('themeSelector');
     if (themeSelector && app.state.colorTheme) themeSelector.value = app.state.colorTheme;
     changeColorTheme(app, app.state.colorTheme || DEFAULTS.colorTheme);
@@ -177,7 +200,13 @@ export async function changeTranslation(app, translation) {
 }
 
 export function updateCopyright(app) {
-    if (app.copyright) {
-        app.copyright.textContent = app._copyrightMap[app.state.translation] || '';
-    }
+    if (!app.copyright) return;
+
+    const copyrightText = app._copyrightMap[app.state.translation] || '';
+    const copyrightHtml = copyrightText ? `<span class="copyright-text">${escapeHtml(copyrightText)}</span>` : '';
+
+    app.copyright.innerHTML = [
+        copyrightHtml,
+        `<span class="recaptcha-disclosure">${RECAPTCHA_DISCLOSURE_HTML}</span>`,
+    ].filter(Boolean).join('<br />');
 }
