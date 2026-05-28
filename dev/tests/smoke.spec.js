@@ -396,40 +396,48 @@ test('theme switch: toggling light mode changes body class', async ({ page }) =>
 });
 
 // ---------------------------------------------------------------------------
-// 17. Copy passage — clipboard receives book/chapter content
+// 17. Copy passage — copy button triggers 'Passage copied to clipboard!' toast
 //
-// copyPassage() in app.js reads passageTitle.textContent and
-// passageText.innerHTML (stripped of HTML tags) to build the clipboard string.
-// navigator.clipboard.writeText() cannot be reliably intercepted in headless
-// Chromium: readText() requires document focus that headless doesn't provide,
-// and the ClipboardAPI property descriptor is non-writable so it can't be
-// patched even with addInitScript + Object.defineProperty.
+// copyPassage() in app.js builds a string from passageTitle.textContent and
+// stripHTML(passageText.innerHTML), calls navigator.clipboard.writeText(),
+// then on success calls showToast('Passage copied to clipboard!').
 //
-// Instead, read the same DOM sources copyPassage() uses, click #copyBtn,
-// wait for the success toast (confirming the full copy path ran without error),
-// then assert those sources contain non-empty content matching the title.
-// This covers the behavioural contract without needing clipboard read access.
+// navigator.clipboard cannot be intercepted or read back in headless Chromium
+// (the descriptor is non-writable; readText requires document focus).
+//
+// The auth flow fires showToast('Sign in to sync your reading position
+// across devices.') for unauthenticated sessions on page load, using the same
+// #toast element. showToast() auto-dismisses after 3 s.
+//
+// Strategy:
+//   1. Assert the DOM sources copyPassage() reads are non-empty.
+//   2. Wait for #toast to lose the 'show' class (auth toast dismissed).
+//   3. Click #copyBtn.
+//   4. Assert #toast gets 'show' and contains 'Passage copied'.
 // ---------------------------------------------------------------------------
 test('copy passage: clipboard receives book/chapter content', async ({ page }) => {
 	await page.goto('/');
 	await waitForPassage(page);
 
-	// Read the DOM sources that copyPassage() uses to build the clipboard string.
+	// Assert the DOM sources copyPassage() reads are non-empty.
 	const title = await page.locator('#passageTitle').textContent();
 	const bodyText = await page.evaluate(() => {
 		const html = document.getElementById('passageText')?.innerHTML ?? '';
 		return html.replace(/<[^>]*>/g, '').trim();
 	});
-
-	// Confirm the source content is non-empty before clicking.
 	expect(title.trim().length).toBeGreaterThan(0);
 	expect(bodyText.length).toBeGreaterThan(0);
 
+	// Wait for any pre-existing toast (auth 'Sign in to sync...' fires on
+	// page load for unauthenticated sessions) to auto-dismiss (3 s timeout
+	// in showToast) before clicking so it doesn't satisfy the assertion below.
+	await expect(page.locator('#toast')).not.toHaveClass(/show/, { timeout: 8000 });
+
 	await page.locator('#copyBtn').click();
 
-	// Toast confirms copyPassage() ran the full path and writeText resolved.
+	// 'Passage copied to clipboard!' confirms writeText resolved and showToast ran.
 	await expect(page.locator('#toast')).toHaveClass(/show/, { timeout: 5000 });
-	await expect(page.locator('#toast')).toContainText('copied', { ignoreCase: true });
+	await expect(page.locator('#toast')).toContainText('Passage copied', { timeout: 1000 });
 });
 
 // ---------------------------------------------------------------------------
