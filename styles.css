@@ -1379,6 +1379,12 @@ body.hide-verse-numbers .verse .verse-num {
     padding: var(--spacing-xs) var(--spacing-md);
     margin-bottom: var(--spacing-xs);
     border-bottom: 1px solid var(--border-color);
+    max-width: var(--max-width);
+    margin: 0 auto var(--spacing-xs);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: var(--bg-secondary);
 }
 
 .search-results-count {
