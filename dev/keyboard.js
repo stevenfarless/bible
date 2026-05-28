@@ -30,6 +30,10 @@ export function handleKeyboardShortcuts(app, e) {
     if (modalOpen || searchOpen) return;
 
     switch (e.key) {
+        case '/':
+            e.preventDefault();
+            app.toggleSearch();
+            break;
         case 'ArrowLeft':
         case 'h':
             e.preventDefault();
