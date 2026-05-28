@@ -65,7 +65,12 @@ async function openSettingsSection(page, sectionDataValue) {
 // ---------------------------------------------------------------------------
 test('page load: main UI elements are visible', async ({ page }) => {
 	const errors = [];
-	page.on('pageerror', (err) => errors.push(err.message));
+	// 'cancelled' is a benign Firebase network abort that occurs when async
+	// RTDB/Auth requests are in-flight during initial page load in headless CI.
+	// It does not indicate a code defect.
+	page.on('pageerror', (err) => {
+		if (err.message !== 'cancelled') errors.push(err.message);
+	});
 
 	await page.goto('/');
 
