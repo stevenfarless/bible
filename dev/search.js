@@ -91,11 +91,14 @@ export async function loadPassageFromReference(app, reference) {
 }
 
 // ─── Delegated event handler ───────────────────────────────────────────────────────────
-
-// Attached once when search opens. Records the container's scrollTop at
-// touchstart. If scrollTop changed by the time touchend fires, the touch
-// was a scroll gesture and the action is skipped. This correctly handles
-// both slow drags and fast flicks, since both move scrollTop.
+//
+// Attached to app.searchContainer (not app.searchResults) so that the
+// summary bar's expand/collapse buttons — which are siblings of
+// searchResults, not children — are covered by the same handler.
+//
+// Scroll-detection guard is still applied, but only blocks the action
+// when the tap target is inside searchResults (result items, headings).
+// Taps on the summary bar buttons are never ambiguous with a scroll.
 
 export function initSearchResultsDelegate(app) {
     if (app._searchDelegateAttached) return;
@@ -103,14 +106,19 @@ export function initSearchResultsDelegate(app) {
 
     let scrollTopAtTouchStart = 0;
 
+    // Track scroll position on the results list for the scroll-vs-tap guard.
     app.searchResults.addEventListener('touchstart', () => {
         scrollTopAtTouchStart = app.searchResults.scrollTop;
     }, { passive: true });
 
     function handleTap(e) {
+        const target = e.target;
+
+        // Apply scroll guard only when the tap is inside the scrollable results list.
+        const insideResultsList = app.searchResults.contains(target);
+
         if (e.type === 'touchend') {
-            // If the container scrolled during this touch, ignore.
-            if (Math.abs(app.searchResults.scrollTop - scrollTopAtTouchStart) > 2) return;
+            if (insideResultsList && Math.abs(app.searchResults.scrollTop - scrollTopAtTouchStart) > 2) return;
             app._searchTouchHandled = true;
         }
 
@@ -119,7 +127,6 @@ export function initSearchResultsDelegate(app) {
             return;
         }
 
-        const target = e.target;
         const query = app.searchLastQuery || '';
 
         // ── Expand / collapse all ─────────────────────────────────────────
@@ -197,8 +204,9 @@ export function initSearchResultsDelegate(app) {
         }
     }
 
-    app.searchResults.addEventListener('touchend', handleTap, { passive: false });
-    app.searchResults.addEventListener('click', handleTap);
+    // Listen on the container so the summary bar buttons are included.
+    app.searchContainer.addEventListener('touchend', handleTap, { passive: false });
+    app.searchContainer.addEventListener('click', handleTap);
 }
 
 // ─── UI state ────────────────────────────────────────────────────────────────────────────────
