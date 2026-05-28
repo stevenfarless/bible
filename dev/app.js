@@ -967,7 +967,7 @@ async function registerServiceWorker(appInstance) {
             if (e.data?.type === 'NEW_VERSION') showUpdateToast(appInstance);
             if (e.data?.type === 'NEW_BUILD') {
                 const swBuildId = e.data.buildId || '';
-                if (pageBuildId && swBuildId && pageBuildId !== swBuildId) window.location.reload();
+                if (pageBuildId && swBuildId && pageBuildId !== swBuildId) showUpdateToast(appInstance);
             }
         });
         document.addEventListener('visibilitychange', () => {
