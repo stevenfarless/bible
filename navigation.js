@@ -10,7 +10,19 @@
 export function updateNavigationState(app) {
     const book = app.state.currentBook;
     const abbr = app.bookAbbreviations[book] || book;
-    app.currentBookSpan.textContent = abbr;
+    const full = app.getDisplayName(book);
+
+    const abbrEl = app.currentBookSpan.querySelector('.book-abbr');
+    const fullEl = app.currentBookSpan.querySelector('.book-full');
+
+    if (abbrEl && fullEl) {
+        abbrEl.textContent = abbr;
+        fullEl.textContent = full;
+    } else {
+        // Fallback for any environment where the child spans are missing
+        app.currentBookSpan.textContent = abbr;
+    }
+
     app.currentChapterSpan.textContent = app.state.currentChapter;
 
     const books = app.getAllBooks();
