@@ -1799,6 +1799,23 @@ body.hide-verse-numbers .verse .verse-num {
     border-color: var(--primary-color);
 }
 
+/* Keyboard-focused translation item (j/k/↑/↓ navigation) */
+.translation-modal-item--focused {
+    background-color: var(--bg-tertiary);
+    outline: 2px solid var(--primary-color);
+    outline-offset: -2px;
+}
+
+.translation-modal-item--active.translation-modal-item--focused {
+    background-color: color-mix(in srgb, var(--primary-color) 22%, transparent);
+}
+
+@media (forced-colors: active) {
+    .translation-modal-item--focused {
+        outline: 2px solid Highlight;
+    }
+}
+
 .translation-modal-item__name {
     font-family: var(--font-sans);
     font-weight: 700;
