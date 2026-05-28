@@ -1,4 +1,4 @@
-const BUILD_ID = "6cb473d7cf3c2096f59f1e5273c394d2f2198e9e";
+const BUILD_ID = "ae5ab40b0625f7178218094345348f26d3b3b8ba";
 const CACHE_NAME = `bible-${BUILD_ID}`;
 
 // App shell JS modules (everything under the root except vendor/):
@@ -6,6 +6,7 @@ const CACHE_NAME = `bible-${BUILD_ID}`;
 // always run the latest deployed code.
 // vendor/ files are third-party SDKs that never change for a given
 // version — they go through the cache-first path below.
+// [ios-update-test]
 const APP_SHELL_PATTERN = /^(?!\..*\/vendor\/).*\.(js|mjs)$/;
 
 // Firebase RTDB paths that are safe to cache indefinitely.
