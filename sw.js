@@ -1,5 +1,5 @@
 const BUILD_ID = "__BUILD_ID__";
-const CACHE_NAME = `esv-bible-${BUILD_ID}`;
+const CACHE_NAME = `bible-${BUILD_ID}`;
 
 // App shell JS modules (everything under the root except vendor/):
 // network-first, bypass the browser HTTP cache entirely so refreshes
