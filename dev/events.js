@@ -15,6 +15,8 @@ export function attachEventListeners(app) {
     app.closeSearchBtn?.addEventListener('click',  () => app.closeSearch());
     app.searchInput?.addEventListener('input',     (e) => app.handleSearch(e.target.value));
     app.searchInput?.addEventListener('keydown',   (e) => app.handleSearchKeydown(e));
+    // iOS/Android: paste does not reliably fire `input`; read value after DOM settles.
+    app.searchInput?.addEventListener('paste',     ()  => setTimeout(() => app.handleSearch(app.searchInput.value), 0));
 
     // When the megasearch toggle is switched ON and there are already results
     // showing, run a supplemental pass immediately against whatever translations
