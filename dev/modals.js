@@ -6,7 +6,7 @@
 export function openModal(app, modal) {
     if (!modal) return;
     modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
 }
 
 export function closeModal(app, modal) {
@@ -22,12 +22,20 @@ export function closeModal(app, modal) {
         content.style.animation = 'slideDownToBottom 250ms ease';
         setTimeout(() => {
             modal.classList.remove('active');
-            document.body.style.overflow = '';
+            _maybeRemoveModalOpen();
             content.style.animation = '';
         }, 250);
     } else {
         modal.classList.remove('active');
-        document.body.style.overflow = '';
+        _maybeRemoveModalOpen();
+    }
+}
+
+// Only remove modal-open when no modals remain active.
+// Guards against a fast open/close sequence on two overlapping modals.
+function _maybeRemoveModalOpen() {
+    if (!document.querySelector('.modal.active')) {
+        document.body.classList.remove('modal-open');
     }
 }
 
