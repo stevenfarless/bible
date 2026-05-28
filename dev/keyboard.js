@@ -24,6 +24,27 @@ export function handleKeyboardShortcuts(app, e) {
         return;
     }
 
+    // Translation modal keyboard navigation — runs before the generic modal guard
+    if (app.translationModal?.classList.contains('active')) {
+        switch (e.key) {
+            case 'ArrowDown':
+            case 'j':
+                e.preventDefault();
+                app.translationKbMove(1);
+                return;
+            case 'ArrowUp':
+            case 'k':
+                e.preventDefault();
+                app.translationKbMove(-1);
+                return;
+            case 'Enter':
+                e.preventDefault();
+                app.translationKbSelect();
+                return;
+        }
+        return; // swallow all other keys while translation modal is open
+    }
+
     // Navigation and reading shortcuts — only when no modal/search is open
     const modalOpen  = !!document.querySelector('.modal.active');
     const searchOpen = !!app.searchContainer?.classList.contains('active');
@@ -33,6 +54,10 @@ export function handleKeyboardShortcuts(app, e) {
         case '/':
             e.preventDefault();
             app.toggleSearch();
+            break;
+        case 't':
+            e.preventDefault();
+            app.openTranslationModal();
             break;
         case 'ArrowLeft':
         case 'h':

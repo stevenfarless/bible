@@ -1,7 +1,7 @@
 // modals.js
 // Modal open/close, population, and drag-to-resize for BibleApp.
 
-// ─── Open / close ─────────────────────────────────────────────────────────────
+// ─── Open / close ─────────────────────────────────────────────────────────────────────────────
 
 export function openModal(app, modal) {
     if (!modal) return;
@@ -11,6 +11,12 @@ export function openModal(app, modal) {
 
 export function closeModal(app, modal) {
     if (!modal) return;
+
+    // Clear translation keyboard focus state when the translation modal closes
+    if (modal === app.translationModal) {
+        _translationKbClear(app);
+    }
+
     if (modal === app.settingsModal || modal === app.referencesModal) {
         const content = modal.querySelector('.modal-content');
         content.style.animation = 'slideDownToBottom 250ms ease';
@@ -25,7 +31,7 @@ export function closeModal(app, modal) {
     }
 }
 
-// ─── Book modal ───────────────────────────────────────────────────────────────
+// ─── Book modal ─────────────────────────────────────────────────────────────────────────────
 
 export function openBookModal(app) {
     populateBookModal(app);
@@ -56,7 +62,7 @@ export function populateBookModal(app) {
     });
 }
 
-// ─── Chapter modal ────────────────────────────────────────────────────────────
+// ─── Chapter modal ───────────────────────────────────────────────────────────────────────────
 
 export function openChapterModal(app) {
     populateChapterModal(app);
@@ -82,7 +88,7 @@ export function populateChapterModal(app) {
     }
 }
 
-// ─── Verse modal ──────────────────────────────────────────────────────────────
+// ─── Verse modal ────────────────────────────────────────────────────────────────────────────
 
 export function openVerseModal(app) {
     populateVerseModal(app);
@@ -120,11 +126,16 @@ export function getCurrentVerseCount(app) {
     return app.passageText.querySelectorAll('.verse-num').length;
 }
 
-// ─── Translation modal ────────────────────────────────────────────────────────
+// ─── Translation modal ────────────────────────────────────────────────────────────────────────
 
 export function openTranslationModal(app) {
     populateTranslationModal(app);
     openModal(app, app.translationModal);
+    // Set initial keyboard focus to the currently-active translation
+    const items = _translationItems(app);
+    const activeIdx = items.findIndex((li) => li.classList.contains('translation-modal-item--active'));
+    app._translationKbIndex = activeIdx >= 0 ? activeIdx : 0;
+    _translationKbApply(app, items);
 }
 
 export function populateTranslationModal(app) {
@@ -169,7 +180,50 @@ export function populateTranslationModal(app) {
     }
 }
 
-// ─── Drag-to-resize ───────────────────────────────────────────────────────────
+// ─── Translation modal keyboard helpers ────────────────────────────────────────────
+
+function _translationItems(app) {
+    return app.translationList
+        ? Array.from(app.translationList.querySelectorAll('.translation-modal-item'))
+        : [];
+}
+
+function _translationKbApply(app, items) {
+    items.forEach((li, i) => {
+        li.classList.toggle('translation-modal-item--focused', i === app._translationKbIndex);
+    });
+    const focused = items[app._translationKbIndex];
+    if (focused) focused.scrollIntoView({ block: 'nearest' });
+}
+
+function _translationKbClear(app) {
+    app._translationKbIndex = -1;
+    if (!app.translationList) return;
+    app.translationList
+        .querySelectorAll('.translation-modal-item--focused')
+        .forEach((li) => li.classList.remove('translation-modal-item--focused'));
+}
+
+export function translationKbMove(app, delta) {
+    const items = _translationItems(app);
+    if (!items.length) return;
+    const current = app._translationKbIndex ?? -1;
+    app._translationKbIndex = (current + delta + items.length) % items.length;
+    _translationKbApply(app, items);
+}
+
+export function translationKbSelect(app) {
+    const items = _translationItems(app);
+    const idx   = app._translationKbIndex ?? -1;
+    if (idx < 0 || idx >= items.length) return;
+    const registry = app._translationRegistry || [];
+    const t = registry[idx];
+    if (!t) return;
+    app.changeTranslation(t.id);
+    app.closeModal(app.translationModal);
+}
+
+// ─── Drag-to-resize ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Attaches touch + mouse drag-to-resize handlers to a bottom-sheet modal.
