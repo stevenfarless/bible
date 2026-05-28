@@ -7,23 +7,81 @@ const CACHE_NAME = `bible-${BUILD_ID}`;
 // version — they go through the cache-first path below.
 const APP_SHELL_PATTERN = /^(?!\..*\/vendor\/).*\.(js|mjs|css)$/;
 
+// Translation bible.json files to precache on install.
+// These are large and slow to fetch cold; having them warm makes every
+// new-build first load fast.
+const TRANSLATION_FILES = [
+  './translations/index.json',
+  './translations/ASV/ASV_bible.json',
+  './translations/BLB/BLB_bible.json',
+  './translations/BSB/BSB_bible.json',
+  './translations/KJV/KJV_bible.json',
+  './translations/LEB/LEB_bible.json',
+  './translations/MSB/MSB_bible.json',
+  './translations/NET/NET_bible.json',
+  './translations/WEB/WEB_bible.json',
+];
+
+// BSB structure files (per-book JSON) that appear frequently in cache logs.
+const BSB_STRUCTURE_FILES = [
+  './translations/BSB/BSB_structure/Genesis.json',
+  './translations/BSB/BSB_structure/Psalm.json',
+  './translations/BSB/BSB_structure/John.json',
+  './translations/BSB/BSB_structure/Leviticus.json',
+  './translations/BSB/BSB_structure/Matthew.json',
+  './translations/BSB/BSB_structure/Mark.json',
+  './translations/BSB/BSB_structure/Luke.json',
+  './translations/BSB/BSB_structure/Acts.json',
+  './translations/BSB/BSB_structure/Romans.json',
+  './translations/BSB/BSB_structure/Revelation.json',
+];
+
 // Firebase RTDB paths that are safe to cache indefinitely.
-// Bible text, translation index, and search index never change for a given
-// translation. Only user-specific paths (/users/) must always be live.
 function isFirebaseCacheable(url) {
   if (!url.hostname.endsWith('.firebaseio.com')) return false;
   const p = url.pathname;
-  // Never cache user account data.
   if (p.startsWith('/users/')) return false;
-  // Cache Bible text, translation index, and search index.
   if (p.startsWith('/translations/')) return true;
   if (p.startsWith('/translationIndex')) return true;
   if (p.startsWith('/searchIndex/')) return true;
   return false;
 }
 
-self.addEventListener('install', () => {
+async function precacheTranslations() {
+  const cache = await caches.open(CACHE_NAME);
+  // Fetch all translation files in parallel, ignoring individual failures
+  // so a single slow file doesn't block the rest.
+  await Promise.allSettled(
+    [...TRANSLATION_FILES, ...BSB_STRUCTURE_FILES].map(async (url) => {
+      try {
+        const cached = await cache.match(url);
+        if (cached) return; // already warm from a previous request this session
+        const resp = await fetch(url);
+        if (resp && resp.status === 200) {
+          await cache.put(url, resp);
+        }
+      } catch {
+        // Network unavailable — skip silently; cache-first fetch will retry.
+      }
+    })
+  );
+}
+
+self.addEventListener('install', (event) => {
+  // skipWaiting so the new SW activates immediately.
   self.skipWaiting();
+
+  // Precache the app shell synchronously so the SW is useful right away.
+  // Translation files are large; precache them in the background after
+  // activation instead (see 'activate' handler below).
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.addAll([
+        './',
+        './translations/index.json',
+      ])
+    )
+  );
 });
 
 self.addEventListener('activate', (event) => {
@@ -33,13 +91,15 @@ self.addEventListener('activate', (event) => {
     await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
     await self.clients.claim();
 
-    // Only broadcast RELOAD when this SW is replacing a *different* build.
-    // If BUILD_ID hasn't changed (e.g. same deploy, page refresh), skip the
-    // reload — otherwise every refresh triggers a redundant page reload.
+    // Broadcast new build to all open windows.
     const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: false });
     for (const client of allClients) {
       client.postMessage({ type: 'NEW_BUILD', buildId: BUILD_ID });
     }
+
+    // Precache all translation files in the background after activation.
+    // This doesn't block activation — it runs concurrently.
+    precacheTranslations();
   })());
 });
 
