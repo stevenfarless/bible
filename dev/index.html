@@ -5,12 +5,12 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>Bible Reader</title>
-	<meta name="build-id" content="753eee5670edaafafc9c06ada530160a640a73e1" />
+	<meta name="build-id" content="376a66b9586b86abf500584e20577d842d3f9345" />
 	<!-- Preconnect to external hosts used on first load -->
 	<link rel="preconnect" href="https://esv-bible-6dffb-default-rtdb.firebaseio.com" />
 	<link rel="preconnect" href="https://www.gstatic.com" />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=753eee5670edaafafc9c06ada530160a640a73e1">.
+	     before the parser reaches <script type="module" src="app.js?v=376a66b9586b86abf500584e20577d842d3f9345">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -33,7 +33,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">dev #957 · 753eee5</span>
+				<span id="build-info">dev #962 · 376a66b</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,7 +47,7 @@
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 								d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
 							</path>
-					</svg>
+				</svg>
 					</button>
 					<button class="icon-btn" id="themeToggle" title="Toggle light/dark mode">
 						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -130,9 +130,18 @@
 
 	<div id="searchContainer" class="search-container">
 		<div class="search-wrapper">
-			<input type="text" id="searchInput" class="search-input"
-				placeholder="Search passages or enter reference (e.g., John 3:16)" />
-			<button id="closeSearch" class="close-btn" title="Close search">×</button>
+			<div class="search-input-row">
+				<input type="text" id="searchInput" class="search-input"
+					placeholder="Search passages or enter reference (e.g., John 3:16)" />
+				<button id="closeSearch" class="close-btn" title="Close search">×</button>
+			</div>
+			<div class="search-options-row">
+				<label class="search-toggle-label" for="megasearchToggle">
+					<input type="checkbox" id="megasearchToggle" class="search-toggle-checkbox" />
+					<span class="search-toggle-track"></span>
+					<span class="search-toggle-text">Search all translations</span>
+				</label>
+			</div>
 		</div>
 		<div id="searchResults" class="search-results"></div>
 	</div>
@@ -386,6 +395,7 @@
 						<li>Search by reference to jump quickly (examples: <code>John 3</code>, <code>John 3:16</code>, <code>jn 3 16</code>).</li>
 						<li>Search by keywords to find mentions across the Bible (example: <code>covenant</code>).</li>
 						<li>Search for an exact phrase by wrapping it in double quotes (example: <code>"in love"</code>).</li>
+						<li>Enable "Search all translations" in the search bar to find verses unique to other translations.</li>
 						<li>Use Settings to change font size, display options, theme, and translation.</li>
 						<li>Your reading position and settings sync across devices when signed in.</li>
 					</ul>
@@ -506,7 +516,7 @@
 	<div id="toast" class="toast"></div>
 
 
-	<script type="module" src="app.js?v=753eee5670edaafafc9c06ada530160a640a73e1"></script>
+	<script type="module" src="app.js?v=376a66b9586b86abf500584e20577d842d3f9345"></script>
 </body>
 
 </html>

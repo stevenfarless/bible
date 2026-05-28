@@ -1247,7 +1247,7 @@ body.hide-verse-numbers .verse .verse-num {
 
 .search-container.active {
     border-bottom: 1px solid var(--border-color);
-    max-height: 600px;
+    max-height: 750px;
 }
 
 .search-wrapper {
@@ -1255,8 +1255,14 @@ body.hide-verse-numbers .verse .verse-num {
     margin: 0 auto;
     padding: var(--spacing-sm);
     display: flex;
-    gap: var(--spacing-sm);
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.search-input-row {
+    display: flex;
     align-items: center;
+    gap: var(--spacing-sm);
 }
 
 .search-input {
@@ -1280,10 +1286,85 @@ body.hide-verse-numbers .verse .verse-num {
     color: var(--text-muted);
 }
 
+/* Search options row — toggle lives here */
+.search-options-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 2px var(--spacing-xs);
+}
+
+/* Toggle label wrapper */
+.search-toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Hide the native checkbox */
+.search-toggle-checkbox {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+/* The pill track */
+.search-toggle-track {
+    position: relative;
+    display: inline-block;
+    width: 32px;
+    height: 18px;
+    border-radius: 9px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border-color);
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+}
+
+/* The thumb */
+.search-toggle-track::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition: transform 0.2s, background 0.2s;
+}
+
+/* Checked state */
+.search-toggle-checkbox:checked + .search-toggle-track {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.search-toggle-checkbox:checked + .search-toggle-track::after {
+    transform: translateX(14px);
+    background: var(--bg-primary);
+}
+
+/* Label text */
+.search-toggle-text {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    transition: color 0.2s;
+}
+
+.search-toggle-label:has(.search-toggle-checkbox:checked) .search-toggle-text {
+    color: var(--primary-color);
+}
+
 .search-results {
     max-width: var(--max-width);
     margin: 0 auto;
-    max-height: 400px;
+    max-height: 520px;
     padding: 8px;
     overflow-y: scroll;
     scrollbar-width: none;
@@ -1293,30 +1374,82 @@ body.hide-verse-numbers .verse .verse-num {
     display: none;
 }
 
+/* Results summary bar — count + expand/collapse controls */
+.search-results-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-xs) var(--spacing-md);
+    margin-bottom: var(--spacing-xs);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.search-results-count {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+}
+
+.search-results-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.search-results-divider {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    user-select: none;
+}
+
+.search-expand-collapse-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    color: var(--primary-color);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color var(--transition-fast), opacity var(--transition-fast);
+}
+
+.search-expand-collapse-btn:hover {
+    color: var(--primary-light);
+    opacity: 0.85;
+}
+
 /* Testament heading row */
 .search-group-heading {
     margin: var(--spacing-md) 0 var(--spacing-xs);
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
     font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    border-left: 3px solid var(--primary-color);
+    border-radius: 0 4px 4px 0;
+    background-color: color-mix(in srgb, var(--primary-color) 8%, transparent);
     display: flex;
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
     user-select: none;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
 .search-group-heading:hover {
-    background-color: var(--bg-tertiary);
-    border-radius: 4px;
+    background-color: color-mix(in srgb, var(--primary-color) 16%, transparent);
+    color: var(--text-primary);
 }
 
 .search-group-chevron {
-    font-size: 0.8rem;
+    font-size: 1rem;
+    color: var(--primary-color);
     transition: transform var(--transition-normal);
+    flex-shrink: 0;
 }
 
 .search-group-chevron.expanded {
@@ -1326,29 +1459,40 @@ body.hide-verse-numbers .verse .verse-num {
 /* Book heading row */
 .search-book-heading {
     margin: var(--spacing-xs) 0;
-    padding: var(--spacing-xs) var(--spacing-md);
+    padding: var(--spacing-xs) var(--spacing-md) var(--spacing-xs) calc(var(--spacing-md) + 8px);
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--primary-color);
+    border-left: 2px solid var(--border-color);
+    border-radius: 0 4px 4px 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
     user-select: none;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .search-book-heading:hover {
     background-color: var(--bg-tertiary);
-    border-radius: 4px;
+    border-left-color: var(--primary-color);
+    border-radius: 0 4px 4px 0;
 }
 
 .search-book-chevron {
-    font-size: 0.8rem;
-    transition: transform var(--transition-normal);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    transition: transform var(--transition-normal), color var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.search-book-heading:hover .search-book-chevron {
+    color: var(--primary-color);
 }
 
 .search-book-chevron.expanded {
     transform: rotate(180deg);
+    color: var(--primary-color);
 }
 
 .search-result-item {
@@ -1423,6 +1567,31 @@ body.hide-verse-numbers .verse .verse-num {
     text-align: center;
     padding: var(--spacing-xl);
     color: var(--text-muted);
+}
+
+/* Cross-translation result badge — small pill showing the source translation */
+.search-result-translation-badge {
+    display: inline-block;
+    margin-left: 0.4em;
+    padding: 0.1em 0.45em;
+    font-family: var(--font-sans);
+    font-size: 0.7em;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background-color: color-mix(in srgb, var(--border-color) 40%, transparent);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    vertical-align: middle;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.search-result-item:hover .search-result-translation-badge {
+    color: var(--text-secondary);
+    border-color: color-mix(in srgb, var(--primary-color) 40%, var(--border-color));
 }
 
 
@@ -1869,6 +2038,14 @@ body.light-mode .selected-verse-glow {
         max-height: 80vh;
         width: 100%;
         border-radius: 16px 16px 0 0;
+    }
+
+    .search-container.active {
+        max-height: 80vh;
+    }
+
+    .search-results {
+        max-height: calc(80vh - 100px);
     }
 }
 
