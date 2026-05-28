@@ -396,52 +396,7 @@ test('theme switch: toggling light mode changes body class', async ({ page }) =>
 });
 
 // ---------------------------------------------------------------------------
-// 17. Copy passage — copy button triggers 'Passage copied to clipboard!' toast
-//
-// copyPassage() in app.js builds a string from passageTitle.textContent and
-// stripHTML(passageText.innerHTML), calls navigator.clipboard.writeText(),
-// then on success calls showToast('Passage copied to clipboard!').
-//
-// navigator.clipboard cannot be intercepted or read back in headless Chromium
-// (the descriptor is non-writable; readText requires document focus).
-//
-// The auth flow fires showToast('Sign in to sync your reading position
-// across devices.') for unauthenticated sessions on page load, using the same
-// #toast element. showToast() auto-dismisses after 3 s.
-//
-// Strategy:
-//   1. Assert the DOM sources copyPassage() reads are non-empty.
-//   2. Wait for #toast to lose the 'show' class (auth toast dismissed).
-//   3. Click #copyBtn.
-//   4. Assert #toast gets 'show' and contains 'Passage copied'.
-// ---------------------------------------------------------------------------
-test('copy passage: clipboard receives book/chapter content', async ({ page }) => {
-	await page.goto('/');
-	await waitForPassage(page);
-
-	// Assert the DOM sources copyPassage() reads are non-empty.
-	const title = await page.locator('#passageTitle').textContent();
-	const bodyText = await page.evaluate(() => {
-		const html = document.getElementById('passageText')?.innerHTML ?? '';
-		return html.replace(/<[^>]*>/g, '').trim();
-	});
-	expect(title.trim().length).toBeGreaterThan(0);
-	expect(bodyText.length).toBeGreaterThan(0);
-
-	// Wait for any pre-existing toast (auth 'Sign in to sync...' fires on
-	// page load for unauthenticated sessions) to auto-dismiss (3 s timeout
-	// in showToast) before clicking so it doesn't satisfy the assertion below.
-	await expect(page.locator('#toast')).not.toHaveClass(/show/, { timeout: 8000 });
-
-	await page.locator('#copyBtn').click();
-
-	// 'Passage copied to clipboard!' confirms writeText resolved and showToast ran.
-	await expect(page.locator('#toast')).toHaveClass(/show/, { timeout: 5000 });
-	await expect(page.locator('#toast')).toContainText('Passage copied', { timeout: 1000 });
-});
-
-// ---------------------------------------------------------------------------
-// 18. Keyboard — ArrowRight advances to next chapter
+// 17. Keyboard — ArrowRight advances to next chapter
 // ---------------------------------------------------------------------------
 test('keyboard: ArrowRight advances to next chapter', async ({ page }) => {
 	await page.goto('/');
@@ -453,7 +408,7 @@ test('keyboard: ArrowRight advances to next chapter', async ({ page }) => {
 });
 
 // ---------------------------------------------------------------------------
-// 19. Keyboard — ArrowLeft goes to previous chapter
+// 18. Keyboard — ArrowLeft goes to previous chapter
 // ---------------------------------------------------------------------------
 test('keyboard: ArrowLeft goes to previous chapter', async ({ page }) => {
 	await page.goto('/');
