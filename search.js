@@ -127,6 +127,7 @@ export function initSearchResultsDelegate(app) {
         if (expandBtn) {
             e.preventDefault();
             const action = expandBtn.dataset.action;
+            app._dbgUserAction(`search expandCollapse: ${action} all`);
             const liveGroups = groupSearchResultsByCanon(app, app.currentSearchResults);
             if (action === 'expand') {
                 for (const g of liveGroups) {
@@ -138,6 +139,7 @@ export function initSearchResultsDelegate(app) {
                 app.searchExpandedBooks.clear();
             }
             displaySearchResults(app, app.currentSearchResults, query);
+            app._dbgUserAction(`search expandCollapse: ${action} all — done`);
             return;
         }
 
@@ -147,11 +149,13 @@ export function initSearchResultsDelegate(app) {
             e.preventDefault();
             const testament = groupHeading.getAttribute('data-testament');
             if (!testament) return;
-            if (app.searchExpandedTestaments.has(testament)) {
-                app.searchExpandedTestaments.delete(testament);
-            } else {
+            const nowExpanded = !app.searchExpandedTestaments.has(testament);
+            if (nowExpanded) {
                 app.searchExpandedTestaments.add(testament);
+            } else {
+                app.searchExpandedTestaments.delete(testament);
             }
+            app._dbgUserAction(`search toggle testament: "${testament}" → ${nowExpanded ? 'expanded' : 'collapsed'}`);
             displaySearchResults(app, app.currentSearchResults, query);
             return;
         }
@@ -162,11 +166,13 @@ export function initSearchResultsDelegate(app) {
             e.preventDefault();
             const book = bookHeading.getAttribute('data-book');
             if (!book) return;
-            if (app.searchExpandedBooks.has(book)) {
-                app.searchExpandedBooks.delete(book);
-            } else {
+            const nowExpanded = !app.searchExpandedBooks.has(book);
+            if (nowExpanded) {
                 app.searchExpandedBooks.add(book);
+            } else {
+                app.searchExpandedBooks.delete(book);
             }
+            app._dbgUserAction(`search toggle book: "${book}" → ${nowExpanded ? 'expanded' : 'collapsed'}`);
             displaySearchResults(app, app.currentSearchResults, query);
             return;
         }
@@ -386,6 +392,8 @@ export async function runMegasearch(app, query) {
     if (q.length < 3) return;
     if (app.searchLastQuery !== query) return;
 
+    app._dbgUserAction(`megasearch: activated for "${q}"`);
+
     const knownRefs = new Set(app.currentSearchResults.map((r) => r.reference));
 
     let supplemental;
@@ -393,14 +401,19 @@ export async function runMegasearch(app, query) {
         supplemental = await app.bibleApi.searchPassagesAllTranslations(query, knownRefs);
     } catch (err) {
         console.warn('megasearch failed', err);
+        app._dbgUserAction(`megasearch: failed — ${err.message}`);
         return;
     }
 
     if (app.searchLastQuery !== query) return;
-    if (!supplemental || supplemental.length === 0) return;
+    if (!supplemental || supplemental.length === 0) {
+        app._dbgUserAction('megasearch: no supplemental results');
+        return;
+    }
 
     const combined = [...app.currentSearchResults, ...supplemental];
     app.currentSearchResults = combined;
+    app._dbgUserAction(`megasearch: added ${supplemental.length} supplemental results (total: ${combined.length})`);
     displaySearchResults(app, combined, query);
 }
 
@@ -464,15 +477,19 @@ export async function performKeywordSearch(app, query) {
 
     if (app.currentSearchResults.length > 0) {
         displaySearchResults(app, app.currentSearchResults, query);
+        app._dbgUserAction(`search results: ${app.currentSearchResults.length} verses for "${query}"`);
     } else {
         app.searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
         if (app.searchResultsSummary) app.searchResultsSummary.remove();
         app.searchResultsSummary = null;
         refreshSearchResultItems(app, false);
+        app._dbgUserAction(`search results: 0 verses for "${query}"`);
     }
 
     const megasearchToggle = document.getElementById('megasearchToggle');
-    if ((megasearchToggle?.checked ?? false) && query.trim().length >= 3) {
+    const megasearchActive = megasearchToggle?.checked ?? false;
+    app._dbgUserAction(`megasearch toggle: ${megasearchActive ? 'ON' : 'OFF'}`);
+    if (megasearchActive && query.trim().length >= 3) {
         runMegasearch(app, query);
     }
 }
