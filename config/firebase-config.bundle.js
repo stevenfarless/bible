@@ -19,13 +19,13 @@ import {
   ReCaptchaV3Provider
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check.js";
 var firebaseConfig = {
-  apiKey: "AIzaSyCGVPqbTZCQ3Hrs9sFIJm_PR32FP_CVXSw",
+  apiKey: "__FIREBASE_API_KEY__",
   authDomain: "esv-bible-6dffb.firebaseapp.com",
   databaseURL: "https://esv-bible-6dffb-default-rtdb.firebaseio.com",
   projectId: "esv-bible-6dffb",
   storageBucket: "esv-bible-6dffb.firebasestorage.app",
-  messagingSenderId: "824462651620",
-  appId: "1:824462651620:web:5f46fe033ac46d2329bcf1"
+  messagingSenderId: "__FIREBASE_MESSAGING_SENDER_ID__",
+  appId: "__FIREBASE_APP_ID__"
 };
 var FIREBASE_DB_URL = firebaseConfig.databaseURL;
 var app = initializeApp(firebaseConfig);
