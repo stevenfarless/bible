@@ -14,6 +14,10 @@ import {
   set,
   onValue
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import {
+  initializeAppCheck,
+  ReCaptchaV3Provider
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check.js";
 var firebaseConfig = {
   apiKey: "AIzaSyCGVPqbTZCQ3Hrs9sFIJm_PR32FP_CVXSw",
   authDomain: "esv-bible-6dffb.firebaseapp.com",
@@ -25,6 +29,10 @@ var firebaseConfig = {
 };
 var FIREBASE_DB_URL = firebaseConfig.databaseURL;
 var app = initializeApp(firebaseConfig);
+initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider("6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV"),
+  isTokenAutoRefreshEnabled: true
+});
 var _auth = getAuth(app);
 var _db = getDatabase(app);
 function makeRef(path) {

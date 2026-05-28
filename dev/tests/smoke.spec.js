@@ -2,6 +2,17 @@
 import { test, expect } from '@playwright/test';
 
 // ---------------------------------------------------------------------------
+// App Check debug token for headless CI runs.
+// This must be set before the app's JS loads so Firebase App Check can
+// bypass reCAPTCHA in Playwright.
+// ---------------------------------------------------------------------------
+test.beforeEach(async ({ page }) => {
+	await page.addInitScript(() => {
+		self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+	});
+});
+
+// ---------------------------------------------------------------------------
 // Helper — waits until the BibleApp has attached its event listeners.
 // app.js sets data-app-ready on <body> immediately after
 // attachEventListeners() + initializeAccordion() complete, before the
