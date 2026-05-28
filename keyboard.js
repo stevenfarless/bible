@@ -50,6 +50,13 @@ export function handleKeyboardShortcuts(app, e) {
             e.preventDefault();
             app.navigateToNextVerse();
             break;
+        case 'n':
+            e.preventDefault();
+            if (app.verseNumbersToggle) {
+                app.verseNumbersToggle.checked = !app.verseNumbersToggle.checked;
+                app.toggleSetting('showVerseNumbers');
+            }
+            break;
         case 'v':
             e.preventDefault();
             if (app.verseByVerseToggle) {
