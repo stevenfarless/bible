@@ -1,5 +1,5 @@
-const BUILD_ID = "376a66b9586b86abf500584e20577d842d3f9345";
-const CACHE_NAME = `esv-bible-${BUILD_ID}`;
+const BUILD_ID = "28ea00b529ba72304780533127ed1ad3d56c5a45";
+const CACHE_NAME = `bible-${BUILD_ID}`;
 
 // App shell JS modules (everything under the root except vendor/):
 // network-first, bypass the browser HTTP cache entirely so refreshes
