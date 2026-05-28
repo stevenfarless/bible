@@ -885,8 +885,8 @@ class BibleApp {
         toggleSearch(this);
     }
     closeSearch()                           { closeSearch(this); }
-    handleSearch(query) {
-        _logUserAction(`search: "${query}"`);
+    handleSearch(query, source = 'type') {
+        _logUserAction(`search (${source}): "${query}"`);
         handleSearch(this, query);
     }
     handleSearchKeydown(e)                  { handleSearchKeydown(this, e); }
