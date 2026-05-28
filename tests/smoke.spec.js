@@ -199,16 +199,6 @@ test('search: entering a keyword returns results', async ({ page }) => {
 
 // ---------------------------------------------------------------------------
 // 8. Search — reference query navigates to correct passage
-//
-// handlePassageReference() (search.js) fetches a preview via bibleApi and
-// renders a single .search-result-item card — it does NOT call loadPassage
-// itself. The Enter key activates the first selected result item via
-// activateSelectedSearchResult → item.click(), which then calls
-// loadPassageFromReference → loadPassage.
-//
-// Strategy: fill the input, wait for the result card to appear (confirming
-// the 300 ms debounce + RTDB fetch completed), then click the card and wait
-// for the passage title to update.
 // ---------------------------------------------------------------------------
 test('search: reference query navigates to correct passage', async ({ page }) => {
 	await page.goto('/');
@@ -219,14 +209,11 @@ test('search: reference query navigates to correct passage', async ({ page }) =>
 
 	await page.locator('#searchInput').fill('John 3:16');
 
-	// Wait for handlePassageReference to render the result card
 	const resultCard = page.locator('#searchResults .search-result-item').first();
 	await expect(resultCard).toBeVisible({ timeout: 10000 });
 
-	// Click the card — this triggers loadPassageFromReference → loadPassage
 	await resultCard.click();
 
-	// Wait for the passage to finish loading
 	await page.waitForFunction(
 		() => {
 			const title = document.getElementById('passageTitle');
@@ -369,7 +356,6 @@ test('settings: color theme selector applies theme to body', async ({ page }) =>
 	const selector = page.locator('#themeSelector');
 	await expect(selector).toBeVisible();
 
-	// Read available options and pick one that isn't currently selected
 	const options = await selector.evaluate(el =>
 		Array.from(el.options).map(o => o.value).filter(v => v)
 	);
@@ -384,27 +370,7 @@ test('settings: color theme selector applies theme to body', async ({ page }) =>
 // ---------------------------------------------------------------------------
 // 16. Theme switch — light mode toggle
 // ---------------------------------------------------------------------------
-test('settings: verse-by-verse mode toggles passage layout class', async ({ page }) => {
-	await page.goto('/');
-	await waitForPassage(page);
-
-	await openSettingsSection(page, 'display');
-
-	const toggle = page.locator('#verseByVerseToggle');
-	const before = await toggle.isChecked();
-	await toggle.click();
-	await expect(toggle).toBeChecked({ checked: !before });
-
-	const hasClass = await page.evaluate(() =>
-		document.getElementById('passageText')?.classList.contains('verse-by-verse')
-	);
-	expect(hasClass).toBe(!before);
-});
-
-// ---------------------------------------------------------------------------
-// 14. Settings — font size change updates passage font size
-// ---------------------------------------------------------------------------
-test('settings: font size change updates passage font size', async ({ page }) => {
+test('theme switch: toggling light mode changes body class', async ({ page }) => {
 	await page.goto('/');
 	await waitForApp(page);
 
@@ -416,7 +382,6 @@ test('settings: font size change updates passage font size', async ({ page }) =>
 	await expect(toggle).toBeChecked({ checked: !before });
 
 	const bodyClass = await page.evaluate(() => document.body.className);
-	// Light mode on → body should have light-mode class (or equivalent)
 	if (!before) {
 		expect(bodyClass).toMatch(/light/);
 	}
@@ -453,30 +418,4 @@ test('keyboard: ArrowLeft goes to previous chapter', async ({ page }) => {
 
 	await page.locator('body').press('ArrowLeft');
 	await expect(page.locator('#passageTitle')).toContainText('Matthew 2', { timeout: 10000 });
-});
-
-// ---------------------------------------------------------------------------
-// 17. Keyboard — ArrowRight advances to next chapter
-// ---------------------------------------------------------------------------
-test('keyboard: ArrowRight advances to next chapter', async ({ page }) => {
-	await page.goto('/');
-	await waitForPassage(page);
-
-	const before = await page.locator('#currentChapter').textContent();
-	await page.keyboard.press('ArrowRight');
-	await expect(page.locator('#currentChapter')).not.toHaveText(before, { timeout: 5000 });
-});
-
-// ---------------------------------------------------------------------------
-// 18. Keyboard — ArrowLeft goes to previous chapter
-// ---------------------------------------------------------------------------
-test('keyboard: ArrowLeft goes to previous chapter', async ({ page }) => {
-	await page.goto('/');
-	await waitForPassage(page);
-
-	await page.keyboard.press('ArrowRight');
-	const mid = await page.locator('#currentChapter').textContent();
-
-	await page.keyboard.press('ArrowLeft');
-	await expect(page.locator('#currentChapter')).not.toHaveText(mid, { timeout: 5000 });
 });
