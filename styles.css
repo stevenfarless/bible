@@ -27,15 +27,20 @@
     box-sizing: border-box;
 }
 
-html,
-body {
-    overflow: scroll;
+/* html owns the scroll — body must NOT be an independent scroll container.
+   If body also has overflow:scroll, mobile browsers make body the scroller
+   and window.scrollY stays 0, breaking the chrome hide/show logic. */
+html {
+    overflow-y: auto;
     scrollbar-width: none;
 }
 
-html::-webkit-scrollbar,
-body::-webkit-scrollbar {
+html::-webkit-scrollbar {
     display: none;
+}
+
+body {
+    overflow: visible;
 }
 
 
@@ -1210,12 +1215,14 @@ body.hide-verse-numbers .verse .verse-num {
     display: none !important;
 }
 
-/* Search */
+/* Search
+   top is var(--chrome-height) so the bar clears the full fixed chrome
+   (header + nav), not just the header alone. */
 .search-container {
     background-color: var(--bg-secondary);
     border-bottom: none;
     position: fixed;
-    top: var(--header-height);
+    top: var(--chrome-height);
     left: 0;
     right: 0;
     z-index: 101;
