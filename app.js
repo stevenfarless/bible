@@ -478,10 +478,12 @@ class BibleApp {
         this.scrollTimeout = null;
         this.lastScrollPosition = 0;
         this.chromeHidden = false;
-        this.chromeScrollLastY = window.scrollY || 0;
-        this.chromeDelta = 2;
-        this.chromeScrollTicking = false;
-        this.chromeSuspend = false;
+        this.chromeScrollAnchorY  = window.scrollY || 0;
+        this.chromeLastDirection  = null;
+        this.chromeDelta          = 8;
+        this.chromeHideOffset     = 80;
+        this.chromeScrollTicking  = false;
+        this.chromeSuspend        = false;
 
         this.showChrome = () => {
             if (!this.chromeHidden) return;
@@ -499,22 +501,33 @@ class BibleApp {
             if (this.chromeScrollTicking) return;
             this.chromeScrollTicking = true;
             if (this.chromeSuspend) {
-                this.chromeScrollLastY = window.scrollY || window.pageYOffset || 0;
+                this.chromeScrollAnchorY = window.scrollY || window.pageYOffset || 0;
+                this.chromeLastDirection = null;
                 this.chromeScrollTicking = false;
                 return;
             }
             window.requestAnimationFrame(() => {
-                const y     = window.scrollY || window.pageYOffset || 0;
-                const delta = y - this.chromeScrollLastY;
-                const modalOpen  = !!document.querySelector('.modal.active');
-                const searchOpen = !!this.searchContainer?.classList.contains('active');
+                const y           = window.scrollY || window.pageYOffset || 0;
+                const direction   = y > this.chromeScrollAnchorY ? 'down' : y < this.chromeScrollAnchorY ? 'up' : this.chromeLastDirection;
+                const modalOpen   = !!document.querySelector('.modal.active');
+                const searchOpen  = !!this.searchContainer?.classList.contains('active');
+
                 if (y <= 0 || modalOpen || searchOpen) {
                     this.showChrome();
+                    this.chromeScrollAnchorY = y;
+                    this.chromeLastDirection = null;
                 } else {
-                    if (delta > this.chromeDelta)  this.hideChrome();
-                    if (delta < -this.chromeDelta) this.showChrome();
+                    // Reset anchor on direction reversal so movement is measured
+                    // from where the scroll turned around, not the page origin.
+                    if (direction !== this.chromeLastDirection) {
+                        this.chromeScrollAnchorY = y;
+                        this.chromeLastDirection = direction;
+                    }
+                    const movement = y - this.chromeScrollAnchorY;
+                    if (movement >  this.chromeDelta && y > this.chromeHideOffset) this.hideChrome();
+                    if (movement < -this.chromeDelta) this.showChrome();
                 }
-                this.chromeScrollLastY = y;
+
                 this.chromeScrollTicking = false;
             });
         };
@@ -846,7 +859,8 @@ class BibleApp {
         window.scrollTo(0, restoreScroll ? (this.lastScrollPosition || 0) : 0);
 
         requestAnimationFrame(() => {
-            this.chromeScrollLastY = window.scrollY || window.pageYOffset || 0;
+            this.chromeScrollAnchorY = window.scrollY || window.pageYOffset || 0;
+            this.chromeLastDirection = null;
             this.chromeSuspend = false;
             document.body.classList.remove('chrome-no-transition');
         });
