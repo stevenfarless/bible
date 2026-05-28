@@ -6,7 +6,6 @@ const CACHE_NAME = `bible-${BUILD_ID}`;
 // always run the latest deployed code.
 // vendor/ files are third-party SDKs that never change for a given
 // version — they go through the cache-first path below.
-// [ios-update-test]
 const APP_SHELL_PATTERN = /^(?!\..*\/vendor\/).*\.(js|mjs)$/;
 
 // Firebase RTDB paths that are safe to cache indefinitely.
@@ -48,8 +47,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Never cache the service worker script itself.
-  if (url.pathname.endsWith('/sw.js')) {
+  // Never cache the service worker script or version.txt — always network.
+  if (url.pathname.endsWith('/sw.js') || url.pathname.endsWith('/version.txt')) {
     event.respondWith(fetch(event.request));
     return;
   }

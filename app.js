@@ -971,8 +971,21 @@ async function registerServiceWorker(appInstance) {
             }
         });
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible')
-                reg.update().catch((err) => console.warn('SW update check failed', err));
+            if (document.visibilityState !== 'visible') return;
+            // Check version.txt directly — bypasses SW cache and browser HTTP cache.
+            // This is the reliable path for iOS Safari PWA, which may resume a frozen
+            // context where the SW update cycle hasn't run yet.
+            fetch('./version.txt', { cache: 'no-store' })
+                .then(r => r.text())
+                .then(remote => {
+                    const remoteSha = remote.trim();
+                    if (remoteSha && pageBuildId && remoteSha !== pageBuildId) {
+                        window.location.reload();
+                    }
+                })
+                .catch(() => {});
+            // Also trigger SW update check for non-iOS browsers.
+            reg.update().catch(() => {});
         });
     } catch (err) {
         console.warn('SW registration failed', err);
