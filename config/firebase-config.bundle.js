@@ -5,7 +5,11 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signOut
+  signOut,
+  setPersistence,
+  indexedDBLocalPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
   getDatabase,
@@ -35,6 +39,11 @@ initializeAppCheck(app, {
 });
 var _auth = getAuth(app);
 var _db = getDatabase(app);
+setPersistence(_auth, indexedDBLocalPersistence).catch(
+  () => setPersistence(_auth, browserLocalPersistence).catch(
+    () => setPersistence(_auth, browserSessionPersistence)
+  )
+);
 function makeRef(path) {
   const dbRef = ref(_db, path);
   return {
