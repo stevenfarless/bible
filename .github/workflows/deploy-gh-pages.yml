@@ -42,7 +42,7 @@ jobs:
           echo "Injecting: $INFO"
           sed -i "s|__BUILD_INFO__|${INFO}|g" index.html
           sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" sw.js index.html
-          sed -i "s|\(<script[^>]* src=\"\)\([^?\"]*\)\(\.js\)\(\"\\)|\1\2\3?v=${GITHUB_SHA}\4|g" index.html
+          sed -i "s|\(<script[^>]* src=\"\)\([^?\"]*\)\(\.js\)\(\"\)|\1\2\3?v=${GITHUB_SHA}\4|g" index.html
           echo "$GITHUB_SHA" > version.txt
 
       - name: Inject Firebase config
@@ -51,9 +51,11 @@ jobs:
           FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
           FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
         run: |
-          sed -i "s|__FIREBASE_API_KEY__|${FIREBASE_API_KEY}|g" config/firebase-config.js
-          sed -i "s|__FIREBASE_APP_ID__|${FIREBASE_APP_ID}|g" config/firebase-config.js
-          sed -i "s|__FIREBASE_MESSAGING_SENDER_ID__|${FIREBASE_MESSAGING_SENDER_ID}|g" config/firebase-config.js
+          for f in config/firebase-config.js config/firebase-config.bundle.js; do
+            sed -i "s|__FIREBASE_API_KEY__|${FIREBASE_API_KEY}|g" "$f"
+            sed -i "s|__FIREBASE_APP_ID__|${FIREBASE_APP_ID}|g" "$f"
+            sed -i "s|__FIREBASE_MESSAGING_SENDER_ID__|${FIREBASE_MESSAGING_SENDER_ID}|g" "$f"
+          done
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
