@@ -963,18 +963,45 @@ async function registerServiceWorker(appInstance) {
         const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
         const pageBuildId = document.querySelector('meta[name="build-id"]')?.content || '';
         console.info('[BUILD_ID]', pageBuildId || '__BUILD_ID__');
+
+        // Guard: once the toast is shown for this page load, don't show it again.
+        let _updateToastShown = false;
+        function _maybeShowUpdateToast() {
+            if (_updateToastShown) return;
+            _updateToastShown = true;
+            showUpdateToast(appInstance);
+        }
+
         navigator.serviceWorker.addEventListener('message', (e) => {
-            if (e.data?.type === 'NEW_VERSION') showUpdateToast(appInstance);
+            if (e.data?.type === 'NEW_VERSION') _maybeShowUpdateToast();
             if (e.data?.type === 'NEW_BUILD') {
                 const swBuildId = e.data.buildId || '';
-                if (pageBuildId && swBuildId && pageBuildId !== swBuildId) showUpdateToast(appInstance);
+                if (pageBuildId && swBuildId && pageBuildId !== swBuildId) _maybeShowUpdateToast();
             }
         });
+
+        // ── version.txt polling ────────────────────────────────────────────
+        // Fetches a 40-byte SHA file every 5 minutes. If the deployed SHA
+        // differs from the one baked into this page at build time, show the
+        // update toast. Runs regardless of user activity — fires even while
+        // the user is mid-chapter with no interaction.
+        // Errors (offline, server down) are silently swallowed.
+        function _checkVersion() {
+            if (!pageBuildId) return;
+            fetch('./version.txt', { cache: 'no-store' })
+                .then(r => r.text())
+                .then(remote => {
+                    if (remote.trim() && remote.trim() !== pageBuildId) _maybeShowUpdateToast();
+                })
+                .catch(() => {});
+        }
+        setInterval(_checkVersion, 5 * 60 * 1000);
+
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState !== 'visible') return;
-            // Check version.txt directly — bypasses SW cache and browser HTTP cache.
-            // This is the reliable path for iOS Safari PWA, which may resume a frozen
-            // context where the SW update cycle hasn't run yet.
+            // On resume from background: silent reload for iOS PWA frozen-context.
+            // This runs independently of the toast — if the page was frozen, JS
+            // was never running, so the polling interval never fired either.
             fetch('./version.txt', { cache: 'no-store' })
                 .then(r => r.text())
                 .then(remote => {
