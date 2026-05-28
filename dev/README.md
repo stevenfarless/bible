@@ -1,19 +1,49 @@
 # Bible Reader
 
-A fast, offline-capable Bible reading app built with vanilla JavaScript, served via GitHub Pages.
+A fast, offline-capable Bible reading web app built with vanilla JavaScript.
+Served via GitHub Pages with no backend required — Firebase handles auth and
+reading state sync only.
+
+Live app: [stevenfarless.github.io/bible](https://stevenfarless.github.io/bible)
+
+---
+
+## Translations
+
+| Translation | License |
+|---|---|
+| **BSB** — Berean Standard Bible | Public domain |
+| **KJV** — King James Version | Public domain |
+| **MSB** — Majority Standard Bible | Public domain |
+| **LEB** — Lexham English Bible | © 2012 Logos Bible Software — free use with attribution |
+| **NET** — New English Translation | © Biblical Studies Press — free non-commercial use with attribution |
+
+Full copyright and attribution information is in [NOTICE](NOTICE).
+
+---
 
 ## Features
 
-- Multiple translations
-- Section headings and paragraph breaks (BSB)
-- Footnotes and cross-references
-- Full-text search across all passages
-- Dark/light mode with multiple color themes
-- Firebase Authentication for sign-in
-- Firebase Realtime Database sync for reading position and settings across devices
-- Service worker for offline use
-- Verse-by-verse reading mode
-- Keyboard shortcuts (`←` `→` chapter nav, `V` verse mode, `S` section headings, `?` help)
+**Reading**
+- Section headings and paragraph breaks sourced from BSB structure data
+- Footnotes and inline cross-references
+- Verse-by-verse mode
+- Adjustable font size and multiple color themes (dark and light)
+
+**Navigation**
+- Book, chapter, and verse picker modals
+- Keyboard shortcuts: `←` `→` chapter navigation, `↑` `↓` verse navigation, `Ctrl+K` search, `?` help
+
+**Search**
+- Full-text search across all translations with results grouped by testament and book
+- Direct passage reference lookup (e.g. `John 3:16`, `Romans 8`)
+
+**Sync & Offline**
+- Firebase Authentication (email/password)
+- Reading position and settings synced across devices via Firebase Realtime Database
+- Service worker for full offline use after first load
+
+---
 
 ## Project Structure
 
@@ -52,11 +82,17 @@ A fast, offline-capable Bible reading app built with vanilla JavaScript, served 
 └── docs/                   # Project documentation
 ```
 
+---
+
 ## Architecture
 
-`app.js` is a thin orchestrator. It owns `init`, `loadPassage`, the service-worker helpers, and one-liner delegation methods for everything else. It should only change when you are modifying the app lifecycle or how passages are loaded.
+`app.js` is a thin orchestrator. It owns `init`, `loadPassage`, the
+service-worker registration, and one-liner delegation methods for everything
+else. It should only change when you are modifying the app lifecycle or how
+passages are loaded.
 
-All other logic lives in single-responsibility modules. When adding a feature, touch only the modules relevant to that feature:
+All other logic lives in single-responsibility modules. When adding a feature,
+touch only the modules relevant to that feature:
 
 | What you're adding | Files to touch |
 |---|---|
@@ -70,24 +106,30 @@ All other logic lives in single-responsibility modules. When adding a feature, t
 | New lifecycle step at startup | `app.js` (`init`) |
 | Change to how passages load | `app.js` (`loadPassage`) |
 
-`app.js` itself should not grow. If you find yourself adding logic directly to `app.js`, it belongs in one of the modules above instead.
+`app.js` should not grow. If you find yourself adding logic directly to
+`app.js`, it belongs in one of the modules above.
+
+---
 
 ## Firebase Setup
 
-This app requires a Firebase project for auth and reading state sync.
+The app requires a Firebase project for auth and cross-device sync.
 
 1. Create a project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable **Authentication** (Email/Password and/or Google sign-in)
-3. Enable **Realtime Database** and set rules to block unauthenticated writes
-4. Copy your Firebase config values into `config/firebase-config.js`
+2. Enable **Authentication** → Email/Password provider
+3. Enable **Realtime Database** and set security rules to block unauthenticated writes
+4. Copy your config values into `config/firebase-config.js`
 
-> **Do not commit real API keys.** The config file is tracked for convenience during development but should be replaced with environment variable injection before any public deployment. See issue [#118](https://github.com/stevenfarless/esv-bible/issues/118).
+`config/firebase-config.js` is tracked in the repository. Do not commit
+production credentials to a public repo — use environment variable injection
+or a CI secret for any public deployment.
+
+---
 
 ## Development
 
-See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for local setup, branch workflow, PR standards, and commit conventions.
-
-See [docs/CODE_OF_CONDUCT.md](docs/CODE_OF_CONDUCT.md) for community standards.
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for local setup, branch
+workflow, PR standards, and commit conventions.
 
 ### Running Tests
 
@@ -97,27 +139,15 @@ npm test          # Vitest unit tests
 npm run e2e       # Playwright end-to-end tests
 ```
 
+---
+
 ## Changelog
 
-See [docs/CHANGELOG.md](docs/CHANGELOG.md) for version history.
+See [docs/CHANGELOG.md](docs/CHANGELOG.md).
 
 ## Security
 
-See [docs/SECURITY.md](docs/SECURITY.md) for the security policy.
-
-## Translations
-
-The app loads Bible translations from JSON files in `translations/`. See [NOTICE](NOTICE) for full copyright and attribution information.
-
-### Included translations
-
-| Translation | License |
-|---|---|
-| **BSB** — Berean Standard Bible | Public domain |
-| **KJV** — King James Version | Public domain |
-| **MSB** — Majority Standard Bible | Public domain |
-| **LEB** — Lexham English Bible | © 2012 Logos Bible Software — free use with attribution |
-| **NET** — New English Translation | © Biblical Studies Press — free non-commercial use with attribution |
+See [docs/SECURITY.md](docs/SECURITY.md).
 
 ## License
 
