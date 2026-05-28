@@ -1,4 +1,4 @@
-// config/firebase-config.bundle.js — compiled from firebase-config.js
+// config/firebase-config.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getAuth,
@@ -9,7 +9,7 @@ import {
   setPersistence,
   indexedDBLocalPersistence,
   browserLocalPersistence,
-  browserSessionPersistence,
+  browserSessionPersistence
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
   getDatabase,
@@ -22,7 +22,6 @@ import {
   initializeAppCheck,
   ReCaptchaV3Provider
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check.js";
-
 var firebaseConfig = {
   apiKey: "__FIREBASE_API_KEY__",
   authDomain: "esv-bible-6dffb.firebaseapp.com",
@@ -32,25 +31,19 @@ var firebaseConfig = {
   messagingSenderId: "__FIREBASE_MESSAGING_SENDER_ID__",
   appId: "__FIREBASE_APP_ID__"
 };
-
 var FIREBASE_DB_URL = firebaseConfig.databaseURL;
 var app = initializeApp(firebaseConfig);
-
 initializeAppCheck(app, {
   provider: new ReCaptchaV3Provider("6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV"),
   isTokenAutoRefreshEnabled: true
 });
-
 var _auth = getAuth(app);
 var _db = getDatabase(app);
-
-// Try IndexedDB first, fall back to localStorage, then sessionStorage.
-setPersistence(_auth, indexedDBLocalPersistence).catch(() =>
-  setPersistence(_auth, browserLocalPersistence).catch(() =>
-    setPersistence(_auth, browserSessionPersistence)
+setPersistence(_auth, indexedDBLocalPersistence).catch(
+  () => setPersistence(_auth, browserLocalPersistence).catch(
+    () => setPersistence(_auth, browserSessionPersistence)
   )
 );
-
 function makeRef(path) {
   const dbRef = ref(_db, path);
   return {
@@ -59,11 +52,9 @@ function makeRef(path) {
     ref: (subpath) => makeRef(path ? `${path}/${subpath}` : subpath)
   };
 }
-
 var dbShim = {
   ref: (path) => makeRef(path)
 };
-
 var authShim = {
   onAuthStateChanged: (cb) => onAuthStateChanged(_auth, cb),
   signInWithEmailAndPassword: (e, p) => signInWithEmailAndPassword(_auth, e, p),
@@ -73,10 +64,8 @@ var authShim = {
     return _auth.currentUser;
   }
 };
-
 window.firebaseAuth = authShim;
 window.firebaseDatabase = dbShim;
-
 async function loadUserData(userId) {
   try {
     const snap = await get(ref(_db, `users/${userId}`));
@@ -101,7 +90,6 @@ async function loadUserData(userId) {
     return null;
   }
 }
-
 export {
   FIREBASE_DB_URL,
   loadUserData
