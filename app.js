@@ -36,6 +36,7 @@ import {
     openChapterModal, populateChapterModal,
     openVerseModal, populateVerseModal,
     openTranslationModal, populateTranslationModal,
+    translationKbMove, translationKbSelect,
     getCurrentVerseCount,
 } from './modals.js';
 import {
@@ -441,6 +442,7 @@ class BibleApp {
         this._copyrightMap = {};
         this._translationRegistry = [];
         this._normalizeTranslation = normalizeTranslation;
+        this._translationKbIndex = -1;
 
         // Debug instrumentation — REMOVE BEFORE MERGING TO MAIN.
         this._dbg = {
@@ -916,6 +918,8 @@ class BibleApp {
     populateVerseModal()       { populateVerseModal(this); }
     openTranslationModal()     { openTranslationModal(this); }
     populateTranslationModal() { populateTranslationModal(this); }
+    translationKbMove(delta)   { translationKbMove(this, delta); }
+    translationKbSelect()      { translationKbSelect(this); }
     getCurrentVerseCount()     { return getCurrentVerseCount(this); }
     scrollToVerse(n)           { scrollVerse(this, n); }
     applyVerseGlow()           { glowVerse(this); }
