@@ -1,8 +1,8 @@
 // ====================
-// ESV Bible Reader App
+// Bible Reader App
 // ====================
 
-import { BibleApi, loadTranslationIndex } from './bible-api.js';
+import { BibleApi, LOCAL_TRANSLATIONS } from './bible-api.js';
 import { loadStructure, eventsForChapter } from './bsb-structure.js';
 import {
     initializeState,
@@ -72,9 +72,81 @@ function revealApp() {
 function ms() { return Math.round(performance.now()); }
 function ts(t) { return t == null ? 'n/a' : `+${t}ms`; }
 
+// ── Network fetch interceptor ──────────────────────────────────────────────
+// Installed once at module load. Records every fetch with timing, status,
+// and whether it hit a local file or Firebase.
+
+const _fetchLog = [];
+const _originalFetch = window.fetch.bind(window);
+window.fetch = async function patchedFetch(input, init) {
+    const url   = typeof input === 'string' ? input : (input?.url ?? String(input));
+    const start = ms();
+    let status  = '?';
+    let ok      = false;
+    try {
+        const res = await _originalFetch(input, init);
+        status = res.status;
+        ok     = res.ok;
+        return res;
+    } catch (err) {
+        status = `ERR(${err.message})`;
+        throw err;
+    } finally {
+        const dur = ms() - start;
+        const src = url.includes('firebaseio.com') ? 'firebase'
+                  : url.includes('_bible.json')    ? 'local'
+                  : url.includes('translations/')  ? 'local'
+                  : 'other';
+        _fetchLog.push({ t: start, dur, url, status, ok, src });
+    }
+};
+
+// ── JS error log ──────────────────────────────────────────────────────────
+// Captures uncaught exceptions and unhandled promise rejections so they
+// appear in the debug panel even if DevTools isn't open.
+
+const _errorLog = [];
+window.addEventListener('error', (e) => {
+    _errorLog.push({
+        t: ms(),
+        msg: `${e.message}`,
+        src: `${e.filename?.replace(/^https?:\/\/[^/]+/, '') ?? '?'}:${e.lineno}`,
+    });
+});
+window.addEventListener('unhandledrejection', (e) => {
+    const msg = e.reason?.message ?? String(e.reason ?? 'unhandled rejection');
+    _errorLog.push({ t: ms(), msg, src: 'promise' });
+});
+
+// ── User action log ───────────────────────────────────────────────────────
+// Tracks meaningful UI interactions: translation changes, navigation,
+// modal opens, search queries. Wired via _dbgUserAction() on the app instance.
+
+const _userActionLog = [];
+function _logUserAction(msg) {
+    _userActionLog.push({ t: ms(), msg });
+}
+
 function buildDebugReport(app) {
     const dbg = app._dbg || {};
     const now = ms();
+
+    // ── Device / browser ──────────────────────────────────────────────────
+    const ua        = navigator.userAgent;
+    const platform  = navigator.platform || 'unknown';
+    const vw        = window.innerWidth;
+    const vh        = window.innerHeight;
+    const dpr       = window.devicePixelRatio ?? 1;
+    const touchDev  = ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 'yes' : 'no';
+    const online    = navigator.onLine ? 'online' : 'OFFLINE';
+    const connType  = navigator.connection?.effectiveType ?? 'unknown';
+    const connDown  = navigator.connection?.downlink != null ? `${navigator.connection.downlink} Mbps` : 'unknown';
+    const buildId   = document.querySelector('meta[name="build-id"]')?.content || '__BUILD_ID__';
+
+    // ── Firebase connectivity ─────────────────────────────────────────────
+    const fbConnected = dbg.firebaseConnected === true  ? 'connected ✓'
+                      : dbg.firebaseConnected === false ? 'DISCONNECTED ✗'
+                      : 'unknown (listener not yet fired)';
 
     const LS_KEYS = [
         'readingPosition', 'passageCache',
@@ -135,6 +207,25 @@ function buildDebugReport(app) {
     const bookCacheKeys   = api?._bookCache         ? [...api._bookCache.keys()]         : [];
     const searchCacheKeys = api?._searchIndexCache  ? [...api._searchIndexCache.keys()]  : [];
 
+    // ── Network log: group by source ──────────────────────────────────────
+    const localFetches    = _fetchLog.filter(f => f.src === 'local');
+    const firebaseFetches = _fetchLog.filter(f => f.src === 'firebase');
+    const otherFetches    = _fetchLog.filter(f => f.src === 'other');
+    const errorFetches    = _fetchLog.filter(f => !f.ok);
+
+    const fmtFetch = (f) => {
+        const shortUrl = f.url.replace(/^https?:\/\/[^/]+/, '').replace(/\.json(\?.*)?$/, '.json');
+        return `  ${ts(f.t)}  [${f.status}] ${f.dur}ms  ${shortUrl}`;
+    };
+
+    // ── Verse count in current passage ────────────────────────────────────
+    const verseCount = app?.passageText
+        ? app.passageText.querySelectorAll('.verse').length
+        : 'n/a';
+
+    // ── SW cache keys ─────────────────────────────────────────────────────
+    const swCacheLines = ['  (loading...)'];
+
     const timings = [
         `  scriptStart:          ${ts(dbg.t_script_start)}`,
         `  domReady:             ${ts(dbg.t_dom_ready)}`,
@@ -143,7 +234,7 @@ function buildDebugReport(app) {
         `  cacheRestoreResult:   ${dbg.cacheRestoreResult ?? 'n/a'} at ${ts(dbg.t_cache_restore)}`,
         `  revealApp (1st):      ${ts(dbg.t_reveal_first)}`,
         `  passageFetchStart:    ${ts(dbg.t_passage_fetch_start)}`,
-        `  passageFetchEnd:      ${ts(dbg.t_passage_fetch_end)}  (${dbg.passageFetchMs != null ? dbg.passageFetchMs + 'ms RTDB' : 'n/a'})`,
+        `  passageFetchEnd:      ${ts(dbg.t_passage_fetch_end)}  (${dbg.passageFetchMs != null ? dbg.passageFetchMs + 'ms' : 'n/a'})`,
         `  revealApp (2nd):      ${ts(dbg.t_reveal_second)}`,
         `  authStateChanged:     ${ts(dbg.t_auth_state)} (${dbg.authStateUser ?? 'n/a'})`,
         `  userDataLoaded:       ${ts(dbg.t_user_data_loaded)}`,
@@ -152,6 +243,14 @@ function buildDebugReport(app) {
     ];
 
     const lines = [
+        '=== environment ===',
+        `  buildId: ${buildId}`,
+        `  userAgent: ${ua}`,
+        `  platform: ${platform}`,
+        `  viewport: ${vw}x${vh}  dpr: ${dpr}  touch: ${touchDev}`,
+        `  network: ${online}  type: ${connType}  downlink: ${connDown}`,
+        `  firebase: ${fbConnected}`,
+        '',
         '=== timings (ms since navigation start) ===',
         ...timings,
         '',
@@ -164,12 +263,40 @@ function buildDebugReport(app) {
         '=== passage cache match (now) ===',
         `  ${cacheMatch}`,
         '',
+        '=== current passage ===',
+        `  verses rendered: ${verseCount}`,
+        `  title: ${app?.passageTitle?.textContent ?? 'n/a'}`,
+        `  translation: ${app?.state?.translation ?? 'n/a'}`,
+        '',
+        '=== user actions ===',
+        _userActionLog.length ? _userActionLog.map(e => `  ${ts(e.t)}  ${e.msg}`).join('\n') : '  (none)',
+        '',
         '=== session event log ===',
         ...(dbg.events?.length ? dbg.events.map(e => `  ${ts(e.t)}  ${e.msg}`) : ['  (none)']),
+        '',
+        '=== JS errors ===',
+        _errorLog.length
+            ? _errorLog.map(e => `  ${ts(e.t)}  [${e.src}] ${e.msg}`).join('\n')
+            : '  (none ✓)',
+        '',
+        '=== network: local file fetches ===',
+        localFetches.length ? localFetches.map(fmtFetch).join('\n') : '  (none)',
+        '',
+        '=== network: firebase fetches ===',
+        firebaseFetches.length ? firebaseFetches.map(fmtFetch).join('\n') : '  (none — local routing working ✓)',
+        '',
+        '=== network: other fetches ===',
+        otherFetches.length ? otherFetches.map(fmtFetch).join('\n') : '  (none)',
+        '',
+        '=== network: errors ===',
+        errorFetches.length ? errorFetches.map(fmtFetch).join('\n') : '  (none ✓)',
         '',
         '=== API memory cache ===',
         `  bookCache (${bookCacheKeys.length}): ${bookCacheKeys.join(', ') || '(empty)'}`,
         `  searchIndexCache (${searchCacheKeys.length}): ${searchCacheKeys.join(', ') || '(empty)'}`,
+        '',
+        '=== service worker cache ===',
+        ...swCacheLines,
         '',
         '=== app state (now) ===',
         `  currentBook: ${app?.state?.currentBook}`,
@@ -181,14 +308,14 @@ function buildDebugReport(app) {
         `  scrollY: ${window.scrollY}`,
         `  currentUser: ${app?.currentUser?.email ?? 'not signed in'}`,
     ];
-    return lines.join('\n');
+    return { text: lines.join('\n'), swCacheLines };
 }
 
 function showDebugPanel(app) {
     const existing = document.getElementById('debugPanel');
     if (existing) { existing.remove(); return; }
 
-    const report = buildDebugReport(app);
+    const { text, swCacheLines } = buildDebugReport(app);
 
     const overlay = document.createElement('div');
     overlay.id = 'debugPanel';
@@ -207,7 +334,7 @@ function showDebugPanel(app) {
         wordBreak: 'break-all', userSelect: 'text',
         border: '1px solid #45475a',
     });
-    box.textContent = report;
+    box.textContent = text;
 
     const hint = document.createElement('div');
     Object.assign(hint.style, {
@@ -222,9 +349,36 @@ function showDebugPanel(app) {
     wrapper.appendChild(hint);
     overlay.appendChild(wrapper);
 
+    // Async: fill in SW cache keys and update the box text.
+    if ('caches' in window) {
+        caches.keys().then(async (cacheNames) => {
+            const allKeys = [];
+            for (const name of cacheNames) {
+                const cache = await caches.open(name);
+                const keys  = await cache.keys();
+                allKeys.push(`  [${name}] ${keys.length} entries`);
+                for (const req of keys.slice(0, 20)) {
+                    const shortUrl = req.url.replace(/^https?:\/\/[^/]+/, '');
+                    allKeys.push(`    ${shortUrl}`);
+                }
+                if (keys.length > 20) allKeys.push(`    ... and ${keys.length - 20} more`);
+            }
+            if (!allKeys.length) allKeys.push('  (no SW caches)');
+            const fullText = box.textContent.replace(
+                /=== service worker cache ===\n  \(loading\.\.\.\)/,
+                `=== service worker cache ===\n${allKeys.join('\n')}`
+            );
+            box.textContent = fullText;
+        }).catch(() => {
+            box.textContent = box.textContent.replace('  (loading...)', '  (cache API unavailable)');
+        });
+    } else {
+        box.textContent = box.textContent.replace('  (loading...)', '  (not supported)');
+    }
+
     box.addEventListener('click', (e) => {
         e.stopPropagation();
-        navigator.clipboard.writeText(report)
+        navigator.clipboard.writeText(box.textContent)
             .then(() => { hint.textContent = 'Copied! ✓'; })
             .catch(() => { hint.textContent = 'Copy failed — select text manually'; });
     });
@@ -292,6 +446,7 @@ class BibleApp {
         this._dbg = {
             t_script_start: ms(),
             events: [],
+            firebaseConnected: null,
         };
 
         this.bibleBooks = initializeBibleStructure();
@@ -368,11 +523,19 @@ class BibleApp {
         this.searchExpandedTestaments = new Set();
         this.searchExpandedBooks = new Set();
         this.bibleApi = new BibleApi(this.state.translation || 'KJV');
+
+        // Expose instance for Playwright debug log attachment — REMOVE BEFORE MERGING TO MAIN.
+        window._bibleApp = this;
+
         this.init();
     }
 
     _dbgEvent(msg) {
         this._dbg.events.push({ t: ms(), msg });
+    }
+
+    _dbgUserAction(msg) {
+        _logUserAction(msg);
     }
 
     getAllBooks()          { return getAllBooks(this); }
@@ -404,8 +567,6 @@ class BibleApp {
             const stateChapter = this.state.currentChapter;
             const stateTrans   = this.state.translation || 'KJV';
 
-            // parseInt on both sides guards against older cache entries
-            // that stored chapter as a string.
             if (
                 book                    !== stateBook    ||
                 parseInt(chapter, 10)  !== stateChapter ||
@@ -428,6 +589,21 @@ class BibleApp {
         } catch (_) {
             return false;
         }
+    }
+
+    // ── Background translation prefetch ───────────────────────────────────
+    _prefetchTranslations() {
+        const active = this.state.translation;
+        const queue = [...LOCAL_TRANSLATIONS].filter(t => t !== active);
+        let i = 0;
+        const next = () => {
+            if (i >= queue.length) return;
+            const t = queue[i++];
+            this.bibleApi._ensureLocalTranslationLoaded(t)
+                .catch(() => {})
+                .finally(() => setTimeout(next, 500));
+        };
+        setTimeout(next, 2000);
     }
 
     async init() {
@@ -475,6 +651,21 @@ class BibleApp {
             if (!this.auth || !this.database) {
                 console.warn('Firebase not available — sign-in disabled.');
                 this._dbgEvent('Firebase unavailable');
+                this._dbg.firebaseConnected = false;
+            }
+
+            // ── Firebase connectivity listener ─────────────────────────────
+            if (this.database) {
+                try {
+                    const { ref: fbRef, onValue } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js');
+                    onValue(fbRef(this.database, '.info/connected'), (snap) => {
+                        const connected = !!snap.val();
+                        this._dbg.firebaseConnected = connected;
+                        this._dbgEvent(`firebase: ${connected ? 'connected' : 'disconnected'}`);
+                    });
+                } catch (_) {
+                    // Firebase SDK not available via dynamic import — connectivity stays 'unknown'.
+                }
             }
 
             const cacheHit = this._restorePassageCache();
@@ -483,34 +674,23 @@ class BibleApp {
             if (cacheHit) this._dbgEvent('cache restore: HIT');
 
             initDebugTrigger(this);
-
-            // Decide what to load on startup:
-            //
-            // 1. Cache HIT and readingPosition agrees with the cache — nothing to
-            //    fetch. Reveal immediately and run translation registry in background.
-            //
-            // 2. Cache HIT but readingPosition points somewhere different (stale cache
-            //    from a previous session's last chapter before reload) — reveal the
-            //    cached content immediately so the user sees something, then load the
-            //    correct position in the background.
-            //
-            // 3. Cache MISS — load the target passage and reveal when done.
+            // Expose debug report builder for Playwright test attachment — REMOVE BEFORE MERGING TO MAIN.
+            window._buildDebugReport = () => buildDebugReport(window._bibleApp).text;
 
             const savedPos = _readSavedPosition();
             const posMatchesCache = !savedPos ||
                 (savedPos.book === this.state.currentBook && savedPos.chapter === this.state.currentChapter);
 
             if (cacheHit && posMatchesCache) {
-                // Fast path: cache is current. No RTDB fetch needed.
                 this._dbg.t_reveal_first = ms();
                 this._dbg.t_passage_fetch_start = null;
                 this._dbg.t_passage_fetch_end   = null;
                 this._dbg.passageFetchMs         = null;
                 revealApp();
-                this._dbgEvent('init: cache hit + position match — skipping RTDB fetch');
+                this._dbgEvent('init: cache hit + position match — skipping fetch');
                 this._loadTranslationRegistry();
+                this._prefetchTranslations();
             } else if (cacheHit && !posMatchesCache) {
-                // Reveal stale cache immediately for fast paint, then fix the position.
                 this._dbg.t_reveal_first = ms();
                 revealApp();
                 this._dbgEvent(`init: cache hit but position mismatch — loading ${savedPos.book} ${savedPos.chapter}`);
@@ -521,8 +701,8 @@ class BibleApp {
                 ]);
                 this._dbg.t_passage_fetch_end = ms();
                 this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
+                this._prefetchTranslations();
             } else {
-                // Cache miss: fetch and then reveal.
                 this._dbg.t_passage_fetch_start = ms();
                 await Promise.all([
                     this._loadTranslationRegistry(),
@@ -532,6 +712,7 @@ class BibleApp {
                 this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
                 this._dbg.t_reveal_second = ms();
                 revealApp();
+                this._prefetchTranslations();
             }
 
             if (this.auth && this.database) {
@@ -569,22 +750,31 @@ class BibleApp {
     }
 
     async _loadTranslationRegistry() {
-        const translations = await loadTranslationIndex();
-        // Save to instance so populateTranslationModal can read it.
-        this._translationRegistry = translations.map(t => ({ id: t.id, name: t.label }));
-        const select = document.getElementById('translationSelector');
-        if (select && translations.length > 0) {
-            select.innerHTML = '';
-            for (const t of translations) {
-                const opt = document.createElement('option');
-                opt.value = t.id;
-                opt.textContent = t.label;
-                select.appendChild(opt);
+        try {
+            const res = await fetch('./translations/index.json');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            const translations = data.translations || [];
+
+            this._translationRegistry = translations.map(t => ({ id: t.id, name: t.label }));
+
+            const select = document.getElementById('translationSelector');
+            if (select && translations.length > 0) {
+                select.innerHTML = '';
+                for (const t of translations) {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = t.label;
+                    select.appendChild(opt);
+                }
             }
+
+            this._copyrightMap = {};
+            for (const t of translations) this._copyrightMap[t.id] = t.copyright || '';
+            this.updateCopyright?.();
+        } catch (err) {
+            console.error('BibleApp: failed to load translation index', err);
         }
-        this._copyrightMap = {};
-        for (const t of translations) this._copyrightMap[t.id] = t.copyright || '';
-        this.updateCopyright?.();
     }
 
     initializeAccordion() {
@@ -666,14 +856,23 @@ class BibleApp {
         this._savePassageCache(book, chapter, this.state.translation || 'KJV', title, this.passageText.innerHTML);
     }
 
-    navigateChapter(direction) { navChapter(this, direction); }
+    navigateChapter(direction) {
+        _logUserAction(`navigateChapter: ${direction > 0 ? 'next' : 'prev'} (${this.state.currentBook} ${this.state.currentChapter})`);
+        navChapter(this, direction);
+    }
     updateNavigationState()    { updateNavigationState(this); }
     navigateToNextVerse()      { navigateToNextVerse(this); }
     navigateToPreviousVerse()  { navigateToPreviousVerse(this); }
 
-    toggleSearch()                          { toggleSearch(this); }
+    toggleSearch() {
+        _logUserAction('toggleSearch');
+        toggleSearch(this);
+    }
     closeSearch()                           { closeSearch(this); }
-    handleSearch(query)                     { handleSearch(this, query); }
+    handleSearch(query) {
+        _logUserAction(`search: "${query}"`);
+        handleSearch(this, query);
+    }
     handleSearchKeydown(e)                  { handleSearchKeydown(this, e); }
     refreshSearchResultItems(autoSelect)    { refreshSearchResultItems(this, autoSelect); }
     setSearchSelectedIndex(i, scroll)       { setSearchSelectedIndex(this, i, scroll); }
@@ -690,7 +889,10 @@ class BibleApp {
     highlightSearchTerm(text, term)         { return highlightSearchTerm(text, term); }
     stripHTML(html)                         { return stripHTML(html); }
 
-    openModal(modal)           { openModal(this, modal); }
+    openModal(modal) {
+        _logUserAction(`openModal: ${modal?.id ?? 'unknown'}`);
+        openModal(this, modal);
+    }
     closeModal(modal)          { closeModal(this, modal); }
     openBookModal()            { openBookModal(this); }
     populateBookModal()        { populateBookModal(this); }
@@ -704,12 +906,24 @@ class BibleApp {
     scrollToVerse(n)           { scrollVerse(this, n); }
     applyVerseGlow()           { glowVerse(this); }
 
-    loadLocalSettings()          { loadLocalSettings(this); }
-    applySettings()              { applySettings(this); }
-    async toggleSetting(s)       { await toggleSetting(this, s); }
-    async toggleVerseByVerse()   { await toggleVerseByVerse(this); }
-    async updateFontSize(size)   { await updateFontSize(this, size); }
-    async changeTranslation(t)   { await changeTranslation(this, t); }
+    loadLocalSettings()        { loadLocalSettings(this); }
+    applySettings()            { applySettings(this); }
+    async toggleSetting(s) {
+        _logUserAction(`toggleSetting: ${s}`);
+        await toggleSetting(this, s);
+    }
+    async toggleVerseByVerse() {
+        _logUserAction('toggleVerseByVerse');
+        await toggleVerseByVerse(this);
+    }
+    async updateFontSize(size) {
+        _logUserAction(`updateFontSize: ${size}`);
+        await updateFontSize(this, size);
+    }
+    async changeTranslation(t) {
+        _logUserAction(`changeTranslation: ${t}`);
+        await changeTranslation(this, t);
+    }
     updateCopyright()            { updateCopyright(this); }
 
     handleKeyboardShortcuts(e)   { handleKeyboardShortcuts(this, e); }
