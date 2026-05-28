@@ -19,6 +19,7 @@ export function handleKeyboardShortcuts(app, e) {
             app.bookModal, app.chapterModal, app.helpModal,
             app.settingsModal, app.loginModal, app.signupModal,
             app.userMenuModal, app.verseModal, app.referencesModal,
+            app.translationModal,
         ].forEach((m) => { if (m?.classList.contains('active')) app.closeModal(m); });
         if (app.searchContainer?.classList.contains('active')) app.closeSearch();
         return;
