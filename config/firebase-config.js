@@ -11,6 +11,10 @@ import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     signOut,
+    setPersistence,
+    indexedDBLocalPersistence,
+    browserLocalPersistence,
+    browserSessionPersistence,
 } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 import {
     getDatabase,
@@ -46,6 +50,15 @@ initializeAppCheck(app, {
 const _auth = getAuth(app);
 const _db   = getDatabase(app);
 
+// Try IndexedDB first (most robust), fall back to localStorage, then
+// sessionStorage. This prevents sign-out on every reload when Edge/Safari
+// tracking prevention blocks cross-origin storage access.
+setPersistence(_auth, indexedDBLocalPersistence).catch(() =>
+    setPersistence(_auth, browserLocalPersistence).catch(() =>
+        setPersistence(_auth, browserSessionPersistence)
+    )
+);
+
 // ── Database shim ──────────────────────────────────────────────────────────
 // Returns a ref-like object whose .once() and .set() match the compat API.
 function makeRef(path) {
@@ -63,11 +76,11 @@ const dbShim = {
 
 // ── Auth shim ──────────────────────────────────────────────────────────────
 const authShim = {
-    onAuthStateChanged: (cb)         => onAuthStateChanged(_auth, cb),
+    onAuthStateChanged: (cb)           => onAuthStateChanged(_auth, cb),
     signInWithEmailAndPassword: (e, p) => signInWithEmailAndPassword(_auth, e, p),
     createUserWithEmailAndPassword: (e, p) => createUserWithEmailAndPassword(_auth, e, p),
-    signOut: ()                      => signOut(_auth),
-    get currentUser()                { return _auth.currentUser; },
+    signOut: ()                        => signOut(_auth),
+    get currentUser()                  { return _auth.currentUser; },
 };
 
 // Expose on window so app.js reads window.firebaseAuth / window.firebaseDatabase
