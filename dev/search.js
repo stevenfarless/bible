@@ -474,11 +474,25 @@ export async function performKeywordSearch(app, query) {
     app.searchSelectedIndex = -1;
     app.searchResultItems = [];
 
+    // Clear expand state for the new query, then seed the initial open state
+    // (first testament + first book). This runs exactly once per search so
+    // subsequent displaySearchResults calls render the Sets as-is without
+    // any auto-open side effects.
     app.searchExpandedTestaments?.clear();
     app.searchExpandedBooks?.clear();
 
     await fetchAllSearchResults(app, query, (accumulatedResults) => {
         if (accumulatedResults.length > 0) {
+            // Seed initial open state before the first incremental render.
+            if (app.searchExpandedTestaments.size === 0 && app.searchExpandedBooks.size === 0) {
+                const groups = groupSearchResultsByCanon(app, accumulatedResults);
+                const firstGroup = groups[0];
+                if (firstGroup) {
+                    app.searchExpandedTestaments.add(firstGroup.heading);
+                    const firstBook = firstGroup.books && firstGroup.books[0];
+                    if (firstBook) app.searchExpandedBooks.add(firstBook.book);
+                }
+            }
             displaySearchResults(app, accumulatedResults, query);
         }
     });
@@ -512,15 +526,6 @@ export function displaySearchResults(app, results, query) {
         app.searchResultsSummary = null;
         refreshSearchResultItems(app, false);
         return;
-    }
-
-    if (app.searchExpandedTestaments.size === 0 && app.searchExpandedBooks.size === 0) {
-        const firstGroup = groups[0];
-        if (firstGroup) {
-            app.searchExpandedTestaments.add(firstGroup.heading);
-            const firstBook = firstGroup.books && firstGroup.books[0];
-            if (firstBook) app.searchExpandedBooks.add(firstBook.book);
-        }
     }
 
     const esc = (str) =>
