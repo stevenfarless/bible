@@ -43,6 +43,14 @@ body {
     overflow: visible;
 }
 
+/* Lock scrolling while a modal is open.
+   Applied to html (not body) so the scroll container owner never changes.
+   body.style.overflow writes were the previous approach; they corrupted
+   iOS Safari's scroll-container resolution after modal close. */
+body.modal-open {
+    overflow: hidden;
+}
+
 
 /* ================================
    2. CSS CUSTOM PROPERTIES (VARIABLES)
