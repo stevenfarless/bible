@@ -264,7 +264,9 @@ test('reading position: localStorage updated after chapter navigation', async ({
 });
 
 // ---------------------------------------------------------------------------
-// 11. Passage cache — navigating to a passage writes cache entry
+// 11. Passage cache — navigating to a passage writes the passageCache key
+// app.js stores the cache under the single key 'passageCache' as JSON with
+// shape { book, chapter, html }.
 // ---------------------------------------------------------------------------
 test('passage cache: navigating back to a visited passage writes cache', async ({ page }) => {
 	await page.goto('/');
@@ -274,20 +276,23 @@ test('passage cache: navigating back to a visited passage writes cache', async (
 	await page.locator('#newTestamentBooks button', { hasText: 'Matt' }).first().click();
 	await expect(page.locator('#passageTitle')).toContainText('Matthew 1');
 
+	// Wait for app.js to write the passageCache key
 	await page.waitForFunction(
 		() => {
 			try {
-				const keys = Object.keys(localStorage).filter(k => k.startsWith('passage_') || k.startsWith('cache_'));
-				return keys.length > 0;
+				const raw = localStorage.getItem('passageCache');
+				if (!raw) return false;
+				const cache = JSON.parse(raw);
+				return cache && typeof cache.html === 'string' && cache.html.length > 0;
 			} catch { return false; }
 		},
-		{ timeout: 5000 }
+		{ timeout: 10000 }
 	);
 
-	const cacheKeys = await page.evaluate(() =>
-		Object.keys(localStorage).filter(k => k.startsWith('passage_') || k.startsWith('cache_'))
-	);
-	expect(cacheKeys.length).toBeGreaterThan(0);
+	const cache = await page.evaluate(() => JSON.parse(localStorage.getItem('passageCache')));
+	expect(cache.book).toBe('Matthew');
+	expect(cache.chapter).toBe(1);
+	expect(cache.html.length).toBeGreaterThan(0);
 });
 
 // ---------------------------------------------------------------------------
