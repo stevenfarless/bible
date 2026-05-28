@@ -11,11 +11,14 @@ Live app: [stevenfarless.github.io/bible](https://stevenfarless.github.io/bible)
 
 | Translation | License |
 |---|---|
+| **ASV** - American Standard Version | Public domain |
+| **BLB** - Berean Literal Bible | Public domain |
 | **BSB** - Berean Standard Bible | Public domain |
 | **KJV** - King James Version | Public domain |
-| **MSB** - Majority Standard Bible | Public domain |
 | **LEB** - Lexham English Bible | (c) 2012 Logos Bible Software, free use with attribution |
+| **MSB** - Majority Standard Bible | Public domain |
 | **NET** - New English Translation | (c) Biblical Studies Press, free non-commercial use with attribution |
+| **WEB** - World English Bible | Public domain |
 
 Full copyright and attribution information is in [NOTICE](NOTICE).
 
