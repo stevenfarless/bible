@@ -10,7 +10,6 @@ Run via GitHub Actions workflow: .github/workflows/split-translations.yml
 """
 
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -40,26 +39,34 @@ BOOK_KEY_ALIASES = {
 }
 
 
-def find_book_data(bible: dict, canonical: str) -> tuple[str, dict] | None:
-    """Return (resolved_key, chapter_dict) or None if not found."""
+def find_book_data(bible: dict, canonical: str):
+    """Return (resolved_key, chapter_dict) or None if not found or not a valid chapter dict."""
     for candidate in [canonical, BOOK_KEY_ALIASES.get(canonical, '')]:
-        if candidate and candidate in bible:
-            data = bible[candidate]
-            # Some monoliths nest one level deeper: {"BookName": {"1": ...}}
-            # Others store chapters directly: {"1": {"1": ...}}
-            # Detect by checking whether the first value is a dict of dicts.
-            if isinstance(data, dict):
-                first_val = next(iter(data.values()), None)
-                if isinstance(first_val, dict):
-                    # Check if it looks like chapter->verse (keys are numeric strings)
-                    first_key = next(iter(data.keys()), '')
-                    if first_key.isdigit():
-                        return candidate, data  # chapters at top level
-                    # Otherwise it might be a nested book key
-                    inner_val = next(iter(first_val.values()), None)
-                    if isinstance(inner_val, str):
-                        return candidate, first_val  # one level deeper
+        if not candidate or candidate not in bible:
+            continue
+        data = bible[candidate]
+
+        # Must be a dict to be valid chapter data.
+        if not isinstance(data, dict):
+            continue
+
+        first_key = next(iter(data.keys()), '')
+
+        if first_key.isdigit():
+            # Chapters at top level: { "1": { "1": "verse", ... }, ... }
             return candidate, data
+
+        # Might be nested one level: { "BookName": { "1": { "1": "verse" } } }
+        first_val = data.get(first_key)
+        if isinstance(first_val, dict):
+            nested_key = next(iter(first_val.keys()), '')
+            if nested_key.isdigit():
+                return candidate, first_val
+
+        # Data exists but structure is unrecognised — skip.
+        print(f'    WARNING: unrecognised structure for "{candidate}" '
+              f'(first key: "{first_key}"), skipping', flush=True)
+
     return None
 
 
