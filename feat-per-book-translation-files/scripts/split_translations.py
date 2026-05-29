@@ -33,7 +33,6 @@ BOOK_ORDER = [
     '1 John', '2 John', '3 John', 'Jude', 'Revelation',
 ]
 
-# Maps canonical name -> known alternate key spellings.
 BOOK_KEY_ALIASES = {
     'Song of Solomon': 'Song Of Solomon',
     'Psalm':           'Psalms',
@@ -52,27 +51,62 @@ def _normalise(s: str) -> str:
 
 
 def _build_key_map(bible: dict) -> dict:
-    """Return {normalised_key: actual_key} for every key in bible."""
     return {_normalise(k): k for k in bible}
 
 
-def _is_chapter_dict(data) -> bool:
-    """True if data looks like { "1": { "1": "verse text", ... }, ... }."""
-    if not isinstance(data, dict) or not data:
-        return False
-    first_key = next(iter(data))
-    if not first_key.isdigit():
-        return False
-    first_val = data[first_key]
-    return isinstance(first_val, dict)
+def _list_chapters_to_dict(chapters_list: list) -> dict:
+    """
+    Convert list-of-lists chapter format to standard dict format.
+
+    Input:  [ ["v1", "v2", ...], ["v1", ...], ... ]  (index 0 = chapter 1)
+    Output: { "1": { "1": "v1", "2": "v2", ... }, "2": { ... }, ... }
+
+    Some arrays use index 0 as a placeholder empty string; verses are
+    1-indexed regardless.
+    """
+    result = {}
+    for ch_idx, verses in enumerate(chapters_list):
+        ch_num = ch_idx + 1
+        if not isinstance(verses, (list, tuple)):
+            continue
+        verse_dict = {}
+        for v_idx, text in enumerate(verses):
+            v_num = v_idx + 1
+            if text is None or text == '':
+                continue
+            verse_dict[str(v_num)] = str(text)
+        if verse_dict:
+            result[str(ch_num)] = verse_dict
+    return result
+
+
+def _normalise_book_value(data) -> dict | None:
+    """
+    Accept chapter data in any of the known formats and return a
+    standard { "1": { "1": "verse" } } dict, or None if unrecognised.
+    """
+    # Already standard dict form.
+    if isinstance(data, dict) and data:
+        first_key = next(iter(data))
+        if first_key.isdigit():
+            return data
+        # Nested one level: { "BookName": { "1": {...} } }
+        first_val = data[first_key]
+        if isinstance(first_val, dict):
+            nested_first = next(iter(first_val), '')
+            if nested_first.isdigit():
+                return first_val
+        return None
+
+    # List-of-lists (KJV style).
+    if isinstance(data, list):
+        converted = _list_chapters_to_dict(data)
+        return converted if converted else None
+
+    return None
 
 
 def _unwrap_envelope(bible: dict) -> dict:
-    """
-    Unwrap a single-key envelope like { "KJV": { "Genesis": {...} } }.
-    Only unwraps when the sole value's first key is non-numeric (looks
-    like a book name, not a chapter number).
-    """
     if len(bible) != 1:
         return bible
     only_key, only_val = next(iter(bible.items()))
@@ -86,44 +120,28 @@ def _unwrap_envelope(bible: dict) -> dict:
 
 
 def _remap_numeric_index(bible: dict) -> dict:
-    """
-    Some monoliths index books by position: { "1": chapters, "2": chapters, ... }
-    If ALL top-level keys are digit strings 1..N where N <= 66, remap
-    them to canonical book names by position.
-    """
     keys = list(bible.keys())
     if not keys or not all(k.isdigit() for k in keys):
         return bible
     indices = sorted(int(k) for k in keys)
     if indices[0] != 1 or indices[-1] > 66:
         return bible
-    # Verify values look like chapter dicts before committing.
     first_val = bible[str(indices[0])]
-    if not _is_chapter_dict(first_val):
+    # Accept dict or list as valid chapter containers.
+    if not isinstance(first_val, (dict, list)):
         return bible
     print(f'    Detected numeric book index (1–{indices[-1]}), remapping to canonical names.', flush=True)
     return {BOOK_ORDER[i - 1]: bible[str(i)] for i in indices}
 
 
 def _resolve(bible: dict, key_map: dict, canonical: str):
-    """
-    Return (actual_key, chapter_dict) for `canonical`, or None.
-    Tries in order:
-      1. Exact canonical name
-      2. Known alias
-      3. Fuzzy normalised match
-      4. Upper-case variant (e.g. 'GENESIS')
-    """
     candidates = [canonical]
     alias = BOOK_KEY_ALIASES.get(canonical)
     if alias:
         candidates.append(alias)
-
-    norm_canonical = _normalise(canonical)
-    fuzzy_key = key_map.get(norm_canonical)
+    fuzzy_key = key_map.get(_normalise(canonical))
     if fuzzy_key and fuzzy_key not in candidates:
         candidates.append(fuzzy_key)
-
     upper = canonical.upper()
     if upper not in candidates:
         candidates.append(upper)
@@ -131,24 +149,10 @@ def _resolve(bible: dict, key_map: dict, canonical: str):
     for candidate in candidates:
         if candidate not in bible:
             continue
-        data = bible[candidate]
-        if not isinstance(data, dict) or not data:
-            continue
-
-        first_key = next(iter(data))
-
-        if first_key.isdigit():
-            return candidate, data
-
-        # Nested one level: { "BookName": { "1": {...} } }
-        first_val = data[first_key]
-        if isinstance(first_val, dict):
-            nested_first = next(iter(first_val), '')
-            if nested_first.isdigit():
-                return candidate, first_val
-
-        print(f'    WARNING: unrecognised structure for "{candidate}" '
-              f'(first key: "{first_key}"), skipping', flush=True)
+        chapters = _normalise_book_value(bible[candidate])
+        if chapters is not None:
+            return candidate, chapters
+        print(f'    WARNING: unrecognised structure for "{candidate}", skipping', flush=True)
 
     return None
 
