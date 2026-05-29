@@ -8,6 +8,11 @@
 // Local path: ./translations/BSB/BSB_structure/{bookName}.json
 
 const _cache = new Map();
+// Deduplicates concurrent in-flight fetches for the same book.
+// Rapid chapter navigation can call loadStructure() for the same book
+// before the first fetch resolves. Both would pass the _cache.has() check
+// and issue duplicate requests without this guard.
+const _fetchPromise = new Map();
 
 function sanitizeForLog(value) {
     return String(value).replace(/[\r\n]/g, '');
@@ -23,21 +28,29 @@ function sanitizeForLog(value) {
  */
 export async function loadStructure(bookName) {
     if (_cache.has(bookName)) return _cache.get(bookName);
+    if (_fetchPromise.has(bookName)) return _fetchPromise.get(bookName);
 
-    const url = `./translations/BSB/BSB_structure/${encodeURIComponent(bookName)}.json`;
-    try {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const events = Array.isArray(data) ? data : [];
-        _cache.set(bookName, events);
-        return events;
-    } catch (err) {
-        const safeBookName = sanitizeForLog(bookName);
-        console.warn('bsb-structure: could not load scaffold for "%s"', safeBookName, err);
-        _cache.set(bookName, []);
-        return [];
-    }
+    const promise = (async () => {
+        const url = `./translations/BSB/BSB_structure/${encodeURIComponent(bookName)}.json`;
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            const events = Array.isArray(data) ? data : [];
+            _cache.set(bookName, events);
+            return events;
+        } catch (err) {
+            const safeBookName = sanitizeForLog(bookName);
+            console.warn('bsb-structure: could not load scaffold for "%s"', safeBookName, err);
+            _cache.set(bookName, []);
+            return [];
+        } finally {
+            _fetchPromise.delete(bookName);
+        }
+    })();
+
+    _fetchPromise.set(bookName, promise);
+    return promise;
 }
 
 /**
