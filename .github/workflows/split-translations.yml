@@ -10,9 +10,9 @@ on:
         required: false
         default: ''
       branch:
-        description: Branch to commit results to (defaults to the branch this workflow runs on)
+        description: Branch to commit results to
         required: false
-        default: ''
+        default: 'feat/per-book-translation-files'
 
 jobs:
   split:
@@ -21,10 +21,10 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout
+      - name: Checkout target branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.event.inputs.branch || 'feat/per-book-translation-files' }}
           fetch-depth: 1
 
       - name: Set up Python
@@ -51,7 +51,6 @@ jobs:
             TRANS="${{ github.event.inputs.translation }}"
             MSG="build: split $( [ -n "$TRANS" ] && echo "$TRANS" || echo "all translations" ) into per-book JSON files"
             git commit -m "$MSG"
-            TARGET="${{ github.event.inputs.branch }}"
-            REF="$( [ -n "$TARGET" ] && echo "$TARGET" || echo "${GITHUB_REF#refs/heads/}" )"
-            git push origin HEAD:"$REF"
+            TARGET="${{ github.event.inputs.branch || 'feat/per-book-translation-files' }}"
+            git push origin HEAD:"$TARGET"
           fi
