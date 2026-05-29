@@ -440,3 +440,290 @@ test('keyboard: ArrowLeft goes to previous chapter', async ({ page }) => {
 	await page.locator('body').press('ArrowLeft');
 	await expect(page.locator('#passageTitle')).toContainText('Matthew 2', { timeout: 10000 });
 });
+
+// ===========================================================================
+// Issue-specific regression tests
+// Tests 19–26 are written to FAIL until the referenced issue is fixed.
+// They serve as regression guards: a passing test means the bug is resolved.
+// ===========================================================================
+
+// ---------------------------------------------------------------------------
+// 19. Issue #62 — Copy button gives visible feedback after click
+// After clicking the copy icon the button must show a success state
+// (class swap, aria-label change, or a toast) within 2 seconds.
+// ---------------------------------------------------------------------------
+test('issue #62: copy button shows visible feedback after click', async ({ page }) => {
+	await page.goto('/');
+	await waitForPassage(page);
+
+	const copyBtn = page
+		.locator('#copyPassage, .copy-btn, [data-action="copy"], button[aria-label*="opy"]')
+		.first();
+	await expect(copyBtn).toBeVisible({ timeout: 5000 });
+
+	const beforeLabel = await copyBtn.getAttribute('aria-label');
+	const beforeClass = await copyBtn.getAttribute('class');
+
+	await copyBtn.click();
+
+	await expect(async () => {
+		const afterLabel = await copyBtn.getAttribute('aria-label');
+		const afterClass = await copyBtn.getAttribute('class');
+		const toast = await page.locator('.toast, [role="status"], .copied-feedback').count();
+		const labelChanged = afterLabel !== beforeLabel;
+		const classChanged = afterClass !== beforeClass;
+		expect(labelChanged || classChanged || toast > 0).toBe(true);
+	}).toPass({ timeout: 2000 });
+});
+
+// ---------------------------------------------------------------------------
+// 20. Issue #63 — Section headings meet WCAG AA contrast in light mode
+// Reads computed color + background-color of the first .section-heading
+// and verifies contrast ratio >= 3.0 (WCAG AA large text threshold).
+// ---------------------------------------------------------------------------
+test('issue #63: section headings meet WCAG AA contrast in light mode', async ({ page }) => {
+	await page.goto('/');
+	await waitForPassage(page);
+
+	// Force light mode regardless of saved prefs
+	await page.evaluate(() => {
+		document.body.classList.remove('dark', 'dark-mode');
+		document.body.classList.add('light', 'light-mode');
+		document.documentElement.classList.remove('dark', 'dark-mode');
+		document.documentElement.classList.add('light', 'light-mode');
+	});
+
+	// Navigate to Genesis 1 which has section headings in the BSB scaffold
+	await page.locator('#bookSelector').click();
+	await page.locator('#oldTestamentBooks button', { hasText: 'Gen' }).first().click();
+	await expect(page.locator('#passageTitle')).toContainText('Genesis 1', { timeout: 10000 });
+
+	const heading = page.locator('.section-heading, .passage-heading, h3.heading').first();
+	if (await heading.count() === 0) {
+		test.skip();
+		return;
+	}
+
+	const contrastRatio = await page.evaluate(() => {
+		function luminance(r, g, b) {
+			return [r, g, b].reduce((acc, c, i) => {
+				const s = c / 255;
+				const lin = s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+				return acc + lin * [0.2126, 0.7152, 0.0722][i];
+			}, 0);
+		}
+		function parseRgb(str) {
+			const m = str.match(/(\d+),\s*(\d+),\s*(\d+)/);
+			return m ? [+m[1], +m[2], +m[3]] : [0, 0, 0];
+		}
+		const el = document.querySelector('.section-heading, .passage-heading, h3.heading');
+		if (!el) return null;
+		const style = getComputedStyle(el);
+		const fg = parseRgb(style.color);
+		const bgRaw = style.backgroundColor !== 'rgba(0, 0, 0, 0)'
+			? style.backgroundColor
+			: getComputedStyle(document.body).backgroundColor;
+		const bg = parseRgb(bgRaw);
+		const L1 = luminance(...fg);
+		const L2 = luminance(...bg);
+		const lighter = Math.max(L1, L2);
+		const darker = Math.min(L1, L2);
+		return (lighter + 0.05) / (darker + 0.05);
+	});
+
+	expect(contrastRatio).not.toBeNull();
+	expect(contrastRatio).toBeGreaterThanOrEqual(3.0);
+});
+
+// ---------------------------------------------------------------------------
+// 21. Issue #66 — Verse selector resets after keyboard chapter navigation
+// Navigate to John 3:16, press ArrowRight → John 4.
+// The verse selector must show 1, not 16.
+// This test will FAIL until #66 is fixed.
+// ---------------------------------------------------------------------------
+test('issue #66: verse selector resets to 1 after keyboard chapter nav', async ({ page }) => {
+	await page.goto('/');
+	await waitForPassage(page);
+
+	// Go to John 3
+	await page.locator('#bookSelector').click();
+	await page.locator('#newTestamentBooks button').filter({ hasText: /^John$/ }).click();
+	await expect(page.locator('#passageTitle')).toContainText('John 1');
+	await page.locator('#chapterSelector').click();
+	await page.locator('#chapterGrid button', { hasText: '3' }).first().click();
+	await expect(page.locator('#passageTitle')).toContainText('John 3');
+
+	// Select verse 16
+	await page.locator('#verseSelector').click();
+	await expect(page.locator('#verseModal')).toBeVisible();
+	await page.locator('#verseGrid button', { hasText: '16' }).first().click();
+	await expect(page.locator('#verseModal')).not.toHaveClass(/active/);
+	await expect(page.locator('#verseSelector')).toContainText('16');
+
+	// Keyboard navigate to John 4
+	await page.locator('body').press('ArrowRight');
+	await expect(page.locator('#passageTitle')).toContainText('John 4', { timeout: 10000 });
+
+	// Verse selector must reset to 1
+	const verseText = await page.locator('#verseSelector').textContent();
+	const verseNum = parseInt(verseText?.trim() ?? '0', 10);
+	expect(verseNum, 'Verse selector should reset to 1 after keyboard chapter navigation').toBe(1);
+});
+
+// ---------------------------------------------------------------------------
+// 22. Issue #165 — Search index is not fetched more than once per session
+// Intercepts all network requests after page load and counts requests
+// matching /searchIndex/. Expects at most 1 per unique URL.
+// This test will FAIL until #165 is fixed.
+// ---------------------------------------------------------------------------
+test('issue #165: search index fetched only once per session', async ({ page }) => {
+	const searchIndexRequests = [];
+
+	page.on('request', req => {
+		if (req.url().includes('searchIndex')) {
+			searchIndexRequests.push(req.url());
+		}
+	});
+
+	await page.goto('/');
+	await waitForApp(page);
+
+	await page.locator('#searchToggle').click();
+	await expect(page.locator('#searchContainer')).toBeVisible();
+	await page.locator('#searchInput').fill('Jn 1');
+
+	// Allow async fetches to settle
+	await page.waitForTimeout(3000);
+
+	const uniqueUrls = [...new Set(searchIndexRequests)];
+	for (const url of uniqueUrls) {
+		const count = searchIndexRequests.filter(r => r === url).length;
+		expect(
+			count,
+			`searchIndex "${url}" fetched ${count}x — expected 1`
+		).toBe(1);
+	}
+});
+
+// ---------------------------------------------------------------------------
+// 23. Issue #165 — Opening search does not bulk-prefetch all book JSON files
+// After the initial passage load, opening search and typing should not
+// trigger any additional translation book JSON fetches.
+// This test will FAIL until #165 is fixed.
+// ---------------------------------------------------------------------------
+test('issue #165: opening search does not prefetch all book JSON files', async ({ page }) => {
+	await page.goto('/');
+	await waitForPassage(page);
+
+	const bookFetches = [];
+
+	// Start intercepting AFTER the initial passage load has settled
+	page.on('request', req => {
+		if (req.url().match(/\/translations\/[A-Z]+\/[A-Za-z]+\.json/)) {
+			bookFetches.push(req.url());
+		}
+	});
+
+	await page.locator('#searchToggle').click();
+	await expect(page.locator('#searchContainer')).toBeVisible();
+	await page.locator('#searchInput').fill('Jn');
+
+	await page.waitForTimeout(3000);
+
+	expect(
+		bookFetches.length,
+		`Expected 0 book fetches on search open, got ${bookFetches.length}: ${bookFetches.slice(0, 5).join(', ')}`
+	).toBe(0);
+});
+
+// ---------------------------------------------------------------------------
+// 24. Issue #175 — reCAPTCHA badge is not visible to the user
+// The badge must be hidden (visibility: hidden is acceptable per Google ToS
+// as long as disclosure text is present in the HTML).
+// ---------------------------------------------------------------------------
+test('issue #175: reCAPTCHA badge is not visible', async ({ page }) => {
+	await page.goto('/');
+	await waitForApp(page);
+
+	// Allow reCAPTCHA time to inject its badge asynchronously
+	await page.waitForTimeout(2000);
+
+	const badge = page.locator('.grecaptcha-badge');
+	if (await badge.count() === 0) {
+		// Badge not injected in this environment — pass
+		return;
+	}
+
+	const isVisible = await badge.isVisible();
+	expect(isVisible, 'reCAPTCHA badge should be hidden via CSS (visibility: hidden)').toBe(false);
+});
+
+// ---------------------------------------------------------------------------
+// 25. Issue #176 — Keyword search does NOT auto-navigate on Enter
+// Typing a keyword phrase and pressing Enter must not change the passage.
+// This test will FAIL until #176 is fixed.
+// ---------------------------------------------------------------------------
+test('issue #176: keyword search does not auto-navigate on Enter', async ({ page }) => {
+	await page.goto('/');
+	await waitForPassage(page);
+
+	const titleBefore = await page.locator('#passageTitle').textContent();
+
+	await page.locator('#searchToggle').click();
+	await expect(page.locator('#searchContainer')).toBeVisible();
+
+	await page.locator('#searchInput').fill('whosoever believes');
+
+	const results = page.locator('#searchResults .search-result-item');
+	await expect(results.first()).toBeVisible({ timeout: 10000 });
+
+	await page.locator('#searchInput').press('Enter');
+	await page.waitForTimeout(500);
+
+	const titleAfter = await page.locator('#passageTitle').textContent();
+	expect(
+		titleAfter?.trim(),
+		'Keyword search Enter should not navigate — passage title changed unexpectedly'
+	).toBe(titleBefore?.trim());
+});
+
+// ---------------------------------------------------------------------------
+// 26. Issue #176 — Reference search auto-selects first result on Enter
+// Typing a scripture reference should auto-select the first result so that
+// pressing Enter navigates without requiring a manual click.
+// This test will FAIL until #176 is fixed.
+// ---------------------------------------------------------------------------
+test('issue #176: reference search auto-selects first result and navigates on Enter', async ({ page }) => {
+	await page.goto('/');
+	await waitForPassage(page);
+
+	await page.locator('#searchToggle').click();
+	await expect(page.locator('#searchContainer')).toBeVisible();
+
+	await page.locator('#searchInput').fill('John 3:16');
+
+	const results = page.locator('#searchResults .search-result-item');
+	await expect(results.first()).toBeVisible({ timeout: 10000 });
+
+	const firstResult = results.first();
+	const isSelected = await firstResult.evaluate(el =>
+		el.classList.contains('selected') ||
+		el.classList.contains('keyboard-focused') ||
+		el.getAttribute('aria-selected') === 'true'
+	);
+	expect(
+		isSelected,
+		'First result should be auto-selected for a reference query'
+	).toBe(true);
+
+	await page.locator('#searchInput').press('Enter');
+
+	await page.waitForFunction(
+		() => {
+			const title = document.getElementById('passageTitle');
+			const loading = document.querySelector('#passageText .loading');
+			return !loading && title?.textContent?.includes('John 3');
+		},
+		{ timeout: 10000 }
+	);
+});
