@@ -697,6 +697,7 @@ class BibleApp {
                 (savedPos.book === this.state.currentBook && savedPos.chapter === this.state.currentChapter);
 
             if (cacheHit && posMatchesCache) {
+                // Cache hit, position matches — reveal immediately, no fetch needed.
                 this._dbg.t_reveal_first = ms();
                 this._dbg.t_passage_fetch_start = null;
                 this._dbg.t_passage_fetch_end   = null;
@@ -706,6 +707,8 @@ class BibleApp {
                 this._loadTranslationRegistry();
                 this._prefetchTranslations();
             } else if (cacheHit && !posMatchesCache) {
+                // Cache hit but reading position changed — reveal immediately with cached
+                // content, then load the correct passage in the background.
                 this._dbg.t_reveal_first = ms();
                 revealApp();
                 this._dbgEvent(`init: cache hit but position mismatch — loading ${savedPos.book} ${savedPos.chapter}`);
@@ -718,15 +721,18 @@ class BibleApp {
                 this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
                 this._prefetchTranslations();
             } else {
+                // Cache miss — reveal immediately with the loading spinner visible,
+                // then load the passage in the background.
                 this._dbg.t_passage_fetch_start = ms();
+                this._dbg.t_reveal_second = ms();
+                revealApp();
+                this._dbgEvent('init: cache miss — revealing with loading spinner');
                 await Promise.all([
                     this._loadTranslationRegistry(),
                     this.loadPassage(this.state.currentBook, this.state.currentChapter),
                 ]);
                 this._dbg.t_passage_fetch_end = ms();
                 this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
-                this._dbg.t_reveal_second = ms();
-                revealApp();
                 this._prefetchTranslations();
             }
 
