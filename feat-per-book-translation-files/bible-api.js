@@ -56,7 +56,6 @@ const BOOK_LOAD_ORDER_BY_LENGTH = [...BOOK_LOAD_ORDER].sort((a, b) => b.length -
 // the alias key so callers using either form always hit cache on subsequent requests.
 const BOOK_KEY_ALIASES = {
     'Song of Solomon': 'Song Of Solomon',
-    'Psalm':           'Psalms',
 };
 
 function _resolveBookKey(bible, canonicalName) {
@@ -112,6 +111,9 @@ export class BibleApi {
         // Deduplicates in-flight per-book fetches for local translations.
         // Key: "{translation}/{book}", value: Promise.
         this._localBookFetchPromise = new Map();
+        // Deduplicates concurrent in-flight search index fetches.
+        // Key: translation, value: Promise. Cleared after fetch settles.
+        this._searchIndexFetchPromise = new Map();
     }
 
     setTranslation(translation) {
@@ -187,7 +189,7 @@ export class BibleApi {
                     // Cache under canonical key always.
                     this._bookCache.set(cacheKey, data);
                     // Also cache under alias key so callers using the alias form
-                    // (e.g. 'Psalms' when canonical is 'Psalm') hit cache too.
+                    // hit cache too without a second fetch.
                     if (resolvedAlias) {
                         this._bookCache.set(`${translation}/${resolvedAlias}`, data);
                     }
@@ -241,21 +243,36 @@ export class BibleApi {
         if (this._searchIndexCache.has(translation)) {
             return this._searchIndexCache.get(translation);
         }
-        try {
-            const url = LOCAL_TRANSLATIONS.has(translation)
-                ? `./translations/${translation}/${translation}_search_index.json`
-                : `${FIREBASE_DB_URL}/searchIndex/${encodeURIComponent(translation)}.json`;
-            const res = await fetch(url);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
-            const index = (data && typeof data === 'object') ? data : null;
-            this._searchIndexCache.set(translation, index);
-            return index;
-        } catch (err) {
-            console.warn(`BibleApi: search index unavailable for ${translation}, falling back to book fetches`, err);
-            this._searchIndexCache.set(translation, null);
-            return null;
+
+        // Deduplicate concurrent fetches — search can fire multiple queries
+        // before the first index fetch resolves, which would otherwise issue
+        // duplicate ~500KB requests.
+        if (this._searchIndexFetchPromise.has(translation)) {
+            return this._searchIndexFetchPromise.get(translation);
         }
+
+        const promise = (async () => {
+            try {
+                const url = LOCAL_TRANSLATIONS.has(translation)
+                    ? `./translations/${translation}/${translation}_search_index.json`
+                    : `${FIREBASE_DB_URL}/searchIndex/${encodeURIComponent(translation)}.json`;
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                const index = (data && typeof data === 'object') ? data : null;
+                this._searchIndexCache.set(translation, index);
+                return index;
+            } catch (err) {
+                console.warn(`BibleApi: search index unavailable for ${translation}, falling back to book fetches`, err);
+                this._searchIndexCache.set(translation, null);
+                return null;
+            } finally {
+                this._searchIndexFetchPromise.delete(translation);
+            }
+        })();
+
+        this._searchIndexFetchPromise.set(translation, promise);
+        return promise;
     }
 
     /**
