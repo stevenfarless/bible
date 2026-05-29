@@ -12,9 +12,10 @@ const TRANSLATIONS = ['ASV', 'BLB', 'BSB', 'KJV', 'LEB', 'MSB', 'NET', 'WEB'];
 // High-value per-book files to precache on activation.
 // These are the books users most commonly open on a fresh load.
 // ~40 files × ~80KB avg = ~3MB total, vs 35MB for all 8 monoliths.
-// NOTE: names must match the filenames emitted by split_translations.py,
-// which uses BOOK_ORDER (canonical names). 'Psalms' not 'Psalm'.
-const HIGH_VALUE_BOOKS = ['John', 'Genesis', 'Psalms', 'Matthew', 'Romans'];
+// NOTE: names must match filenames emitted by split_translations.py, which
+// uses BOOK_ORDER as the output filename. BOOK_ORDER contains 'Psalm' (not
+// 'Psalms'), so the file on disk is Psalm.json.
+const HIGH_VALUE_BOOKS = ['John', 'Genesis', 'Psalm', 'Matthew', 'Romans'];
 
 const PER_BOOK_PRECACHE = TRANSLATIONS.flatMap(t =>
   HIGH_VALUE_BOOKS.map(b => `./translations/${t}/${b}.json`)
