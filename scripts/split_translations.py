@@ -10,6 +10,7 @@ Run via GitHub Actions workflow: .github/workflows/split-translations.yml
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -32,42 +33,103 @@ BOOK_ORDER = [
     '1 John', '2 John', '3 John', 'Jude', 'Revelation',
 ]
 
-# Keys that differ inside the monolith JSON vs. the canonical name.
-# Maps canonical -> key-as-stored-in-json.
+# Extra aliases for known variant spellings (canonical -> stored key).
+# The fuzzy matcher below handles most cases automatically; this list
+# catches things that differ in ways the normaliser can't guess.
 BOOK_KEY_ALIASES = {
     'Song of Solomon': 'Song Of Solomon',
+    'Psalm':           'Psalms',
 }
 
+# Normalise a key for fuzzy matching:
+#   lowercase, collapse whitespace, strip punctuation,
+#   replace leading digit-word prefixes ("1 " -> "1", "III " -> "3 ").
+_ROMAN = {'i': '1', 'ii': '2', 'iii': '3', 'iv': '4'}
 
-def find_book_data(bible: dict, canonical: str):
-    """Return (resolved_key, chapter_dict) or None if not found or not a valid chapter dict."""
-    for candidate in [canonical, BOOK_KEY_ALIASES.get(canonical, '')]:
-        if not candidate or candidate not in bible:
+def _normalise(s: str) -> str:
+    s = s.lower().strip()
+    # Roman numeral prefix: "iii john" -> "3 john"
+    m = re.match(r'^(i{1,3}v?|iv)\s+', s)
+    if m:
+        s = _ROMAN.get(m.group(1), m.group(1)) + ' ' + s[m.end():]
+    s = re.sub(r'\s+', ' ', s)
+    return s
+
+
+def _build_key_map(bible: dict) -> dict:
+    """Return {normalised_key: actual_key} for every key in bible."""
+    return {_normalise(k): k for k in bible}
+
+
+def _resolve(bible: dict, key_map: dict, canonical: str):
+    """
+    Try to find chapter data for `canonical` in `bible`.
+    Lookup order:
+      1. Exact canonical name.
+      2. Known alias from BOOK_KEY_ALIASES.
+      3. Case-insensitive / normalised fuzzy match via key_map.
+    Returns (actual_key, chapter_dict) or None.
+    """
+    candidates = [canonical]
+    alias = BOOK_KEY_ALIASES.get(canonical)
+    if alias:
+        candidates.append(alias)
+    # Add the reverse alias too (e.g. "Psalms" when canonical is "Psalm")
+    for stored_alias in BOOK_KEY_ALIASES.values():
+        if stored_alias not in candidates:
+            candidates.append(stored_alias)
+
+    # Fuzzy fallback via normalised key map
+    norm_canonical = _normalise(canonical)
+    fuzzy_key = key_map.get(norm_canonical)
+    if fuzzy_key and fuzzy_key not in candidates:
+        candidates.append(fuzzy_key)
+
+    for candidate in candidates:
+        if candidate not in bible:
             continue
         data = bible[candidate]
-
-        # Must be a dict to be valid chapter data.
         if not isinstance(data, dict):
             continue
 
         first_key = next(iter(data.keys()), '')
 
         if first_key.isdigit():
-            # Chapters at top level: { "1": { "1": "verse", ... }, ... }
+            # Standard: { "1": { "1": "verse" }, ... }
             return candidate, data
 
-        # Might be nested one level: { "BookName": { "1": { "1": "verse" } } }
+        # Nested one level: { "BookName": { "1": { "1": "verse" } } }
         first_val = data.get(first_key)
         if isinstance(first_val, dict):
             nested_key = next(iter(first_val.keys()), '')
             if nested_key.isdigit():
                 return candidate, first_val
 
-        # Data exists but structure is unrecognised — skip.
         print(f'    WARNING: unrecognised structure for "{candidate}" '
               f'(first key: "{first_key}"), skipping', flush=True)
 
     return None
+
+
+def _unwrap_envelope(bible: dict) -> dict:
+    """
+    Some monoliths wrap everything under a single top-level key, e.g.
+      { "KJV": { "Genesis": {...}, ... } }
+    If the dict has exactly one key whose value is a dict containing
+    what looks like book data, unwrap it.
+    """
+    if len(bible) != 1:
+        return bible
+    only_key, only_val = next(iter(bible.items()))
+    if not isinstance(only_val, dict):
+        return bible
+    # If the inner dict's first key looks like a book name (not a digit),
+    # treat this as an envelope.
+    first_inner = next(iter(only_val.keys()), '')
+    if first_inner and not first_inner.isdigit():
+        print(f'    Detected single-key envelope "{only_key}", unwrapping.', flush=True)
+        return only_val
+    return bible
 
 
 def split_translation(translation: str, translations_dir: Path) -> bool:
@@ -80,18 +142,21 @@ def split_translation(translation: str, translations_dir: Path) -> bool:
     with open(monolith_path, encoding='utf-8') as f:
         bible = json.load(f)
 
+    bible = _unwrap_envelope(bible)
+    key_map = _build_key_map(bible)
+
     out_dir = translations_dir / translation
     search_index = {}
     books_written = 0
     books_missing = []
 
     for book in BOOK_ORDER:
-        result = find_book_data(bible, book)
+        result = _resolve(bible, key_map, book)
         if result is None:
             books_missing.append(book)
             continue
 
-        _, chapters = result
+        actual_key, chapters = result
 
         # Write per-book file using canonical book name as filename.
         out_path = out_dir / f'{book}.json'
@@ -121,7 +186,10 @@ def split_translation(translation: str, translations_dir: Path) -> bool:
     print(f'  {translation}: {books_written}/66 books written, '
           f'{len(search_index)} index entries', flush=True)
     if books_missing:
+        # Print actual top-level keys to aid diagnosis
+        sample_keys = list(bible.keys())[:20]
         print(f'  WARNING {translation}: missing books: {books_missing}', flush=True)
+        print(f'  DEBUG {translation}: top-level keys sample: {sample_keys}', flush=True)
 
     return True
 
