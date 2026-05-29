@@ -51,8 +51,12 @@ const BOOK_LOAD_ORDER = [
 // on every call.
 const BOOK_LOAD_ORDER_BY_LENGTH = [...BOOK_LOAD_ORDER].sort((a, b) => b.length - a.length);
 
+// Maps canonical caller-facing name → filename-on-disk for books where they differ.
+// When _loadBook resolves via alias, it caches under BOTH the canonical key and
+// the alias key so callers using either form always hit cache on subsequent requests.
 const BOOK_KEY_ALIASES = {
     'Song of Solomon': 'Song Of Solomon',
+    'Psalm':           'Psalms',
 };
 
 function _resolveBookKey(bible, canonicalName) {
@@ -108,8 +112,6 @@ export class BibleApi {
         // Deduplicates in-flight per-book fetches for local translations.
         // Key: "{translation}/{book}", value: Promise.
         this._localBookFetchPromise = new Map();
-        // Retained for legacy callers only — no longer used on the read path.
-        this._localFetchPromise = new Map();
     }
 
     setTranslation(translation) {
@@ -118,35 +120,6 @@ export class BibleApi {
 
     get translation() {
         return this._translation;
-    }
-
-    // ── Local file loading ────────────────────────────────────────────────
-
-    // Kept for any callers that still invoke it (e.g. legacy prefetch).
-    // No longer called on the critical read path.
-    async _ensureLocalTranslationLoaded(translation) {
-        if (this._bookCache.has(`${translation}/Genesis`)) return;
-
-        if (this._localFetchPromise.has(translation)) {
-            return this._localFetchPromise.get(translation);
-        }
-
-        const promise = (async () => {
-            const url = `./translations/${translation}/${translation}_bible.json`;
-            const res = await fetch(url);
-            if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`);
-            const data = await res.json();
-            for (const [book, chapters] of Object.entries(data)) {
-                this._bookCache.set(`${translation}/${book}`, chapters);
-            }
-        })();
-
-        this._localFetchPromise.set(translation, promise);
-        try {
-            await promise;
-        } finally {
-            this._localFetchPromise.delete(translation);
-        }
     }
 
     // ── Firebase loading ──────────────────────────────────────────────────
@@ -197,18 +170,27 @@ export class BibleApi {
             const promise = (async () => {
                 try {
                     let data;
+                    let resolvedAlias = null;
                     try {
                         data = await fetchBook(book);
                     } catch (err) {
-                        // If canonical name 404s, retry with alias filename.
+                        // Canonical name 404d — retry with alias filename.
+                        // Only alias-misses should reach this path; other errors rethrow.
                         const alias = BOOK_KEY_ALIASES[book];
                         if (alias) {
                             data = await fetchBook(alias);
+                            resolvedAlias = alias;
                         } else {
                             throw err;
                         }
                     }
+                    // Cache under canonical key always.
                     this._bookCache.set(cacheKey, data);
+                    // Also cache under alias key so callers using the alias form
+                    // (e.g. 'Psalms' when canonical is 'Psalm') hit cache too.
+                    if (resolvedAlias) {
+                        this._bookCache.set(`${translation}/${resolvedAlias}`, data);
+                    }
                     return data;
                 } catch (err) {
                     console.error(`BibleApi: failed to load local ${translation}/${this._sanitizeForLog(book)}`, err);
