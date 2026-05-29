@@ -54,41 +54,38 @@ def _build_key_map(bible: dict) -> dict:
     return {_normalise(k): k for k in bible}
 
 
+def _is_placeholder(entry) -> bool:
+    """True if entry is an empty/null value used as a list index-0 placeholder."""
+    if entry is None or entry == '':
+        return True
+    if isinstance(entry, (list, tuple)):
+        return len(entry) == 0 or all(v is None or v == '' for v in entry)
+    return False
+
+
 def _list_chapters_to_dict(chapters_list: list) -> dict:
     """
     Convert list-of-lists chapter format to standard dict format.
 
-    Input:  [ [\"v1\", \"v2\", ...], [\"v1\", ...], ... ]  (index 0 = chapter 1)
-    Output: { \"1\": { \"1\": \"v1\", \"2\": \"v2\", ... }, \"2\": { ... }, ... }
+    Input:  [ ["v1", "v2", ...], ["v1", ...], ... ]  (index 0 = chapter 1)
+    Output: { "1": { "1": "v1", "2": "v2", ... }, "2": { ... }, ... }
 
-    Some source files (e.g. KJV) use index 0 as an empty placeholder so that
-    real chapter data starts at index 1.  Detect this by checking whether the
-    first element is empty/non-list and, if so, skip it so chapter numbers
-    start at 1 instead of 2.
+    KJV source uses index 0 as an empty placeholder at both the chapter level
+    and the verse level within each chapter.  Both are detected and skipped so
+    numbering always starts at 1.
     """
-    # Detect index-0 placeholder: empty string, None, empty list, or a list
-    # whose every element is empty/None.
-    def _is_placeholder(entry) -> bool:
-        if entry is None or entry == '':
-            return True
-        if isinstance(entry, (list, tuple)):
-            return len(entry) == 0 or all(v is None or v == '' for v in entry)
-        return False
-
-    start_idx = 0
-    if chapters_list and _is_placeholder(chapters_list[0]):
-        start_idx = 1
+    ch_start = 1 if (chapters_list and _is_placeholder(chapters_list[0])) else 0
 
     result = {}
-    for ch_idx, verses in enumerate(chapters_list[start_idx:], start=1):
+    for ch_idx, verses in enumerate(chapters_list[ch_start:], start=1):
         if not isinstance(verses, (list, tuple)):
             continue
+        v_start = 1 if (verses and _is_placeholder(verses[0])) else 0
         verse_dict = {}
-        for v_idx, text in enumerate(verses):
-            v_num = v_idx + 1
+        for v_idx, text in enumerate(verses[v_start:], start=1):
             if text is None or text == '':
                 continue
-            verse_dict[str(v_num)] = str(text)
+            verse_dict[str(v_idx)] = str(text)
         if verse_dict:
             result[str(ch_idx)] = verse_dict
     return result
@@ -97,14 +94,12 @@ def _list_chapters_to_dict(chapters_list: list) -> dict:
 def _normalise_book_value(data) -> dict | None:
     """
     Accept chapter data in any of the known formats and return a
-    standard { \"1\": { \"1\": \"verse\" } } dict, or None if unrecognised.
+    standard { "1": { "1": "verse" } } dict, or None if unrecognised.
     """
-    # Already standard dict form.
     if isinstance(data, dict) and data:
         first_key = next(iter(data))
         if first_key.isdigit():
             return data
-        # Nested one level: { \"BookName\": { \"1\": {...} } }
         first_val = data[first_key]
         if isinstance(first_val, dict):
             nested_first = next(iter(first_val), '')
@@ -112,7 +107,6 @@ def _normalise_book_value(data) -> dict | None:
                 return first_val
         return None
 
-    # List-of-lists (KJV style).
     if isinstance(data, list):
         converted = _list_chapters_to_dict(data)
         return converted if converted else None
@@ -141,7 +135,6 @@ def _remap_numeric_index(bible: dict) -> dict:
     if indices[0] != 1 or indices[-1] > 66:
         return bible
     first_val = bible[str(indices[0])]
-    # Accept dict or list as valid chapter containers.
     if not isinstance(first_val, (dict, list)):
         return bible
     print(f'    Detected numeric book index (1–{indices[-1]}), remapping to canonical names.', flush=True)
