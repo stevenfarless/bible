@@ -605,19 +605,19 @@ class BibleApp {
     }
 
     // ── Background prefetch ────────────────────────────────────────────────
-    // After the initial passage renders, warm the per-book cache for:
-    //   1. The current book in all other translations (so switching
-    //      translation on the open chapter shows instantly).
-    //   2. The adjacent books for the active translation (next/prev nav).
+    // Warm the per-book cache so common interactions are instant:
+    //   1. Current book in all other translations — translation switch = no fetch.
+    //   2. Adjacent books in the active translation — next/prev nav = no fetch.
+
     _prefetchCurrentBook() {
-        const book = this.state.currentBook;
+        const book   = this.state.currentBook;
         const active = this.state.translation;
         const others = [...LOCAL_TRANSLATIONS].filter(t => t !== active);
         let i = 0;
         const next = () => {
             if (i >= others.length) return;
             const t = others[i++];
-            this.bibleApi._fetchBookForTranslation(t, book)
+            this.bibleApi._loadBook(t, book)
                 .catch(() => {})
                 .finally(() => setTimeout(next, 300));
         };
@@ -634,7 +634,7 @@ class BibleApp {
         ].filter(Boolean);
         setTimeout(() => {
             for (const book of toFetch) {
-                this.bibleApi._fetchBookForTranslation(translation, book).catch(() => {});
+                this.bibleApi._loadBook(translation, book).catch(() => {});
             }
         }, 3000);
     }
