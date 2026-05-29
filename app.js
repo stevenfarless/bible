@@ -519,8 +519,6 @@ class BibleApp {
                     this.chromeScrollAnchorY = y;
                     this.chromeLastDirection = null;
                 } else {
-                    // Reset anchor on direction reversal so movement is measured
-                    // from where the scroll turned around, not the page origin.
                     if (direction !== this.chromeLastDirection) {
                         this.chromeScrollAnchorY = y;
                         this.chromeLastDirection = direction;
@@ -606,19 +604,39 @@ class BibleApp {
         }
     }
 
-    // ── Background translation prefetch ───────────────────────────────────
-    _prefetchTranslations() {
+    // ── Background prefetch ────────────────────────────────────────────────
+    // Warm the per-book cache so common interactions are instant:
+    //   1. Current book in all other translations — translation switch = no fetch.
+    //   2. Adjacent books in the active translation — next/prev nav = no fetch.
+
+    _prefetchCurrentBook() {
+        const book   = this.state.currentBook;
         const active = this.state.translation;
-        const queue = [...LOCAL_TRANSLATIONS].filter(t => t !== active);
+        const others = [...LOCAL_TRANSLATIONS].filter(t => t !== active);
         let i = 0;
         const next = () => {
-            if (i >= queue.length) return;
-            const t = queue[i++];
-            this.bibleApi._ensureLocalTranslationLoaded(t)
+            if (i >= others.length) return;
+            const t = others[i++];
+            this.bibleApi._loadBook(t, book)
                 .catch(() => {})
-                .finally(() => setTimeout(next, 500));
+                .finally(() => setTimeout(next, 300));
         };
-        setTimeout(next, 2000);
+        setTimeout(next, 1000);
+    }
+
+    _prefetchAdjacentChapters() {
+        const { currentBook, translation } = this.state;
+        const books = this.getAllBooks();
+        const idx = books.indexOf(currentBook);
+        const toFetch = [
+            idx > 0              ? books[idx - 1] : null,
+            idx < books.length-1 ? books[idx + 1] : null,
+        ].filter(Boolean);
+        setTimeout(() => {
+            for (const book of toFetch) {
+                this.bibleApi._loadBook(translation, book).catch(() => {});
+            }
+        }, 3000);
     }
 
     async init() {
@@ -697,7 +715,6 @@ class BibleApp {
                 (savedPos.book === this.state.currentBook && savedPos.chapter === this.state.currentChapter);
 
             if (cacheHit && posMatchesCache) {
-                // Cache hit, position matches — reveal immediately, no fetch needed.
                 this._dbg.t_reveal_first = ms();
                 this._dbg.t_passage_fetch_start = null;
                 this._dbg.t_passage_fetch_end   = null;
@@ -705,10 +722,9 @@ class BibleApp {
                 revealApp();
                 this._dbgEvent('init: cache hit + position match — skipping fetch');
                 this._loadTranslationRegistry();
-                this._prefetchTranslations();
+                this._prefetchCurrentBook();
+                this._prefetchAdjacentChapters();
             } else if (cacheHit && !posMatchesCache) {
-                // Cache hit but reading position changed — reveal immediately with cached
-                // content, then load the correct passage in the background.
                 this._dbg.t_reveal_first = ms();
                 revealApp();
                 this._dbgEvent(`init: cache hit but position mismatch — loading ${savedPos.book} ${savedPos.chapter}`);
@@ -719,10 +735,9 @@ class BibleApp {
                 ]);
                 this._dbg.t_passage_fetch_end = ms();
                 this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
-                this._prefetchTranslations();
+                this._prefetchCurrentBook();
+                this._prefetchAdjacentChapters();
             } else {
-                // Cache miss — reveal immediately with the loading spinner visible,
-                // then load the passage in the background.
                 this._dbg.t_passage_fetch_start = ms();
                 this._dbg.t_reveal_second = ms();
                 revealApp();
@@ -733,7 +748,8 @@ class BibleApp {
                 ]);
                 this._dbg.t_passage_fetch_end = ms();
                 this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
-                this._prefetchTranslations();
+                this._prefetchCurrentBook();
+                this._prefetchAdjacentChapters();
             }
 
             if (this.auth && this.database) {
@@ -988,7 +1004,6 @@ async function registerServiceWorker(appInstance) {
         const pageBuildId = document.querySelector('meta[name="build-id"]')?.content || '';
         console.info('[BUILD_ID]', pageBuildId || '__BUILD_ID__');
 
-        // Guard: once the toast is shown for this page load, don't show it again.
         let _updateToastShown = false;
         function _maybeShowUpdateToast() {
             if (_updateToastShown) return;
@@ -1004,12 +1019,6 @@ async function registerServiceWorker(appInstance) {
             }
         });
 
-        // ── version.txt polling ────────────────────────────────────────────
-        // Fetches a 40-byte SHA file every 5 minutes. If the deployed SHA
-        // differs from the one baked into this page at build time, show the
-        // update toast. Runs regardless of user activity — fires even while
-        // the user is mid-chapter with no interaction.
-        // Errors (offline, server down) are silently swallowed.
         function _checkVersion() {
             if (!pageBuildId) return;
             fetch('./version.txt', { cache: 'no-store' })
@@ -1023,9 +1032,6 @@ async function registerServiceWorker(appInstance) {
 
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState !== 'visible') return;
-            // On resume from background: silent reload for iOS PWA frozen-context.
-            // This runs independently of the toast — if the page was frozen, JS
-            // was never running, so the polling interval never fired either.
             fetch('./version.txt', { cache: 'no-store' })
                 .then(r => r.text())
                 .then(remote => {
@@ -1035,7 +1041,6 @@ async function registerServiceWorker(appInstance) {
                     }
                 })
                 .catch(() => {});
-            // Also trigger SW update check for non-iOS browsers.
             reg.update().catch(() => {});
         });
     } catch (err) {

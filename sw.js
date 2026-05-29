@@ -7,22 +7,21 @@ const CACHE_NAME = `bible-${BUILD_ID}`;
 // version — they go through the cache-first path below.
 const APP_SHELL_PATTERN = /^(?!\..*\/vendor\/).*\.(js|mjs|css)$/;
 
-// Translation bible.json files to precache on install.
-// These are large and slow to fetch cold; having them warm makes every
-// new-build first load fast.
-const TRANSLATION_FILES = [
-  './translations/index.json',
-  './translations/ASV/ASV_bible.json',
-  './translations/BLB/BLB_bible.json',
-  './translations/BSB/BSB_bible.json',
-  './translations/KJV/KJV_bible.json',
-  './translations/LEB/LEB_bible.json',
-  './translations/MSB/MSB_bible.json',
-  './translations/NET/NET_bible.json',
-  './translations/WEB/WEB_bible.json',
-];
+const TRANSLATIONS = ['ASV', 'BLB', 'BSB', 'KJV', 'LEB', 'MSB', 'NET', 'WEB'];
 
-// BSB structure files (per-book JSON) that appear frequently in cache logs.
+// High-value per-book files to precache on activation.
+// These are the books users most commonly open on a fresh load.
+// ~40 files × ~80KB avg = ~3MB total, vs 35MB for all 8 monoliths.
+// NOTE: names must match filenames emitted by split_translations.py, which
+// uses BOOK_ORDER as the output filename. BOOK_ORDER contains 'Psalm' (not
+// 'Psalms'), so the file on disk is Psalm.json.
+const HIGH_VALUE_BOOKS = ['John', 'Genesis', 'Psalm', 'Matthew', 'Romans'];
+
+const PER_BOOK_PRECACHE = TRANSLATIONS.flatMap(t =>
+  HIGH_VALUE_BOOKS.map(b => `./translations/${t}/${b}.json`)
+);
+
+// BSB structure files (per-book JSON) used by bsb-structure.js.
 const BSB_STRUCTURE_FILES = [
   './translations/BSB/BSB_structure/Genesis.json',
   './translations/BSB/BSB_structure/Psalm.json',
@@ -47,33 +46,26 @@ function isFirebaseCacheable(url) {
   return false;
 }
 
-async function precacheTranslations() {
+async function precacheFiles() {
   const cache = await caches.open(CACHE_NAME);
-  // Fetch all translation files in parallel, ignoring individual failures
-  // so a single slow file doesn't block the rest.
   await Promise.allSettled(
-    [...TRANSLATION_FILES, ...BSB_STRUCTURE_FILES].map(async (url) => {
+    [...PER_BOOK_PRECACHE, ...BSB_STRUCTURE_FILES].map(async (url) => {
       try {
         const cached = await cache.match(url);
-        if (cached) return; // already warm from a previous request this session
+        if (cached) return;
         const resp = await fetch(url);
         if (resp && resp.status === 200) {
           await cache.put(url, resp);
         }
       } catch {
-        // Network unavailable — skip silently; cache-first fetch will retry.
+        // Network unavailable — skip silently.
       }
     })
   );
 }
 
 self.addEventListener('install', (event) => {
-  // skipWaiting so the new SW activates immediately.
   self.skipWaiting();
-
-  // Precache the app shell synchronously so the SW is useful right away.
-  // Translation files are large; precache them in the background after
-  // activation instead (see 'activate' handler below).
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
       cache.addAll([
@@ -86,34 +78,28 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    // Delete caches from previous builds.
     const keys = await caches.keys();
     await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
     await self.clients.claim();
 
-    // Broadcast new build to all open windows.
     const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: false });
     for (const client of allClients) {
       client.postMessage({ type: 'NEW_BUILD', buildId: BUILD_ID });
     }
 
-    // Precache all translation files in the background after activation.
-    // This doesn't block activation — it runs concurrently.
-    precacheTranslations();
+    // Precache high-value per-book files in the background after activation.
+    precacheFiles();
   })());
 });
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Never cache the service worker script or version.txt — always network.
   if (url.pathname.endsWith('/sw.js') || url.pathname.endsWith('/version.txt')) {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // Firebase RTDB — cacheable Bible data goes cache-first;
-  // everything else (user data, auth) bypasses the cache entirely.
   if (url.hostname.endsWith('.firebaseio.com')) {
     if (isFirebaseCacheable(url)) {
       event.respondWith((async () => {
@@ -136,7 +122,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // App shell JS + CSS: network-first, bypass the browser HTTP cache entirely.
   if (APP_SHELL_PATTERN.test(url.pathname)) {
     event.respondWith(
       fetch(new Request(event.request, { cache: 'no-store' })).catch(async () => {
