@@ -58,15 +58,29 @@ def _list_chapters_to_dict(chapters_list: list) -> dict:
     """
     Convert list-of-lists chapter format to standard dict format.
 
-    Input:  [ ["v1", "v2", ...], ["v1", ...], ... ]  (index 0 = chapter 1)
-    Output: { "1": { "1": "v1", "2": "v2", ... }, "2": { ... }, ... }
+    Input:  [ [\"v1\", \"v2\", ...], [\"v1\", ...], ... ]  (index 0 = chapter 1)
+    Output: { \"1\": { \"1\": \"v1\", \"2\": \"v2\", ... }, \"2\": { ... }, ... }
 
-    Some arrays use index 0 as a placeholder empty string; verses are
-    1-indexed regardless.
+    Some source files (e.g. KJV) use index 0 as an empty placeholder so that
+    real chapter data starts at index 1.  Detect this by checking whether the
+    first element is empty/non-list and, if so, skip it so chapter numbers
+    start at 1 instead of 2.
     """
+    # Detect index-0 placeholder: empty string, None, empty list, or a list
+    # whose every element is empty/None.
+    def _is_placeholder(entry) -> bool:
+        if entry is None or entry == '':
+            return True
+        if isinstance(entry, (list, tuple)):
+            return len(entry) == 0 or all(v is None or v == '' for v in entry)
+        return False
+
+    start_idx = 0
+    if chapters_list and _is_placeholder(chapters_list[0]):
+        start_idx = 1
+
     result = {}
-    for ch_idx, verses in enumerate(chapters_list):
-        ch_num = ch_idx + 1
+    for ch_idx, verses in enumerate(chapters_list[start_idx:], start=1):
         if not isinstance(verses, (list, tuple)):
             continue
         verse_dict = {}
@@ -76,21 +90,21 @@ def _list_chapters_to_dict(chapters_list: list) -> dict:
                 continue
             verse_dict[str(v_num)] = str(text)
         if verse_dict:
-            result[str(ch_num)] = verse_dict
+            result[str(ch_idx)] = verse_dict
     return result
 
 
 def _normalise_book_value(data) -> dict | None:
     """
     Accept chapter data in any of the known formats and return a
-    standard { "1": { "1": "verse" } } dict, or None if unrecognised.
+    standard { \"1\": { \"1\": \"verse\" } } dict, or None if unrecognised.
     """
     # Already standard dict form.
     if isinstance(data, dict) and data:
         first_key = next(iter(data))
         if first_key.isdigit():
             return data
-        # Nested one level: { "BookName": { "1": {...} } }
+        # Nested one level: { \"BookName\": { \"1\": {...} } }
         first_val = data[first_key]
         if isinstance(first_val, dict):
             nested_first = next(iter(first_val), '')
