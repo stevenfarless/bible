@@ -5,7 +5,7 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>Lege Lux</title>
-	<meta name="build-id" content="61a88b08138c8ef834fc6bd64b92baeba68dbc44" />
+	<meta name="build-id" content="c114dfa3e98e0f78131157e3940043355a509032" />
 	<!-- Favicons -->
 	<link rel="icon" type="image/x-icon" href="./favicon.ico" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32x32.png" />
@@ -24,21 +24,21 @@
 	<link rel="preconnect" href="https://www.gstatic.com" />
 	<link rel="preconnect" href="https://www.google.com" />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=61a88b08138c8ef834fc6bd64b92baeba68dbc44">.
+	     before the parser reaches <script type="module" src="app.js?v=c114dfa3e98e0f78131157e3940043355a509032">.
 	     This eliminates the sequential module-discovery waterfall. -->
-	<link rel="modulepreload" href="app.js?v=61a88b08138c8ef834fc6bd64b92baeba68dbc44" />
-	<link rel="modulepreload" href="bible-api.js?v=61a88b08138c8ef834fc6bd64b92baeba68dbc44" />
-	<link rel="modulepreload" href="bsb-structure.js?v=61a88b08138c8ef834fc6bd64b92baeba68dbc44" />
-	<link rel="modulepreload" href="reading-state.js?v=61a88b08138c8ef834fc6bd64b92baeba68dbc44" />
-	<link rel="modulepreload" href="ui.js?v=61a88b08138c8ef834fc6bd64b92baeba68dbc44" />
-	<link rel="modulepreload" href="bible-structure.js?v=61a88b08138c8ef834fc6bd64b92baeba68dbc44" />
-	<link rel="modulepreload" href="navigation.js?v=61a88b08138c8ef834fc6bd64b92baeba68dbc44" />
-	<link rel="modulepreload" href="search.js?v=61a88b08138c8ef834fc6bd64b92baeba68dbc44" />
-	<link rel="modulepreload" href="auth.js?v=61a88b08138c8ef834fc6bd64b92baeba68dbc44" />
-	<link rel="modulepreload" href="modals.js?v=61a88b08138c8ef834fc6bd64b92baeba68dbc44" />
-	<link rel="modulepreload" href="settings.js?v=61a88b08138c8ef834fc6bd64b92baeba68dbc44" />
-	<link rel="modulepreload" href="keyboard.js?v=61a88b08138c8ef834fc6bd64b92baeba68dbc44" />
-	<link rel="modulepreload" href="events.js?v=61a88b08138c8ef834fc6bd64b92baeba68dbc44" />
+	<link rel="modulepreload" href="app.js?v=c114dfa3e98e0f78131157e3940043355a509032" />
+	<link rel="modulepreload" href="bible-api.js?v=c114dfa3e98e0f78131157e3940043355a509032" />
+	<link rel="modulepreload" href="bsb-structure.js?v=c114dfa3e98e0f78131157e3940043355a509032" />
+	<link rel="modulepreload" href="reading-state.js?v=c114dfa3e98e0f78131157e3940043355a509032" />
+	<link rel="modulepreload" href="ui.js?v=c114dfa3e98e0f78131157e3940043355a509032" />
+	<link rel="modulepreload" href="bible-structure.js?v=c114dfa3e98e0f78131157e3940043355a509032" />
+	<link rel="modulepreload" href="navigation.js?v=c114dfa3e98e0f78131157e3940043355a509032" />
+	<link rel="modulepreload" href="search.js?v=c114dfa3e98e0f78131157e3940043355a509032" />
+	<link rel="modulepreload" href="auth.js?v=c114dfa3e98e0f78131157e3940043355a509032" />
+	<link rel="modulepreload" href="modals.js?v=c114dfa3e98e0f78131157e3940043355a509032" />
+	<link rel="modulepreload" href="settings.js?v=c114dfa3e98e0f78131157e3940043355a509032" />
+	<link rel="modulepreload" href="keyboard.js?v=c114dfa3e98e0f78131157e3940043355a509032" />
+	<link rel="modulepreload" href="events.js?v=c114dfa3e98e0f78131157e3940043355a509032" />
 	<link rel="stylesheet" href="styles.css" />
 	<!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
 	<script src="https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV" async defer></script>
@@ -49,7 +49,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">dev #1065 · 61a88b0</span>
+				<span id="build-info">dev #1066 · c114dfa</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,7 +169,7 @@
 		<div class="passage-container">
 			<div class="passage-header">
 				<h2 id="passageTitle" class="passage-title">Genesis 1</h2>
-				<button id="copyBtn" class="icon-btn" title="Copy passage" aria-label="Copy passage">
+				<button id="copyPassage" class="icon-btn" title="Copy passage" aria-label="Copy passage">
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
 						<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -549,7 +549,7 @@
 		</div>
 	</div>
 
-	<script type="module" src="app.js?v=61a88b08138c8ef834fc6bd64b92baeba68dbc44"></script>
+	<script type="module" src="app.js?v=c114dfa3e98e0f78131157e3940043355a509032"></script>
 </body>
 
 </html>

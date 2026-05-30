@@ -40,7 +40,7 @@ export function attachEventListeners(app) {
     app.translationSelectorBtn?.addEventListener('click', () => app.openTranslationModal());
 
     // ── Copy passage ────────────────────────────────────────────
-    const copyBtn = document.getElementById('copyBtn');
+    const copyBtn = document.getElementById('copyPassage');
     if (copyBtn) {
         copyBtn.addEventListener('click', () => {
             // Apply feedback first — before any async/throwing code runs.
