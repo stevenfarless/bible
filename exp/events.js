@@ -40,17 +40,18 @@ export function attachEventListeners(app) {
     app.translationSelectorBtn?.addEventListener('click', () => app.openTranslationModal());
 
     // ── Copy passage ────────────────────────────────────────────
-    const copyBtn = document.getElementById('copyBtn');
+    const copyBtn = document.getElementById('copyPassage');
     if (copyBtn) {
         copyBtn.addEventListener('click', () => {
-            app.copyPassage();
+            // Apply feedback first — before any async/throwing code runs.
             const prev = copyBtn.getAttribute('aria-label');
             copyBtn.setAttribute('aria-label', 'Copied!');
             copyBtn.classList.add('copy-btn--copied');
             setTimeout(() => {
                 copyBtn.setAttribute('aria-label', prev);
                 copyBtn.classList.remove('copy-btn--copied');
-            }, 4000);
+            }, 2000);
+            try { app.copyPassage(); } catch (err) { console.error('copyPassage error:', err); }
         });
     }
 

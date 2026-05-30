@@ -971,11 +971,36 @@ class BibleApp {
     checkApiKey() { checkApiKey(this); }
 
     copyPassage() {
-        const text = this.stripHTML(this.passageText.innerHTML);
-        const ref  = this.passageTitle.textContent;
-        navigator.clipboard.writeText(`${ref}\n\n${text}\n\n${this.copyright?.textContent ?? ''}`)
-            .then(() => this.showToast('Passage copied to clipboard!'))
-            .catch((err) => { console.error('Failed to copy:', err); this.showToast('Failed to copy passage'); });
+        const text    = this.stripHTML(this.passageText.innerHTML);
+        const ref     = this.passageTitle.textContent;
+        const content = `${ref}\n\n${text}\n\n${this.copyright?.textContent ?? ''}`;
+
+        if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(content)
+                .then(() => this.showToast('Passage copied to clipboard!'))
+                .catch((err) => {
+                    console.error('Failed to copy:', err);
+                    this._copyFallback(content);
+                });
+        } else {
+            this._copyFallback(content);
+        }
+    }
+
+    _copyFallback(content) {
+        try {
+            const ta = document.createElement('textarea');
+            ta.value = content;
+            ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            this.showToast('Passage copied to clipboard!');
+        } catch (err) {
+            console.error('Copy fallback failed:', err);
+            this.showToast('Failed to copy passage');
+        }
     }
 
     showError(message) { this.passageText.innerHTML = `<div class="error">${message}</div>`; }
