@@ -43,6 +43,7 @@ jobs:
           sed -i "s|__BUILD_INFO__|${INFO}|g" index.html
           sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" sw.js index.html
           sed -i "s|\(<script[^>]* src=\"\)\([^?\"]*\)\(\.js\)\(\"\)|\1\2\3?v=${GITHUB_SHA}\4|g" index.html
+          sed -i "s|\(<link[^>]* rel=\"modulepreload\"[^>]* href=\"\)\([^?\"]*\.js\)\(\"\)|\1\2?v=${GITHUB_SHA}\3|g" index.html
           echo "$GITHUB_SHA" > version.txt
 
       - name: Inject Firebase config
