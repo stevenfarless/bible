@@ -861,6 +861,8 @@ class BibleApp {
 
         if (!data) {
             this._dbgEvent(`loadPassage: no data for ${book} ${chapter}`);
+            if (this.passageTitle) this.passageTitle.textContent = `${book} ${chapter}`;
+            if (this.passageText)  this.passageText.innerHTML = '<p class="error">Passage not available.</p>';
             this.chromeSuspend = false;
             document.body.classList.remove('chrome-no-transition');
             return;
@@ -971,11 +973,36 @@ class BibleApp {
     checkApiKey() { checkApiKey(this); }
 
     copyPassage() {
-        const text = this.stripHTML(this.passageText.innerHTML);
-        const ref  = this.passageTitle.textContent;
-        navigator.clipboard.writeText(`${ref}\n\n${text}\n\n${this.copyright?.textContent ?? ''}`)
-            .then(() => this.showToast('Passage copied to clipboard!'))
-            .catch((err) => { console.error('Failed to copy:', err); this.showToast('Failed to copy passage'); });
+        const text    = this.stripHTML(this.passageText.innerHTML);
+        const ref     = this.passageTitle.textContent;
+        const content = `${ref}\n\n${text}\n\n${this.copyright?.textContent ?? ''}`;
+
+        if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(content)
+                .then(() => this.showToast('Passage copied to clipboard!'))
+                .catch((err) => {
+                    console.error('Failed to copy:', err);
+                    this._copyFallback(content);
+                });
+        } else {
+            this._copyFallback(content);
+        }
+    }
+
+    _copyFallback(content) {
+        try {
+            const ta = document.createElement('textarea');
+            ta.value = content;
+            ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            this.showToast('Passage copied to clipboard!');
+        } catch (err) {
+            console.error('Copy fallback failed:', err);
+            this.showToast('Failed to copy passage');
+        }
     }
 
     showError(message) { this.passageText.innerHTML = `<div class="error">${message}</div>`; }
@@ -994,6 +1021,62 @@ class BibleApp {
     async loadUserData()    { await loadUserData(this, normalizeTranslation); }
 }
 
+
+/* ─── PWA Install Prompt ─── */
+
+let _deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    _deferredInstallPrompt = e;
+    if (!window.matchMedia('(display-mode: standalone)').matches) {
+        _setInstallBannerVisible(true);
+    }
+});
+
+window.addEventListener('appinstalled', () => {
+    _deferredInstallPrompt = null;
+    _setInstallBannerVisible(false);
+    console.info('[PWA] installed');
+});
+
+function _setInstallBannerVisible(visible) {
+    const banner = document.getElementById('installBanner');
+    if (!banner) return;
+    banner.classList.toggle('hidden', !visible);
+}
+
+async function _promptInstall() {
+    if (!_deferredInstallPrompt) return;
+    try {
+        _deferredInstallPrompt.prompt();
+        const { outcome } = await _deferredInstallPrompt.userChoice;
+        console.info('[PWA] user choice:', outcome);
+        _deferredInstallPrompt = null;
+        if (outcome === 'dismissed') _setInstallBannerVisible(false);
+    } catch (err) {
+        console.error('[PWA] install prompt error', err);
+    }
+}
+
+// Modules are deferred — DOM is already parsed by execution time.
+// Use readyState guard (same pattern as the app boot IIFE) to be safe.
+(function _wireInstallBanner() {
+    function _attach() {
+        const btn = document.getElementById('installBtn');
+        if (btn) btn.addEventListener('click', _promptInstall);
+        const dismiss = document.getElementById('installBannerDismiss');
+        if (dismiss) dismiss.addEventListener('click', () => _setInstallBannerVisible(false));
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            _setInstallBannerVisible(false);
+        }
+    }
+    if (document.readyState !== 'loading') {
+        _attach();
+    } else {
+        document.addEventListener('DOMContentLoaded', _attach, { once: true });
+    }
+}());
 
 /* ─── Service Worker & Update Toast ─── */
 
@@ -1068,7 +1151,7 @@ function showUpdateToast(appInstance) {
         if (document.readyState !== 'loading') return resolve();
         document.addEventListener('DOMContentLoaded', resolve, { once: true });
     });
-    import('./config/firebase-config.bundle.js').catch(
+    await import('./config/firebase-config.bundle.js').catch(
         (err) => console.warn('Firebase bundle failed to load — sign-in unavailable:', err)
     );
     new BibleApp();
