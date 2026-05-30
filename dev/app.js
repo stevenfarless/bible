@@ -861,6 +861,8 @@ class BibleApp {
 
         if (!data) {
             this._dbgEvent(`loadPassage: no data for ${book} ${chapter}`);
+            if (this.passageTitle) this.passageTitle.textContent = `${book} ${chapter}`;
+            if (this.passageText)  this.passageText.innerHTML = '<p class="error">Passage not available.</p>';
             this.chromeSuspend = false;
             document.body.classList.remove('chrome-no-transition');
             return;
