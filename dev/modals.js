@@ -246,6 +246,9 @@ function attachDragHandlers(app, modal, dismissOnDrag = true) {
 
     if (!content || !header) return;
 
+    const MAX_H = () => window.innerHeight * 0.9;
+    const RESET_H = () => `${MAX_H()}px`;
+
     // ── touch ──
     let isTouchDragging = false;
     let touchStartY = 0;
@@ -264,7 +267,7 @@ function attachDragHandlers(app, modal, dismissOnDrag = true) {
     document.addEventListener('touchmove', (e) => {
         if (!isTouchDragging) return;
         const deltaY = touchStartY - e.touches[0].clientY;
-        const newH = Math.max(200, Math.min(window.innerHeight * 0.9, touchStartHeight + deltaY));
+        const newH = Math.max(200, Math.min(MAX_H(), touchStartHeight + deltaY));
         content.style.height = `${newH}px`;
         e.preventDefault();
     }, { passive: false });
@@ -276,7 +279,7 @@ function attachDragHandlers(app, modal, dismissOnDrag = true) {
         const totalDrag = e.changedTouches[0].clientY - touchStartY;
         if (dismissOnDrag && totalDrag > 150 && touchStartScrollTop === 0) {
             app.closeModal(modal);
-            setTimeout(() => { content.style.height = '50vh'; }, 300);
+            setTimeout(() => { content.style.height = RESET_H(); }, 300);
         }
     }, { passive: true });
 
@@ -296,7 +299,7 @@ function attachDragHandlers(app, modal, dismissOnDrag = true) {
 
     document.addEventListener('mousemove', (e) => {
         if (!isMouseDragging) return;
-        const newH = Math.max(200, Math.min(window.innerHeight * 0.9, mouseStartHeight + (mouseStartY - e.clientY)));
+        const newH = Math.max(200, Math.min(MAX_H(), mouseStartHeight + (mouseStartY - e.clientY)));
         content.style.height = `${newH}px`;
     });
 
@@ -306,7 +309,7 @@ function attachDragHandlers(app, modal, dismissOnDrag = true) {
         content.classList.remove('dragging');
         if (dismissOnDrag && e.clientY - mouseStartY > 150) {
             app.closeModal(modal);
-            setTimeout(() => { content.style.height = '50vh'; }, 300);
+            setTimeout(() => { content.style.height = RESET_H(); }, 300);
         }
     });
 }
