@@ -16,9 +16,9 @@ BUILD_ID   = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S') + '-dev'
 BUILD_INFO = f'dev · {BUILD_ID}'
 
 REPLACEMENTS = {
-    '__FIREBASE_API_KEY__':             os.environ.get('FIREBASE_API_KEY', ''),
-    '__FIREBASE_APP_ID__':              os.environ.get('FIREBASE_APP_ID', ''),
-    '__FIREBASE_MESSAGING_SENDER_ID__': os.environ.get('FIREBASE_MESSAGING_SENDER_ID', ''),
+    '__FIREBASE_API_KEY__':             os.environ.get('FIREBASE_API_KEY', '__FIREBASE_API_KEY__'),
+    '__FIREBASE_APP_ID__':              os.environ.get('FIREBASE_APP_ID', '__FIREBASE_APP_ID__'),
+    '__FIREBASE_MESSAGING_SENDER_ID__': os.environ.get('FIREBASE_MESSAGING_SENDER_ID', '__FIREBASE_MESSAGING_SENDER_ID__'),
     '__BUILD_ID__':                     BUILD_ID,
     '__BUILD_INFO__':                   BUILD_INFO,
 }
