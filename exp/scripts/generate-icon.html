@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Lege Lux — Icon Generator</title>
+  <!-- JSZip for in-browser zip creation -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -41,6 +43,7 @@
       font-size: 0.7rem;
       opacity: 0.55;
       text-align: center;
+      white-space: pre-line;
     }
     .btn-row {
       display: flex;
@@ -77,7 +80,8 @@
     #drop-zone.over { border-color: #FFD700; }
     #drop-zone p { margin: 0; opacity: 0.5; font-size: 0.9rem; }
     #file-input { display: none; }
-    .note { font-size: 0.75rem; opacity: 0.4; text-align: center; max-width: 400px; }
+    .note { font-size: 0.75rem; opacity: 0.4; text-align: center; max-width: 420px; line-height: 1.6; }
+    .note code { opacity: 0.8; background: #2a2b38; padding: 0.1em 0.3em; border-radius: 3px; }
     #status { font-size: 0.85rem; opacity: 0.7; min-height: 1.2em; }
   </style>
 </head>
@@ -94,25 +98,25 @@
   <div id="preview-grid"></div>
 
   <div class="btn-row">
-    <button id="dl-all" disabled onclick="downloadAll()">&#8659; Download All Files</button>
+    <button id="dl-all" disabled onclick="downloadZip()">⇓ Download lege-lux-icons.zip</button>
   </div>
 
   <p class="note">
-    Drop in <code>icons/logo_original.png</code> from your repo.<br>
-    Downloads all required sizes and formats in one click.
+    Zip contains two folders:<br>
+    <code>icons/</code> — drop contents into your repo’s <code>icons/</code> folder<br>
+    <code>root/</code> — <code>favicon.ico.png</code>: convert at
+    <a href="https://favicon.io/favicon-converter/" target="_blank" style="color:#FFD700">favicon.io</a>
+    then place <code>favicon.ico</code> in repo root
   </p>
 
   <script>
-    // All required output formats
     const EXPORTS = [
-      { filename: 'icons/icon-512.png',         size: 512, radius: 0,   note: 'PWA manifest • Android' },
-      { filename: 'icons/icon-192.png',         size: 192, radius: 0,   note: 'PWA manifest • Android home screen' },
-      { filename: 'icons/apple-touch-icon.png', size: 180, radius: 0,   note: 'iOS Add to Home Screen' },
-      { filename: 'icons/favicon-32.png',       size: 32,  radius: 0,   note: 'Browser tab' },
-      { filename: 'icons/favicon-16.png',       size: 16,  radius: 0,   note: 'Browser tab (legacy)' },
-      // favicon.ico: we export a 32px PNG named favicon.ico — most hosts/browsers accept PNG-named .ico
-      // For a true .ico use favicon.io/favicon-converter with the 32px PNG
-      { filename: 'favicon.ico.png',            size: 32,  radius: 0,   note: 'Rename to favicon.ico → repo root' },
+      { path: 'icons/icon-512.png',         size: 512, note: 'PWA manifest • Android' },
+      { path: 'icons/icon-192.png',         size: 192, note: 'PWA manifest • Android home screen' },
+      { path: 'icons/apple-touch-icon.png', size: 180, note: 'iOS Add to Home Screen' },
+      { path: 'icons/favicon-32.png',       size: 32,  note: 'Browser tab' },
+      { path: 'icons/favicon-16.png',       size: 16,  note: 'Browser tab (legacy)' },
+      { path: 'root/favicon.ico.png',       size: 32,  note: 'Convert → favicon.ico → repo root' },
     ];
 
     let sourceImg = null;
@@ -120,8 +124,8 @@
     const dlBtn   = document.getElementById('dl-all');
     const status  = document.getElementById('status');
 
-    // ── Drag & drop + file input ─────────────────────
-    const dropZone = document.getElementById('drop-zone');
+    // ── File input ───────────────────────────────────
+    const dropZone  = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
 
     dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
@@ -150,69 +154,65 @@
       reader.readAsDataURL(file);
     }
 
-    // ── Build preview canvases ────────────────────────
+    // ── Previews ────────────────────────────────────
     function buildPreviews() {
       grid.innerHTML = '';
       EXPORTS.forEach(exp => {
-        const wrap = document.createElement('div');
+        const wrap  = document.createElement('div');
         wrap.className = 'preview-item';
-
-        const c = document.createElement('canvas');
-        c.width  = exp.size;
-        c.height = exp.size;
-        drawToCanvas(c, exp.size);
-
+        const c = makeCanvas(exp.size);
         const label = document.createElement('span');
-        label.textContent = `${exp.filename.split('/').pop()}\n${exp.size}×${exp.size}`;
-
+        label.textContent = `${exp.path.split('/').pop()}\n${exp.size}×${exp.size}`;
         wrap.appendChild(c);
         wrap.appendChild(label);
         grid.appendChild(wrap);
       });
     }
 
-    // ── Draw source image into a square canvas ────────
-    // Fits the image to fill the canvas (cover), centered.
-    function drawToCanvas(canvas, size) {
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, size, size);
-
-      if (!sourceImg) return;
-
-      const iw = sourceImg.naturalWidth;
-      const ih = sourceImg.naturalHeight;
+    // ── Canvas helper ──────────────────────────────
+    function makeCanvas(size) {
+      const c   = document.createElement('canvas');
+      c.width   = size;
+      c.height  = size;
+      const ctx = c.getContext('2d');
+      const iw  = sourceImg.naturalWidth;
+      const ih  = sourceImg.naturalHeight;
       const scale = Math.max(size / iw, size / ih);
-      const dw = iw * scale;
-      const dh = ih * scale;
-      const dx = (size - dw) / 2;
-      const dy = (size - dh) / 2;
-
-      ctx.drawImage(sourceImg, dx, dy, dw, dh);
+      const dw  = iw * scale;
+      const dh  = ih * scale;
+      ctx.drawImage(sourceImg, (size - dw) / 2, (size - dh) / 2, dw, dh);
+      return c;
     }
 
-    // ── Download all ──────────────────────────────────
-    function downloadAll() {
+    // Canvas → PNG blob (Promise)
+    function canvasToBlob(canvas) {
+      return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    }
+
+    // ── Zip download ──────────────────────────────
+    async function downloadZip() {
       if (!sourceImg) return;
-      status.textContent = 'Downloading…';
+      dlBtn.disabled = true;
+      status.textContent = 'Building zip…';
 
-      EXPORTS.forEach((exp, i) => {
-        setTimeout(() => {
-          const c = document.createElement('canvas');
-          c.width  = exp.size;
-          c.height = exp.size;
-          drawToCanvas(c, exp.size);
+      const zip = new JSZip();
 
-          const a = document.createElement('a');
-          // Strip leading path for download filename
-          a.download = exp.filename.replace('icons/', '');
-          a.href = c.toDataURL('image/png');
-          a.click();
+      for (const exp of EXPORTS) {
+        const canvas = makeCanvas(exp.size);
+        const blob   = await canvasToBlob(canvas);
+        const buf    = await blob.arrayBuffer();
+        zip.file(exp.path, buf);
+      }
 
-          if (i === EXPORTS.length - 1) {
-            status.textContent = `✓ All ${EXPORTS.length} files downloaded`;
-          }
-        }, i * 120); // stagger to avoid browser blocking rapid downloads
-      });
+      const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+      const a = document.createElement('a');
+      a.download = 'lege-lux-icons.zip';
+      a.href = URL.createObjectURL(zipBlob);
+      a.click();
+      URL.revokeObjectURL(a.href);
+
+      status.textContent = `✓ lege-lux-icons.zip downloaded (${EXPORTS.length} files)`;
+      dlBtn.disabled = false;
     }
   </script>
 </body>
