@@ -819,7 +819,12 @@ class BibleApp {
 
     initializeAccordion() {
         document.querySelectorAll('.accordion-header').forEach((header) => {
-            header.addEventListener('click', () => header.closest('.accordion-section').classList.toggle('active'));
+            header.addEventListener('click', () => {
+                const section = header.closest('.accordion-section');
+                const isActive = section.classList.contains('active');
+                document.querySelectorAll('.accordion-section').forEach(s => s.classList.remove('active'));
+                if (!isActive) section.classList.add('active');
+            });
         });
         const openAccountBtn = document.getElementById('openAccountBtn');
         if (openAccountBtn) {

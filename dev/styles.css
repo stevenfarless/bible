@@ -1731,7 +1731,7 @@ body.hide-verse-numbers .verse .verse-num {
 #settingsModal .modal-content {
     width: 100%;
     max-width: var(--max-width);
-    height: 50vh;
+    height: 75vh;
     max-height: 90vh;
     min-height: 200px;
     border-radius: 12px 12px 0 0;
