@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Lege Lux — Icon Generator</title>
-  <!-- JSZip for in-browser zip creation -->
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <style>
     * { box-sizing: border-box; }
@@ -19,9 +18,38 @@
       margin: 0;
     }
     h1 { font-size: 1.1rem; opacity: 0.7; margin: 0; }
+    .upload-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+      max-width: 700px;
+    }
+    .drop-zone {
+      flex: 1;
+      min-width: 220px;
+      padding: 1.5rem 1rem;
+      border: 2px dashed #44475a;
+      border-radius: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .drop-zone.over  { border-color: #FFD700; }
+    .drop-zone.ready { border-color: #50FA7B; }
+    .drop-zone p { margin: 0; opacity: 0.55; font-size: 0.85rem; line-height: 1.5; }
+    .drop-zone strong { color: #f8f8f2; opacity: 1; }
+    .drop-zone .tag {
+      display: inline-block;
+      margin-top: 0.4rem;
+      font-size: 0.7rem;
+      opacity: 0.4;
+    }
+    input[type=file] { display: none; }
     #preview-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
       gap: 1rem;
       width: 100%;
       max-width: 700px;
@@ -35,27 +63,27 @@
     .preview-item canvas {
       border-radius: 22%;
       box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-      width: 100%;
-      height: auto;
-      max-width: 100px;
+      width: 80px;
+      height: 80px;
+      image-rendering: pixelated;
     }
+    .preview-item canvas.large { image-rendering: auto; }
     .preview-item span {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       opacity: 0.55;
       text-align: center;
       white-space: pre-line;
     }
-    .btn-row {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.75rem;
-      width: 100%;
-      max-width: 340px;
+    .preview-item .src-tag {
+      font-size: 0.62rem;
+      padding: 0.1em 0.4em;
+      border-radius: 3px;
+      font-weight: 600;
     }
+    .src-large { background: #44475a; color: #bd93f9; }
+    .src-small { background: #44475a; color: #50fa7b; }
     button {
-      width: 100%;
-      padding: 0.65rem 1.4rem;
+      padding: 0.65rem 2rem;
       background: #FFD700;
       color: #1e1e2e;
       border: none;
@@ -65,143 +93,164 @@
       cursor: pointer;
       transition: background 0.15s;
     }
-    button:hover { background: #f0c800; }
+    button:hover  { background: #f0c800; }
     button:disabled { background: #555; color: #999; cursor: not-allowed; }
-    #drop-zone {
-      width: 100%;
-      max-width: 340px;
-      padding: 2rem;
-      border: 2px dashed #44475a;
-      border-radius: 10px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.2s;
-    }
-    #drop-zone.over { border-color: #FFD700; }
-    #drop-zone p { margin: 0; opacity: 0.5; font-size: 0.9rem; }
-    #file-input { display: none; }
-    .note { font-size: 0.75rem; opacity: 0.4; text-align: center; max-width: 420px; line-height: 1.6; }
-    .note code { opacity: 0.8; background: #2a2b38; padding: 0.1em 0.3em; border-radius: 3px; }
+    .note { font-size: 0.72rem; opacity: 0.38; text-align: center; max-width: 460px; line-height: 1.7; }
+    .note code { background: #2a2b38; padding: 0.1em 0.3em; border-radius: 3px; opacity: 0.9; }
     #status { font-size: 0.85rem; opacity: 0.7; min-height: 1.2em; }
   </style>
 </head>
 <body>
   <h1>Lege Lux — Icon Generator</h1>
 
-  <div id="drop-zone" onclick="document.getElementById('file-input').click()">
-    <p>📂 Click or drop <strong>logo_original.png</strong> here</p>
-    <input type="file" id="file-input" accept="image/png,image/jpeg,image/webp">
+  <div class="upload-row">
+    <!-- Large source -->
+    <div class="drop-zone" id="dz-large" onclick="document.getElementById('fi-large').click()">
+      <p>📷 <strong>logo_original.png</strong><br>Full icon — 192px and up</p>
+      <span class="tag">icon-512 • icon-192 • apple-touch-icon</span>
+      <input type="file" id="fi-large" accept="image/*">
+    </div>
+    <!-- Small source -->
+    <div class="drop-zone" id="dz-small" onclick="document.getElementById('fi-small').click()">
+      <p>📷 <strong>logo_small.png</strong><br>Small icon — 32px and 16px</p>
+      <span class="tag">favicon-32 • favicon-16 • favicon.ico</span>
+      <input type="file" id="fi-small" accept="image/*">
+    </div>
   </div>
 
-  <div id="status">Waiting for image…</div>
-
+  <div id="status">Upload both images to continue…</div>
   <div id="preview-grid"></div>
 
-  <div class="btn-row">
-    <button id="dl-all" disabled onclick="downloadZip()">⇓ Download lege-lux-icons.zip</button>
-  </div>
+  <button id="dl-btn" disabled onclick="downloadZip()">⇓ Download lege-lux-icons.zip</button>
 
   <p class="note">
-    Zip contains two folders:<br>
-    <code>icons/</code> — drop contents into your repo’s <code>icons/</code> folder<br>
-    <code>root/</code> — <code>favicon.ico.png</code>: convert at
+    Zip structure mirrors your repo:<br>
+    <code>icons/</code> → drop all PNG files here &nbsp;|
+    <code>root/favicon.ico.png</code> → convert at
     <a href="https://favicon.io/favicon-converter/" target="_blank" style="color:#FFD700">favicon.io</a>
     then place <code>favicon.ico</code> in repo root
   </p>
 
   <script>
     const EXPORTS = [
-      { path: 'icons/icon-512.png',         size: 512, note: 'PWA manifest • Android' },
-      { path: 'icons/icon-192.png',         size: 192, note: 'PWA manifest • Android home screen' },
-      { path: 'icons/apple-touch-icon.png', size: 180, note: 'iOS Add to Home Screen' },
-      { path: 'icons/favicon-32.png',       size: 32,  note: 'Browser tab' },
-      { path: 'icons/favicon-16.png',       size: 16,  note: 'Browser tab (legacy)' },
-      { path: 'root/favicon.ico.png',       size: 32,  note: 'Convert → favicon.ico → repo root' },
+      { path: 'icons/icon-512.png',         size: 512, src: 'large', label: 'icon-512.png\n512×512' },
+      { path: 'icons/icon-192.png',         size: 192, src: 'large', label: 'icon-192.png\n192×192' },
+      { path: 'icons/apple-touch-icon.png', size: 180, src: 'large', label: 'apple-touch-icon\n180×180' },
+      { path: 'icons/favicon-32.png',       size: 32,  src: 'small', label: 'favicon-32.png\n32×32' },
+      { path: 'icons/favicon-16.png',       size: 16,  src: 'small', label: 'favicon-16.png\n16×16' },
+      { path: 'root/favicon.ico.png',       size: 32,  src: 'small', label: 'favicon.ico.png\n32×32' },
     ];
 
-    let sourceImg = null;
-    const grid    = document.getElementById('preview-grid');
-    const dlBtn   = document.getElementById('dl-all');
-    const status  = document.getElementById('status');
+    const imgs   = { large: null, small: null };
+    const grid   = document.getElementById('preview-grid');
+    const dlBtn  = document.getElementById('dl-btn');
+    const status = document.getElementById('status');
 
-    // ── File input ───────────────────────────────────
-    const dropZone  = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('file-input');
+    function setupDropZone(dzId, inputId, key) {
+      const dz    = document.getElementById(dzId);
+      const input = document.getElementById(inputId);
 
-    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
-    dropZone.addEventListener('drop', e => {
-      e.preventDefault();
-      dropZone.classList.remove('over');
-      loadFile(e.dataTransfer.files[0]);
-    });
-    fileInput.addEventListener('change', () => loadFile(fileInput.files[0]));
+      dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+      dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+      dz.addEventListener('drop', e => {
+        e.preventDefault();
+        dz.classList.remove('over');
+        loadFile(e.dataTransfer.files[0], key, dz);
+      });
+      input.addEventListener('change', () => loadFile(input.files[0], key, dz));
+    }
 
-    function loadFile(file) {
+    setupDropZone('dz-large', 'fi-large', 'large');
+    setupDropZone('dz-small', 'fi-small', 'small');
+
+    function loadFile(file, key, dz) {
       if (!file) return;
-      status.textContent = 'Loading…';
       const reader = new FileReader();
       reader.onload = e => {
         const img = new Image();
         img.onload = () => {
-          sourceImg = img;
-          buildPreviews();
-          dlBtn.disabled = false;
-          status.textContent = `✓ Loaded — ${img.naturalWidth}×${img.naturalHeight}px`;
+          imgs[key] = img;
+          dz.classList.add('ready');
+          dz.querySelector('p').innerHTML =
+            `✓ <strong>${file.name}</strong><br><span style="opacity:0.5;font-size:0.8em">${img.naturalWidth}×${img.naturalHeight}px</span>`;
+          onImagesUpdated();
         };
         img.src = e.target.result;
       };
       reader.readAsDataURL(file);
     }
 
-    // ── Previews ────────────────────────────────────
+    function onImagesUpdated() {
+      const bothReady = imgs.large && imgs.small;
+      const anyReady  = imgs.large || imgs.small;
+
+      if (anyReady) buildPreviews();
+
+      if (bothReady) {
+        dlBtn.disabled = false;
+        status.textContent = '✓ Both images loaded — ready to download';
+      } else if (imgs.large) {
+        status.textContent = '✓ Large icon loaded — still need small icon';
+      } else {
+        status.textContent = '✓ Small icon loaded — still need large icon';
+      }
+    }
+
     function buildPreviews() {
       grid.innerHTML = '';
       EXPORTS.forEach(exp => {
+        const img = imgs[exp.src];
+        if (!img) return;
+
         const wrap  = document.createElement('div');
         wrap.className = 'preview-item';
-        const c = makeCanvas(exp.size);
+
+        const c = makeCanvas(img, exp.size);
+        if (exp.size >= 64) c.classList.add('large');
+
+        const tag = document.createElement('span');
+        tag.className = `src-tag src-${exp.src}`;
+        tag.textContent = exp.src === 'large' ? 'FULL' : 'SMALL';
+
         const label = document.createElement('span');
-        label.textContent = `${exp.path.split('/').pop()}\n${exp.size}×${exp.size}`;
+        label.textContent = exp.label;
+
         wrap.appendChild(c);
+        wrap.appendChild(tag);
         wrap.appendChild(label);
         grid.appendChild(wrap);
       });
     }
 
-    // ── Canvas helper ──────────────────────────────
-    function makeCanvas(size) {
+    function makeCanvas(img, size) {
       const c   = document.createElement('canvas');
       c.width   = size;
       c.height  = size;
       const ctx = c.getContext('2d');
-      const iw  = sourceImg.naturalWidth;
-      const ih  = sourceImg.naturalHeight;
+      const iw  = img.naturalWidth;
+      const ih  = img.naturalHeight;
       const scale = Math.max(size / iw, size / ih);
       const dw  = iw * scale;
       const dh  = ih * scale;
-      ctx.drawImage(sourceImg, (size - dw) / 2, (size - dh) / 2, dw, dh);
+      ctx.drawImage(img, (size - dw) / 2, (size - dh) / 2, dw, dh);
       return c;
     }
 
-    // Canvas → PNG blob (Promise)
     function canvasToBlob(canvas) {
       return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
     }
 
-    // ── Zip download ──────────────────────────────
     async function downloadZip() {
-      if (!sourceImg) return;
+      if (!imgs.large || !imgs.small) return;
       dlBtn.disabled = true;
       status.textContent = 'Building zip…';
 
       const zip = new JSZip();
 
       for (const exp of EXPORTS) {
-        const canvas = makeCanvas(exp.size);
+        const canvas = makeCanvas(imgs[exp.src], exp.size);
         const blob   = await canvasToBlob(canvas);
-        const buf    = await blob.arrayBuffer();
-        zip.file(exp.path, buf);
+        zip.file(exp.path, await blob.arrayBuffer());
       }
 
       const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
