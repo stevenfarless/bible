@@ -43,7 +43,7 @@ export function attachEventListeners(app) {
     const copyBtn = document.getElementById('copyBtn');
     if (copyBtn) {
         copyBtn.addEventListener('click', () => {
-            app.copyPassage();
+            // Apply feedback first — before any async/throwing code runs.
             const prev = copyBtn.getAttribute('aria-label');
             copyBtn.setAttribute('aria-label', 'Copied!');
             copyBtn.classList.add('copy-btn--copied');
@@ -51,6 +51,7 @@ export function attachEventListeners(app) {
                 copyBtn.setAttribute('aria-label', prev);
                 copyBtn.classList.remove('copy-btn--copied');
             }, 2000);
+            try { app.copyPassage(); } catch (err) { console.error('copyPassage error:', err); }
         });
     }
 
