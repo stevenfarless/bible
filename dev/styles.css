@@ -1731,7 +1731,7 @@ body.hide-verse-numbers .verse .verse-num {
 #settingsModal .modal-content {
     width: 100%;
     max-width: var(--max-width);
-    height: 50vh;
+    height: 90vh;
     max-height: 90vh;
     min-height: 200px;
     border-radius: 12px 12px 0 0;
@@ -2056,7 +2056,7 @@ body.light-mode .selected-verse-glow {
     }
 
     #settingsModal .modal-content {
-        max-height: 80vh;
+        max-height: 90vh;
         width: 100%;
         border-radius: 16px 16px 0 0;
     }
