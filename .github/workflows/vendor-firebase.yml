@@ -1,0 +1,40 @@
+name: Vendor Firebase SDK
+
+# Run manually once to download the Firebase ESM bundles and commit them
+# to vendor/firebase/ so the app can load them from the same origin
+# (fixes Brave blocking gstatic.com imports).
+on:
+  workflow_dispatch:
+
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+
+      - name: Download Firebase 9.23.0 ESM bundles
+        run: |
+          mkdir -p vendor/firebase
+          curl -fsSL -o vendor/firebase/app.js \
+            "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"
+          curl -fsSL -o vendor/firebase/auth.js \
+            "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"
+          curl -fsSL -o vendor/firebase/database.js \
+            "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"
+          echo "Downloaded files:"
+          ls -lh vendor/firebase/
+
+      - name: Commit vendor files
+        run: |
+          git config user.name "stevenfarless"
+          git config user.email "125781365+stevenfarless@users.noreply.github.com"
+          git add vendor/firebase/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "vendor: add Firebase 9.23.0 ESM bundles for same-origin loading"
+          git pull --rebase origin dev
+          git push origin dev
