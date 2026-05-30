@@ -1,7 +1,7 @@
 // settings.js
 // Reading preferences: load from storage, apply to DOM, persist to Firebase and localStorage.
 
-import { changeColorTheme } from './ui.js';
+import { changeColorTheme, updateThemeIcon } from './ui.js';
 
 const DEFAULTS = {
     fontSize:            18,
@@ -102,6 +102,7 @@ export function applySettings(app) {
     document.body.classList.toggle('light-mode', !!app.state.lightMode);
     const lightModeToggle = document.getElementById('lightModeToggle');
     if (lightModeToggle) lightModeToggle.checked = !!app.state.lightMode;
+    updateThemeIcon(app.state.lightMode);
 
     document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
     if (app.verseNumbersToggle)    app.verseNumbersToggle.checked    = !!app.state.showVerseNumbers;

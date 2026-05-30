@@ -4,41 +4,28 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Lege Lux</title>
-	<meta name="build-id" content="a2292d08be52327e56c184c8d2a625cc9117513b" />
-	<!-- Favicons -->
-	<link rel="icon" type="image/x-icon" href="./favicon.ico" />
-	<link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32x32.png" />
-	<link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon-16x16.png" />
-	<!-- PWA manifest -->
-	<link rel="manifest" href="./manifest.json" />
-	<!-- iOS PWA support -->
-	<meta name="apple-mobile-web-app-capable" content="yes" />
-	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-	<meta name="apple-mobile-web-app-title" content="Lege Lux" />
-	<link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png" />
-	<!-- Android theme color -->
-	<meta name="theme-color" content="#1e1e2e" />
+	<title>Bible Reader</title>
+	<meta name="build-id" content="26a3aa30ec3b3b7a03cc0473709cf3b867fe685c" />
 	<!-- Preconnect to external hosts used on first load -->
 	<link rel="preconnect" href="https://esv-bible-6dffb-default-rtdb.firebaseio.com" />
 	<link rel="preconnect" href="https://www.gstatic.com" />
 	<link rel="preconnect" href="https://www.google.com" />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=a2292d08be52327e56c184c8d2a625cc9117513b">.
+	     before the parser reaches <script type="module" src="app.js?v=26a3aa30ec3b3b7a03cc0473709cf3b867fe685c">.
 	     This eliminates the sequential module-discovery waterfall. -->
-	<link rel="modulepreload" href="app.js?v=a2292d08be52327e56c184c8d2a625cc9117513b" />
-	<link rel="modulepreload" href="bible-api.js?v=a2292d08be52327e56c184c8d2a625cc9117513b" />
-	<link rel="modulepreload" href="bsb-structure.js?v=a2292d08be52327e56c184c8d2a625cc9117513b" />
-	<link rel="modulepreload" href="reading-state.js?v=a2292d08be52327e56c184c8d2a625cc9117513b" />
-	<link rel="modulepreload" href="ui.js?v=a2292d08be52327e56c184c8d2a625cc9117513b" />
-	<link rel="modulepreload" href="bible-structure.js?v=a2292d08be52327e56c184c8d2a625cc9117513b" />
-	<link rel="modulepreload" href="navigation.js?v=a2292d08be52327e56c184c8d2a625cc9117513b" />
-	<link rel="modulepreload" href="search.js?v=a2292d08be52327e56c184c8d2a625cc9117513b" />
-	<link rel="modulepreload" href="auth.js?v=a2292d08be52327e56c184c8d2a625cc9117513b" />
-	<link rel="modulepreload" href="modals.js?v=a2292d08be52327e56c184c8d2a625cc9117513b" />
-	<link rel="modulepreload" href="settings.js?v=a2292d08be52327e56c184c8d2a625cc9117513b" />
-	<link rel="modulepreload" href="keyboard.js?v=a2292d08be52327e56c184c8d2a625cc9117513b" />
-	<link rel="modulepreload" href="events.js?v=a2292d08be52327e56c184c8d2a625cc9117513b" />
+	<link rel="modulepreload" href="app.js" />
+	<link rel="modulepreload" href="bible-api.js" />
+	<link rel="modulepreload" href="bsb-structure.js" />
+	<link rel="modulepreload" href="reading-state.js" />
+	<link rel="modulepreload" href="ui.js" />
+	<link rel="modulepreload" href="bible-structure.js" />
+	<link rel="modulepreload" href="navigation.js" />
+	<link rel="modulepreload" href="search.js" />
+	<link rel="modulepreload" href="auth.js" />
+	<link rel="modulepreload" href="modals.js" />
+	<link rel="modulepreload" href="settings.js" />
+	<link rel="modulepreload" href="keyboard.js" />
+	<link rel="modulepreload" href="events.js" />
 	<link rel="stylesheet" href="styles.css" />
 	<!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
 	<script src="https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV" async defer></script>
@@ -49,7 +36,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">dev #1076 · a2292d0</span>
+				<span id="build-info">dev #1077 · 26a3aa3</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,7 +156,7 @@
 		<div class="passage-container">
 			<div class="passage-header">
 				<h2 id="passageTitle" class="passage-title">Genesis 1</h2>
-				<button id="copyPassage" class="icon-btn" title="Copy passage" aria-label="Copy passage">
+				<button id="copyBtn" class="icon-btn" title="Copy passage">
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
 						<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -535,21 +522,7 @@
 	<div id="toast" class="toast"></div>
 
 
-	<!-- PWA install banner: shown by JS when beforeinstallprompt fires -->
-	<div id="installBanner" class="install-banner hidden" role="banner" aria-label="Install app">
-		<div class="install-banner__inner">
-			<div class="install-banner__text">
-				<strong>Install Lege Lux</strong>
-				<span>Add to your home screen for offline access</span>
-			</div>
-			<div class="install-banner__actions">
-				<button id="installBtn" class="install-banner__cta">Install</button>
-				<button id="installBannerDismiss" class="install-banner__dismiss" aria-label="Dismiss">&#x2715;</button>
-			</div>
-		</div>
-	</div>
-
-	<script type="module" src="app.js?v=a2292d08be52327e56c184c8d2a625cc9117513b"></script>
+	<script type="module" src="app.js?v=26a3aa30ec3b3b7a03cc0473709cf3b867fe685c"></script>
 </body>
 
 </html>

@@ -482,7 +482,6 @@ export async function performKeywordSearch(app, query) {
     app.searchExpandedBooks?.clear();
 
     await fetchAllSearchResults(app, query, (accumulatedResults) => {
-        if (app.searchLastQuery !== query) return;
         if (accumulatedResults.length > 0) {
             // Seed initial open state before the first incremental render.
             if (app.searchExpandedTestaments.size === 0 && app.searchExpandedBooks.size === 0) {
@@ -497,8 +496,6 @@ export async function performKeywordSearch(app, query) {
             displaySearchResults(app, accumulatedResults, query);
         }
     });
-
-    if (app.searchLastQuery !== query) return;
 
     if (app.currentSearchResults.length > 0) {
         displaySearchResults(app, app.currentSearchResults, query);

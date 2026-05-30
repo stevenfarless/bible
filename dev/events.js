@@ -39,22 +39,6 @@ export function attachEventListeners(app) {
     // ── Translation badge (nav) ──────────────────────────────────
     app.translationSelectorBtn?.addEventListener('click', () => app.openTranslationModal());
 
-    // ── Copy passage ────────────────────────────────────────────
-    const copyBtn = document.getElementById('copyPassage');
-    if (copyBtn) {
-        copyBtn.addEventListener('click', () => {
-            // Apply feedback first — before any async/throwing code runs.
-            const prev = copyBtn.getAttribute('aria-label');
-            copyBtn.setAttribute('aria-label', 'Copied!');
-            copyBtn.classList.add('copy-btn--copied');
-            setTimeout(() => {
-                copyBtn.setAttribute('aria-label', prev);
-                copyBtn.classList.remove('copy-btn--copied');
-            }, 2000);
-            try { app.copyPassage(); } catch (err) { console.error('copyPassage error:', err); }
-        });
-    }
-
     // ── Modals: late-cached elements ─────────────────────────────────
     app.referencesModal        = document.getElementById('referencesModal');
     app.closeReferencesModal   = document.getElementById('closeReferencesModal');
