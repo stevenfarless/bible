@@ -17,7 +17,7 @@ const REQUIRED_IDS = [
 	'chapterModalBook', 'chapterGrid', 'verseModalBook', 'verseGrid',
 	'verseNumbersToggle', 'headingsToggle', 'footnotesToggle',
 	'crossReferencesToggle', 'verseByVerseToggle',
-	'fontSizeSlider', 'fontSizeValue',
+	'fontSizeSlider', 'fontSizeValue', 'translationSelector',
 	'referencesModal', 'closeReferencesModal',
 	'footnotesSection', 'footnotesContent',
 	'crossReferencesSection', 'crossReferencesContent',
@@ -111,6 +111,7 @@ export function cacheElements(app) {
 	app.verseByVerseToggle = document.getElementById('verseByVerseToggle');
 	app.fontSizeSlider = document.getElementById('fontSizeSlider');
 	app.fontSizeValue = document.getElementById('fontSizeValue');
+	app.translationSelector = document.getElementById('translationSelector');
 
 	// References modal (footnotes and cross-references)
 	app.referencesModal = document.getElementById('referencesModal');
