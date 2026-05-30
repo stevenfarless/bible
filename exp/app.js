@@ -1151,7 +1151,7 @@ function showUpdateToast(appInstance) {
         if (document.readyState !== 'loading') return resolve();
         document.addEventListener('DOMContentLoaded', resolve, { once: true });
     });
-    import('./config/firebase-config.bundle.js').catch(
+    await import('./config/firebase-config.bundle.js').catch(
         (err) => console.warn('Firebase bundle failed to load — sign-in unavailable:', err)
     );
     new BibleApp();
