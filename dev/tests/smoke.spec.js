@@ -640,6 +640,8 @@ test('issue #165: opening search does not prefetch all book JSON files', async (
 // 24. Issue #175 — reCAPTCHA badge is not visible to the user
 // The badge must be hidden (visibility: hidden is acceptable per Google ToS
 // as long as disclosure text is present in the HTML).
+// Uses .first() to avoid Playwright strict mode violation when reCAPTCHA
+// injects multiple badge elements into the page.
 // ---------------------------------------------------------------------------
 test('issue #175: reCAPTCHA badge is not visible', async ({ page }) => {
 	await page.goto('/');
@@ -654,7 +656,9 @@ test('issue #175: reCAPTCHA badge is not visible', async ({ page }) => {
 		return;
 	}
 
-	const isVisible = await badge.isVisible();
+	// Use .first() — reCAPTCHA may inject more than one badge element;
+	// strict mode would throw if we called .isVisible() on a multi-match locator.
+	const isVisible = await badge.first().isVisible();
 	expect(isVisible, 'reCAPTCHA badge should be hidden via CSS (visibility: hidden)').toBe(false);
 });
 
