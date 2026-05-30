@@ -1,4 +1,4 @@
-const BUILD_ID = "cbf1dcb4f2edb1cb2acbdd12d29c20a5b122d088";
+const BUILD_ID = "f65cf3fbc3739718abf5533ec03f084de47773cb";
 const CACHE_NAME = `bible-${BUILD_ID}`;
 
 // App shell assets (JS modules + CSS): network-first, bypass the browser
@@ -35,6 +35,36 @@ const BSB_STRUCTURE_FILES = [
   './translations/BSB/BSB_structure/Revelation.json',
 ];
 
+// Full app shell — everything needed to render the UI without any network.
+const APP_SHELL = [
+  './',
+  './index.html',
+  './styles.css',
+  './app.js',
+  './bible-api.js',
+  './bible-structure.js',
+  './bsb-structure.js',
+  './book-aliases.js',
+  './reading-state.js',
+  './ui.js',
+  './navigation.js',
+  './search.js',
+  './auth.js',
+  './modals.js',
+  './settings.js',
+  './keyboard.js',
+  './events.js',
+  './firebase-config.js',
+  './translations/index.json',
+  './site.webmanifest',
+  './android-chrome-192x192.png',
+  './android-chrome-512x512.png',
+  './apple-touch-icon.png',
+  './favicon-16x16.png',
+  './favicon-32x32.png',
+  './favicon.ico',
+];
+
 // Firebase RTDB paths that are safe to cache indefinitely.
 function isFirebaseCacheable(url) {
   if (!url.hostname.endsWith('.firebaseio.com')) return false;
@@ -68,10 +98,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
-      cache.addAll([
-        './',
-        './translations/index.json',
-      ])
+      cache.addAll(APP_SHELL)
     )
   );
 });
