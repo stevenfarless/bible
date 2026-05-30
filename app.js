@@ -1032,15 +1032,24 @@ async function _promptInstall() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('installBtn');
-    if (btn) btn.addEventListener('click', _promptInstall);
-    const dismiss = document.getElementById('installBannerDismiss');
-    if (dismiss) dismiss.addEventListener('click', () => _setInstallBannerVisible(false));
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-        _setInstallBannerVisible(false);
+// Modules are deferred — DOM is already parsed by execution time.
+// Use readyState guard (same pattern as the app boot IIFE) to be safe.
+(function _wireInstallBanner() {
+    function _attach() {
+        const btn = document.getElementById('installBtn');
+        if (btn) btn.addEventListener('click', _promptInstall);
+        const dismiss = document.getElementById('installBannerDismiss');
+        if (dismiss) dismiss.addEventListener('click', () => _setInstallBannerVisible(false));
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            _setInstallBannerVisible(false);
+        }
     }
-});
+    if (document.readyState !== 'loading') {
+        _attach();
+    } else {
+        document.addEventListener('DOMContentLoaded', _attach, { once: true });
+    }
+}());
 
 /* ─── Service Worker & Update Toast ─── */
 
