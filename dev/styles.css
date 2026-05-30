@@ -2242,3 +2242,100 @@ body.hide-verse-numbers .passage-text .verse-num {
 #build-info[data-branch="main"] {
     display: none;
 }
+
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+
+.hidden {
+    display: none !important;
+}
+
+/* ============================================================
+   PWA INSTALL BANNER
+   ============================================================ */
+
+.install-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: var(--bg-secondary, #282a36);
+    border-top: 1px solid var(--border-color, #44475a);
+    padding: 0.75rem 1rem;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
+    animation: slideUpBanner 0.25s ease-out;
+}
+
+@keyframes slideUpBanner {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+.install-banner__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.install-banner__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.install-banner__text strong {
+    font-size: 0.9rem;
+    color: var(--text-primary, #f8f8f2);
+}
+
+.install-banner__text span {
+    font-size: 0.78rem;
+    color: var(--text-muted, #6272a4);
+}
+
+.install-banner__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.install-banner__cta {
+    background: var(--primary-color, #bd93f9);
+    color: var(--bg-primary, #1e1e2e);
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    font-family: var(--font-sans, sans-serif);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+
+.install-banner__cta:hover {
+    background: var(--primary-dark, #a97ef4);
+}
+
+.install-banner__dismiss {
+    background: transparent;
+    border: none;
+    color: var(--text-muted, #6272a4);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    transition: color 0.15s;
+}
+
+.install-banner__dismiss:hover {
+    color: var(--text-primary, #f8f8f2);
+}
