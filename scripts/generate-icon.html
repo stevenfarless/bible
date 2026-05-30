@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Lege Lux — Icon Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #191a21;
+      color: #f8f8f2;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+      gap: 1.5rem;
+    }
+    h1 { font-size: 1.2rem; opacity: 0.7; margin: 0; }
+    canvas { border-radius: 18%; box-shadow: 0 8px 40px rgba(0,0,0,0.6); }
+    .controls {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    button {
+      padding: 0.6rem 1.4rem;
+      background: #FFD700;
+      color: #1e1e2e;
+      border: none;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    button:hover { background: #f0c800; }
+    .note { font-size: 0.8rem; opacity: 0.5; text-align: center; max-width: 400px; }
+  </style>
+</head>
+<body>
+  <h1>Lege Lux — Icon Generator</h1>
+  <canvas id="c" width="512" height="512"></canvas>
+  <div class="controls">
+    <button onclick="download(512, 'icon-512.png')">Download 512×512</button>
+    <button onclick="download(192, 'icon-192.png')">Download 192×192</button>
+    <button onclick="download(180, 'apple-touch-icon.png')">Download 180×180 (Apple)</button>
+  </div>
+  <p class="note">Wait for the font to load (1–2 seconds) before downloading. If text looks wrong, reload and wait longer.</p>
+
+  <script>
+    const SIZE = 512;
+    const c = document.getElementById('c');
+    const ctx = c.getContext('2d');
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function draw() {
+      const s = SIZE;
+      ctx.clearRect(0, 0, s, s);
+
+      // ── Icon background ──────────────────────────────
+      roundRect(ctx, 0, 0, s, s, s * 0.175);
+      ctx.fillStyle = '#21222C';
+      ctx.fill();
+
+      // ── Card dimensions ──────────────────────────────
+      const pad  = s * 0.17;          // outer padding
+      const cx   = pad;
+      const cy   = pad;
+      const cw   = s - pad * 2;
+      const ch   = s - pad * 2;
+      const cr   = 18;               // card corner radius
+
+      // Card outer glow (gold shadow)
+      ctx.save();
+      roundRect(ctx, cx, cy, cw, ch, cr);
+      ctx.shadowColor   = '#FFD700';
+      ctx.shadowBlur    = 28;
+      ctx.strokeStyle   = 'rgba(255,215,0,0.45)';
+      ctx.lineWidth     = 1.5;
+      ctx.stroke();
+      ctx.restore();
+
+      // Card body
+      roundRect(ctx, cx, cy, cw, ch, cr);
+      ctx.fillStyle = '#282A36';
+      ctx.fill();
+
+      // Clip inset glows to card
+      ctx.save();
+      roundRect(ctx, cx, cy, cw, ch, cr);
+      ctx.clip();
+
+      // Left inset glow
+      let g = ctx.createLinearGradient(cx, 0, cx + cw * 0.55, 0);
+      g.addColorStop(0,    'rgba(255,215,0,0.22)');
+      g.addColorStop(0.45, 'rgba(255,215,0,0.04)');
+      g.addColorStop(1,    'rgba(255,215,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(cx, cy, cw, ch);
+
+      // Right inset glow
+      g = ctx.createLinearGradient(cx + cw, 0, cx + cw * 0.55, 0);
+      g.addColorStop(0,    'rgba(255,215,0,0.10)');
+      g.addColorStop(0.45, 'rgba(255,215,0,0.02)');
+      g.addColorStop(1,    'rgba(255,215,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(cx, cy, cw, ch);
+
+      // Top inset glow
+      g = ctx.createLinearGradient(0, cy, 0, cy + ch * 0.45);
+      g.addColorStop(0,    'rgba(255,215,0,0.12)');
+      g.addColorStop(0.45, 'rgba(255,215,0,0.02)');
+      g.addColorStop(1,    'rgba(255,215,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(cx, cy, cw, ch);
+
+      // Bottom inset glow
+      g = ctx.createLinearGradient(0, cy + ch, 0, cy + ch * 0.6);
+      g.addColorStop(0,    'rgba(255,215,0,0.10)');
+      g.addColorStop(0.45, 'rgba(255,215,0,0.02)');
+      g.addColorStop(1,    'rgba(255,215,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(cx, cy, cw, ch);
+
+      ctx.restore();
+
+      // ── Gold left border bar ─────────────────────────
+      const barW = 7;
+      ctx.save();
+      ctx.shadowColor = '#FFD700';
+      ctx.shadowBlur  = 18;
+      roundRect(ctx, cx, cy, barW, ch, 3);
+      ctx.fillStyle = '#FFD700';
+      ctx.fill();
+      // second pass for extra glow intensity
+      ctx.shadowBlur = 30;
+      ctx.fill();
+      ctx.restore();
+
+      // ── Text ─────────────────────────────────────────
+      // Both words target the same rendered width.
+      // LEGE: slightly smaller size + letter-spacing to match LUX width.
+      // Vertical gap sized so text block is approximately square.
+
+      const textColor = '#F8F8F2';
+
+      // Measure LUX at size 104 to get target width
+      ctx.font = '700 104px "Cinzel", "Trajan Pro", serif';
+      const luxW = ctx.measureText('LUX').width;
+
+      // Find LEGE font-size that matches luxW naturally (4 glyphs vs 3)
+      // then add letter-spacing via manual character spacing
+      const legeFontSize = 80;
+      ctx.font = `700 ${legeFontSize}px "Cinzel", "Trajan Pro", serif`;
+      const legeRawW = ctx.measureText('LEGE').width;
+      // letter-spacing to add: distribute (luxW - legeRawW) across 3 gaps
+      const legeSpacing = (luxW - legeRawW) / 3;
+
+      // Vertical layout: place text block centered in card
+      // Block height ≈ cap-height of LUX (≈73px) + gap + cap-height of LEGE (≈56px)
+      const luxCap  = 104 * 0.72;   // ~75px
+      const legeCap = legeFontSize * 0.72; // ~58px
+      const gap     = luxW - luxCap - legeCap; // makes block square
+      const blockH  = luxCap + gap + legeCap;
+      const blockTop = cy + (ch - blockH) / 2;
+
+      // LEGE baseline
+      const legeY = blockTop + legeCap;
+      // LUX baseline
+      const luxY  = legeY + gap + luxCap;
+
+      const centerX = cx + cw / 2;
+
+      // Draw LEGE with manual letter spacing
+      ctx.font = `700 ${legeFontSize}px "Cinzel", "Trajan Pro", serif`;
+      ctx.fillStyle   = textColor;
+      ctx.textAlign   = 'left';
+      ctx.textBaseline = 'alphabetic';
+      const legeStr = 'LEGE';
+      const startX  = centerX - luxW / 2;
+      let  curX     = startX;
+      for (let i = 0; i < legeStr.length; i++) {
+        ctx.fillText(legeStr[i], curX, legeY);
+        curX += ctx.measureText(legeStr[i]).width + legeSpacing;
+      }
+
+      // Draw LUX centered
+      ctx.font = '700 104px "Cinzel", "Trajan Pro", serif';
+      ctx.textAlign   = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText('LUX', centerX, luxY);
+    }
+
+    function download(size, filename) {
+      const offscreen = document.createElement('canvas');
+      offscreen.width  = size;
+      offscreen.height = size;
+      const octx = offscreen.getContext('2d');
+      octx.drawImage(c, 0, 0, size, size);
+      const a = document.createElement('a');
+      a.download = filename;
+      a.href = offscreen.toDataURL('image/png');
+      a.click();
+    }
+
+    // Wait for Cinzel to load before drawing
+    document.fonts.ready.then(() => {
+      draw();
+      // Redraw once more after a tick in case metrics weren't ready
+      setTimeout(draw, 300);
+    });
+  </script>
+</body>
+</html>
