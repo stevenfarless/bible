@@ -33,10 +33,14 @@ var firebaseConfig = {
 };
 var FIREBASE_DB_URL = firebaseConfig.databaseURL;
 var app = initializeApp(firebaseConfig);
-initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider("6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV"),
-  isTokenAutoRefreshEnabled: true
-});
+try {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider("6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV"),
+    isTokenAutoRefreshEnabled: true
+  });
+} catch (err) {
+  console.warn("[AppCheck] initializeAppCheck failed — reCAPTCHA may not be ready yet:", err);
+}
 var _auth = getAuth(app);
 var _db = getDatabase(app);
 setPersistence(_auth, indexedDBLocalPersistence).catch(
