@@ -29,7 +29,7 @@ const SEARCH_CONCURRENCY = 5;
 // Translations served from ./translations/{T}/{Book}.json.
 // These never hit Firebase.
 // Exported so app.js can iterate the set for background prefetching.
-export const LOCAL_TRANSLATIONS = new Set(['ASV', 'BLB', 'BSB', 'KJV', 'LEB', 'MSB', 'NET', 'WEB']);
+export const LOCAL_TRANSLATIONS = new Set(["ASV", "BLB", "BSB", "CSB", "ESV", "ISV", "KJV", "LEB", "MEV", "MSB", "NET", "NIV", "NKJV", "NLT", "NRSVUE", "WEB"]);
 
 const BOOK_LOAD_ORDER = [
     'Genesis','Exodus','Leviticus','Numbers','Deuteronomy',
