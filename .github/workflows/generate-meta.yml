@@ -1,0 +1,45 @@
+name: Generate Translation Metadata
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+    paths:
+      - 'translations/**/info.json'
+      - 'translations/**/*.json'
+      - 'scripts/canon-registry.json'
+      - 'scripts/generate-meta.js'
+      - 'scripts/generate-index.js'
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate meta.json for all translations
+        run: node scripts/generate-meta.js
+
+      - name: Generate translations/index.json
+        run: node scripts/generate-index.js
+
+      - name: Commit generated files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add translations/**/meta.json translations/index.json
+          git diff --cached --quiet || git commit -m "chore(meta): regenerate translation metadata [skip ci]"
+          git push
