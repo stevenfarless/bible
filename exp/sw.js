@@ -1,4 +1,4 @@
-const BUILD_ID = "9db78367714301aefb2d372f2f4cb5b4a0a19d03";
+const BUILD_ID = "ee2febc562dfd736f63bc87e611c684f7f7fa348";
 const CACHE_NAME = `bible-${BUILD_ID}`;
 
 // App shell assets (JS modules + CSS): network-first, bypass the browser

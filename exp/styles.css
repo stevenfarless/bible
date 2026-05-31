@@ -1014,6 +1014,7 @@ body.light-mode .crossref-item {
     color: var(--text-primary);
     cursor: pointer;
     transition: all var(--transition-fast);
+    white-space: nowrap;
 }
 
 .selector-btn:hover {
@@ -2089,6 +2090,15 @@ body.light-mode .selected-verse-glow {
 /* Mobile default: show abbr, hide full */
 #currentBook .book-abbr { display: inline; }
 #currentBook .book-full { display: none; }
+
+/* Truncate long book names rather than wrapping or overflowing */
+#currentBook {
+    display: inline-block;
+    max-width: 7rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
 
 @media (min-width: 640px) {
     #currentBook .book-abbr { display: none; }
