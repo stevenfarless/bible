@@ -115,7 +115,8 @@ export function populateBookModal(app) {
 // ── Deuterocanon info modal ─────────────────────────────────────────────────────────────────────────────────
 
 export function openDeuterocanonInfoModal(app) {
-    openModal(app, app.deuterocanonInfoModal);
+    const modal = document.getElementById('deuterocanonInfoModal');
+    if (modal) openModal(app, modal);
 }
 
 
