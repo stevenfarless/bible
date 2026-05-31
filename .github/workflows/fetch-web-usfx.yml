@@ -10,11 +10,10 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout script from dev
+      - name: Checkout dev
         uses: actions/checkout@v4
         with:
           ref: dev
-          path: dev-scripts
 
       - name: Set up Python
         uses: actions/setup-python@v5
