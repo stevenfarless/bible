@@ -61,6 +61,22 @@ async function openSettingsSection(page, sectionDataValue) {
 }
 
 // ---------------------------------------------------------------------------
+// Helper — switches translation via the translation modal and waits for the
+// passage to reload in the new translation.
+// ---------------------------------------------------------------------------
+async function switchTranslation(page, translationId) {
+        await page.locator('#translationSelectorBtn').click();
+        await expect(page.locator('#translationModal')).toBeVisible();
+        await page.waitForFunction(
+                () => document.querySelectorAll('.translation-modal-item').length > 0,
+                { timeout: 10000 }
+        );
+        await page.locator(`.translation-modal-item[data-translation="${translationId}"]`).click();
+        await expect(page.locator('#translationModal')).not.toHaveClass(/active/);
+        await waitForPassage(page);
+}
+
+// ---------------------------------------------------------------------------
 // 1. Page load — app loads without JS errors, key UI elements visible
 // ---------------------------------------------------------------------------
 test('page load: main UI elements are visible', async ({ page }) => {
@@ -436,4 +452,111 @@ test('keyboard: ArrowLeft goes to previous chapter', async ({ page }) => {
 
         await page.locator('body').press('ArrowLeft');
         await expect(page.locator('#passageTitle')).toContainText('Matthew 2', { timeout: 10000 });
+});
+
+// ---------------------------------------------------------------------------
+// 19. Dynamic book picker — fallback: translation without meta.json keeps
+//     the 66-book picker with both OT and NT sections non-empty.
+// ---------------------------------------------------------------------------
+test('dynamic book picker: translation without meta.json uses 66-book fallback', async ({ page }) => {
+        await page.goto('/');
+        await waitForPassage(page);
+
+        // KJV has no meta.json — switching to it (or staying on it) exercises fallback.
+        await page.evaluate(() => window._bibleApp.changeTranslation('KJV'));
+        await waitForPassage(page);
+
+        await page.locator('#bookSelector').click();
+        await expect(page.locator('#bookModal')).toBeVisible();
+
+        const otBooks = page.locator('#oldTestamentBooks button');
+        const ntBooks = page.locator('#newTestamentBooks button');
+        await expect(otBooks.first()).toBeVisible();
+        await expect(ntBooks.first()).toBeVisible();
+        expect(await otBooks.count()).toBeGreaterThan(0);
+        expect(await ntBooks.count()).toBeGreaterThan(0);
+});
+
+// ---------------------------------------------------------------------------
+// 20. Dynamic book picker — switching to ASV fires _rebuildBibleBooks and
+//     the debug log confirms it ran with the correct book count.
+// ---------------------------------------------------------------------------
+test('dynamic book picker: switching to ASV fires _rebuildBibleBooks', async ({ page }) => {
+        await page.goto('/');
+        await waitForPassage(page);
+
+        await switchTranslation(page, 'ASV');
+
+        const report = await page.evaluate(() => window._buildDebugReport());
+        expect(report).toContain('_rebuildBibleBooks: 66 books');
+});
+
+// ---------------------------------------------------------------------------
+// 21. Dynamic book picker — book modal re-renders in place when translation
+//     is switched while the modal is already open.
+// ---------------------------------------------------------------------------
+test('dynamic book picker: book modal re-renders while open on translation switch', async ({ page }) => {
+        await page.goto('/');
+        await waitForPassage(page);
+
+        // Open the book modal first.
+        await page.locator('#bookSelector').click();
+        await expect(page.locator('#bookModal')).toBeVisible();
+
+        // Switch translation programmatically while modal stays open.
+        await page.evaluate(() => window._bibleApp.changeTranslation('ASV'));
+
+        // Modal should still be visible and still contain book buttons.
+        await expect(page.locator('#bookModal')).toBeVisible();
+        await expect(page.locator('#bookModal .book-category button').first()).toBeVisible({ timeout: 5000 });
+});
+
+// ---------------------------------------------------------------------------
+// 22. Dynamic book picker — book-not-in-canon guard redirects to Genesis 1.
+// ---------------------------------------------------------------------------
+test('dynamic book picker: book not in canon redirects to Genesis 1', async ({ page }) => {
+        await page.goto('/');
+        await waitForPassage(page);
+
+        // Shrink the canon to only Genesis then try to load Revelation.
+        await page.evaluate(async () => {
+                window._bibleApp.bibleBooks = { 'Old Testament': { Genesis: 50 } };
+                await window._bibleApp.loadPassage('Revelation', 1);
+        });
+
+        await expect(page.locator('#passageTitle')).toContainText('Genesis 1', { timeout: 10000 });
+
+        const report = await page.evaluate(() => window._buildDebugReport());
+        expect(report).toContain('not in canon');
+});
+
+// ---------------------------------------------------------------------------
+// 23. Dynamic book picker — network error fetching meta.json falls back to
+//     the static 66-book structure without throwing a JS error.
+// ---------------------------------------------------------------------------
+test('dynamic book picker: meta.json network error falls back gracefully', async ({ page }) => {
+        const errors = [];
+        page.on('pageerror', (err) => {
+                if (err.message !== 'cancelled') errors.push(err.message);
+        });
+
+        // Abort any request for ASV meta.json to simulate a network failure.
+        await page.route('**/translations/ASV/meta.json', route => route.abort());
+
+        await page.goto('/');
+        await waitForPassage(page);
+
+        await page.evaluate(() => window._bibleApp.changeTranslation('ASV'));
+        await waitForPassage(page);
+
+        // No JS errors should have been thrown.
+        expect(errors).toHaveLength(0);
+
+        // Book modal should still show the full 66-book static fallback.
+        await page.locator('#bookSelector').click();
+        await expect(page.locator('#bookModal')).toBeVisible();
+        const otBooks = page.locator('#oldTestamentBooks button');
+        const ntBooks = page.locator('#newTestamentBooks button');
+        expect(await otBooks.count()).toBeGreaterThan(0);
+        expect(await ntBooks.count()).toBeGreaterThan(0);
 });
