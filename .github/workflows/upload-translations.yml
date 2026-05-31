@@ -10,7 +10,7 @@ on:
       branch:
         description: 'Branch to read translations from'
         required: false
-        default: 'exp'
+        default: 'dev'
 
 jobs:
   upload:
@@ -21,7 +21,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch || 'exp' }}
+          ref: ${{ github.event.inputs.branch || 'dev' }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
@@ -40,72 +40,7 @@ jobs:
       - name: Upload translations
         env:
           TARGET_TRANSLATION: ${{ github.event.inputs.translation }}
-        run: |
-          python - <<'EOF'
-          import os, json, glob, sys
-          import firebase_admin
-          from firebase_admin import credentials, db
-
-          cred = credentials.Certificate("/tmp/service_account.json")
-          firebase_admin.initialize_app(cred, {
-              "databaseURL": "https://esv-bible-6dffb-default-rtdb.firebaseio.com"
-          })
-
-          target = os.environ.get("TARGET_TRANSLATION", "").strip().upper()
-
-          # Per-book layout: translations/{ABBR}/{Book}.json
-          # Skip structure subdirs (BSB_structure, WEB_structure) and meta/index files.
-          trans_root = "translations"
-          trans_dirs = sorted(
-              d for d in os.listdir(trans_root)
-              if os.path.isdir(os.path.join(trans_root, d))
-          )
-
-          if not trans_dirs:
-              print("No translation directories found under translations/")
-              sys.exit(1)
-
-          uploaded = 0
-          for abbr in trans_dirs:
-              if target and abbr.upper() != target:
-                  continue
-
-              folder = os.path.join(trans_root, abbr)
-              book_files = sorted(
-                  f for f in os.listdir(folder)
-                  if f.endswith(".json") and not f.endswith("_structure.json")
-              )
-
-              if not book_files:
-                  print(f"  {abbr}: no book files found, skipping")
-                  continue
-
-              print(f"Uploading {abbr} ({len(book_files)} books)...")
-
-              # Build full translation object {bookName: {chapterNum: {verseNum: text}}}
-              translation_data = {}
-              for fname in book_files:
-                  book_name = fname[:-5]  # strip .json
-                  # Skip known non-book files
-                  if book_name in ("meta", "index", "search-index"):
-                      continue
-                  path = os.path.join(folder, fname)
-                  with open(path, "r", encoding="utf-8-sig") as f:
-                      translation_data[book_name] = json.load(f)
-
-              # Also include meta if present
-              meta_path = os.path.join(folder, "meta.json")
-              if os.path.exists(meta_path):
-                  with open(meta_path, "r", encoding="utf-8-sig") as f:
-                      translation_data["meta"] = json.load(f)
-
-              ref = db.reference(f"translations/{abbr}")
-              ref.set(translation_data)
-              print(f"  {abbr}: uploaded {len(translation_data)} nodes to Firebase.")
-              uploaded += 1
-
-          print(f"\nDone. {uploaded} translation(s) uploaded.")
-          EOF
+        run: python .github/scripts/upload_translations.py
 
       - name: Clean up key
         if: always()
