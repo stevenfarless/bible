@@ -618,7 +618,7 @@ body.chrome-no-transition .top-chrome {
     font-size: 1.5rem;
     font-weight: 400;
     font-family: 'Cinzel', serif;
-    color: var(--secondary-color);
+    color: var(--primary-color);
     letter-spacing: -0.025em;
 }
 
@@ -1200,7 +1200,7 @@ body.light-mode .crossref-item {
 .passage-text h4 {
     font-family: var(--font-sans);
     font-weight: 600;
-    color: var(--secondary-color);
+    color: var(--primary-color);
     margin-top: var(--spacing-lg);
     margin-bottom: var(--spacing-md);
 }
