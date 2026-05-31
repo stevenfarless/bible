@@ -26,6 +26,7 @@ APOCRYPHA_BOOKS = [
     "Additions to Esther",
 ]
 
+# BibleGateway slugs — version-neutral except where noted
 BG_SLUG = {
     "Tobit": "Tobit",
     "Judith": "Judith",
@@ -44,7 +45,8 @@ BG_SLUG = {
     "Bel and the Dragon": "Bel+and+the+Dragon",
     "Prayer of Manasseh": "Prayer+of+Manasseh",
     "Psalm 151": "Psalm+151",
-    "Additions to Esther": "Additions+to+Esther",
+    # NRSVUE uses "Greek Esther" for Additions to Esther
+    "Additions to Esther": "Greek+Esther",
 }
 
 CHAPTER_COUNTS = {
@@ -65,8 +67,17 @@ CHAPTER_COUNTS = {
     "Bel and the Dragon": 1,
     "Prayer of Manasseh": 1,
     "Psalm 151": 1,
-    "Additions to Esther": 1,
+    "Additions to Esther": 10,
 }
+
+# aruljohn/Bible-kjv-1611 filenames differ for some books
+KJV_1611_FILENAME = {
+    "Sirach": "Ecclesiasticus",
+    # Psalm 151 and Additions to Esther are absent from this corpus
+}
+KJV_1611_SKIP = {"Additions to Esther", "Psalm 151"}
+
+KJV_1611_BASE = "https://raw.githubusercontent.com/aruljohn/Bible-kjv-1611/main"
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; Bible research tool)"}
 
@@ -112,6 +123,32 @@ def fetch_bg_book(book, version):
     return result
 
 
+def fetch_kjv_book(book):
+    if book in KJV_1611_SKIP:
+        print(f"  KJV: {book} not in 1611 corpus, skipping")
+        return None
+    filename = KJV_1611_FILENAME.get(book, book)
+    url = f"{KJV_1611_BASE}/{requests.utils.quote(filename)}.json"
+    r = requests.get(url, headers=HEADERS, timeout=30)
+    if r.status_code != 200:
+        print(f"  KJV 1611 fetch failed for {book} ({filename}): HTTP {r.status_code}")
+        return None
+    try:
+        data = r.json()
+        # Format: {"book": "...", "chapters": [{"chapter": 1, "verses": [{"verse": 1, "text": "..."}]}]}
+        if "chapters" not in data:
+            print(f"  KJV 1611: unexpected format for {book}")
+            return None
+        result = {}
+        for ch_obj in data["chapters"]:
+            ch = str(ch_obj["chapter"])
+            result[ch] = {str(v["verse"]): v["text"] for v in ch_obj["verses"]}
+        return result
+    except Exception as e:
+        print(f"  KJV 1611 parse error for {book}: {e}")
+        return None
+
+
 def fetch_web_book(book):
     BOLLS_WEBBE_BOOKS = {
         "Tobit": 68, "Judith": 69, "1 Maccabees": 74, "2 Maccabees": 75,
@@ -139,7 +176,7 @@ def fetch_web_book(book):
 
 
 TRANSLATION_FETCHERS = {
-    "KJV": lambda book: fetch_bg_book(book, "KJV"),
+    "KJV": fetch_kjv_book,
     "WEB": fetch_web_book,
     "NRSVUE": lambda book: fetch_bg_book(book, "NRSVUE"),
     "ESV": lambda book: fetch_bg_book(book, "ESV"),
