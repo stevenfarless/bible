@@ -222,9 +222,9 @@ body.light-mode {
 /* Alucard — official Dracula light mode (https://spec.draculatheme.com)
    Targets Dracula (default theme, no theme class) in light mode only.
    Higher specificity than the generic .light-mode block above. */
-:root.light-mode:not(.steel-theme):not(.onyx-theme):not(.parchment-theme):not(.perplexity-theme),
-html.light-mode:not(.steel-theme):not(.onyx-theme):not(.parchment-theme):not(.perplexity-theme),
-body.light-mode:not(.steel-theme):not(.onyx-theme):not(.parchment-theme):not(.perplexity-theme) {
+:root.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme),
+html.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme),
+body.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme) {
     --bg-base:    var(--alucard-bg);
     --bg-card:    var(--alucard-bg-lighter);
     --bg-raised:  var(--alucard-bg-light);
@@ -251,63 +251,6 @@ body.light-mode:not(.steel-theme):not(.onyx-theme):not(.parchment-theme):not(.pe
     --shadow-sm: 0 1px 3px rgba(108, 102, 75, 0.12);
     --shadow-md: 0 4px 6px rgba(108, 102, 75, 0.14);
     --shadow-lg: 0 10px 15px rgba(108, 102, 75, 0.18);
-}
-
-/* Steel theme (semantic HSL) */
-:root.steel-theme,
-html.steel-theme,
-body.steel-theme {
-    --bg-base: hsl(212, 30%, 9%);
-    --bg-card: hsl(212, 28%, 12%);
-    --bg-raised: hsl(212, 26%, 16%);
-
-    --text-heading: hsl(210, 20%, 92%);
-    --text-body: hsl(214, 14%, 68%);
-    --text-muted-2: hsl(214, 10%, 54%);
-
-    --border-neutral: hsl(212, 18%, 26%);
-    --highlight-border: hsl(212, 18%, 34%);
-
-    --primary-color: hsl(210, 55%, 56%);
-    --primary-dark: hsl(210, 55%, 44%);
-    --primary-light: hsl(210, 70%, 70%);
-    --secondary-color: hsl(32, 70%, 60%);
-    --accent-color: hsl(195, 70%, 78%);
-
-    --success-color: hsl(160, 45%, 52%);
-    --warning-color: hsl(32, 70%, 60%);
-    --error-color: hsl(6, 65%, 56%);
-}
-
-:root.steel-theme.light-mode,
-html.steel-theme.light-mode,
-body.steel-theme.light-mode {
-    --bg-base: hsl(210, 30%, 98%);
-    --bg-card: hsl(210, 28%, 96%);
-    --bg-raised: hsl(210, 25%, 92%);
-
-    --text-heading: hsl(212, 30%, 14%);
-    --text-body: hsl(212, 18%, 34%);
-    --text-muted-2: hsl(212, 12%, 50%);
-
-    --border-neutral: hsl(210, 20%, 86%);
-    --highlight-border: hsl(210, 25%, 94%);
-
-    /* Increased saturation 52→62% so steel-blue reads clearly on light bg */
-    --primary-color: hsl(210, 62%, 38%);
-    --primary-dark: hsl(210, 65%, 30%);
-    --primary-light: hsl(210, 60%, 50%);
-    --secondary-color: hsl(32, 70%, 46%);
-    /* Differentiated from --primary-dark (was identical hsl(210,55%,34%)) */
-    --accent-color: hsl(195, 55%, 34%);
-
-    --success-color: hsl(160, 42%, 36%);
-    --warning-color: hsl(32, 70%, 46%);
-    --error-color: hsl(6, 60%, 44%);
-
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
 }
 
 /* Onyx theme (semantic; OLED-friendly) */
@@ -368,7 +311,6 @@ body.onyx-theme.light-mode {
     --primary-dark: hsl(45, 75%, 28%);
     --primary-light: hsl(45, 70%, 44%);
     --secondary-color: hsl(30, 60%, 36%);
-    /* Changed from out-of-character blue to warm amber */
     --accent-color: hsl(35, 50%, 42%);
 
     --success-color: hsl(110, 45%, 34%);
@@ -380,61 +322,140 @@ body.onyx-theme.light-mode {
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.12);
 }
 
-/* Parchment theme (semantic; long-session, low-fatigue) */
-:root.parchment-theme,
-html.parchment-theme,
-body.parchment-theme {
-    /* Bumped saturation 20→28% so amber hue is visible at low lightness */
-    --bg-base: hsl(32, 28%, 9%);
-    --bg-card: hsl(32, 26%, 13%);
-    --bg-raised: hsl(32, 24%, 17%);
+/* ================================
+   Sage theme — forest green; organic, calm reading
+   Primary hue: 145° green. No overlap with any other theme (nearest is
+   Perplexity at 187° teal — 42° apart). Surfaces: deep forest dark /
+   warm sage-tinted light.
+   ================================ */
+:root.sage-theme,
+html.sage-theme,
+body.sage-theme {
+    --bg-base:   hsl(150, 18%, 8%);
+    --bg-card:   hsl(150, 16%, 11%);
+    --bg-raised: hsl(150, 14%, 16%);
 
-    --text-heading: hsl(40, 35%, 92%);
-    --text-body: hsl(40, 22%, 80%);
-    --text-muted-2: hsl(40, 12%, 56%);
+    --text-heading: hsl(100, 18%, 90%);
+    --text-body:    hsl(130, 10%, 64%);
+    --text-muted-2: hsl(130,  8%, 46%);
 
-    /* Warmed border tokens to reinforce amber identity */
-    --border-neutral: hsl(34, 18%, 24%);
-    --highlight-border: hsl(34, 22%, 30%);
+    --border-neutral:   hsl(148, 14%, 22%);
+    --highlight-border: hsl(148, 16%, 30%);
 
-    --primary-color: hsl(190, 38%, 48%);
-    --primary-dark: hsl(190, 38%, 36%);
-    --primary-light: hsl(190, 50%, 60%);
-    --secondary-color: hsl(45, 80%, 60%);
-    --accent-color: hsl(190, 35%, 55%);
+    --primary-color:   hsl(145, 48%, 52%);
+    --primary-dark:    hsl(145, 50%, 40%);
+    --primary-light:   hsl(145, 55%, 66%);
+    --secondary-color: hsl(40,  65%, 58%);
+    --accent-color:    hsl(170, 45%, 60%);
 
-    --success-color: hsl(145, 32%, 52%);
-    --warning-color: hsl(40, 70%, 58%);
-    --error-color: hsl(4, 65%, 58%);
+    --success-color: hsl(145, 48%, 52%);
+    --warning-color: hsl(40,  70%, 58%);
+    --error-color:   hsl(4,   62%, 56%);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
 }
 
-:root.parchment-theme.light-mode,
-html.parchment-theme.light-mode,
-body.parchment-theme.light-mode {
-    --bg-base: hsl(40, 32%, 96%);
-    --bg-card: hsl(40, 28%, 94%);
-    --bg-raised: hsl(40, 26%, 99%);
+:root.sage-theme.light-mode,
+html.sage-theme.light-mode,
+body.sage-theme.light-mode {
+    --bg-base:   hsl(90, 14%, 97%);
+    --bg-card:   hsl(90, 12%, 94%);
+    --bg-raised: hsl(90, 10%, 89%);
 
-    --text-heading: hsl(30, 25%, 18%);
-    --text-body: hsl(30, 18%, 26%);
-    --text-muted-2: hsl(30, 10%, 54%);
+    --text-heading: hsl(150, 25%, 12%);
+    --text-body:    hsl(150, 14%, 32%);
+    --text-muted-2: hsl(150, 10%, 50%);
 
-    --border-neutral: hsl(35, 20%, 85%);
-    --highlight-border: hsl(40, 30%, 94%);
+    --border-neutral:   hsl(130, 14%, 84%);
+    --highlight-border: hsl(130, 18%, 92%);
 
-    --primary-color: hsl(190, 40%, 34%);
-    --primary-dark: hsl(190, 44%, 26%);
-    --primary-light: hsl(190, 45%, 44%);
-    --secondary-color: hsl(38, 65%, 46%);
-    --accent-color: hsl(190, 38%, 30%);
+    --primary-color:   hsl(145, 50%, 30%);
+    --primary-dark:    hsl(145, 52%, 24%);
+    --primary-light:   hsl(145, 48%, 42%);
+    --secondary-color: hsl(32,  70%, 40%);
+    --accent-color:    hsl(170, 45%, 28%);
 
-    --success-color: hsl(145, 35%, 36%);
-    --warning-color: hsl(38, 80%, 46%);
-    --error-color: hsl(2, 60%, 48%);
+    --success-color: hsl(145, 45%, 32%);
+    --warning-color: hsl(38,  72%, 40%);
+    --error-color:   hsl(4,   58%, 44%);
 
-    --shadow-sm: 0 1px 2px hsla(30, 30%, 20%, 0.12);
-    --shadow-md: 0 6px 16px hsla(30, 30%, 20%, 0.16);
-    --shadow-lg: 0 16px 40px hsla(30, 30%, 20%, 0.20);
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 14%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(20, 50, 30, 0.10);
+    --shadow-md: 0 4px 6px rgba(20, 50, 30, 0.12);
+    --shadow-lg: 0 10px 15px rgba(20, 50, 30, 0.16);
+}
+
+/* ================================
+   Ember theme — candlelit warmth; analogous warm palette
+   Primary hue: 35° amber. Secondary: 8° rust-red. Accent: 50° gold.
+   All three hues within 45° of each other — fully analogous, zero
+   cool colors. Surfaces: dark chocolate / warm cream.
+   ================================ */
+:root.ember-theme,
+html.ember-theme,
+body.ember-theme {
+    --bg-base:   hsl(20, 18%,  8%);
+    --bg-card:   hsl(20, 16%, 11%);
+    --bg-raised: hsl(20, 14%, 16%);
+
+    --text-heading: hsl(36, 22%, 88%);
+    --text-body:    hsl(30, 14%, 64%);
+    --text-muted-2: hsl(28, 10%, 46%);
+
+    --border-neutral:   hsl(24, 16%, 22%);
+    --highlight-border: hsl(26, 18%, 30%);
+
+    --primary-color:   hsl(35, 72%, 55%);
+    --primary-dark:    hsl(33, 74%, 44%);
+    --primary-light:   hsl(40, 78%, 68%);
+    --secondary-color: hsl(8,  60%, 55%);
+    --accent-color:    hsl(50, 70%, 60%);
+
+    --success-color: hsl(130, 36%, 48%);
+    --warning-color: hsl(40,  72%, 56%);
+    --error-color:   hsl(4,   65%, 56%);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 22%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.55);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.55);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.60);
+}
+
+:root.ember-theme.light-mode,
+html.ember-theme.light-mode,
+body.ember-theme.light-mode {
+    --bg-base:   hsl(38, 30%, 97%);
+    --bg-card:   hsl(38, 26%, 93%);
+    --bg-raised: hsl(36, 22%, 88%);
+
+    --text-heading: hsl(20, 28%, 14%);
+    --text-body:    hsl(22, 18%, 32%);
+    --text-muted-2: hsl(24, 12%, 50%);
+
+    --border-neutral:   hsl(32, 18%, 84%);
+    --highlight-border: hsl(36, 24%, 92%);
+
+    --primary-color:   hsl(25, 68%, 34%);
+    --primary-dark:    hsl(22, 70%, 27%);
+    --primary-light:   hsl(30, 65%, 46%);
+    --secondary-color: hsl(6,  55%, 40%);
+    --accent-color:    hsl(45, 60%, 32%);
+
+    --success-color: hsl(130, 38%, 34%);
+    --warning-color: hsl(38,  70%, 38%);
+    --error-color:   hsl(2,   58%, 42%);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 14%, transparent);
+
+    --shadow-sm: 0 1px 2px hsla(24, 30%, 20%, 0.12);
+    --shadow-md: 0 6px 16px hsla(24, 30%, 20%, 0.16);
+    --shadow-lg: 0 16px 40px hsla(24, 30%, 20%, 0.20);
 }
 
 /* Perplexity theme — sampled directly from the Perplexity app UI */
@@ -1195,12 +1216,14 @@ body.light-mode .crossref-item {
     margin-bottom: var(--spacing-md);
 }
 
+/* Section headings inside the passage use --secondary-color so they are
+   visually distinct from .passage-title which uses --primary-color. */
 .passage-text h2,
 .passage-text h3,
 .passage-text h4 {
     font-family: var(--font-sans);
     font-weight: 600;
-    color: var(--primary-color);
+    color: var(--secondary-color);
     margin-top: var(--spacing-lg);
     margin-bottom: var(--spacing-md);
 }
