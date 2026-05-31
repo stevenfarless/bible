@@ -222,9 +222,9 @@ body.light-mode {
 /* Alucard — official Dracula light mode (https://spec.draculatheme.com)
    Targets Dracula (default theme, no theme class) in light mode only.
    Higher specificity than the generic .light-mode block above. */
-:root.light-mode:not(.steel-theme):not(.onyx-theme):not(.parchment-theme),
-html.light-mode:not(.steel-theme):not(.onyx-theme):not(.parchment-theme),
-body.light-mode:not(.steel-theme):not(.onyx-theme):not(.parchment-theme) {
+:root.light-mode:not(.steel-theme):not(.onyx-theme):not(.parchment-theme):not(.perplexity-theme),
+html.light-mode:not(.steel-theme):not(.onyx-theme):not(.parchment-theme):not(.perplexity-theme),
+body.light-mode:not(.steel-theme):not(.onyx-theme):not(.parchment-theme):not(.perplexity-theme) {
     --bg-base:    var(--alucard-bg);
     --bg-card:    var(--alucard-bg-lighter);
     --bg-raised:  var(--alucard-bg-light);
@@ -435,6 +435,86 @@ body.parchment-theme.light-mode {
     --shadow-sm: 0 1px 2px hsla(30, 30%, 20%, 0.12);
     --shadow-md: 0 6px 16px hsla(30, 30%, 20%, 0.16);
     --shadow-lg: 0 16px 40px hsla(30, 30%, 20%, 0.20);
+}
+
+/* Perplexity theme — True Turquoise (#20808D) + Off-black/Paper White */
+:root.perplexity-theme,
+html.perplexity-theme,
+body.perplexity-theme {
+    /* Palette constants */
+    --pplx-teal:         #20808D;
+    --pplx-teal-dark:    #185f6a;
+    --pplx-teal-light:   #2ba8b8;
+    --pplx-offblack:     #111111;
+    --pplx-offblack-mid: #1c1c1e;
+    --pplx-offblack-lt:  #2a2a2e;
+    --pplx-offblack-ll:  #3a3a3e;
+    --pplx-paper:        #f5f5f0;
+    --pplx-muted:        #8a8a90;
+    --pplx-amber:        #e8a045;
+
+    /* Surfaces */
+    --bg-base:   var(--pplx-offblack);
+    --bg-card:   var(--pplx-offblack-mid);
+    --bg-raised: var(--pplx-offblack-lt);
+
+    /* Text */
+    --text-heading: var(--pplx-paper);
+    --text-body:    #c8c8cc;
+    --text-muted-2: var(--pplx-muted);
+
+    /* Borders */
+    --border-neutral:   var(--pplx-offblack-ll);
+    --highlight-border: #4a4a50;
+
+    /* Brand */
+    --primary-color:   var(--pplx-teal);
+    --primary-dark:    var(--pplx-teal-dark);
+    --primary-light:   var(--pplx-teal-light);
+    --secondary-color: var(--pplx-amber);
+    --accent-color:    #2bbdd0;
+
+    /* Functional */
+    --success-color: hsl(155, 45%, 48%);
+    --warning-color: var(--pplx-amber);
+    --error-color:   hsl(6, 65%, 56%);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--pplx-teal) 18%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.6);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.65);
+}
+
+:root.perplexity-theme.light-mode,
+html.perplexity-theme.light-mode,
+body.perplexity-theme.light-mode {
+    --bg-base:   var(--pplx-paper);
+    --bg-card:   hsl(50, 12%, 94%);
+    --bg-raised: hsl(50, 10%, 90%);
+
+    --text-heading: var(--pplx-offblack);
+    --text-body:    hsl(220, 8%, 30%);
+    --text-muted-2: hsl(220, 6%, 52%);
+
+    --border-neutral:   hsl(220, 10%, 84%);
+    --highlight-border: hsl(220, 14%, 92%);
+
+    --primary-color:   var(--pplx-teal);
+    --primary-dark:    var(--pplx-teal-dark);
+    --primary-light:   var(--pplx-teal-light);
+    --secondary-color: hsl(30, 65%, 38%);
+    --accent-color:    hsl(187, 63%, 30%);
+
+    --success-color: hsl(155, 42%, 34%);
+    --warning-color: hsl(30, 65%, 38%);
+    --error-color:   hsl(6, 60%, 44%);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--pplx-teal) 14%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.09);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.14);
 }
 
 
