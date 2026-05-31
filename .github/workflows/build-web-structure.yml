@@ -14,13 +14,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          ref: main-book-update
+          ref: exp
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Checkout workflow script from dev
-        run: |
-          git fetch origin dev
-          git checkout origin/dev -- scripts/build-web-structure.mjs
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -38,4 +33,4 @@ jobs:
           git add translations/WEB/WEB_structure/
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: generate WEB structure scaffold JSONs (Protestant + deuterocanon)"
-          git push origin main-book-update
+          git push origin exp
