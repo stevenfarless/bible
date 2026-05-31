@@ -2,7 +2,10 @@ import zipfile
 import json
 import os
 import re
-from bs4 import BeautifulSoup
+import sys
+from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
+import warnings
+warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
 EPUB_PATH = "esv-with-apocrypha.epub"
 OUT_DIR = "translations/ESV"
@@ -43,14 +46,14 @@ BOOK_NAME_MAP = {
 }
 
 CANON_66 = {
-    "genesis", "exodus", "leviticus", "numbers", "deuteronomy", "joshua",
-    "judges", "ruth", "1 samuel", "2 samuel", "1 kings", "2 kings",
+    "genesis", "exodus", "leviticus", "numbers", "numeri", "deuteronomy",
+    "joshua", "judges", "ruth", "1 samuel", "2 samuel", "1 kings", "2 kings",
     "1 chronicles", "2 chronicles", "ezra", "nehemiah", "esther", "job",
     "psalms", "psalm", "proverbs", "ecclesiastes", "song of solomon",
     "song of songs", "isaiah", "jeremiah", "lamentations", "ezekiel",
     "daniel", "hosea", "joel", "amos", "obadiah", "jonah", "micah",
-    "nahum", "habakkuk", "zephaniah", "haggai", "zechariah", "malachi",
-    "matthew", "mark", "luke", "john", "acts", "romans",
+    "nahum", "habakkuk", "habbakuk", "zephaniah", "haggai", "zechariah",
+    "malachi", "matthew", "mark", "luke", "john", "acts", "romans",
     "1 corinthians", "2 corinthians", "galatians", "ephesians",
     "philippians", "colossians", "1 thessalonians", "2 thessalonians",
     "1 timothy", "2 timothy", "titus", "philemon", "hebrews", "james",
@@ -102,7 +105,6 @@ def extract_verses(soup):
                 current_text = []
                 continue
 
-    # Fallback: raw text walk
     if not book_data:
         current_chapter = 1
         current_verse = None
@@ -146,6 +148,10 @@ def parse_epub(epub_path):
     with zipfile.ZipFile(epub_path, 'r') as z:
         names = z.namelist()
 
+        print("\n=== ALL FILES IN EPUB ===")
+        for n in sorted(names):
+            print(f"  {n}")
+
         opf_path = None
         for n in names:
             if n.endswith('.opf'):
@@ -157,6 +163,10 @@ def parse_epub(epub_path):
             rootfile = cont.find('rootfile')
             if rootfile:
                 opf_path = rootfile.get('full-path')
+
+        print(f"\n=== OPF: {opf_path} ===")
+        if opf_path:
+            print(z.read(opf_path).decode('utf-8', errors='replace')[:6000])
 
         spine_items = []
         opf_base = ''
@@ -183,6 +193,10 @@ def parse_epub(epub_path):
                 {'href': n, 'media-type': 'application/xhtml+xml'}
                 for n in names if n.endswith(('.xhtml', '.html', '.htm'))
             ]
+
+        print(f"\n=== SPINE ({len(spine_items)} items) ===")
+        for item in spine_items:
+            print(f"  {item['href']}")
 
         current_book_name = None
         current_book_data = {}
@@ -215,8 +229,6 @@ def parse_epub(epub_path):
                     os.path.basename(href).replace('.xhtml', '').replace('.html', '')
                 )
 
-            print(f"  file={href!r} title={page_title!r}")
-
             matched_book = None
             for key, canonical in BOOK_NAME_MAP.items():
                 if key in page_title:
@@ -232,7 +244,7 @@ def parse_epub(epub_path):
                         results[current_book_name].setdefault(ch, {}).update(vv)
                 current_book_name = matched_book
                 current_book_data = {}
-                print(f"    -> book: {matched_book}")
+                print(f"  -> book: {matched_book} (file={href!r} title={page_title!r})")
 
             if current_book_name and not is_canon:
                 chapter_data = extract_verses(soup)
@@ -249,11 +261,11 @@ def parse_epub(epub_path):
 
 print(f"Parsing {EPUB_PATH}...")
 books = parse_epub(EPUB_PATH)
-print(f"Found {len(books)} apocrypha books: {list(books.keys())}")
+print(f"\nFound {len(books)} apocrypha books: {list(books.keys())}")
 
 if not books:
-    print("ERROR: No apocrypha books found. Check file/title output above.")
-    raise SystemExit(1)
+    print("ERROR: No apocrypha books found. Inspect epub structure above.")
+    sys.exit(1)
 
 for book_name, data in books.items():
     if not data:
@@ -286,5 +298,4 @@ info['canon'] = 'protestant+apocrypha'
 with open(INFO_PATH, 'w', encoding='utf-8') as f:
     json.dump(info, f, ensure_ascii=False, indent=2)
 print(f"Updated {INFO_PATH}")
-
 print("Done.")
