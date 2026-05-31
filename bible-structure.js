@@ -37,11 +37,19 @@ export const PROTESTANT_BOOKS = new Set(
 );
 
 /**
+ * Standard testament order for the book selector.
+ * OT → Deuterocanon → NT matches the Protestant Apocrypha convention
+ * (1611 KJV, NRSV with Apocrypha, etc.) — placing deuterocanon between
+ * the testaments without implying it belongs inside the OT canon.
+ */
+const TESTAMENT_ORDER = ['Old Testament', 'Deuterocanon', 'New Testament'];
+
+/**
  * Returns the full bible structure object: { testament: { book: chapterCount } }
  *
  * If `meta` is provided and contains a `books` array, the structure is built
- * dynamically from that data — meaning the picker will show exactly the books
- * that translation includes, in the order they are listed.
+ * dynamically from that data. Testaments are always returned in the order
+ * OT → Deuterocanon → NT regardless of the order in meta.books.
  *
  * Each entry in meta.books must be:
  *   { name: string, testament: string, chapters: number }
@@ -63,8 +71,18 @@ export function buildBibleBooks(meta) {
         structure[testament][name] = chapters;
     }
 
-    // If parsing produced nothing valid, fall back to the static structure.
-    return Object.keys(structure).length ? structure : PROTESTANT_STRUCTURE;
+    if (!Object.keys(structure).length) return PROTESTANT_STRUCTURE;
+
+    // Reorder testaments: OT → Deuterocanon → NT, then any non-standard sections.
+    const ordered = {};
+    for (const testament of TESTAMENT_ORDER) {
+        if (structure[testament]) ordered[testament] = structure[testament];
+    }
+    for (const testament of Object.keys(structure)) {
+        if (!ordered[testament]) ordered[testament] = structure[testament];
+    }
+
+    return ordered;
 }
 
 /**
