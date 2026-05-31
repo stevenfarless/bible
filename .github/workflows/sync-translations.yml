@@ -3,21 +3,13 @@ name: Sync Translations Between Branches
 on:
   workflow_dispatch:
     inputs:
-      source_branch:
-        description: 'Branch to copy translations FROM'
+      branch_a:
+        description: 'First branch'
         required: true
         type: string
-      target_branch:
-        description: 'Branch to copy translations TO'
+      branch_b:
+        description: 'Second branch'
         required: true
-        type: string
-      translations:
-        description: >-
-          Space-separated list of translation abbreviations to copy
-          (e.g. "ASV BLB NET"). Leave blank to copy ALL translations
-          present in source but missing from target.
-        required: false
-        default: ''
         type: string
 
 jobs:
@@ -27,50 +19,80 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout target branch (full history)
+      - name: Checkout branch_a (full history)
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.target_branch }}
+          ref: ${{ github.event.inputs.branch_a }}
           fetch-depth: 0
 
-      - name: Fetch source branch
-        run: git fetch origin ${{ github.event.inputs.source_branch }}
+      - name: Fetch branch_b
+        run: git fetch origin ${{ github.event.inputs.branch_b }}
 
-      - name: Determine translations to copy
-        id: resolve
+      - name: Copy translations missing from branch_a (present in branch_b)
+        id: a_from_b
         run: |
-          SOURCE="origin/${{ github.event.inputs.source_branch }}"
-          INPUT="${{ github.event.inputs.translations }}"
-
-          if [ -n "$INPUT" ]; then
-            TO_COPY="$INPUT"
+          B="origin/${{ github.event.inputs.branch_b }}"
+          SOURCE_LIST=$(git ls-tree --name-only "$B" translations/)
+          TARGET_LIST=$(ls translations/)
+          MISSING=$(comm -23 <(echo "$SOURCE_LIST" | sort) <(echo "$TARGET_LIST" | sort))
+          if [ -z "$MISSING" ]; then
+            echo "branch_a already has all translations from branch_b."
           else
-            # Auto-detect: present in source, missing from target
-            SOURCE_LIST=$(git ls-tree --name-only "$SOURCE" translations/ | xargs -I{} basename {})
-            TARGET_LIST=$(ls translations/ 2>/dev/null | cat)
-            TO_COPY=$(comm -23 <(echo "$SOURCE_LIST" | sort) <(echo "$TARGET_LIST" | sort))
+            for T in $MISSING; do
+              NAME=$(basename "$T")
+              echo "Adding $NAME to ${{ github.event.inputs.branch_a }}"
+              git checkout "$B" -- "translations/$NAME"
+            done
           fi
+          echo "added=$MISSING" >> "$GITHUB_OUTPUT"
 
-          echo "Translations to copy: $TO_COPY"
-          echo "to_copy=$TO_COPY" >> "$GITHUB_OUTPUT"
-
-      - name: Copy translation folders from source
-        run: |
-          SOURCE="origin/${{ github.event.inputs.source_branch }}"
-          for T in ${{ steps.resolve.outputs.to_copy }}; do
-            echo "Copying translations/$T from $SOURCE"
-            git checkout "$SOURCE" -- "translations/$T"
-          done
-
-      - name: Commit and push
+      - name: Commit to branch_a
         run: |
           git config user.name  "stevenfarless"
           git config user.email "125781365+stevenfarless@users.noreply.github.com"
           git add translations/
           if git diff --cached --quiet; then
-            echo "Nothing to commit — all specified translations already present."
+            echo "Nothing to commit to ${{ github.event.inputs.branch_a }}."
           else
-            TRANS="${{ steps.resolve.outputs.to_copy }}"
-            git commit -m "chore: sync translations ($TRANS) from ${{ github.event.inputs.source_branch }} to ${{ github.event.inputs.target_branch }}"
-            git push origin HEAD:${{ github.event.inputs.target_branch }}
+            git commit -m "chore: sync missing translations from ${{ github.event.inputs.branch_b }} into ${{ github.event.inputs.branch_a }}"
+            git push origin HEAD:${{ github.event.inputs.branch_a }}
+          fi
+
+      - name: Checkout branch_b
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch_b }}
+          fetch-depth: 0
+
+      - name: Fetch branch_a
+        run: git fetch origin ${{ github.event.inputs.branch_a }}
+
+      - name: Copy translations missing from branch_b (present in branch_a)
+        id: b_from_a
+        run: |
+          A="origin/${{ github.event.inputs.branch_a }}"
+          SOURCE_LIST=$(git ls-tree --name-only "$A" translations/)
+          TARGET_LIST=$(ls translations/)
+          MISSING=$(comm -23 <(echo "$SOURCE_LIST" | sort) <(echo "$TARGET_LIST" | sort))
+          if [ -z "$MISSING" ]; then
+            echo "branch_b already has all translations from branch_a."
+          else
+            for T in $MISSING; do
+              NAME=$(basename "$T")
+              echo "Adding $NAME to ${{ github.event.inputs.branch_b }}"
+              git checkout "$A" -- "translations/$NAME"
+            done
+          fi
+          echo "added=$MISSING" >> "$GITHUB_OUTPUT"
+
+      - name: Commit to branch_b
+        run: |
+          git config user.name  "stevenfarless"
+          git config user.email "125781365+stevenfarless@users.noreply.github.com"
+          git add translations/
+          if git diff --cached --quiet; then
+            echo "Nothing to commit to ${{ github.event.inputs.branch_b }}."
+          else
+            git commit -m "chore: sync missing translations from ${{ github.event.inputs.branch_a }} into ${{ github.event.inputs.branch_b }}"
+            git push origin HEAD:${{ github.event.inputs.branch_b }}
           fi
