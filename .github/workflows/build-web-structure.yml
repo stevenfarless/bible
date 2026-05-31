@@ -1,0 +1,67 @@
+name: Build WEB Structure Scaffold
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: main-book-update
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate WEB structure JSONs
+        run: |
+          cat > /tmp/build-web-structure.mjs << 'SCRIPT'
+          import fs from 'fs';
+          import path from 'path';
+          const OUT_DIR = path.resolve('translations/WEB/WEB_structure');
+          const ZIP_URL = 'https://ebible.org/Scriptures/eng-webbe_usfm.zip';
+          const MAP = {GEN:'Genesis',EXO:'Exodus',EXOD:'Exodus',LEV:'Leviticus',NUM:'Numbers',DEU:'Deuteronomy',DEUT:'Deuteronomy',JOS:'Joshua',JOSH:'Joshua',JDG:'Judges',JUDG:'Judges',RUT:'Ruth','1SA':'1 Samuel','2SA':'2 Samuel','1KI':'1 Kings','2KI':'2 Kings','1CH':'1 Chronicles','2CH':'2 Chronicles',EZR:'Ezra',NEH:'Nehemiah',EST:'Esther',ESTH:'Esther',JOB:'Job',PSA:'Psalm',PS:'Psalm',PRO:'Proverbs',PROV:'Proverbs',ECC:'Ecclesiastes',ECCL:'Ecclesiastes',SNG:'Song of Solomon',SONG:'Song of Solomon',ISA:'Isaiah',JER:'Jeremiah',LAM:'Lamentations',EZK:'Ezekiel',EZEK:'Ezekiel',DAN:'Daniel',HOS:'Hosea',JOL:'Joel',AMO:'Amos',OBA:'Obadiah',JON:'Jonah',MIC:'Micah',NAM:'Nahum',HAB:'Habakkuk',ZEP:'Zephaniah',ZEPH:'Zephaniah',HAG:'Haggai',ZEC:'Zechariah',ZECH:'Zechariah',MAL:'Malachi',MAT:'Matthew',MATT:'Matthew',MRK:'Mark',LUK:'Luke',JHN:'John',JOHN:'John',ACT:'Acts',ROM:'Romans','1CO':'1 Corinthians','1COR':'1 Corinthians','2CO':'2 Corinthians','2COR':'2 Corinthians',GAL:'Galatians',EPH:'Ephesians',PHP:'Philippians',PHIL:'Philippians',COL:'Colossians','1TH':'1 Thessalonians','1THES':'1 Thessalonians','2TH':'2 Thessalonians','2THES':'2 Thessalonians','1TI':'1 Timothy','1TIM':'1 Timothy','2TI':'2 Timothy','2TIM':'2 Timothy',TIT:'Titus',PHM:'Philemon',PHLM:'Philemon',HEB:'Hebrews',JAS:'James','1PE':'1 Peter','1PET':'1 Peter','2PE':'2 Peter','2PET':'2 Peter','1JN':'1 John','2JN':'2 John','3JN':'3 John',JUD:'Jude',JUDE:'Jude',REV:'Revelation',TOB:'Tobit',JDT:'Judith',WIS:'Wisdom of Solomon',SIR:'Sirach',BAR:'Baruch',LJE:'Letter of Jeremiah','1MA':'1 Maccabees','1MAC':'1 Maccabees','2MA':'2 Maccabees','2MAC':'2 Maccabees','3MA':'3 Maccabees','3MAC':'3 Maccabees','4MA':'4 Maccabees','4MAC':'4 Maccabees','1ES':'1 Esdras','1ESD':'1 Esdras','2ES':'2 Esdras','2ESD':'2 Esdras',MAN:'Prayer of Manasseh',AZA:'Prayer of Azariah',PRAZAR:'Prayer of Azariah',SUS:'Susanna',BEL:'Bel and the Dragon',ADDEST:'Additions to Esther',ADDESTH:'Additions to Esther',ESTGR:'Additions to Esther',PS2:'Psalm 151'};
+          function bookName(a){return MAP[a.toUpperCase()]||null}
+          function abbrev(f){let m=f.match(/^\d+([A-Za-z0-9]+?)eng-webbe\.usfm$/i);if(m)return m[1];m=f.match(/^\d+([A-Za-z0-9]+?)\.usfm$/i);if(m)return m[1];m=f.match(/^([A-Za-z0-9]+)\.usfm$/i);return m?m[1]:null}
+          function parseUsfm(c){const e=[];let ch=0,hd=null,bk=false;for(const l of c.split(/\r?\n/)){const t=l.trim();if(!t)continue;const cm=t.match(/^\\c\s+(\d+)/);if(cm){ch=+cm[1];hd=null;bk=false;continue}const sm=t.match(/^\\(?:s\d?|ms\d?)\s+(.*)/);if(sm){const x=sm[1].replace(/\\[a-z0-9*]+/g,'').replace(/\s+/g,' ').trim();if(x)hd=x;continue}if(/^\\(?:p|b|pi\d?|q\d?|m|li\d?|nb)(?:\s|$)/.test(t)){bk=true;continue}const vm=t.match(/^\\v\s+(\d+)/);if(vm){const v=+vm[1];if(hd!==null)e.push({ch,v,type:'heading',text:hd});if(bk)e.push({ch,v,type:'para_break'});hd=null;bk=false}}e.sort((a,b)=>a.ch!==b.ch?a.ch-b.ch:a.v!==b.v?a.v-b.v:a.type==='heading'?-1:1);return e}
+          function parseZip(buf,inf){const e=[];let o=0;while(o+30<=buf.length){if(buf.readUInt32LE(o)!==0x04034b50)break;const comp=buf.readUInt16LE(o+8),sz=buf.readUInt32LE(o+18),fnl=buf.readUInt16LE(o+26),xl=buf.readUInt16LE(o+28),fn=buf.slice(o+30,o+30+fnl).toString('utf8'),ds=o+30+fnl+xl,de=ds+sz,cd=buf.slice(ds,de);o=de;if(o+4<=buf.length&&buf.readUInt32LE(o)===0x08074b50)o+=16;if(!fn.toLowerCase().endsWith('.usfm'))continue;let ct;if(comp===0)ct=cd.toString('utf8');else if(comp===8)try{ct=inf(cd).toString('utf8')}catch{continue}else continue;e.push({filename:path.basename(fn),content:ct})}return e}
+          console.log('Downloading WEBBE USFM zip...');
+          const r=await fetch(ZIP_URL);
+          if(!r.ok)throw new Error('HTTP '+r.status);
+          const buf=Buffer.from(await r.arrayBuffer());
+          console.log('Downloaded '+(buf.length/1024/1024).toFixed(1)+' MB');
+          const{inflateRawSync:inf}=await import('zlib');
+          const entries=parseZip(buf,inf);
+          console.log('Found '+entries.length+' USFM files');
+          fs.mkdirSync(OUT_DIR,{recursive:true});
+          let n=0;
+          for(const{filename:f,content:c}of entries){
+            const ab=abbrev(f);if(!ab)continue;
+            const bn=bookName(ab);if(!bn)continue;
+            const ev=parseUsfm(c);
+            fs.writeFileSync(path.join(OUT_DIR,bn+'.json'),JSON.stringify(ev,null,2));
+            console.log('  '+bn.padEnd(30)+' '+ev.length+' events');
+            n++;
+          }
+          console.log('Done. '+n+' files written.');
+          SCRIPT
+          node /tmp/build-web-structure.mjs
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git add translations/WEB/WEB_structure/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: generate WEB structure scaffold JSONs (Protestant + deuterocanon)"
+          git push origin main-book-update
