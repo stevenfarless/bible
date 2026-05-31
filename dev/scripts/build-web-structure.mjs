@@ -53,16 +53,10 @@ const MAP = {
 
 function bookName(a) { return MAP[a.toUpperCase()] || null; }
 
+// Handles formats like: 02-GENeng-webbe.usfm, 10-1SAeng-webbe.usfm
 function abbrev(filename) {
-  // e.g. "eng-webbe_usfm/01GENeng-webbe.usfm" -> basename -> "01GENeng-webbe.usfm"
-  // Try: digits + abbrev + "eng-webbe"
-  let m = filename.match(/^(\d+)?([A-Za-z0-9]+?)(?:eng-webbe)?\.usfm$/i);
-  if (m) {
-    // m[2] is the abbrev candidate; skip if it's purely numeric
-    const candidate = m[2];
-    if (candidate && !/^\d+$/.test(candidate)) return candidate;
-  }
-  return null;
+  const m = filename.match(/^\d+-([A-Za-z0-9]+?)(?:eng-webbe)?\.usfm$/i);
+  return m ? m[1] : null;
 }
 
 function parseZip(buf) {
@@ -131,7 +125,6 @@ console.log(`Downloaded ${(buf.length / 1024 / 1024).toFixed(1)} MB`);
 
 const entries = parseZip(buf);
 console.log(`Found ${entries.length} USFM files`);
-console.log('Sample filenames:', entries.slice(0, 5).map(e => e.filename));
 
 fs.mkdirSync(OUT_DIR, { recursive: true });
 let n = 0;
