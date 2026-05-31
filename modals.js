@@ -82,6 +82,17 @@ export function populateBookModal(app) {
 
         const heading = document.createElement('h4');
         heading.textContent = testament;
+        if (testament === 'Deuterocanon') {
+            const infoBtn = document.createElement('button');
+            infoBtn.className = 'deuterocanon-info-btn';
+            infoBtn.setAttribute('aria-label', 'About the Deuterocanon');
+            infoBtn.innerHTML = '?';
+            infoBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openDeuterocanonInfoModal(app);
+            });
+            heading.appendChild(infoBtn);
+        }
         section.appendChild(heading);
 
         const grid = document.createElement('div');
@@ -99,6 +110,14 @@ export function populateBookModal(app) {
         modalBody.appendChild(section);
     }
 }
+
+
+// ── Deuterocanon info modal ─────────────────────────────────────────────────────────────────────────────────
+
+export function openDeuterocanonInfoModal(app) {
+    openModal(app, app.deuterocanonInfoModal);
+}
+
 
 // ── Chapter modal ─────────────────────────────────────────────────────────────────────────────────
 
