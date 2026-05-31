@@ -63,6 +63,8 @@ async function openSettingsSection(page, sectionDataValue) {
 // ---------------------------------------------------------------------------
 // Helper — switches translation via the translation modal and waits for the
 // passage to reload in the new translation.
+// Items have no data attribute; the translation ID is the text content of
+// the .translation-modal-item__name span inside each list item.
 // ---------------------------------------------------------------------------
 async function switchTranslation(page, translationId) {
         await page.locator('#translationSelectorBtn').click();
@@ -71,7 +73,10 @@ async function switchTranslation(page, translationId) {
                 () => document.querySelectorAll('.translation-modal-item').length > 0,
                 { timeout: 10000 }
         );
-        await page.locator(`.translation-modal-item[data-translation="${translationId}"]`).click();
+        await page
+                .locator('.translation-modal-item')
+                .filter({ has: page.locator('.translation-modal-item__name', { hasText: translationId }) })
+                .click();
         await expect(page.locator('#translationModal')).not.toHaveClass(/active/);
         await waitForPassage(page);
 }
@@ -480,12 +485,16 @@ test('dynamic book picker: translation without meta.json uses 66-book fallback',
 // ---------------------------------------------------------------------------
 // 20. Dynamic book picker — switching to ASV fires _rebuildBibleBooks and
 //     the debug log confirms it ran with the correct book count.
+//     Uses changeTranslation() directly rather than the modal UI because
+//     the goal is verifying the rebuild path, not re-testing modal interaction
+//     (covered by test 6).
 // ---------------------------------------------------------------------------
 test('dynamic book picker: switching to ASV fires _rebuildBibleBooks', async ({ page }) => {
         await page.goto('/');
         await waitForPassage(page);
 
-        await switchTranslation(page, 'ASV');
+        await page.evaluate(() => window._bibleApp.changeTranslation('ASV'));
+        await waitForPassage(page);
 
         const report = await page.evaluate(() => window._buildDebugReport());
         expect(report).toContain('_rebuildBibleBooks: 66 books');
