@@ -67,9 +67,6 @@ export function loadLocalSettings(app) {
     try { app.state.translation = app._normalizeTranslation(localStorage.getItem('translation') || DEFAULTS.translation); }
     catch (_) { app.state.translation = DEFAULTS.translation; }
 
-    // Restore last reading position.
-    // Signed-in users may get an updated position from Firebase later in
-    // loadSavedPositionIfChanged, but localStorage gives instant first paint.
     try {
         const raw = localStorage.getItem('readingPosition');
         if (raw) {
@@ -93,7 +90,6 @@ export function applySettings(app) {
     if (app.translationSelector && app.state.translation) {
         app.translationSelector.value = app.state.translation;
     }
-    // Sync nav translation badge label
     if (app.currentTranslationSpan && app.state.translation) {
         app.currentTranslationSpan.textContent = app.state.translation;
     }
@@ -133,8 +129,6 @@ export async function toggleSetting(app, setting) {
     if (!el) return;
     app.state[setting] = el.checked;
 
-    // Always write to localStorage so cold loads get the correct value
-    // immediately without waiting on Firebase.
     lsSet(setting, el.checked);
 
     if (app.currentUser) {
@@ -179,11 +173,15 @@ export async function updateFontSize(app, size) {
     }
 }
 
+/**
+ * Fetch the new translation's meta.json, rebuild app.bibleBooks from it,
+ * then load the current passage (redirecting to Genesis 1 if the active
+ * book is not present in the new canon).
+ */
 export async function changeTranslation(app, translation) {
     app.state.translation = translation;
     app.bibleApi.setTranslation(translation);
 
-    // Sync both the settings <select> and the nav badge
     if (app.translationSelector) app.translationSelector.value = translation;
     if (app.currentTranslationSpan) app.currentTranslationSpan.textContent = translation;
 
@@ -194,6 +192,16 @@ export async function changeTranslation(app, translation) {
             .ref(`users/${app.currentUser.uid}/settings/translation`)
             .set(translation);
     }
+
+    // Fetch meta.json for the incoming translation and rebuild the canon.
+    // A missing or malformed meta falls back to the static 66-book structure
+    // inside _rebuildBibleBooks, so this is safe to fire-and-forget on error.
+    let meta = null;
+    try {
+        const res = await fetch(`./translations/${translation}/meta.json`);
+        if (res.ok) meta = await res.json();
+    } catch (_) { /* network error — fall back to static structure */ }
+    app._rebuildBibleBooks(meta);
 
     updateCopyright(app);
     await app.loadPassage(app.state.currentBook, app.state.currentChapter);

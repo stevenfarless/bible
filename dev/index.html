@@ -5,7 +5,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Bible Reader</title>
-        <meta name="build-id" content="937ef80f6ef41d3f6ab510eca5ea5a5a6f61bb3c" />
+        <meta name="build-id" content="266ad6bac6616824598eee37b1d7c5b7a5d9b729" />
         <link rel="manifest" href="./site.webmanifest" />
         <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -16,7 +16,7 @@
         <link rel="preconnect" href="https://www.gstatic.com" />
         <link rel="preconnect" href="https://www.google.com" />
         <!-- Preload all ES modules so the browser fetches them in parallel
-             before the parser reaches <script type="module" src="app.js?v=937ef80f6ef41d3f6ab510eca5ea5a5a6f61bb3c">.
+             before the parser reaches <script type="module" src="app.js?v=266ad6bac6616824598eee37b1d7c5b7a5d9b729">.
              This eliminates the sequential module-discovery waterfall. -->
         <link rel="modulepreload" href="app.js" />
         <link rel="modulepreload" href="bible-api.js" />
@@ -41,7 +41,7 @@
                 <header class="header">
                         <div class="header-content">
                                 <h1 class="logo">Lege Lux</h1>
-                                <span id="build-info">dev #1184 · 937ef80</span>
+                                <span id="build-info">dev #1197 · 266ad6b</span>
                                 <div class="header-controls">
                                         <button class="icon-btn" id="searchToggle" title="Search (Ctrl+K)">
                                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,9 +254,10 @@
                                                                 <label>Color Theme</label>
                                                                 <select id="themeSelector" class="input-field">
                                                                         <option value="dracula">Dracula (Purple/Pink)</option>
-                                                                        <option value="steel">Steel (Blue/Cool)</option>
                                                                         <option value="onyx">Onyx (Gold/OLED)</option>
-                                                                        <option value="parchment">Parchment (Warm/Sepia)</option>
+                                                                        <option value="sage">Sage (Green/Forest)</option>
+                                                                        <option value="ember">Ember (Amber/Candlelit)</option>
+                                                                        <option value="perplexity">Perplexity (Teal/Minimal)</option>
                                                                 </select>
                                                                 <small class="help-text">Choose your preferred color scheme.</small>
                                                         </div>
@@ -512,10 +513,44 @@
                 </div>
         </div>
 
+
+        <div id="deuterocanonInfoModal" class="modal">
+                <div class="modal-content">
+                        <div class="modal-header">
+                                <h3>About the Deuterocanon</h3>
+                                <button class="close-btn" id="closeDeuterocanonInfoModal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                                <div class="deuterocanon-info-content">
+                                        <h4>What is the Deuterocanon?</h4>
+                                        <p>The <strong>Deuterocanon</strong> (also called the <strong>Apocrypha</strong>) refers to books and passages included in the Greek Septuagint and Latin Vulgate but not in the Hebrew Bible.</p>
+
+                                        <h4>Why Protestants Don't Consider Them Inspired Scripture</h4>
+                                        <ul>
+                                                <li>Not included in the Hebrew canon</li>
+                                                <li>Never quoted as Scripture by Jesus or the Apostles</li>
+                                                <li>Contain teachings inconsistent with the rest of Scripture (e.g., prayers for the dead in 2 Macc 12:44–46)</li>
+                                        </ul>
+
+                                        <h4>What Reformers Said About Reading It</h4>
+                                        <blockquote>
+                                                <strong>Martin Luther (1534):</strong> "Apocrypha, that is, books not considered equal to Holy Scripture, but which are still useful and good to read."
+                                        </blockquote>
+                                        <blockquote>
+                                                <strong>Thirty-Nine Articles (1563):</strong> "The church may certainly read these books and learn from them as far as they agree with the canonical books."
+                                        </blockquote>
+                                        <blockquote>
+                                                <strong>Belgic Confession (1561):</strong> "The church may certainly read these books and learn from them as far as they agree with the canonical books."
+                                        </blockquote>
+                                </div>
+                        </div>
+                </div>
+        </div>
+
         <div id="toast" class="toast"></div>
 
 
-        <script type="module" src="app.js?v=937ef80f6ef41d3f6ab510eca5ea5a5a6f61bb3c"></script>
+        <script type="module" src="app.js?v=266ad6bac6616824598eee37b1d7c5b7a5d9b729"></script>
 </body>
 
 </html>

@@ -1,7 +1,7 @@
 // modals.js
 // Modal open/close, population, and drag-to-resize for BibleApp.
 
-// ─── Open / close ─────────────────────────────────────────────────────────────────────────────
+// ── Open / close ─────────────────────────────────────────────────────────────────────────────────────
 
 export function openModal(app, modal) {
     if (!modal) return;
@@ -31,22 +31,39 @@ export function closeModal(app, modal) {
     }
 }
 
-// Only remove modal-open when no modals remain active.
-// Guards against a fast open/close sequence on two overlapping modals.
 function _maybeRemoveModalOpen() {
     if (!document.querySelector('.modal.active')) {
         document.body.classList.remove('modal-open');
     }
 }
 
-// ─── Book modal ─────────────────────────────────────────────────────────────────────────────
+// ── Book modal ──────────────────────────────────────────────────────────────────────────────────
 
 export function openBookModal(app) {
     populateBookModal(app);
     openModal(app, app.bookModal);
 }
 
+/**
+ * Renders the book picker dynamically from app.bibleBooks.
+ *
+ * app.bibleBooks is { testament: { book: chapterCount } } and may contain
+ * any number of testament sections (OT, NT, Deuterocanon, etc.).
+ * One .book-category block is created per section, so extended-canon
+ * translations automatically get their extra sections without any HTML
+ * or code changes.
+ *
+ * The two static #oldTestamentBooks / #newTestamentBooks divs in index.html
+ * are preserved so REQUIRED_IDS validation stays clean, but this function
+ * targets the .modal-body container directly and rebuilds it from scratch
+ * on every open.
+ */
 export function populateBookModal(app) {
+    const modalBody = app.bookModal?.querySelector('.modal-body');
+    if (!modalBody) return;
+
+    modalBody.innerHTML = '';
+
     const createBookButton = (book) => {
         const btn = document.createElement('button');
         btn.className = 'book-item';
@@ -59,18 +76,58 @@ export function populateBookModal(app) {
         return btn;
     };
 
-    app.oldTestamentBooks.innerHTML = '';
-    Object.keys(app.bibleBooks['Old Testament']).forEach((book) => {
-        app.oldTestamentBooks.appendChild(createBookButton(book));
-    });
+    for (const [testament, books] of Object.entries(app.bibleBooks)) {
+        const section = document.createElement('div');
+        section.className = 'book-category';
 
-    app.newTestamentBooks.innerHTML = '';
-    Object.keys(app.bibleBooks['New Testament']).forEach((book) => {
-        app.newTestamentBooks.appendChild(createBookButton(book));
-    });
+        const heading = document.createElement('h4');
+        heading.textContent = testament === 'Deuterocanon' ? 'Apocrypha / Deuterocanon' : testament;
+        if (testament === 'Deuterocanon') {
+            const infoBtn = document.createElement('button');
+            infoBtn.className = 'deuterocanon-info-btn';
+            infoBtn.setAttribute('aria-label', 'About the Deuterocanon');
+            infoBtn.innerHTML = '?';
+            infoBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                console.log('[DeutModal] button clicked');
+                openDeuterocanonInfoModal(app);
+            });
+            heading.appendChild(infoBtn);
+        }
+        section.appendChild(heading);
+
+        const grid = document.createElement('div');
+        grid.className = 'book-grid';
+        // Mirror the legacy IDs on the first two sections so any external
+        // code that targets #oldTestamentBooks / #newTestamentBooks still works.
+        if (testament === 'Old Testament') grid.id = 'oldTestamentBooks';
+        if (testament === 'New Testament') grid.id = 'newTestamentBooks';
+
+        for (const book of Object.keys(books)) {
+            grid.appendChild(createBookButton(book));
+        }
+
+        section.appendChild(grid);
+        modalBody.appendChild(section);
+    }
 }
 
-// ─── Chapter modal ───────────────────────────────────────────────────────────────────────────
+
+// ── Deuterocanon info modal ─────────────────────────────────────────────────────────────────────────────────
+
+export function openDeuterocanonInfoModal(app) {
+    console.log('[DeutModal] openDeuterocanonInfoModal called');
+    const modal = document.getElementById('deuterocanonInfoModal');
+    console.log('[DeutModal] modal element:', modal);
+    if (modal) {
+        openModal(app, modal);
+    } else {
+        console.error('[DeutModal] element #deuterocanonInfoModal not found in DOM');
+    }
+}
+
+
+// ── Chapter modal ─────────────────────────────────────────────────────────────────────────────────
 
 export function openChapterModal(app) {
     populateChapterModal(app);
@@ -96,7 +153,7 @@ export function populateChapterModal(app) {
     }
 }
 
-// ─── Verse modal ────────────────────────────────────────────────────────────────────────────
+// ── Verse modal ──────────────────────────────────────────────────────────────────────────────────
 
 export function openVerseModal(app) {
     populateVerseModal(app);
@@ -134,12 +191,11 @@ export function getCurrentVerseCount(app) {
     return app.passageText.querySelectorAll('.verse-num').length;
 }
 
-// ─── Translation modal ────────────────────────────────────────────────────────────────────────
+// ── Translation modal ────────────────────────────────────────────────────────────────────────────────
 
 export function openTranslationModal(app) {
     populateTranslationModal(app);
     openModal(app, app.translationModal);
-    // Set initial keyboard focus to the currently-active translation
     const items = _translationItems(app);
     const activeIdx = items.findIndex((li) => li.classList.contains('translation-modal-item--active'));
     app._translationKbIndex = activeIdx >= 0 ? activeIdx : 0;
@@ -150,8 +206,6 @@ export function populateTranslationModal(app) {
     if (!app.translationList) return;
     app.translationList.innerHTML = '';
 
-    // _translationRegistry is populated by _loadTranslationRegistry() in app.js.
-    // Fall back gracefully if it hasn't loaded yet.
     const registry = app._translationRegistry || [];
 
     if (registry.length === 0) {
@@ -188,7 +242,7 @@ export function populateTranslationModal(app) {
     }
 }
 
-// ─── Translation modal keyboard helpers ────────────────────────────────────────────
+// ── Translation modal keyboard helpers ───────────────────────────────────────────────
 
 function _translationItems(app) {
     return app.translationList
@@ -231,14 +285,8 @@ export function translationKbSelect(app) {
     app.closeModal(app.translationModal);
 }
 
-// ─── Drag-to-resize ─────────────────────────────────────────────────────────────────────────────
+// ── Drag-to-resize ───────────────────────────────────────────────────────────────────────────────────────
 
-/**
- * Attaches touch + mouse drag-to-resize handlers to a bottom-sheet modal.
- * @param {object} app        - BibleApp instance
- * @param {Element} modal     - the modal root element
- * @param {boolean} [dismissOnDrag=true] - close modal when dragged down far enough
- */
 function attachDragHandlers(app, modal, dismissOnDrag = true) {
     const content = modal.querySelector('.modal-content');
     const header  = modal.querySelector('.modal-header');
@@ -246,7 +294,6 @@ function attachDragHandlers(app, modal, dismissOnDrag = true) {
 
     if (!content || !header) return;
 
-    // ── touch ──
     let isTouchDragging = false;
     let touchStartY = 0;
     let touchStartHeight = 0;
@@ -280,7 +327,6 @@ function attachDragHandlers(app, modal, dismissOnDrag = true) {
         }
     }, { passive: true });
 
-    // ── mouse ──
     let isMouseDragging = false;
     let mouseStartY = 0;
     let mouseStartHeight = 0;
@@ -311,10 +357,6 @@ function attachDragHandlers(app, modal, dismissOnDrag = true) {
     });
 }
 
-/**
- * Call once from attachEventListeners to wire drag-to-resize on all
- * bottom-sheet modals (settings + references).
- */
 export function attachDragToResize(app) {
     if (app.settingsModal)   attachDragHandlers(app, app.settingsModal);
     if (app.referencesModal) attachDragHandlers(app, app.referencesModal);
