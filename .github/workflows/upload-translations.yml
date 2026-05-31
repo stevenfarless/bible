@@ -14,10 +14,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+      - name: Checkout main-book-update
+        uses: actions/checkout@v4
         with:
+          ref: main-book-update
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout script from dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          path: dev-scripts
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -35,46 +44,7 @@ jobs:
       - name: Upload translations
         env:
           TARGET_TRANSLATION: ${{ github.event.inputs.translation }}
-        run: |
-          python - <<'EOF'
-          import os
-          import json
-          import glob
-          import firebase_admin
-          from firebase_admin import credentials, db
-
-          cred = credentials.Certificate("/tmp/service_account.json")
-          firebase_admin.initialize_app(cred, {
-              "databaseURL": "https://esv-bible-6dffb-default-rtdb.firebaseio.com"
-          })
-
-          target = os.environ.get("TARGET_TRANSLATION", "").strip()
-
-          pattern = "translations/*/**_bible.json"
-          files = sorted(glob.glob(pattern))
-
-          if not files:
-              print("No translation JSON files found.")
-              exit(1)
-
-          for path in files:
-              # path looks like translations/ESV/ESV_bible.json
-              parts = path.split("/")
-              abbr = parts[1]  # e.g. ESV
-
-              if target and abbr.upper() != target.upper():
-                  continue
-
-              print(f"Reading {path} ({abbr})...")
-              with open(path, "r", encoding="utf-8-sig") as f:
-                  data = json.load(f)
-
-              ref = db.reference(f"translations/{abbr}")
-              ref.set(data)
-              print(f"  Uploaded {abbr} to Firebase.")
-
-          print("Done.")
-          EOF
+        run: python dev-scripts/.github/scripts/upload_translations.py
 
       - name: Clean up key
         if: always()
