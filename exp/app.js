@@ -13,6 +13,7 @@ import {
 import { cacheElements, loadTheme, toggleTheme, changeColorTheme } from './ui.js';
 import {
     initializeBibleStructure,
+    buildBibleBooks,
     getAllBooks,
     getChapterCount,
     getTestament,
@@ -481,6 +482,7 @@ class BibleApp {
         this.lastScrollPosition = 0;
         this.chromeHidden = false;
         this.chromeScrollAnchorY  = window.scrollY || 0;
+        this.chromeLastY          = window.scrollY || 0;
         this.chromeLastDirection  = null;
         this.chromeDelta          = 8;
         this.chromeHideOffset     = 80;
@@ -504,13 +506,14 @@ class BibleApp {
             this.chromeScrollTicking = true;
             if (this.chromeSuspend) {
                 this.chromeScrollAnchorY = window.scrollY || window.pageYOffset || 0;
+                this.chromeLastY         = window.scrollY || window.pageYOffset || 0;
                 this.chromeLastDirection = null;
                 this.chromeScrollTicking = false;
                 return;
             }
             window.requestAnimationFrame(() => {
                 const y           = window.scrollY || window.pageYOffset || 0;
-                const direction   = y > this.chromeScrollAnchorY ? 'down' : y < this.chromeScrollAnchorY ? 'up' : this.chromeLastDirection;
+                const direction   = y > this.chromeLastY ? 'down' : y < this.chromeLastY ? 'up' : this.chromeLastDirection;
                 const modalOpen   = !!document.querySelector('.modal.active');
                 const searchOpen  = !!this.searchContainer?.classList.contains('active');
 
@@ -528,6 +531,7 @@ class BibleApp {
                     if (movement < -this.chromeDelta) this.showChrome();
                 }
 
+                this.chromeLastY = y;
                 this.chromeScrollTicking = false;
             });
         };
@@ -555,6 +559,22 @@ class BibleApp {
     getChapterCount(book) { return getChapterCount(this, book); }
     getTestament(book)    { return getTestament(this, book); }
     getDisplayName(book)  { return getDisplayName(this, book); }
+
+    /**
+     * Rebuild app.bibleBooks from a translation's meta.json.
+     * Called by changeTranslation() after it fetches the incoming translation's meta.
+     * If meta is null or has no books array, falls back to the static 66-book structure.
+     * If the book modal is currently open, re-renders it so the user sees the new list.
+     *
+     * @param {object|null} meta  parsed meta.json, or null on fetch failure
+     */
+    _rebuildBibleBooks(meta) {
+        this.bibleBooks = buildBibleBooks(meta);
+        this._dbgEvent(`_rebuildBibleBooks: ${Object.values(this.bibleBooks).reduce((n, t) => n + Object.keys(t).length, 0)} books`);
+        if (this.bookModal?.classList.contains('active')) {
+            populateBookModal(this);
+        }
+    }
 
     // ── Passage cache ──────────────────────────────────────────────────────
 
@@ -605,9 +625,6 @@ class BibleApp {
     }
 
     // ── Background prefetch ────────────────────────────────────────────────
-    // Warm the per-book cache so common interactions are instant:
-    //   1. Current book in all other translations — translation switch = no fetch.
-    //   2. Adjacent books in the active translation — next/prev nav = no fetch.
 
     _prefetchCurrentBook() {
         const book   = this.state.currentBook;
@@ -816,7 +833,12 @@ class BibleApp {
 
     initializeAccordion() {
         document.querySelectorAll('.accordion-header').forEach((header) => {
-            header.addEventListener('click', () => header.closest('.accordion-section').classList.toggle('active'));
+            header.addEventListener('click', () => {
+                const section = header.closest('.accordion-section');
+                const isActive = section.classList.contains('active');
+                document.querySelectorAll('.accordion-section').forEach(s => s.classList.remove('active'));
+                if (!isActive) section.classList.add('active');
+            });
         });
         const openAccountBtn = document.getElementById('openAccountBtn');
         if (openAccountBtn) {
@@ -832,6 +854,16 @@ class BibleApp {
     saveReadingPosition()               { saveReadingPosition(this); }
 
     async loadPassage(book, chapter, restoreScroll = false) {
+        // Guard: if the requested book is not present in the current canon
+        // (e.g. after switching to a translation with a different canon),
+        // fall back to Genesis 1 rather than fetching a passage that does not exist.
+        const allBooks = this.getAllBooks();
+        if (!allBooks.includes(book)) {
+            this._dbgEvent(`loadPassage: "${book}" not in canon — redirecting to Genesis 1`);
+            book    = 'Genesis';
+            chapter = 1;
+        }
+
         if (!restoreScroll) this.saveReadingPosition?.();
 
         this.state.currentBook    = book;
@@ -886,6 +918,7 @@ class BibleApp {
 
         requestAnimationFrame(() => {
             this.chromeScrollAnchorY = window.scrollY || window.pageYOffset || 0;
+            this.chromeLastY         = window.scrollY || window.pageYOffset || 0;
             this.chromeLastDirection = null;
             this.chromeSuspend = false;
             document.body.classList.remove('chrome-no-transition');

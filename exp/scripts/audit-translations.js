@@ -123,7 +123,6 @@ const CANON = {
 };
 
 // Startup sanity check: chapter counts and verse totals for all 66 books.
-// Any corrupted per-chapter array exits immediately with a named error.
 const EXPECTED_CHAPTERS = {
     'Genesis':50,'Exodus':40,'Leviticus':27,'Numbers':36,'Deuteronomy':34,
     'Joshua':24,'Judges':21,'Ruth':4,'1 Samuel':31,'2 Samuel':24,
@@ -171,8 +170,7 @@ for (const [book, expected] of Object.entries(EXPECTED_VERSE_TOTALS)) {
     }
 }
 
-// Verses intentionally left empty in modern critical-text translations (absent from
-// oldest manuscripts). KJV/NKJV/MEV include these; ESV/NIV/BSB/CSB/NLT/etc. do not.
+// Verses intentionally left empty in modern critical-text translations.
 const KNOWN_OMISSIONS = new Set([
     'Matthew 12:47',
     'Matthew 17:21',
@@ -202,33 +200,80 @@ function resolveBookName(name) {
     return BOOK_ALIASES[name] || name;
 }
 
-function auditTranslation(translationId) {
-    const filePath = join(TRANSLATIONS_DIR, translationId, `${translationId}_bible.json`);
-    if (!existsSync(filePath)) {
-        return [{ type: 'ERROR', detail: `File not found: ${filePath}` }];
-    }
+/**
+ * Load all per-book JSON files for a translation and assemble them into
+ * the same shape the audit logic expects:
+ *   { [canonicalBookName]: { [chapterStr]: { [verseStr]: text } } }
+ *
+ * Each book file is expected to contain either:
+ *   - An object keyed by chapter number string: { "1": { "1": "text", ... }, ... }
+ *   - Or an array where index 0 = chapter 1 and each element is
+ *     an object or array of verse strings.
+ * Both shapes are normalised to { chapterStr: { verseStr: text } }.
+ */
+function loadTranslation(translationId) {
+    const dir = join(TRANSLATIONS_DIR, translationId);
+    const bible = {};
+    const missing = [];
 
-    let bible;
-    try {
-        bible = JSON.parse(readFileSync(filePath, 'utf8'));
-    } catch (e) {
-        return [{ type: 'ERROR', detail: `JSON parse failed: ${e.message}` }];
-    }
-
-    const normalizedBible = {};
-    for (const [key, val] of Object.entries(bible)) {
-        normalizedBible[resolveBookName(key)] = val;
-    }
-
-    const issues = [];
-
-    for (const [book, chapters] of Object.entries(CANON)) {
-        if (!normalizedBible[book]) {
-            issues.push({ type: 'MISSING_BOOK', book, detail: '' });
+    for (const book of Object.keys(CANON)) {
+        const filePath = join(dir, `${book}.json`);
+        if (!existsSync(filePath)) {
+            missing.push(book);
             continue;
         }
 
-        const bookData = normalizedBible[book];
+        let raw;
+        try {
+            raw = JSON.parse(readFileSync(filePath, 'utf8'));
+        } catch (e) {
+            // Return a parse error sentinel so auditTranslation can report it.
+            bible[book] = { __parseError: e.message };
+            continue;
+        }
+
+        // Normalise: arrays -> object with 1-based string keys.
+        const normalise = (obj) => {
+            if (Array.isArray(obj)) {
+                const out = {};
+                obj.forEach((v, i) => { out[String(i + 1)] = v; });
+                return out;
+            }
+            return obj;
+        };
+
+        const chapters = normalise(raw);
+        const normChapters = {};
+        for (const [ch, verses] of Object.entries(chapters)) {
+            normChapters[ch] = normalise(verses);
+        }
+        bible[resolveBookName(book)] = normChapters;
+    }
+
+    return { bible, missing };
+}
+
+function auditTranslation(translationId) {
+    const dir = join(TRANSLATIONS_DIR, translationId);
+    if (!existsSync(dir)) {
+        return [{ type: 'ERROR', detail: `Directory not found: ${dir}` }];
+    }
+
+    const { bible, missing } = loadTranslation(translationId);
+    const issues = [];
+
+    for (const book of missing) {
+        issues.push({ type: 'MISSING_BOOK', book, detail: '' });
+    }
+
+    for (const [book, chapters] of Object.entries(CANON)) {
+        const bookData = bible[book];
+        if (!bookData) continue; // already reported as MISSING_BOOK
+
+        if (bookData.__parseError) {
+            issues.push({ type: 'ERROR', detail: `JSON parse failed in ${book}.json: ${bookData.__parseError}` });
+            continue;
+        }
 
         for (let ch = 1; ch <= chapters.length; ch++) {
             const chapterData = bookData[String(ch)];
