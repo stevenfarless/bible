@@ -29,22 +29,20 @@ jobs:
         run: git fetch origin ${{ github.event.inputs.branch_b }}
 
       - name: Copy translations missing from branch_a (present in branch_b)
-        id: a_from_b
         run: |
           B="origin/${{ github.event.inputs.branch_b }}"
-          SOURCE_LIST=$(git ls-tree --name-only "$B" translations/)
-          TARGET_LIST=$(ls translations/)
-          MISSING=$(comm -23 <(echo "$SOURCE_LIST" | sort) <(echo "$TARGET_LIST" | sort))
+          # ls-tree returns full paths like translations/ASV — strip prefix to get bare names
+          SOURCE_NAMES=$(git ls-tree --name-only "$B" translations/ | sed 's|translations/||')
+          TARGET_NAMES=$(ls translations/)
+          MISSING=$(comm -23 <(echo "$SOURCE_NAMES" | sort) <(echo "$TARGET_NAMES" | sort))
           if [ -z "$MISSING" ]; then
             echo "branch_a already has all translations from branch_b."
           else
-            for T in $MISSING; do
-              NAME=$(basename "$T")
+            for NAME in $MISSING; do
               echo "Adding $NAME to ${{ github.event.inputs.branch_a }}"
               git checkout "$B" -- "translations/$NAME"
             done
           fi
-          echo "added=$MISSING" >> "$GITHUB_OUTPUT"
 
       - name: Commit to branch_a
         run: |
@@ -68,22 +66,19 @@ jobs:
         run: git fetch origin ${{ github.event.inputs.branch_a }}
 
       - name: Copy translations missing from branch_b (present in branch_a)
-        id: b_from_a
         run: |
           A="origin/${{ github.event.inputs.branch_a }}"
-          SOURCE_LIST=$(git ls-tree --name-only "$A" translations/)
-          TARGET_LIST=$(ls translations/)
-          MISSING=$(comm -23 <(echo "$SOURCE_LIST" | sort) <(echo "$TARGET_LIST" | sort))
+          SOURCE_NAMES=$(git ls-tree --name-only "$A" translations/ | sed 's|translations/||')
+          TARGET_NAMES=$(ls translations/)
+          MISSING=$(comm -23 <(echo "$SOURCE_NAMES" | sort) <(echo "$TARGET_NAMES" | sort))
           if [ -z "$MISSING" ]; then
             echo "branch_b already has all translations from branch_a."
           else
-            for T in $MISSING; do
-              NAME=$(basename "$T")
+            for NAME in $MISSING; do
               echo "Adding $NAME to ${{ github.event.inputs.branch_b }}"
               git checkout "$A" -- "translations/$NAME"
             done
           fi
-          echo "added=$MISSING" >> "$GITHUB_OUTPUT"
 
       - name: Commit to branch_b
         run: |
