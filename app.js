@@ -13,6 +13,7 @@ import {
 import { cacheElements, loadTheme, toggleTheme, changeColorTheme } from './ui.js';
 import {
     initializeBibleStructure,
+    buildBibleBooks,
     getAllBooks,
     getChapterCount,
     getTestament,
@@ -559,6 +560,22 @@ class BibleApp {
     getTestament(book)    { return getTestament(this, book); }
     getDisplayName(book)  { return getDisplayName(this, book); }
 
+    /**
+     * Rebuild app.bibleBooks from a translation's meta.json.
+     * Called by changeTranslation() after it fetches the incoming translation's meta.
+     * If meta is null or has no books array, falls back to the static 66-book structure.
+     * If the book modal is currently open, re-renders it so the user sees the new list.
+     *
+     * @param {object|null} meta  parsed meta.json, or null on fetch failure
+     */
+    _rebuildBibleBooks(meta) {
+        this.bibleBooks = buildBibleBooks(meta);
+        this._dbgEvent(`_rebuildBibleBooks: ${Object.values(this.bibleBooks).reduce((n, t) => n + Object.keys(t).length, 0)} books`);
+        if (this.bookModal?.classList.contains('active')) {
+            populateBookModal(this);
+        }
+    }
+
     // ── Passage cache ──────────────────────────────────────────────────────
 
     _savePassageCache(book, chapter, translation, title, html) {
@@ -608,9 +625,6 @@ class BibleApp {
     }
 
     // ── Background prefetch ────────────────────────────────────────────────
-    // Warm the per-book cache so common interactions are instant:
-    //   1. Current book in all other translations — translation switch = no fetch.
-    //   2. Adjacent books in the active translation — next/prev nav = no fetch.
 
     _prefetchCurrentBook() {
         const book   = this.state.currentBook;
@@ -840,6 +854,16 @@ class BibleApp {
     saveReadingPosition()               { saveReadingPosition(this); }
 
     async loadPassage(book, chapter, restoreScroll = false) {
+        // Guard: if the requested book is not present in the current canon
+        // (e.g. after switching to a translation with a different canon),
+        // fall back to Genesis 1 rather than fetching a passage that does not exist.
+        const allBooks = this.getAllBooks();
+        if (!allBooks.includes(book)) {
+            this._dbgEvent(`loadPassage: "${book}" not in canon — redirecting to Genesis 1`);
+            book    = 'Genesis';
+            chapter = 1;
+        }
+
         if (!restoreScroll) this.saveReadingPosition?.();
 
         this.state.currentBook    = book;
