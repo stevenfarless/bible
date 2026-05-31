@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - json-ver
+      - dev
     paths:
       - 'translations/**'
       - 'scripts/audit-translations.js'
