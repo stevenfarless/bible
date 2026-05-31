@@ -1,0 +1,28 @@
+name: Fix Translation Meta
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix-meta:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fix meta.json chapter counts and index
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+          GITHUB_REF_NAME: main-book-update
+        run: python dev-scripts/.github/scripts/fix_meta.py
