@@ -29,7 +29,7 @@ const SEARCH_CONCURRENCY = 5;
 // Translations served from ./translations/{T}/{Book}.json.
 // These never hit Firebase.
 // Exported so app.js can iterate the set for background prefetching.
-export const LOCAL_TRANSLATIONS = new Set(['ASV', 'BLB', 'BSB', 'KJV', 'LEB', 'MSB', 'NET', 'WEB']);
+export const LOCAL_TRANSLATIONS = new Set(["ASV", "BLB", "BSB", "CSB", "ESV", "ISV", "KJV", "LEB", "MEV", "MSB", "NET", "NIV", "NKJV", "NLT", "NRSVUE", "WEB"]);
 
 const BOOK_LOAD_ORDER = [
     'Genesis','Exodus','Leviticus','Numbers','Deuteronomy',
@@ -45,6 +45,12 @@ const BOOK_LOAD_ORDER = [
     '1 Thessalonians','2 Thessalonians','1 Timothy','2 Timothy',
     'Titus','Philemon','Hebrews','James','1 Peter','2 Peter',
     '1 John','2 John','3 John','Jude','Revelation',
+    // Deuterocanon
+    'Additions to Esther','Bel and the Dragon','Prayer of Manasseh','Letter of Jeremiah',
+    'Prayer of Azariah','Wisdom of Solomon','2 Maccabees','4 Maccabees',
+    '3 Maccabees','1 Maccabees','Psalm 151','1 Esdras',
+    '2 Esdras','Susanna','Sirach','Baruch',
+    'Judith','Tobit',
 ];
 
 // Sorted longest-first once at module load so _parseReference doesn't re-sort
@@ -325,6 +331,11 @@ export class BibleApi {
     }
 
     _buildPassageHtml(chapter, chapterData, verseStart, verseEnd, scaffoldEvents = [], showHeadings = true) {
+        // Render optional pre-verse prologue/intro stored at key "0"
+        const prologueHtml = (chapterData['0'] && verseStart === null)
+            ? `<div class="passage-prologue">${escapeHtml(chapterData['0'])}</div>`
+            : '';
+
         const verseNums = Object.keys(chapterData)
             .map(Number)
             .filter(Number.isFinite)
@@ -350,7 +361,7 @@ export class BibleApi {
                     `</span>`
                 );
             }
-            return `<p class="passage-para">${spans.join('')}</p>`;
+            return prologueHtml + `<p class="passage-para">${spans.join('')}</p>`;
         }
 
         const eventMap = new Map();
@@ -383,7 +394,7 @@ export class BibleApi {
             );
         }
         closeP();
-        return parts.join('');
+        return prologueHtml + parts.join('');
     }
 
     async fetchPassage(reference, scaffoldEvents = [], showHeadings = true) {

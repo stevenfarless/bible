@@ -19,6 +19,7 @@ const REQUIRED_IDS = [
 	'crossReferencesToggle', 'verseByVerseToggle',
 	'fontSizeSlider', 'fontSizeValue',
 	'referencesModal', 'closeReferencesModal',
+	'deuterocanonInfoModal', 'closeDeuterocanonInfoModal',
 	'footnotesSection', 'footnotesContent',
 	'crossReferencesSection', 'crossReferencesContent',
 	'toast',
@@ -118,6 +119,10 @@ export function cacheElements(app) {
 	// References modal (footnotes and cross-references)
 	app.referencesModal = document.getElementById('referencesModal');
 	app.closeReferencesModal = document.getElementById('closeReferencesModal');
+
+	// Deuterocanon info modal
+	app.deuterocanonInfoModal = document.getElementById('deuterocanonInfoModal');
+	app.closeDeuterocanonInfoModal = document.getElementById('closeDeuterocanonInfoModal');
 	app.footnotesSection = document.getElementById('footnotesSection');
 	app.footnotesContent = document.getElementById('footnotesContent');
 	app.crossReferencesSection = document.getElementById('crossReferencesSection');
@@ -192,11 +197,12 @@ export function updateThemeIcon(isLightMode) {
 }
 
 export async function changeColorTheme(app, theme) {
-	document.body.classList.remove('steel-theme', 'onyx-theme', 'parchment-theme');
+	document.body.classList.remove('onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme');
 
-	if (theme === 'steel')     document.body.classList.add('steel-theme');
-	else if (theme === 'onyx')      document.body.classList.add('onyx-theme');
-	else if (theme === 'parchment') document.body.classList.add('parchment-theme');
+	if (theme === 'onyx')            document.body.classList.add('onyx-theme');
+	else if (theme === 'sage')       document.body.classList.add('sage-theme');
+	else if (theme === 'ember')      document.body.classList.add('ember-theme');
+	else if (theme === 'perplexity') document.body.classList.add('perplexity-theme');
 
 	// Always write locally so cold loads get the correct value immediately.
 	try { localStorage.setItem('colorTheme', theme); } catch (_) {}
