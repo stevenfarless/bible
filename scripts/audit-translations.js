@@ -242,12 +242,26 @@ function loadTranslation(translationId) {
             return obj;
         };
 
-        const chapters = normalise(raw);
+        // Handle nested shape: { "Info": {...}, "Genesis": { "1": {...} } }
+        // vs flat shape: { "1": { "1": "text" }, "2": {...} }
+        const rawNormalized = normalise(raw);
+        let chapterData;
+        const canonicalBook = resolveBookName(book);
+        if (rawNormalized[canonicalBook] !== undefined) {
+            // Nested shape: book data is under the book name key
+            chapterData = normalise(rawNormalized[canonicalBook]);
+        } else {
+            // Flat shape: raw is the chapter data itself
+            chapterData = rawNormalized;
+        }
+
         const normChapters = {};
-        for (const [ch, verses] of Object.entries(chapters)) {
+        for (const [ch, verses] of Object.entries(chapterData)) {
+            // Skip non-chapter keys like "Info"
+            if (!/^\d+$/.test(ch)) continue;
             normChapters[ch] = normalise(verses);
         }
-        bible[resolveBookName(book)] = normChapters;
+        bible[canonicalBook] = normChapters;
     }
 
     return { bible, missing };
