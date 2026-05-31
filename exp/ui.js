@@ -19,6 +19,7 @@ const REQUIRED_IDS = [
 	'crossReferencesToggle', 'verseByVerseToggle',
 	'fontSizeSlider', 'fontSizeValue',
 	'referencesModal', 'closeReferencesModal',
+	'deuterocanonInfoModal', 'closeDeuterocanonInfoModal',
 	'footnotesSection', 'footnotesContent',
 	'crossReferencesSection', 'crossReferencesContent',
 	'toast',
