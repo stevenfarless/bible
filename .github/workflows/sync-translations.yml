@@ -1,0 +1,76 @@
+name: Sync Translations Between Branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: 'Branch to copy translations FROM'
+        required: true
+        type: string
+      target_branch:
+        description: 'Branch to copy translations TO'
+        required: true
+        type: string
+      translations:
+        description: >-
+          Space-separated list of translation abbreviations to copy
+          (e.g. "ASV BLB NET"). Leave blank to copy ALL translations
+          present in source but missing from target.
+        required: false
+        default: ''
+        type: string
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout target branch (full history)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.target_branch }}
+          fetch-depth: 0
+
+      - name: Fetch source branch
+        run: git fetch origin ${{ github.event.inputs.source_branch }}
+
+      - name: Determine translations to copy
+        id: resolve
+        run: |
+          SOURCE="origin/${{ github.event.inputs.source_branch }}"
+          INPUT="${{ github.event.inputs.translations }}"
+
+          if [ -n "$INPUT" ]; then
+            TO_COPY="$INPUT"
+          else
+            # Auto-detect: present in source, missing from target
+            SOURCE_LIST=$(git ls-tree --name-only "$SOURCE" translations/ | xargs -I{} basename {})
+            TARGET_LIST=$(ls translations/ 2>/dev/null | cat)
+            TO_COPY=$(comm -23 <(echo "$SOURCE_LIST" | sort) <(echo "$TARGET_LIST" | sort))
+          fi
+
+          echo "Translations to copy: $TO_COPY"
+          echo "to_copy=$TO_COPY" >> "$GITHUB_OUTPUT"
+
+      - name: Copy translation folders from source
+        run: |
+          SOURCE="origin/${{ github.event.inputs.source_branch }}"
+          for T in ${{ steps.resolve.outputs.to_copy }}; do
+            echo "Copying translations/$T from $SOURCE"
+            git checkout "$SOURCE" -- "translations/$T"
+          done
+
+      - name: Commit and push
+        run: |
+          git config user.name  "stevenfarless"
+          git config user.email "125781365+stevenfarless@users.noreply.github.com"
+          git add translations/
+          if git diff --cached --quiet; then
+            echo "Nothing to commit — all specified translations already present."
+          else
+            TRANS="${{ steps.resolve.outputs.to_copy }}"
+            git commit -m "chore: sync translations ($TRANS) from ${{ github.event.inputs.source_branch }} to ${{ github.event.inputs.target_branch }}"
+            git push origin HEAD:${{ github.event.inputs.target_branch }}
+          fi
