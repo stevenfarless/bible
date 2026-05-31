@@ -17,7 +17,7 @@ const REQUIRED_IDS = [
 	'chapterModalBook', 'chapterGrid', 'verseModalBook', 'verseGrid',
 	'verseNumbersToggle', 'headingsToggle', 'footnotesToggle',
 	'crossReferencesToggle', 'verseByVerseToggle',
-	'fontSizeSlider', 'fontSizeValue', 'translationSelector',
+	'fontSizeSlider', 'fontSizeValue',
 	'referencesModal', 'closeReferencesModal',
 	'footnotesSection', 'footnotesContent',
 	'crossReferencesSection', 'crossReferencesContent',
@@ -111,7 +111,9 @@ export function cacheElements(app) {
 	app.verseByVerseToggle = document.getElementById('verseByVerseToggle');
 	app.fontSizeSlider = document.getElementById('fontSizeSlider');
 	app.fontSizeValue = document.getElementById('fontSizeValue');
-	app.translationSelector = document.getElementById('translationSelector');
+	// translationSelector (<select>) was removed from the settings modal;
+	// translation switching is handled exclusively by the translationModal.
+	app.translationSelector = document.getElementById('translationSelector') ?? null;
 
 	// References modal (footnotes and cross-references)
 	app.referencesModal = document.getElementById('referencesModal');
