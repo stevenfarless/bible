@@ -331,6 +331,11 @@ export class BibleApi {
     }
 
     _buildPassageHtml(chapter, chapterData, verseStart, verseEnd, scaffoldEvents = [], showHeadings = true) {
+        // Render optional pre-verse prologue/intro stored at key "0"
+        const prologueHtml = (chapterData['0'] && verseStart === null)
+            ? `<div class="passage-prologue">${escapeHtml(chapterData['0'])}</div>`
+            : '';
+
         const verseNums = Object.keys(chapterData)
             .map(Number)
             .filter(Number.isFinite)
@@ -356,7 +361,7 @@ export class BibleApi {
                     `</span>`
                 );
             }
-            return `<p class="passage-para">${spans.join('')}</p>`;
+            return prologueHtml + `<p class="passage-para">${spans.join('')}</p>`;
         }
 
         const eventMap = new Map();
@@ -389,7 +394,7 @@ export class BibleApi {
             );
         }
         closeP();
-        return parts.join('');
+        return prologueHtml + parts.join('');
     }
 
     async fetchPassage(reference, scaffoldEvents = [], showHeadings = true) {
