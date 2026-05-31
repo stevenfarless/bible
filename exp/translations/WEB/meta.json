@@ -7,6 +7,13 @@
     "textDirection": "ltr",
     "year": 2000,
     "canon": "deuterocanon",
+    "philosophy": "dynamic",
+    "manuscriptTradition": [
+      "Majority Text",
+      "NA28",
+      "LXX"
+    ],
+    "textualBasis": "OT from the Masoretic Text and LXX. NT from the Majority Text (Byzantine). Deuterocanon from the LXX and related sources. Based on the American Standard Version (1901), updated to modern English.",
     "copyright": "World English Bible (WEB). Public domain."
   },
   "books": [
@@ -206,76 +213,6 @@
       "chapters": 4
     },
     {
-      "name": "1 Esdras",
-      "testament": "Deuterocanon",
-      "chapters": 9
-    },
-    {
-      "name": "2 Esdras",
-      "testament": "Deuterocanon",
-      "chapters": 16
-    },
-    {
-      "name": "Tobit",
-      "testament": "Deuterocanon",
-      "chapters": 14
-    },
-    {
-      "name": "Judith",
-      "testament": "Deuterocanon",
-      "chapters": 16
-    },
-    {
-      "name": "Additions to Esther",
-      "testament": "Deuterocanon",
-      "chapters": 10
-    },
-    {
-      "name": "Wisdom of Solomon",
-      "testament": "Deuterocanon",
-      "chapters": 19
-    },
-    {
-      "name": "Sirach",
-      "testament": "Deuterocanon",
-      "chapters": 51
-    },
-    {
-      "name": "Baruch",
-      "testament": "Deuterocanon",
-      "chapters": 6
-    },
-    {
-      "name": "Prayer of Manasseh",
-      "testament": "Deuterocanon",
-      "chapters": 1
-    },
-    {
-      "name": "Psalm 151",
-      "testament": "Deuterocanon",
-      "chapters": 1
-    },
-    {
-      "name": "1 Maccabees",
-      "testament": "Deuterocanon",
-      "chapters": 16
-    },
-    {
-      "name": "2 Maccabees",
-      "testament": "Deuterocanon",
-      "chapters": 15
-    },
-    {
-      "name": "3 Maccabees",
-      "testament": "Deuterocanon",
-      "chapters": 7
-    },
-    {
-      "name": "4 Maccabees",
-      "testament": "Deuterocanon",
-      "chapters": 18
-    },
-    {
       "name": "Matthew",
       "testament": "New Testament",
       "chapters": 28
@@ -352,7 +289,7 @@
     },
     {
       "name": "2 Timothy",
-      "testament": "New Testament",
+      "testament": "Deuterocanon",
       "chapters": 4
     },
     {
@@ -409,6 +346,81 @@
       "name": "Revelation",
       "testament": "New Testament",
       "chapters": 22
+    },
+    {
+      "name": "Tobit",
+      "testament": "Deuterocanon",
+      "chapters": 10
+    },
+    {
+      "name": "Judith",
+      "testament": "Deuterocanon",
+      "chapters": 9
+    },
+    {
+      "name": "Additions to Esther",
+      "testament": "Deuterocanon",
+      "chapters": 10
+    },
+    {
+      "name": "Wisdom of Solomon",
+      "testament": "Deuterocanon",
+      "chapters": 19
+    },
+    {
+      "name": "Sirach",
+      "testament": "Deuterocanon",
+      "chapters": 51
+    },
+    {
+      "name": "Baruch",
+      "testament": "Deuterocanon",
+      "chapters": 2
+    },
+    {
+      "name": "1 Maccabees",
+      "testament": "Deuterocanon",
+      "chapters": 15
+    },
+    {
+      "name": "2 Maccabees",
+      "testament": "Deuterocanon",
+      "chapters": 15
+    },
+    {
+      "name": "3 Maccabees",
+      "testament": "Deuterocanon",
+      "chapters": 2
+    },
+    {
+      "name": "4 Maccabees",
+      "testament": "Deuterocanon",
+      "chapters": 1
+    },
+    {
+      "name": "1 Esdras",
+      "testament": "Deuterocanon",
+      "chapters": 8
+    },
+    {
+      "name": "2 Esdras",
+      "testament": "Deuterocanon",
+      "chapters": 12
+    },
+    {
+      "name": "Prayer of Manasseh",
+      "testament": "Deuterocanon",
+      "chapters": 1
+    },
+    {
+      "name": "Psalm 151",
+      "testament": "Deuterocanon",
+      "chapters": 1
+    },
+    {
+      "name": "WEB_search_index",
+      "testament": "Deuterocanon",
+      "chapters": 31103
     }
   ]
 }
