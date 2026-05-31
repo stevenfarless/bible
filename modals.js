@@ -81,7 +81,7 @@ export function populateBookModal(app) {
         section.className = 'book-category';
 
         const heading = document.createElement('h4');
-        heading.textContent = testament;
+        heading.textContent = testament === 'Deuterocanon' ? 'Apocrypha / Deuterocanon' : testament;
         if (testament === 'Deuterocanon') {
             const infoBtn = document.createElement('button');
             infoBtn.className = 'deuterocanon-info-btn';
@@ -89,6 +89,7 @@ export function populateBookModal(app) {
             infoBtn.innerHTML = '?';
             infoBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                console.log('[DeutModal] button clicked');
                 openDeuterocanonInfoModal(app);
             });
             heading.appendChild(infoBtn);
@@ -115,8 +116,14 @@ export function populateBookModal(app) {
 // ── Deuterocanon info modal ─────────────────────────────────────────────────────────────────────────────────
 
 export function openDeuterocanonInfoModal(app) {
+    console.log('[DeutModal] openDeuterocanonInfoModal called');
     const modal = document.getElementById('deuterocanonInfoModal');
-    if (modal) openModal(app, modal);
+    console.log('[DeutModal] modal element:', modal);
+    if (modal) {
+        openModal(app, modal);
+    } else {
+        console.error('[DeutModal] element #deuterocanonInfoModal not found in DOM');
+    }
 }
 
 
