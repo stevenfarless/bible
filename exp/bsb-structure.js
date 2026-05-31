@@ -1,11 +1,16 @@
 // bsb-structure.js
-// Loads pre-computed BSB structure scaffold data from local repo files.
+// Loads pre-computed structure scaffold data from local repo files.
 // Each record is a flat array of events: { ch, v, type, text? }
 // type is 'heading' or 'para_break'.
 // Events fire BEFORE the verse they reference.
 //
-// Only used at runtime when the active translation is BSB.
-// Local path: ./translations/BSB/BSB_structure/{bookName}.json
+// Protestant canon books use BSB_structure.
+// Deuterocanon books (not in the 66-book Protestant canon) use WEB_structure.
+// Local paths:
+//   ./translations/BSB/BSB_structure/{bookName}.json
+//   ./translations/WEB/WEB_structure/{bookName}.json
+
+import { PROTESTANT_BOOKS } from './bible-structure.js';
 
 const _cache = new Map();
 // Deduplicates concurrent in-flight fetches for the same book.
@@ -22,8 +27,11 @@ function sanitizeForLog(value) {
  * Returns the scaffold event array for the given book name.
  * Results are cached in memory for the session.
  *
+ * Protestant canon books load from BSB_structure.
+ * Deuterocanon books load from WEB_structure.
+ *
  * @param {string} bookName - Exact book name matching the file key,
- *   e.g. 'John', '1 Corinthians', 'Song of Solomon'.
+ *   e.g. 'John', '1 Corinthians', 'Song of Solomon', 'Tobit'.
  * @returns {Promise<Array>} Flat array of structure events, or [] on failure.
  */
 export async function loadStructure(bookName) {
@@ -31,7 +39,10 @@ export async function loadStructure(bookName) {
     if (_fetchPromise.has(bookName)) return _fetchPromise.get(bookName);
 
     const promise = (async () => {
-        const url = `./translations/BSB/BSB_structure/${encodeURIComponent(bookName)}.json`;
+        const folder = PROTESTANT_BOOKS.has(bookName)
+            ? 'BSB/BSB_structure'
+            : 'WEB/WEB_structure';
+        const url = `./translations/${folder}/${encodeURIComponent(bookName)}.json`;
         try {
             const res = await fetch(url);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);

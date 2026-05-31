@@ -29,6 +29,14 @@ const PROTESTANT_STRUCTURE = {
 };
 
 /**
+ * Flat Set of all 66 Protestant canon book names.
+ * Any book not in this set is deuterocanon and should use WEB_structure.
+ */
+export const PROTESTANT_BOOKS = new Set(
+    Object.values(PROTESTANT_STRUCTURE).flatMap(Object.keys)
+);
+
+/**
  * Returns the full bible structure object: { testament: { book: chapterCount } }
  *
  * If `meta` is provided and contains a `books` array, the structure is built
