@@ -119,6 +119,10 @@ export function cacheElements(app) {
 	// References modal (footnotes and cross-references)
 	app.referencesModal = document.getElementById('referencesModal');
 	app.closeReferencesModal = document.getElementById('closeReferencesModal');
+
+	// Deuterocanon info modal
+	app.deuterocanonInfoModal = document.getElementById('deuterocanonInfoModal');
+	app.closeDeuterocanonInfoModal = document.getElementById('closeDeuterocanonInfoModal');
 	app.footnotesSection = document.getElementById('footnotesSection');
 	app.footnotesContent = document.getElementById('footnotesContent');
 	app.crossReferencesSection = document.getElementById('crossReferencesSection');
