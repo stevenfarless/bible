@@ -7,6 +7,10 @@ on:
         description: 'Translation to upload (e.g. ESV, KJV) — leave blank to upload all'
         required: false
         default: ''
+      branch:
+        description: 'Branch to read translations from'
+        required: false
+        default: 'exp'
 
 jobs:
   upload:
@@ -15,8 +19,9 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.inputs.branch || 'exp' }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
@@ -37,9 +42,7 @@ jobs:
           TARGET_TRANSLATION: ${{ github.event.inputs.translation }}
         run: |
           python - <<'EOF'
-          import os
-          import json
-          import glob
+          import os, json, glob, sys
           import firebase_admin
           from firebase_admin import credentials, db
 
@@ -48,32 +51,60 @@ jobs:
               "databaseURL": "https://esv-bible-6dffb-default-rtdb.firebaseio.com"
           })
 
-          target = os.environ.get("TARGET_TRANSLATION", "").strip()
+          target = os.environ.get("TARGET_TRANSLATION", "").strip().upper()
 
-          pattern = "translations/*/**_bible.json"
-          files = sorted(glob.glob(pattern))
+          # Per-book layout: translations/{ABBR}/{Book}.json
+          # Skip structure subdirs (BSB_structure, WEB_structure) and meta/index files.
+          trans_root = "translations"
+          trans_dirs = sorted(
+              d for d in os.listdir(trans_root)
+              if os.path.isdir(os.path.join(trans_root, d))
+          )
 
-          if not files:
-              print("No translation JSON files found.")
-              exit(1)
+          if not trans_dirs:
+              print("No translation directories found under translations/")
+              sys.exit(1)
 
-          for path in files:
-              # path looks like translations/ESV/ESV_bible.json
-              parts = path.split("/")
-              abbr = parts[1]  # e.g. ESV
-
-              if target and abbr.upper() != target.upper():
+          uploaded = 0
+          for abbr in trans_dirs:
+              if target and abbr.upper() != target:
                   continue
 
-              print(f"Reading {path} ({abbr})...")
-              with open(path, "r", encoding="utf-8-sig") as f:
-                  data = json.load(f)
+              folder = os.path.join(trans_root, abbr)
+              book_files = sorted(
+                  f for f in os.listdir(folder)
+                  if f.endswith(".json") and not f.endswith("_structure.json")
+              )
+
+              if not book_files:
+                  print(f"  {abbr}: no book files found, skipping")
+                  continue
+
+              print(f"Uploading {abbr} ({len(book_files)} books)...")
+
+              # Build full translation object {bookName: {chapterNum: {verseNum: text}}}
+              translation_data = {}
+              for fname in book_files:
+                  book_name = fname[:-5]  # strip .json
+                  # Skip known non-book files
+                  if book_name in ("meta", "index", "search-index"):
+                      continue
+                  path = os.path.join(folder, fname)
+                  with open(path, "r", encoding="utf-8-sig") as f:
+                      translation_data[book_name] = json.load(f)
+
+              # Also include meta if present
+              meta_path = os.path.join(folder, "meta.json")
+              if os.path.exists(meta_path):
+                  with open(meta_path, "r", encoding="utf-8-sig") as f:
+                      translation_data["meta"] = json.load(f)
 
               ref = db.reference(f"translations/{abbr}")
-              ref.set(data)
-              print(f"  Uploaded {abbr} to Firebase.")
+              ref.set(translation_data)
+              print(f"  {abbr}: uploaded {len(translation_data)} nodes to Firebase.")
+              uploaded += 1
 
-          print("Done.")
+          print(f"\nDone. {uploaded} translation(s) uploaded.")
           EOF
 
       - name: Clean up key
