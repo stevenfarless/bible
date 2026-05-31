@@ -1,0 +1,352 @@
+{
+  "info": {
+    "id": "NLT",
+    "label": "New Living Translation",
+    "abbreviation": "NLT",
+    "language": "en",
+    "textDirection": "ltr",
+    "year": 1996,
+    "canon": "protestant",
+    "philosophy": "dynamic",
+    "manuscriptTradition": [
+      "Masoretic Text",
+      "Dead Sea Scrolls",
+      "Septuagint",
+      "Critical Text"
+    ],
+    "textualBasis": "OT from the Masoretic Text with reference to the Dead Sea Scrolls and Septuagint. NT from the critical Greek text. Thought-for-thought translation prioritizing clarity and natural English expression.",
+    "copyright": "Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation. Verify distribution rights before publishing."
+  },
+  "books": [
+    {
+      "name": "Genesis",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Exodus",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Leviticus",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Numbers",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Deuteronomy",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Joshua",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Judges",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Ruth",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "1 Samuel",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "2 Samuel",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "1 Kings",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "2 Kings",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "1 Chronicles",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "2 Chronicles",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Ezra",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Nehemiah",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Esther",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Job",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Psalm",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Proverbs",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Ecclesiastes",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Song of Solomon",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Isaiah",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Jeremiah",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Lamentations",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Ezekiel",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Daniel",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Hosea",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Joel",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Amos",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Obadiah",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Jonah",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Micah",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Nahum",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Habakkuk",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Zephaniah",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Haggai",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Zechariah",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Malachi",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Matthew",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Mark",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Luke",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "John",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Acts",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Romans",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "1 Corinthians",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "2 Corinthians",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Galatians",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Ephesians",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Philippians",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Colossians",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "1 Thessalonians",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "2 Thessalonians",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "1 Timothy",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "2 Timothy",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Titus",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Philemon",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Hebrews",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "James",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "1 Peter",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "2 Peter",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "1 John",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "2 John",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "3 John",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Jude",
+      "testament": "New Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Revelation",
+      "testament": "New Testament",
+      "chapters": 2
+    }
+  ]
+}
