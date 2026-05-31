@@ -1,0 +1,48 @@
+name: Fetch Apocrypha Books
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fetch-apocrypha:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout main-book-update
+        uses: actions/checkout@v4
+        with:
+          ref: main-book-update
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout script from dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          path: dev-scripts
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 lxml
+
+      - name: Fetch apocrypha
+        run: python dev-scripts/.github/scripts/fetch_apocrypha.py
+
+      - name: Commit apocrypha files
+        run: |
+          git config user.name "stevenfarless"
+          git config user.email "125781365+stevenfarless@users.noreply.github.com"
+          git add translations/
+          if git diff --cached --quiet; then
+            echo "No new files to commit."
+          else
+            git commit -m "feat(apocrypha): add deuterocanonical books for KJV, WEB, NRSVUE, ESV"
+            git push
+          fi
