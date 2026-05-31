@@ -10,11 +10,11 @@ translations/WEB/meta.json and pushes everything to the target branch
 via the GitHub API in a single commit.
 
 Usage (local):
-    GITHUB_TOKEN=<pat> GITHUB_REPO=stevenfarless/bible python fetch_web_usfx.py
+    GITHUB_TOKEN=<pat> GITHUB_REPO=stevenfarless/bible TARGET_BRANCH=main-book-update python fetch_web_usfx.py
 
 Usage (GitHub Actions):
     Set GITHUB_TOKEN via secrets; GITHUB_REPO is set automatically.
-    Branch is read from GITHUB_REF_NAME or defaults to main-book-update.
+    Branch is read from TARGET_BRANCH (defaults to main-book-update).
 
 No external dependencies beyond the Python standard library.
 """
@@ -35,13 +35,12 @@ import base64
 USFX_URL = "https://ebible.org/Scriptures/eng-webbe_usfx.zip"
 TRANSLATION_ID = "WEB"
 TARGET_DIR = "translations/WEB"
-BRANCH = os.environ.get("GITHUB_REF_NAME", "main-book-update")
+BRANCH = os.environ.get("TARGET_BRANCH", "main-book-update")
 REPO = os.environ.get("GITHUB_REPO", "stevenfarless/bible")
 TOKEN = os.environ.get("GITHUB_TOKEN", "")
 API_BASE = "https://api.github.com"
 
 # USFX book id → canonical display name used as the filename (no .json)
-# Deuterocanonical books follow the same naming convention as other translations.
 BOOK_NAMES = {
     # Old Testament
     "GEN": "Genesis", "EXO": "Exodus", "LEV": "Leviticus", "NUM": "Numbers",

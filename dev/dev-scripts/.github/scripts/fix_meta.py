@@ -12,32 +12,34 @@ For every translation folder on the target branch:
 All changes are pushed as a single commit.
 
 Usage (local):
-    GITHUB_TOKEN=<pat> GITHUB_REPO=stevenfarless/bible python fix_meta.py
+    GITHUB_TOKEN=<pat> GITHUB_REPO=stevenfarless/bible TARGET_BRANCH=main-book-update python fix_meta.py
 
 Usage (GitHub Actions):
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GITHUB_REPO: ${{ github.repository }}
-      GITHUB_REF_NAME: main-book-update
+      TARGET_BRANCH: main-book-update
 
 No external dependencies beyond the Python standard library.
 """
 
 import base64
-import io
 import json
 import os
 import sys
 import urllib.request
 import urllib.error
 
-BRANCH = os.environ.get("GITHUB_REF_NAME", "main-book-update")
+BRANCH = os.environ.get("TARGET_BRANCH", "main-book-update")
 REPO   = os.environ.get("GITHUB_REPO", "stevenfarless/bible")
 TOKEN  = os.environ.get("GITHUB_TOKEN", "")
 API    = "https://api.github.com"
 
+# Files whose names end in _search_index are not book files
+SKIP_SUFFIXES = ("_search_index",)
+
 # ---------------------------------------------------------------------------
-# Testament classification for books not already in meta
+# Testament classification
 # ---------------------------------------------------------------------------
 
 OT = {
@@ -56,7 +58,6 @@ NT = {
     "3 John","Jude","Revelation",
 }
 
-# Canonical book order for sorting (OT then NT then Deuterocanon)
 CANON_ORDER = [
     "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges",
     "Ruth","1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles",
@@ -69,7 +70,6 @@ CANON_ORDER = [
     "1 Thessalonians","2 Thessalonians","1 Timothy","2 Timothy","Titus",
     "Philemon","Hebrews","James","1 Peter","2 Peter","1 John","2 John",
     "3 John","Jude","Revelation",
-    # Deuterocanon
     "Tobit","Judith","Additions to Esther","Wisdom of Solomon","Sirach",
     "Baruch","Letter of Jeremiah","Prayer of Azariah","Susanna",
     "Bel and the Dragon","1 Maccabees","2 Maccabees","3 Maccabees",
@@ -87,7 +87,6 @@ def testament(name):
     if name in NT: return "New Testament"
     return "Deuterocanon"
 
-# New translations to add to index.json if not present
 NEW_TRANSLATIONS = {
     "WEB": {
         "id": "WEB",
@@ -119,13 +118,9 @@ def gh(method, path, body=None):
         with urllib.request.urlopen(req) as r:
             return json.loads(r.read())
     except urllib.error.HTTPError as e:
-        body = e.read().decode()
-        print(f"  API {e.code} {method} {path}: {body[:200]}")
+        msg = e.read().decode()
+        print(f"  API {e.code} {method} {path}: {msg[:200]}")
         raise
-
-def get_tree(tree_sha):
-    owner, repo = REPO.split("/", 1)
-    return gh("GET", f"/repos/{owner}/{repo}/git/trees/{tree_sha}?recursive=1")
 
 def get_blob_text(blob_sha):
     owner, repo = REPO.split("/", 1)
@@ -151,21 +146,18 @@ def main():
         sys.exit(1)
 
     owner, repo = REPO.split("/", 1)
+    print(f"Branch: {BRANCH}")
 
-    # Get branch tip and full tree
     ref = gh("GET", f"/repos/{owner}/{repo}/git/ref/heads/{BRANCH}")
     tip_sha = ref["object"]["sha"]
     commit = gh("GET", f"/repos/{owner}/{repo}/git/commits/{tip_sha}")
     base_tree_sha = commit["tree"]["sha"]
-    print(f"Branch: {BRANCH} @ {tip_sha}")
+    print(f"Tip: {tip_sha}")
 
-    tree_data = get_tree(base_tree_sha)
-    items = tree_data["tree"]  # flat list of {path, type, sha, mode}
-
-    # Index by path
+    tree_data = gh("GET", f"/repos/{owner}/{repo}/git/trees/{base_tree_sha}?recursive=1")
+    items = tree_data["tree"]
     by_path = {item["path"]: item for item in items if item["type"] == "blob"}
 
-    # Find all translation folders
     trans_dirs = set()
     for path in by_path:
         parts = path.split("/")
@@ -174,37 +166,39 @@ def main():
 
     print(f"Translations found: {sorted(trans_dirs)}")
 
-    new_blobs = []  # list of (path, new_blob_sha)
+    new_blobs = []
 
-    # Process each translation
     for tid in sorted(trans_dirs):
         print(f"\n=== {tid} ===")
         folder = f"translations/{tid}"
         meta_path = f"{folder}/meta.json"
 
-        # Collect book files (exclude meta.json and subdirectories)
-        book_files = {
-            item["path"].split("/")[-1].replace(".json", ""): item["sha"]
-            for path, item in by_path.items()
-            if path.startswith(f"{folder}/")
-            and path.endswith(".json")
-            and path != meta_path
-            and path.count("/") == 2  # no subdirs like BSB_structure
-        }
+        book_files = {}
+        for path, item in by_path.items():
+            if not path.startswith(f"{folder}/"):
+                continue
+            if not path.endswith(".json"):
+                continue
+            if path == meta_path:
+                continue
+            if path.count("/") != 2:
+                continue
+            stem = path.split("/")[-1][:-5]  # strip .json
+            if any(stem.endswith(s) for s in SKIP_SUFFIXES):
+                print(f"  Skipping non-book file: {stem}")
+                continue
+            book_files[stem] = item["sha"]
 
         if not book_files:
             print(f"  No book files, skipping")
             continue
 
-        # Load existing meta
         if meta_path not in by_path:
-            print(f"  No meta.json found, skipping")
+            print(f"  No meta.json, skipping")
             continue
 
         meta_text = get_blob_text(by_path[meta_path]["sha"])
         meta = json.loads(meta_text)
-
-        # Build lookup of existing books in meta
         existing = {b["name"]: b for b in meta.get("books", [])}
 
         updated_books = {}
@@ -222,22 +216,20 @@ def main():
                 old = entry.get("chapters")
                 entry["chapters"] = chapter_count
                 if old != chapter_count:
-                    print(f"  {book_name}: {old} -> {chapter_count} chapters")
+                    print(f"  {book_name}: {old} -> {chapter_count}")
                 else:
-                    print(f"  {book_name}: {chapter_count} chapters (ok)")
+                    print(f"  {book_name}: {chapter_count} (ok)")
             else:
                 entry = {
                     "name": book_name,
                     "testament": testament(book_name),
                     "chapters": chapter_count,
                 }
-                print(f"  {book_name}: NEW ({chapter_count} chapters, {entry['testament']})")
+                print(f"  {book_name}: NEW ({chapter_count}, {entry['testament']})")
 
             updated_books[book_name] = entry
 
-        # Sort by canon order
-        sorted_books = sorted(updated_books.values(), key=lambda b: book_order(b["name"]))
-        meta["books"] = sorted_books
+        meta["books"] = sorted(updated_books.values(), key=lambda b: book_order(b["name"]))
 
         new_meta = json.dumps(meta, indent=2, ensure_ascii=False)
         if new_meta != meta_text:
@@ -247,7 +239,6 @@ def main():
         else:
             print(f"  meta.json unchanged")
 
-    # Update translations/index.json
     index_path = "translations/index.json"
     if index_path in by_path:
         index_text = get_blob_text(by_path[index_path]["sha"])
@@ -271,15 +262,12 @@ def main():
 
     print(f"\nCommitting {len(new_blobs)} file(s)...")
 
-    # Build tree entries
-    tree_entries = []
-    for path, blob_sha in new_blobs:
-        tree_entries.append({
-            "path": path,
-            "mode": "100644",
-            "type": "blob",
-            "sha": blob_sha,
-        })
+    tree_entries = [{
+        "path": path,
+        "mode": "100644",
+        "type": "blob",
+        "sha": sha,
+    } for path, sha in new_blobs]
 
     new_tree = gh("POST", f"/repos/{owner}/{repo}/git/trees", {
         "base_tree": base_tree_sha,
