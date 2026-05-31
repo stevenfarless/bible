@@ -45,6 +45,12 @@ const BOOK_LOAD_ORDER = [
     '1 Thessalonians','2 Thessalonians','1 Timothy','2 Timothy',
     'Titus','Philemon','Hebrews','James','1 Peter','2 Peter',
     '1 John','2 John','3 John','Jude','Revelation',
+    // Deuterocanon
+    'Additions to Esther','Bel and the Dragon','Prayer of Manasseh','Letter of Jeremiah',
+    'Prayer of Azariah','Wisdom of Solomon','2 Maccabees','4 Maccabees',
+    '3 Maccabees','1 Maccabees','Psalm 151','1 Esdras',
+    '2 Esdras','Susanna','Sirach','Baruch',
+    'Judith','Tobit',
 ];
 
 // Sorted longest-first once at module load so _parseReference doesn't re-sort
