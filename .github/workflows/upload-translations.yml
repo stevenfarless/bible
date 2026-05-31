@@ -7,10 +7,6 @@ on:
         description: 'Translation to upload (e.g. ESV, KJV) — leave blank to upload all'
         required: false
         default: ''
-      branch:
-        description: 'Branch to read translations from'
-        required: false
-        default: 'dev'
 
 jobs:
   upload:
@@ -18,10 +14,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout dev
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch || 'dev' }}
+          ref: dev
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
