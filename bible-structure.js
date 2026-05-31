@@ -4,7 +4,8 @@
 // read app.bibleBooks and app.bookDisplayNames without coupling to BibleApp.
 
 /**
- * Returns the full OT/NT structure object: { testament: { book: chapterCount } }
+ * Returns the full OT/NT/Apocrypha structure object:
+ *   { testament: { book: chapterCount } }
  * Called once during BibleApp construction; result stored on app.bibleBooks.
  */
 export function initializeBibleStructure() {
@@ -27,11 +28,31 @@ export function initializeBibleStructure() {
             James: 5, '1 Peter': 5, '2 Peter': 3, '1 John': 5, '2 John': 1,
             '3 John': 1, Jude: 1, Revelation: 22,
         },
+        'Apocrypha': {
+            Tobit: 14,
+            Judith: 16,
+            '1 Maccabees': 16,
+            '2 Maccabees': 15,
+            '3 Maccabees': 7,
+            '4 Maccabees': 18,
+            '1 Esdras': 9,
+            '2 Esdras': 16,
+            'Wisdom of Solomon': 19,
+            Sirach: 51,
+            Baruch: 5,
+            'Letter of Jeremiah': 1,
+            'Prayer of Azariah': 1,
+            Susanna: 1,
+            'Bel and the Dragon': 1,
+            'Prayer of Manasseh': 1,
+            'Psalm 151': 1,
+            'Additions to Esther': 10,
+        },
     };
 }
 
 /**
- * Returns a flat ordered array of all book names (OT then NT).
+ * Returns a flat ordered array of all book names (OT, NT, then Apocrypha).
  * @param {object} app
  * @returns {string[]}
  */
@@ -39,6 +60,7 @@ export function getAllBooks(app) {
     return [
         ...Object.keys(app.bibleBooks['Old Testament']),
         ...Object.keys(app.bibleBooks['New Testament']),
+        ...Object.keys(app.bibleBooks['Apocrypha'] || {}),
     ];
 }
 
@@ -58,14 +80,15 @@ export function getChapterCount(app, book) {
 }
 
 /**
- * Returns 'Old Testament', 'New Testament', or null.
+ * Returns 'Old Testament', 'New Testament', 'Apocrypha', or null.
  * @param {object} app
  * @param {string} book
  * @returns {string|null}
  */
 export function getTestament(app, book) {
-    if (app.bibleBooks['Old Testament'][book]) return 'Old Testament';
-    if (app.bibleBooks['New Testament'][book]) return 'New Testament';
+    if (app.bibleBooks['Old Testament']?.[book]) return 'Old Testament';
+    if (app.bibleBooks['New Testament']?.[book]) return 'New Testament';
+    if (app.bibleBooks['Apocrypha']?.[book])     return 'Apocrypha';
     return null;
 }
 
