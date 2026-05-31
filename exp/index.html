@@ -5,7 +5,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Bible Reader</title>
-        <meta name="build-id" content="ac89e9d13892f64426bff4d03c9395bae9822ce6" />
+        <meta name="build-id" content="01523a3a1d36ce2609724d95ec70f3d622f74666" />
         <link rel="manifest" href="./site.webmanifest" />
         <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -16,7 +16,7 @@
         <link rel="preconnect" href="https://www.gstatic.com" />
         <link rel="preconnect" href="https://www.google.com" />
         <!-- Preload all ES modules so the browser fetches them in parallel
-             before the parser reaches <script type="module" src="app.js?v=ac89e9d13892f64426bff4d03c9395bae9822ce6">.
+             before the parser reaches <script type="module" src="app.js?v=01523a3a1d36ce2609724d95ec70f3d622f74666">.
              This eliminates the sequential module-discovery waterfall. -->
         <link rel="modulepreload" href="app.js" />
         <link rel="modulepreload" href="bible-api.js" />
@@ -41,7 +41,7 @@
                 <header class="header">
                         <div class="header-content">
                                 <h1 class="logo">Lege Lux</h1>
-                                <span id="build-info">exp #1164 · ac89e9d</span>
+                                <span id="build-info">exp #1166 · 01523a3</span>
                                 <div class="header-controls">
                                         <button class="icon-btn" id="searchToggle" title="Search (Ctrl+K)">
                                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -512,10 +512,44 @@
                 </div>
         </div>
 
+
+        <div id="deuterocanonInfoModal" class="modal">
+                <div class="modal-content">
+                        <div class="modal-header">
+                                <h3>About the Deuterocanon</h3>
+                                <button class="close-btn" id="closeDeuterocanonInfoModal">Ã«</button>
+                        </div>
+                        <div class="modal-body">
+                                <div class="deuterocanon-info-content">
+                                        <h4>What is the Deuterocanon?</h4>
+                                        <p>The <strong>Deuterocanon</strong> (also called the <strong>Apocrypha</strong>) refers to books and passages included in the Greek Septuagint and Latin Vulgate but not in the Hebrew Bible.</p>
+
+                                        <h4>Why Protestants Don't Consider Them Inspired Scripture</h4>
+                                        <ul>
+                                                <li>Not included in the Hebrew canon</li>
+                                                <li>Never quoted as Scripture by Jesus or the Apostles</li>
+                                                <li>Contain teachings inconsistent with the rest of Scripture (e.g., prayers for the dead in 2 Macc 12:44–46)</li>
+                                        </ul>
+
+                                        <h4>What Reformers Said About Reading It</h4>
+                                        <blockquote>
+                                                <strong>Martin Luther (1534):</strong> "Apocrypha, that is, books not considered equal to Holy Scripture, but which are still useful and good to read."
+                                        </blockquote>
+                                        <blockquote>
+                                                <strong>Thirty-Nine Articles (1563):</strong> "The other books the Church doth read for example of life and instruction of manners; but yet doth it not apply them to establish any doctrine."
+                                        </blockquote>
+                                        <blockquote>
+                                                <strong>Belgic Confession (1561):</strong> "The church may certainly read these books and learn from them as far as they agree with the canonical books."
+                                        </blockquote>
+                                </div>
+                        </div>
+                </div>
+        </div>
+
         <div id="toast" class="toast"></div>
 
 
-        <script type="module" src="app.js?v=ac89e9d13892f64426bff4d03c9395bae9822ce6"></script>
+        <script type="module" src="app.js?v=01523a3a1d36ce2609724d95ec70f3d622f74666"></script>
 </body>
 
 </html>
