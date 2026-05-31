@@ -15,8 +15,6 @@ jobs:
         with:
           ref: dev
           path: dev-scripts
-          sparse-checkout: .github/scripts
-          sparse-checkout-cone-mode: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
