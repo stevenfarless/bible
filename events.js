@@ -39,6 +39,9 @@ export function attachEventListeners(app) {
     // ── Translation badge (nav) ──────────────────────────────────
     app.translationSelectorBtn?.addEventListener('click', () => app.openTranslationModal());
 
+    // ── Copy passage ─────────────────────────────────────────────
+    document.getElementById('copyPassage')?.addEventListener('click', () => app.copyPassage());
+
     // ── Modals: late-cached elements ─────────────────────────────────
     app.referencesModal        = document.getElementById('referencesModal');
     app.closeReferencesModal   = document.getElementById('closeReferencesModal');
