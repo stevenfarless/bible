@@ -1330,11 +1330,7 @@ body.hide-verse-numbers .verse .verse-num {
     display: none !important;
 }
 
-/* Search
-   .search-container handles the open/close animation via max-height.
-   overflow must NOT be hidden here — that would prevent position:sticky
-   from working on .search-results-summary. Clipping is delegated to
-   .search-wrapper so the container itself stays overflow:visible. */
+/* Search */
 .search-container {
     background-color: var(--bg-secondary);
     border-bottom: none;
@@ -1344,7 +1340,7 @@ body.hide-verse-numbers .verse .verse-num {
     right: 0;
     z-index: 101;
     max-height: 0;
-    overflow: visible;
+    overflow: hidden;
     transition: max-height var(--transition-normal);
 }
 
@@ -1360,7 +1356,6 @@ body.hide-verse-numbers .verse .verse-num {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xs);
-    overflow: hidden;
 }
 
 .search-input-row {
@@ -1478,9 +1473,7 @@ body.hide-verse-numbers .verse .verse-num {
     display: none;
 }
 
-/* Results summary bar — count + expand/collapse controls
-   Sticky within the .search-results scroll container.
-   Requires .search-container to NOT have overflow:hidden (handled above). */
+/* Results summary bar — count + expand/collapse controls */
 .search-results-summary {
     display: flex;
     align-items: center;
@@ -1490,9 +1483,6 @@ body.hide-verse-numbers .verse .verse-num {
     border-bottom: 1px solid var(--border-color);
     max-width: var(--max-width);
     margin: 0 auto var(--spacing-xs);
-    position: sticky;
-    top: 0;
-    z-index: 1;
     background-color: var(--bg-secondary);
 }
 
