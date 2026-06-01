@@ -91,7 +91,7 @@ export function attachEventListeners(app) {
     app.verseByVerseToggle?.addEventListener('change', () => app.toggleVerseByVerse());
     app.fontSizeSlider?.addEventListener('input',  (e) => app.updateFontSize(e.target.value));
 
-    const readingFontSelector = document.getElementById('readingFontSelector');
+        const readingFontSelector = document.getElementById('readingFontSelector');
 if (readingFontSelector) {
     readingFontSelector.addEventListener('change', async () => {
         const font = readingFontSelector.value;
