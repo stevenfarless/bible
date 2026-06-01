@@ -13,6 +13,7 @@ const DEFAULTS = {
     lightMode:           false,
     colorTheme:          'dracula',
     translation:         'KJV',
+    readingFont:         'gentium',
 };
 
 const RECAPTCHA_STYLE_ID = 'recaptcha-badge-style';
@@ -64,6 +65,9 @@ export function loadLocalSettings(app) {
     try { app.state.colorTheme = localStorage.getItem('colorTheme') || DEFAULTS.colorTheme; }
     catch (_) { app.state.colorTheme = DEFAULTS.colorTheme; }
 
+    try { app.state.readingFont = localStorage.getItem('readingFont') || DEFAULTS.readingFont; }
+    catch (_) { app.state.readingFont = DEFAULTS.readingFont; }
+
     try { app.state.translation = app._normalizeTranslation(localStorage.getItem('translation') || DEFAULTS.translation); }
     catch (_) { app.state.translation = DEFAULTS.translation; }
 
@@ -113,6 +117,8 @@ export function applySettings(app) {
     if (app.fontSizeSlider) app.fontSizeSlider.value = fontSize;
     if (app.fontSizeValue)  app.fontSizeValue.textContent = `${fontSize}px`;
     if (app.passageText)    app.passageText.style.fontSize = `${fontSize}px`;
+    const readingFont = app.state.readingFont || DEFAULTS.readingFont;
+    applyReadingFont(app, readingFont);
 
     updateCopyright(app);
 }
@@ -157,6 +163,14 @@ export async function toggleVerseByVerse(app) {
     }
 
     app.passageText.classList.toggle('verse-by-verse', app.state.verseByVerse);
+}
+export function applyReadingFont(app, font) {
+    document.body.classList.remove('font-andika', 'font-ubuntu');
+    if (font === 'andika') document.body.classList.add('font-andika');
+    if (font === 'ubuntu') document.body.classList.add('font-ubuntu');
+
+    const selector = document.getElementById('readingFontSelector');
+    if (selector) selector.value = font;
 }
 
 export async function updateFontSize(app, size) {
