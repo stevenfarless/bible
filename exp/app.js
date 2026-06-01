@@ -229,16 +229,6 @@ function buildDebugReport(app) {
     // ── SW cache keys ─────────────────────────────────────────────────────
     const swCacheLines = ['  (loading...)'];
 
-    // ── Active font ───────────────────────────────────────────────────────
-    const passageEl = app?.passageText ?? document.querySelector('.passage-text');
-    const computedFont = passageEl
-        ? getComputedStyle(passageEl).fontFamily
-        : getComputedStyle(document.body).fontFamily;
-    const storedFont = (() => {
-        try { return localStorage.getItem('font') ?? '(not set)'; } catch (_) { return '(error)'; }
-    })();
-    const bodyFont = getComputedStyle(document.body).fontFamily;
-
     const timings = [
         `  scriptStart:          ${ts(dbg.t_script_start)}`,
         `  domReady:             ${ts(dbg.t_dom_ready)}`,
@@ -320,11 +310,6 @@ function buildDebugReport(app) {
         `  fontSize: ${app?.state?.fontSize}`,
         `  scrollY: ${window.scrollY}`,
         `  currentUser: ${app?.currentUser?.email ?? 'not signed in'}`,
-        '',
-        '=== active font ===',
-        `  localStorage font: ${storedFont}`,
-        `  computed (passage): ${computedFont}`,
-        `  computed (body): ${bodyFont}`,
     ];
     return { text: lines.join('\n'), swCacheLines };
 }
