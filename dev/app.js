@@ -18,6 +18,7 @@ import {
     getChapterCount,
     getTestament,
     getDisplayName,
+    PROTESTANT_BOOKS,
 } from './bible-structure.js';
 import { updateNavigationState, navigateToNextVerse, navigateToPreviousVerse } from './navigation.js';
 import {
@@ -628,6 +629,15 @@ class BibleApp {
 
     _prefetchCurrentBook() {
         const book   = this.state.currentBook;
+
+        // Deuterocanonical books are only in a subset of translations.
+        // Prefetching them across all LOCAL_TRANSLATIONS causes a flood of
+        // 404s for translations that don't include them. Skip entirely.
+        if (!PROTESTANT_BOOKS.has(book)) {
+            this._dbgEvent(`prefetch: skipped "${book}" (not in Protestant canon)`);
+            return;
+        }
+
         const active = this.state.translation;
         const others = [...LOCAL_TRANSLATIONS].filter(t => t !== active);
         let i = 0;
