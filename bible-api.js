@@ -157,7 +157,7 @@ export class BibleApi {
         this._translationBookLists.set(translation, bookNames);
     }
 
-    // ── Firebase loading ──────────────────────────────────────────────
+    // ── Firebase loading ──────────────────────────────────────────────────
 
     async _getShallowIndex(translation) {
         if (!FIREBASE_TRANSLATIONS_ENABLED) return new Map();
