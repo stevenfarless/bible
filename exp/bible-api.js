@@ -22,6 +22,13 @@
 import { FIREBASE_DB_URL } from './config/firebase-config.js';
 import { normaliseBookAlias } from './book-aliases.js';
 
+// ── Feature flag ──────────────────────────────────────────────────────────────
+// Set to true once Firebase-hosted translations are ready to be served.
+// While false, all translation fetches use only local files; the Firebase
+// translation/search-index paths are preserved but never called.
+const FIREBASE_TRANSLATIONS_ENABLED = false;
+// ─────────────────────────────────────────────────────────────────────────────
+
 const PAGE_SIZE = 100;
 // Max concurrent RTDB book fetches during search (fallback path only).
 const SEARCH_CONCURRENCY = 5;
@@ -93,6 +100,7 @@ function _buildWordRegex(q) {
 }
 
 export async function loadTranslationIndex() {
+    if (!FIREBASE_TRANSLATIONS_ENABLED) return [];
     const url = `${FIREBASE_DB_URL}/translationIndex.json`;
     try {
         const res = await fetch(url);
@@ -133,6 +141,7 @@ export class BibleApi {
     // ── Firebase loading ──────────────────────────────────────────────────
 
     async _getShallowIndex(translation) {
+        if (!FIREBASE_TRANSLATIONS_ENABLED) return new Map();
         if (this._shallowIndexCache.has(translation)) {
             return this._shallowIndexCache.get(translation);
         }
@@ -213,7 +222,12 @@ export class BibleApi {
             return promise;
         }
 
-        // ── Firebase path ─────────────────────────────────────────────────
+        // ── Firebase path (disabled until FIREBASE_TRANSLATIONS_ENABLED = true) ──
+        if (!FIREBASE_TRANSLATIONS_ENABLED) {
+            console.warn(`BibleApi: Firebase translations disabled — cannot load ${translation}/${this._sanitizeForLog(book)}`);
+            return null;
+        }
+
         const fetchNode = async (nodeKey) => {
             const url = `${FIREBASE_DB_URL}/translations/${encodeURIComponent(translation)}/${encodeURIComponent(nodeKey)}.json`;
             const res = await fetch(url);
@@ -259,7 +273,13 @@ export class BibleApi {
 
         const promise = (async () => {
             try {
-                const url = LOCAL_TRANSLATIONS.has(translation)
+                const isLocal = LOCAL_TRANSLATIONS.has(translation);
+                // Firebase search index is disabled until FIREBASE_TRANSLATIONS_ENABLED = true.
+                if (!isLocal && !FIREBASE_TRANSLATIONS_ENABLED) {
+                    this._searchIndexCache.set(translation, null);
+                    return null;
+                }
+                const url = isLocal
                     ? `./translations/${translation}/${translation}_search_index.json`
                     : `${FIREBASE_DB_URL}/searchIndex/${encodeURIComponent(translation)}.json`;
                 const res = await fetch(url);
@@ -478,9 +498,6 @@ export class BibleApi {
         }
 
         // ── Fallback path: batched per-book fetches ───────────────────────────
-        // Per-book fetches are issued directly. For local translations each book
-        // is fetched on demand (small file, fast) rather than preloading the
-        // full monolith. Already-navigated books are served from _bookCache.
         const allResults = [];
 
         for (let i = 0; i < BOOK_LOAD_ORDER.length; i += SEARCH_CONCURRENCY) {
@@ -565,7 +582,6 @@ export class BibleApi {
         const cachedTranslations = [];
         for (const t of LOCAL_TRANSLATIONS) {
             if (t === activeTranslation) continue;
-            // Any cached book is enough — we walk only what's in cache.
             const hasAny = BOOK_LOAD_ORDER.some((b) =>
                 this._bookCache.has(`${t}/${b}`) || this._bookCache.has(`${t}/${BOOK_KEY_ALIASES[b]}`)
             );
@@ -574,7 +590,6 @@ export class BibleApi {
 
         if (cachedTranslations.length === 0) return [];
 
-        // Run all cached translations in parallel.
         const translationResults = await Promise.all(
             cachedTranslations.map(async (translation) => {
                 const found = [];
@@ -611,8 +626,6 @@ export class BibleApi {
             })
         );
 
-        // Merge: deduplicate across supplemental translations too. First
-        // translation to surface a ref wins (arbitrary but consistent).
         const seen = new Set(knownRefs);
         for (const results of translationResults) {
             for (const result of results) {
