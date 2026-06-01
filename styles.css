@@ -466,10 +466,10 @@ body.perplexity-theme {
     --pplx-teal:         #33B8C7;
     --pplx-teal-dark:    #259aaa;
     --pplx-teal-light:   #4fd0de;
-    --pplx-offblack:     #141414;
-    --pplx-offblack-mid: #1e1e1e;
-    --pplx-offblack-lt:  #282828;
-    --pplx-offblack-ll:  #323232;
+    --pplx-offblack:     #091717;
+    --pplx-offblack-mid: #0f2020;
+    --pplx-offblack-lt:  #162a2a;
+    --pplx-offblack-ll:  #1e3434;
     --pplx-paper:        #f5f5f5;
     --pplx-muted:        #8a8a90;
     --pplx-amber:        #e8a045;
@@ -486,7 +486,7 @@ body.perplexity-theme {
 
     /* Borders */
     --border-neutral:   var(--pplx-offblack-ll);
-    --highlight-border: #444444;
+    --highlight-border: #2a4444;
 
     /* Brand */
     --primary-color:   var(--pplx-teal);
