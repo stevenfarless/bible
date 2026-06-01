@@ -842,6 +842,20 @@ class BibleApp {
             this._copyrightMap = {};
             for (const t of translations) this._copyrightMap[t.id] = t.copyright || '';
             this.updateCopyright?.();
+
+            // Fetch the starting translation's meta.json so the fallback search
+            // path knows its canon from the first search. Fire-and-forget — a
+            // failure here is harmless; the fallback just uses BOOK_LOAD_ORDER.
+            const startingTranslation = this.state.translation;
+            fetch(`./translations/${startingTranslation}/meta.json`)
+                .then(r => (r.ok ? r.json() : null))
+                .then(meta => {
+                    if (meta?.books?.length) {
+                        this.bibleApi.setBookList(startingTranslation, meta.books.map(b => b.name));
+                        this._dbgEvent(`setBookList: ${startingTranslation} (${meta.books.length} books)`);
+                    }
+                })
+                .catch(() => {});
         } catch (err) {
             console.error('BibleApp: failed to load translation index', err);
         }
