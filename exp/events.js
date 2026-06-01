@@ -5,6 +5,7 @@
 import { toggleTheme, changeColorTheme } from './ui.js';
 import { attachDragToResize } from './modals.js';
 import { runMegasearch, performKeywordSearch } from './search.js';
+import { applyReadingFont } from './settings.js';
 
 /**
  * @param {object} app - BibleApp instance
