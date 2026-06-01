@@ -5,7 +5,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Bible Reader</title>
-        <meta name="build-id" content="cb56941203cf40f221659c9f7398463213e6db50" />
+        <meta name="build-id" content="f09ceea30293a8dc9befbf0fd72f12bb849f2389" />
         <link rel="manifest" href="./site.webmanifest" />
         <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -16,7 +16,7 @@
         <link rel="preconnect" href="https://www.gstatic.com" />
         <link rel="preconnect" href="https://www.google.com" />
         <!-- Preload all ES modules so the browser fetches them in parallel
-             before the parser reaches <script type="module" src="app.js?v=cb56941203cf40f221659c9f7398463213e6db50">.
+             before the parser reaches <script type="module" src="app.js?v=f09ceea30293a8dc9befbf0fd72f12bb849f2389">.
              This eliminates the sequential module-discovery waterfall. -->
         <link rel="modulepreload" href="app.js" />
         <link rel="modulepreload" href="bible-api.js" />
@@ -41,7 +41,7 @@
                 <header class="header">
                         <div class="header-content">
                                 <h1 class="logo">Lege Lux</h1>
-                                <span id="build-info">dev #1751 · cb56941</span>
+                                <span id="build-info">dev #1763 · f09ceea</span>
                                 <div class="header-controls">
                                         <button class="icon-btn" id="searchToggle" title="Search (Ctrl+K)">
                                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,7 +161,7 @@
                 <div class="passage-container">
                         <div class="passage-header">
                                 <h2 id="passageTitle" class="passage-title">Genesis 1</h2>
-                                <button id="copyBtn" class="icon-btn" title="Copy passage">
+                                <button id="copyPassage" class="icon-btn" aria-label="Copy passage" title="Copy passage">
                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -251,7 +251,7 @@
                                         <div class="accordion-panel" data-panel="appearance">
                                                 <div class="settings-group">
                                                         <div class="setting-item">
-                                                                <label>Color Theme</label>
+                                                                <label for="themeSelector">Color Theme</label>
                                                                 <select id="themeSelector" class="input-field">
                                                                         <option value="dracula">Dracula (Purple/Pink)</option>
                                                                         <option value="onyx">Onyx (Gold/OLED)</option>
@@ -268,7 +268,7 @@
                                                                 </label>
                                                         </div>
                                                         <div class="setting-item">
-                                                                <label>Font Size</label>
+                                                                <label for="fontSizeSlider">Font Size</label>
                                                                 <input type="range" id="fontSizeSlider" class="slider" min="12" max="32" value="18" />
                                                                 <span id="fontSizeValue">18px</span>
                                                         </div>
@@ -422,12 +422,12 @@
                         <div class="modal-body">
                                 <form id="loginForm" class="auth-form">
                                         <div class="setting-item">
-                                                <label>Email</label>
+                                                <label for="loginEmail">Email</label>
                                                 <input type="email" id="loginEmail" class="input-field" placeholder="your@email.com"
                                                         autocomplete="email" required />
                                         </div>
                                         <div class="setting-item">
-                                                <label>Password</label>
+                                                <label for="loginPassword">Password</label>
                                                 <input type="password" id="loginPassword" class="input-field" placeholder="Password"
                                                         autocomplete="current-password" required />
                                         </div>
@@ -450,12 +450,12 @@
                         <div class="modal-body">
                                 <form id="signupForm" class="auth-form">
                                         <div class="setting-item">
-                                                <label>Email</label>
+                                                <label for="signupEmail">Email</label>
                                                 <input type="email" id="signupEmail" class="input-field" placeholder="your@email.com"
                                                         autocomplete="email" required />
                                         </div>
                                         <div class="setting-item">
-                                                <label>Password</label>
+                                                <label for="signupPassword">Password</label>
                                                 <input type="password" id="signupPassword" class="input-field"
                                                         placeholder="At least 6 characters" autocomplete="new-password" required />
                                         </div>
@@ -550,7 +550,7 @@
         <div id="toast" class="toast"></div>
 
 
-        <script type="module" src="app.js?v=cb56941203cf40f221659c9f7398463213e6db50"></script>
+        <script type="module" src="app.js?v=f09ceea30293a8dc9befbf0fd72f12bb849f2389"></script>
 </body>
 
 </html>

@@ -203,6 +203,12 @@ export async function changeTranslation(app, translation) {
     } catch (_) { /* network error — fall back to static structure */ }
     app._rebuildBibleBooks(meta);
 
+    // Register the book list so searchPassages fallback skips books this
+    // translation doesn't include (e.g. deuterocanon for protestant canons).
+    if (meta?.books?.length) {
+        app.bibleApi.setBookList(translation, meta.books.map(b => b.name));
+    }
+
     updateCopyright(app);
     await app.loadPassage(app.state.currentBook, app.state.currentChapter);
 }

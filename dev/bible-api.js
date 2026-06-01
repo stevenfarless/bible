@@ -128,6 +128,11 @@ export class BibleApi {
         // Deduplicates concurrent in-flight search index fetches.
         // Key: translation, value: Promise. Cleared after fetch settles.
         this._searchIndexFetchPromise = new Map();
+        // Per-translation book lists registered from meta.json.
+        // Used by the fallback search path to avoid fetching books the
+        // translation doesn't include (e.g. deuterocanon for ESV).
+        // Key: translation id, value: string[].
+        this._translationBookLists = new Map();
     }
 
     setTranslation(translation) {
@@ -136,6 +141,20 @@ export class BibleApi {
 
     get translation() {
         return this._translation;
+    }
+
+    /**
+     * Register the canonical book list for a translation, sourced from
+     * its meta.json `books` array. The fallback search path uses this list
+     * instead of the full BOOK_LOAD_ORDER so it never requests books the
+     * translation doesn't have.
+     *
+     * @param {string}   translation  Translation id (e.g. 'ESV')
+     * @param {string[]} bookNames    Ordered array of book name strings
+     */
+    setBookList(translation, bookNames) {
+        if (!translation || !Array.isArray(bookNames) || bookNames.length === 0) return;
+        this._translationBookLists.set(translation, bookNames);
     }
 
     // ── Firebase loading ──────────────────────────────────────────────────
@@ -498,10 +517,14 @@ export class BibleApi {
         }
 
         // ── Fallback path: batched per-book fetches ───────────────────────────
+        // Use the translation's declared book list when available so we never
+        // request books the translation doesn't include (e.g. deuterocanon for ESV).
+        const bookList = this._translationBookLists.get(this._translation) ?? BOOK_LOAD_ORDER;
+
         const allResults = [];
 
-        for (let i = 0; i < BOOK_LOAD_ORDER.length; i += SEARCH_CONCURRENCY) {
-            const batch = BOOK_LOAD_ORDER.slice(i, i + SEARCH_CONCURRENCY);
+        for (let i = 0; i < bookList.length; i += SEARCH_CONCURRENCY) {
+            const batch = bookList.slice(i, i + SEARCH_CONCURRENCY);
 
             const bookDataList = await Promise.all(
                 batch.map((book) => this._loadBook(this._translation, book))

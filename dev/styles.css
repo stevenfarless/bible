@@ -2,6 +2,7 @@
    ESV Bible Reader - Styles
 
    TABLE OF CONTENTS
+   0. Web Fonts
    1. CSS Reset & Base
    2. CSS Custom Properties (Variables)
    3. Theme Overrides
@@ -15,6 +16,51 @@
    11. Utility Classes
    12. Print Styles
    ================================ */
+
+
+/* ================================
+   0. WEB FONTS
+   ================================ */
+
+@font-face {
+    font-family: 'Cinzel';
+    src: url('./fonts/Cinzel-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Gentium Book Plus';
+    src: url('./fonts/GentiumBookPlus-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Gentium Book Plus';
+    src: url('./fonts/GentiumBookPlus-Italic.woff2') format('woff2');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Gentium Book Plus';
+    src: url('./fonts/GentiumBookPlus-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Gentium Book Plus';
+    src: url('./fonts/GentiumBookPlus-BoldItalic.woff2') format('woff2');
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
 
 
 /* ================================
@@ -468,10 +514,10 @@ body.perplexity-theme {
     --pplx-teal:         #33B8C7;
     --pplx-teal-dark:    #259aaa;
     --pplx-teal-light:   #4fd0de;
-    --pplx-offblack:     #141414;
-    --pplx-offblack-mid: #1e1e1e;
-    --pplx-offblack-lt:  #282828;
-    --pplx-offblack-ll:  #323232;
+    --pplx-offblack:     #091717;
+    --pplx-offblack-mid: #0f2020;
+    --pplx-offblack-lt:  #162a2a;
+    --pplx-offblack-ll:  #1e3434;
     --pplx-paper:        #f5f5f5;
     --pplx-muted:        #8a8a90;
     --pplx-amber:        #e8a045;
@@ -488,13 +534,13 @@ body.perplexity-theme {
 
     /* Borders */
     --border-neutral:   var(--pplx-offblack-ll);
-    --highlight-border: #444444;
+    --highlight-border: #2a4444;
 
     /* Brand */
     --primary-color:   var(--pplx-teal);
     --primary-dark:    var(--pplx-teal-dark);
     --primary-light:   var(--pplx-teal-light);
-    --secondary-color: var(--pplx-amber);
+    --secondary-color: var(--pplx-teal-light);
     --accent-color:    var(--pplx-teal-light);
 
     /* Functional */
@@ -1332,9 +1378,7 @@ body.hide-verse-numbers .verse .verse-num {
     display: none !important;
 }
 
-/* Search
-   top is var(--chrome-height) so the bar clears the full fixed chrome
-   (header + nav), not just the header alone. */
+/* Search */
 .search-container {
     background-color: var(--bg-secondary);
     border-bottom: none;
@@ -1487,9 +1531,6 @@ body.hide-verse-numbers .verse .verse-num {
     border-bottom: 1px solid var(--border-color);
     max-width: var(--max-width);
     margin: 0 auto var(--spacing-xs);
-    position: sticky;
-    top: 0;
-    z-index: 1;
     background-color: var(--bg-secondary);
 }
 
