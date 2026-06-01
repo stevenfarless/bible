@@ -1038,6 +1038,7 @@ class BibleApp {
             navigator.clipboard.writeText(content)
                 .then(() => {
                     _swapToCheck();
+                    this.showToast('Passage copied!');
                     this._dbgEvent('copyPassage: clipboard success');
                 })
                 .catch((err) => {
@@ -1064,6 +1065,7 @@ class BibleApp {
                 btn.innerHTML = _CHECK_SVG;
                 setTimeout(() => { btn.innerHTML = _COPY_SVG; }, 1500);
             }
+            this.showToast('Passage copied!');
             this._dbgEvent('copyPassage: fallback execCommand success');
         } catch (err) {
             console.error('Copy fallback failed:', err);
