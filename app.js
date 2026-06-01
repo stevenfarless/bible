@@ -436,6 +436,10 @@ function _readSavedPosition() {
     return null;
 }
 
+// SVG paths for copy/check icon swap
+const _COPY_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+const _CHECK_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
 class BibleApp {
     constructor() {
         this.auth     = window.firebaseAuth;
@@ -1018,15 +1022,27 @@ class BibleApp {
     checkApiKey() { checkApiKey(this); }
 
     copyPassage() {
+        _logUserAction('copyPassage');
         const text    = this.stripHTML(this.passageText.innerHTML);
         const ref     = this.passageTitle.textContent;
         const content = `${ref}\n\n${text}\n\n${this.copyright?.textContent ?? ''}`;
 
+        const btn = document.getElementById('copyPassage');
+        const _swapToCheck = () => {
+            if (!btn) return;
+            btn.innerHTML = _CHECK_SVG;
+            setTimeout(() => { btn.innerHTML = _COPY_SVG; }, 1500);
+        };
+
         if (navigator.clipboard?.writeText) {
             navigator.clipboard.writeText(content)
-                .then(() => this.showToast('Passage copied to clipboard!'))
+                .then(() => {
+                    _swapToCheck();
+                    this._dbgEvent('copyPassage: clipboard success');
+                })
                 .catch((err) => {
                     console.error('Failed to copy:', err);
+                    this._dbgEvent(`copyPassage: clipboard error — ${err.message}`);
                     this._copyFallback(content);
                 });
         } else {
@@ -1043,10 +1059,16 @@ class BibleApp {
             ta.select();
             document.execCommand('copy');
             document.body.removeChild(ta);
-            this.showToast('Passage copied to clipboard!');
+            const btn = document.getElementById('copyPassage');
+            if (btn) {
+                btn.innerHTML = _CHECK_SVG;
+                setTimeout(() => { btn.innerHTML = _COPY_SVG; }, 1500);
+            }
+            this._dbgEvent('copyPassage: fallback execCommand success');
         } catch (err) {
             console.error('Copy fallback failed:', err);
             this.showToast('Failed to copy passage');
+            this._dbgEvent(`copyPassage: fallback failed — ${err.message}`);
         }
     }
 
