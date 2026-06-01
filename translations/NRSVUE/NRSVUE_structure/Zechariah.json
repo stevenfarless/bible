@@ -183,15 +183,440 @@
   },
   {
     "ch": 9,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 2,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 9,
+    "v": 2,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 9,
+    "v": 2,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 9,
+    "v": 3,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 9,
+    "v": 3,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 9,
+    "v": 4,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 9,
+    "v": 4,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 9,
+    "v": 5,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 9,
+    "v": 5,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 9,
+    "v": 6,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 9,
+    "v": 6,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 9,
+    "v": 7,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 9,
+    "v": 7,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 9,
+    "v": 8,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 9,
+    "v": 8,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 9,
+    "v": 9,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 9,
+    "v": 9,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 9,
     "v": 9,
     "type": "heading",
     "text": "The Coming Ruler of God’s People"
+  },
+  {
+    "ch": 9,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 9,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 9,
+    "v": 10,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 9,
+    "v": 10,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 9,
+    "v": 11,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 9,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 9,
+    "v": 12,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 9,
+    "v": 12,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 9,
+    "v": 13,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 9,
+    "v": 13,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 9,
+    "v": 14,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 9,
+    "v": 14,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 9,
+    "v": 15,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 9,
+    "v": 15,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 9,
+    "v": 16,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 9,
+    "v": 16,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 9,
+    "v": 17,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 9,
+    "v": 17,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 1,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 10,
     "v": 1,
     "type": "heading",
     "text": "Restoration of Judah and Israel"
+  },
+  {
+    "ch": 10,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 1,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 10,
+    "v": 1,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 2,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 2,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 3,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 3,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 4,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 4,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 5,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 5,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 6,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 6,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 7,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 7,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 8,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 8,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 9,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 9,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 10,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 10,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 11,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 12,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 12,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 11,
+    "v": 1,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 11,
+    "v": 1,
+    "type": "poetry",
+    "indent": 4
+  },
+  {
+    "ch": 11,
+    "v": 1,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 11,
+    "v": 1,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 11,
+    "v": 2,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 11,
+    "v": 2,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 11,
+    "v": 3,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 11,
+    "v": 3,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 11,
+    "v": 4,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 11,
+    "v": 4,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 11,
@@ -205,10 +630,43 @@
     "type": "para_break"
   },
   {
+    "ch": 11,
+    "v": 17,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 11,
+    "v": 17,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 12,
+    "v": 1,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 12,
+    "v": 1,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
     "ch": 12,
     "v": 1,
     "type": "heading",
     "text": "Jerusalem’s Victory"
+  },
+  {
+    "ch": 12,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 2,
+    "type": "blockquote"
   },
   {
     "ch": 12,
@@ -242,6 +700,64 @@
     "v": 7,
     "type": "heading",
     "text": "The Shepherd Struck, the Flock Scattered"
+  },
+  {
+    "ch": 13,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 7,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 13,
+    "v": 7,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 13,
+    "v": 8,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 13,
+    "v": 8,
+    "type": "poetry",
+    "indent": 4
+  },
+  {
+    "ch": 13,
+    "v": 8,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 13,
+    "v": 9,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 13,
+    "v": 9,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 14,
+    "v": 1,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 14,
+    "v": 1,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 14,

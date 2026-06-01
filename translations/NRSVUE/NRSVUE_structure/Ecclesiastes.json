@@ -12,6 +12,137 @@
   },
   {
     "ch": 1,
+    "v": 2,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 1,
+    "v": 2,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 3,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 3,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 4,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 4,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 5,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 5,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 6,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 6,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 7,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 7,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 8,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 8,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 9,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 9,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 10,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 10,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 11,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 12,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 12,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
     "v": 12,
     "type": "heading",
     "text": "The Futility of Seeking Wisdom"
@@ -20,6 +151,40 @@
     "ch": 1,
     "v": 12,
     "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 15,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 1,
+    "v": 15,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 16,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 18,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 1,
+    "v": 18,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 1,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 2,
@@ -44,6 +209,23 @@
     "type": "para_break"
   },
   {
+    "ch": 2,
+    "v": 14,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 2,
+    "v": 14,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 15,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
     "ch": 3,
     "v": 1,
     "type": "heading",
@@ -53,6 +235,59 @@
     "ch": 3,
     "v": 1,
     "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 2,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 3,
+    "v": 2,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 3,
+    "v": 3,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 3,
+    "v": 4,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 3,
+    "v": 5,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 3,
+    "v": 6,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 3,
+    "v": 7,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 3,
+    "v": 8,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 3,
+    "v": 9,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 3,
@@ -80,6 +315,35 @@
     "ch": 4,
     "v": 1,
     "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 5,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 4,
+    "v": 5,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 6,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 6,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 7,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 4,
@@ -122,6 +386,172 @@
   },
   {
     "ch": 7,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 1,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 7,
+    "v": 1,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 2,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 2,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 3,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 3,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 4,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 4,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 5,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 5,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 6,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 6,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 7,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 7,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 8,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 8,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 9,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 9,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 10,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 10,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 11,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 12,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 12,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 13,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 13,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 14,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
     "v": 15,
     "type": "heading",
     "text": "The Riddles of Life"
@@ -136,6 +566,34 @@
     "v": 1,
     "type": "heading",
     "text": "Obey the King and Enjoy Yourself"
+  },
+  {
+    "ch": 8,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 1,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 8,
+    "v": 1,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 8,
+    "v": 2,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 8,
+    "v": 2,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 8,
@@ -171,16 +629,322 @@
     "type": "para_break"
   },
   {
+    "ch": 9,
+    "v": 17,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 9,
+    "v": 17,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 9,
+    "v": 18,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 9,
+    "v": 18,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 1,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
     "ch": 10,
     "v": 1,
     "type": "heading",
     "text": "Miscellaneous Observations"
   },
   {
+    "ch": 10,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 1,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 10,
+    "v": 1,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 2,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 2,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 3,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 3,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 4,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 4,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 5,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 8,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 10,
+    "v": 8,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 9,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 9,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 10,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 10,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 11,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 12,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 12,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 13,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 13,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 14,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 14,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 15,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 15,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 16,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 16,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 17,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 17,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 18,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 18,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 19,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 19,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 20,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 20,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 11,
+    "v": 1,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 11,
+    "v": 1,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
     "ch": 11,
     "v": 1,
     "type": "heading",
     "text": "The Value of Diligence"
+  },
+  {
+    "ch": 11,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 1,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 11,
+    "v": 2,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 11,
+    "v": 2,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 11,
+    "v": 3,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 11,
+    "v": 3,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 11,
+    "v": 4,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 11,
+    "v": 4,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 11,
+    "v": 5,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 11,

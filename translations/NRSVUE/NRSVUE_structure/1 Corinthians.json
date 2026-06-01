@@ -12,6 +12,11 @@
   },
   {
     "ch": 1,
+    "v": 4,
+    "type": "blockquote"
+  },
+  {
+    "ch": 1,
     "v": 10,
     "type": "heading",
     "text": "Divisions in the Church"
@@ -31,6 +36,23 @@
     "ch": 1,
     "v": 18,
     "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 20,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 1,
+    "v": 20,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 20,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 1,
@@ -62,6 +84,45 @@
   {
     "ch": 2,
     "v": 10,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 2,
+    "v": 10,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 10,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 10,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 16,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 2,
+    "v": 16,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 3,
+    "v": 1,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 3,
+    "v": 1,
     "type": "para_break"
   },
   {
@@ -72,13 +133,36 @@
   },
   {
     "ch": 3,
-    "v": 1,
-    "type": "para_break"
+    "v": 20,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 3,
+    "v": 20,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 3,
     "v": 20,
     "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 21,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 3,
+    "v": 21,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 3,
+    "v": 21,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 3,
@@ -324,6 +408,23 @@
   {
     "ch": 14,
     "v": 22,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 14,
+    "v": 22,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 14,
+    "v": 22,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 14,
+    "v": 22,
     "type": "para_break"
   },
   {
@@ -362,7 +463,35 @@
   {
     "ch": 15,
     "v": 33,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 15,
+    "v": 33,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 15,
+    "v": 33,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 15,
+    "v": 33,
     "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 34,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 15,
+    "v": 34,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 15,
@@ -379,6 +508,23 @@
     "ch": 15,
     "v": 35,
     "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 55,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 15,
+    "v": 55,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 15,
+    "v": 56,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 15,
@@ -417,5 +563,10 @@
     "ch": 16,
     "v": 13,
     "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 21,
+    "type": "blockquote"
   }
 ]

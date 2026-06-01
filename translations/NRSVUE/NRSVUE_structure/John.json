@@ -24,6 +24,17 @@
   {
     "ch": 1,
     "v": 24,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 1,
+    "v": 24,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 24,
     "type": "para_break"
   },
   {
@@ -507,7 +518,47 @@
   {
     "ch": 12,
     "v": 14,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 12,
+    "v": 14,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 12,
+    "v": 14,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 12,
+    "v": 14,
     "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 15,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 12,
+    "v": 15,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 12,
+    "v": 16,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 12,
+    "v": 16,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 12,
@@ -550,7 +601,47 @@
   {
     "ch": 12,
     "v": 39,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 12,
+    "v": 39,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 12,
+    "v": 39,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 12,
+    "v": 39,
     "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 40,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 12,
+    "v": 40,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 12,
+    "v": 41,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 12,
+    "v": 41,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 12,
@@ -797,6 +888,23 @@
     "ch": 19,
     "v": 17,
     "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 25,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 19,
+    "v": 25,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 19,
+    "v": 25,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 19,

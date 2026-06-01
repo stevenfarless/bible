@@ -46,6 +46,17 @@
   {
     "ch": 3,
     "v": 12,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 3,
+    "v": 12,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 3,
+    "v": 12,
     "type": "para_break"
   },
   {

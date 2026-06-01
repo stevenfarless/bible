@@ -23,6 +23,131 @@
   },
   {
     "ch": 2,
+    "v": 2,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 2,
+    "v": 2,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 2,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 3,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 3,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 4,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 4,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 5,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 5,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 6,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 6,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 7,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 7,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 8,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 8,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 9,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 9,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 10,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 10,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 11,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
     "v": 11,
     "type": "heading",
     "text": "Eli’s Wicked Sons"
@@ -329,6 +454,52 @@
   },
   {
     "ch": 15,
+    "v": 23,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 15,
+    "v": 23,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 15,
+    "v": 23,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 15,
+    "v": 24,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 15,
+    "v": 24,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 15,
+    "v": 34,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 15,
+    "v": 34,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 15,
+    "v": 34,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 15,
     "v": 34,
     "type": "para_break"
   },
@@ -375,6 +546,23 @@
     "ch": 18,
     "v": 1,
     "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 8,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 18,
+    "v": 8,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 18,
+    "v": 8,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 18,
@@ -468,6 +656,23 @@
     "ch": 21,
     "v": 10,
     "type": "para_break"
+  },
+  {
+    "ch": 21,
+    "v": 12,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 21,
+    "v": 12,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 21,
+    "v": 12,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 21,
@@ -599,6 +804,23 @@
     "ch": 29,
     "v": 1,
     "type": "para_break"
+  },
+  {
+    "ch": 29,
+    "v": 6,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 29,
+    "v": 6,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 29,
+    "v": 6,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 30,

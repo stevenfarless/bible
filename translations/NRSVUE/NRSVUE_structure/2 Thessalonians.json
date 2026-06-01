@@ -12,6 +12,11 @@
   },
   {
     "ch": 1,
+    "v": 2,
+    "type": "blockquote"
+  },
+  {
+    "ch": 1,
     "v": 3,
     "type": "heading",
     "text": "Thanksgiving"

@@ -112,6 +112,23 @@
   {
     "ch": 4,
     "v": 7,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 4,
+    "v": 7,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 7,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 7,
     "type": "para_break"
   },
   {

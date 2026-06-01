@@ -56,6 +56,119 @@
   },
   {
     "ch": 1,
+    "v": 47,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 1,
+    "v": 47,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 47,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 48,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 49,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 49,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 50,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 50,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 51,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 51,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 52,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 52,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 53,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 53,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 54,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 54,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 55,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 55,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 56,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
     "v": 57,
     "type": "heading",
     "text": "The Birth of John the Baptist"
@@ -75,6 +188,131 @@
     "ch": 1,
     "v": 67,
     "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 68,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 1,
+    "v": 68,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 69,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 69,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 70,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 70,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 71,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 72,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 73,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 73,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 74,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 75,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 76,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 76,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 77,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 77,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 78,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 78,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 79,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 79,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 80,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 2,
@@ -100,6 +338,23 @@
   },
   {
     "ch": 2,
+    "v": 14,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 2,
+    "v": 14,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 15,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
     "v": 21,
     "type": "heading",
     "text": "Jesus Is Named"
@@ -119,6 +374,47 @@
     "ch": 2,
     "v": 22,
     "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 29,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 2,
+    "v": 29,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 30,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 30,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 31,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 32,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 33,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 2,
@@ -155,6 +451,35 @@
   },
   {
     "ch": 3,
+    "v": 5,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 3,
+    "v": 5,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 3,
+    "v": 5,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 3,
+    "v": 6,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 3,
+    "v": 6,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 3,
     "v": 21,
     "type": "heading",
     "text": "The Baptism of Jesus"
@@ -188,8 +513,59 @@
   },
   {
     "ch": 4,
+    "v": 9,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 4,
+    "v": 9,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 9,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 11,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 4,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 11,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
     "v": 11,
     "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 12,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 4,
+    "v": 12,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 12,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 4,
@@ -217,6 +593,35 @@
     "ch": 4,
     "v": 16,
     "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 18,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 4,
+    "v": 18,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 19,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 19,
+    "type": "poetry",
+    "indent": 3
+  },
+  {
+    "ch": 4,
+    "v": 19,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 4,
@@ -368,6 +773,70 @@
   },
   {
     "ch": 6,
+    "v": 21,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 6,
+    "v": 21,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 6,
+    "v": 21,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 6,
+    "v": 22,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 6,
+    "v": 22,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 6,
+    "v": 24,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 6,
+    "v": 24,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 6,
+    "v": 25,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 6,
+    "v": 25,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 6,
+    "v": 26,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 6,
+    "v": 26,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 6,
     "v": 27,
     "type": "heading",
     "text": "Love for Enemies"
@@ -446,7 +915,41 @@
   {
     "ch": 7,
     "v": 28,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 7,
+    "v": 28,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 28,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 28,
     "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 33,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 7,
+    "v": 33,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 33,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 7,
@@ -496,6 +999,23 @@
     "ch": 8,
     "v": 9,
     "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 11,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 8,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 8,
+    "v": 11,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 8,
@@ -719,6 +1239,23 @@
   },
   {
     "ch": 10,
+    "v": 16,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 10,
+    "v": 16,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 16,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
     "v": 17,
     "type": "heading",
     "text": "The Return of the Seventy-Two"
@@ -771,6 +1308,41 @@
     "ch": 11,
     "v": 1,
     "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 3,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 11,
+    "v": 3,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 11,
+    "v": 3,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 11,
+    "v": 4,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 11,
+    "v": 5,
+    "type": "poetry",
+    "indent": 3
+  },
+  {
+    "ch": 11,
+    "v": 5,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 11,
@@ -925,6 +1497,23 @@
     "ch": 12,
     "v": 49,
     "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 54,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 12,
+    "v": 54,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 12,
+    "v": 54,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 12,
@@ -1281,6 +1870,23 @@
   {
     "ch": 19,
     "v": 39,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 19,
+    "v": 39,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 19,
+    "v": 39,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 19,
+    "v": 39,
     "type": "para_break"
   },
   {
@@ -1306,6 +1912,23 @@
     "type": "para_break"
   },
   {
+    "ch": 19,
+    "v": 47,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 19,
+    "v": 47,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 19,
+    "v": 47,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
     "ch": 20,
     "v": 1,
     "type": "heading",
@@ -1326,6 +1949,23 @@
     "ch": 20,
     "v": 9,
     "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 18,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 20,
+    "v": 18,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 20,
+    "v": 18,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 20,
@@ -1364,6 +2004,23 @@
     "ch": 20,
     "v": 41,
     "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 43,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 20,
+    "v": 43,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 20,
+    "v": 43,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 20,

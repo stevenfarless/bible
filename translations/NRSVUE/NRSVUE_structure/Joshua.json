@@ -99,6 +99,23 @@
     "type": "para_break"
   },
   {
+    "ch": 6,
+    "v": 27,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 6,
+    "v": 27,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 6,
+    "v": 27,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
     "ch": 7,
     "v": 1,
     "type": "heading",
@@ -152,6 +169,29 @@
     "ch": 10,
     "v": 1,
     "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 13,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 10,
+    "v": 13,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 13,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
+    "v": 14,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 10,
@@ -216,13 +256,13 @@
   {
     "ch": 13,
     "v": 1,
-    "type": "heading",
-    "text": "The Parts of Canaan Still Unconquered"
+    "type": "para_break"
   },
   {
     "ch": 13,
     "v": 1,
-    "type": "para_break"
+    "type": "heading",
+    "text": "The Parts of Canaan Still Unconquered"
   },
   {
     "ch": 13,

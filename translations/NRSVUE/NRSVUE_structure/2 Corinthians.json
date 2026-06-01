@@ -116,6 +116,23 @@
   {
     "ch": 6,
     "v": 3,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 6,
+    "v": 3,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 6,
+    "v": 3,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 6,
+    "v": 3,
     "type": "para_break"
   },
   {
@@ -128,6 +145,47 @@
     "ch": 6,
     "v": 14,
     "type": "para_break"
+  },
+  {
+    "ch": 6,
+    "v": 17,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 6,
+    "v": 17,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 6,
+    "v": 17,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 6,
+    "v": 18,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 6,
+    "v": 18,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 1,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 1,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 7,
@@ -159,6 +217,23 @@
   {
     "ch": 8,
     "v": 16,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 8,
+    "v": 16,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 8,
+    "v": 16,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 8,
+    "v": 16,
     "type": "heading",
     "text": "Commendation of Titus"
   },
@@ -177,6 +252,23 @@
     "ch": 9,
     "v": 1,
     "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 10,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 9,
+    "v": 10,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 9,
+    "v": 10,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 9,

@@ -24,6 +24,17 @@
   {
     "ch": 1,
     "v": 13,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 1,
+    "v": 13,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 13,
     "type": "para_break"
   },
   {
