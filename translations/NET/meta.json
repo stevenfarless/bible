@@ -1,7 +1,22 @@
 {
-  "id": "NET",
-  "label": "NET — New English Translation",
-  "copyright": "Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved.",
+  "info": {
+    "id": "NET",
+    "label": "New English Translation",
+    "abbreviation": "NET",
+    "language": "en",
+    "textDirection": "ltr",
+    "year": 1996,
+    "canon": "protestant",
+    "philosophy": "dynamic",
+    "manuscriptTradition": [
+      "Masoretic Text",
+      "Dead Sea Scrolls",
+      "Septuagint",
+      "Critical Text"
+    ],
+    "textualBasis": "OT translated from the Masoretic Text with significant reference to the Dead Sea Scrolls and Septuagint where they provide textual clarity. NT translated from the eclectic critical Greek text (NA27/UBS4). Notable for its extensive translator footnotes documenting textual decisions.",
+    "copyright": "Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved."
+  },
   "books": [
     {
       "name": "Genesis",
@@ -332,11 +347,6 @@
       "name": "Revelation",
       "testament": "New Testament",
       "chapters": 22
-    },
-    {
-      "name": "NET_search_index",
-      "testament": "Deuterocanon",
-      "chapters": 31103
     }
   ]
 }
