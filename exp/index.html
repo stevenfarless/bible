@@ -5,7 +5,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Bible Reader</title>
-        <meta name="build-id" content="2db71828746b0eabfe27f16c1350cb106bf9cfb9" />
+        <meta name="build-id" content="fe3daa79583c2602eafccebc02e826d848f6c60a" />
         <link rel="manifest" href="./site.webmanifest" />
         <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -16,7 +16,7 @@
         <link rel="preconnect" href="https://www.gstatic.com" />
         <link rel="preconnect" href="https://www.google.com" />
         <!-- Preload all ES modules so the browser fetches them in parallel
-             before the parser reaches <script type="module" src="app.js?v=2db71828746b0eabfe27f16c1350cb106bf9cfb9">.
+             before the parser reaches <script type="module" src="app.js?v=fe3daa79583c2602eafccebc02e826d848f6c60a">.
              This eliminates the sequential module-discovery waterfall. -->
         <link rel="modulepreload" href="app.js" />
         <link rel="modulepreload" href="bible-api.js" />
@@ -31,6 +31,11 @@
         <link rel="modulepreload" href="settings.js" />
         <link rel="modulepreload" href="keyboard.js" />
         <link rel="modulepreload" href="events.js" />
+        <!-- Preload reading fonts so the browser fetches them early,
+             preventing a late font-discovery stall that inflates LCP. -->
+        <link rel="preload" href="./fonts/GentiumBookPlus-Regular.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="./fonts/Andika-Regular.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="./fonts/Ubuntu-Regular.woff2" as="font" type="font/woff2" crossorigin />
         <link rel="stylesheet" href="styles.css" />
         <!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
         <script src="https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV" async defer></script>
@@ -41,7 +46,7 @@
                 <header class="header">
                         <div class="header-content">
                                 <h1 class="logo">Lege Lux</h1>
-                                <span id="build-info">exp #1779 · 2db7182</span>
+                                <span id="build-info">exp #1780 · fe3daa7</span>
                                 <div class="header-controls">
                                         <button class="icon-btn" id="searchToggle" title="Search (Ctrl+K)">
                                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -559,7 +564,7 @@
         <div id="toast" class="toast"></div>
 
 
-        <script type="module" src="app.js?v=2db71828746b0eabfe27f16c1350cb106bf9cfb9"></script>
+        <script type="module" src="app.js?v=fe3daa79583c2602eafccebc02e826d848f6c60a"></script>
 </body>
 
 </html>
