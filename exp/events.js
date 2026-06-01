@@ -4,7 +4,7 @@
 
 import { toggleTheme, changeColorTheme } from './ui.js';
 import { attachDragToResize } from './modals.js';
-import { runMegasearch } from './search.js';
+import { runMegasearch, performKeywordSearch } from './search.js';
 
 /**
  * @param {object} app - BibleApp instance
@@ -18,14 +18,19 @@ export function attachEventListeners(app) {
     // iOS/Android: paste does not reliably fire `input`; read value after DOM settles.
     app.searchInput?.addEventListener('paste',     ()  => setTimeout(() => app.handleSearch(app.searchInput.value, 'paste'), 0));
 
-    // When the megasearch toggle is switched ON and there are already results
-    // showing, run a supplemental pass immediately against whatever translations
-    // are now in the cache — no need to retype the query.
+    // Megasearch toggle:
+    // ON  — run a supplemental pass against cached translations immediately.
+    // OFF — re-run the active-translation-only search to strip supplemental results.
     document.getElementById('megasearchToggle')?.addEventListener('change', (e) => {
-        if (!e.target.checked) return;
         const query = app.searchLastQuery || '';
-        if (query.trim().length >= 3 && app.currentSearchResults?.length > 0) {
-            runMegasearch(app, query);
+        if (e.target.checked) {
+            if (query.trim().length >= 3 && app.currentSearchResults?.length > 0) {
+                runMegasearch(app, query);
+            }
+        } else {
+            if (query.trim().length > 0) {
+                performKeywordSearch(app, query);
+            }
         }
     });
 
