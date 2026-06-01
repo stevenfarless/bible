@@ -35,6 +35,23 @@
   {
     "ch": 1,
     "v": 21,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 1,
+    "v": 21,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 21,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 21,
     "type": "para_break"
   },
   {
@@ -61,8 +78,166 @@
   },
   {
     "ch": 2,
+    "v": 17,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 2,
+    "v": 17,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 18,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 18,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 19,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 19,
+    "type": "poetry",
+    "indent": 3
+  },
+  {
+    "ch": 2,
+    "v": 19,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 20,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 20,
+    "type": "poetry",
+    "indent": 3
+  },
+  {
+    "ch": 2,
+    "v": 20,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 21,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 21,
+    "type": "poetry",
+    "indent": 3
+  },
+  {
+    "ch": 2,
+    "v": 21,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 26,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 2,
+    "v": 26,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 26,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 27,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 27,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 28,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 28,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 29,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 32,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 2,
+    "v": 32,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 32,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
     "v": 32,
     "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 35,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 2,
+    "v": 35,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 35,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 2,
@@ -127,6 +302,23 @@
   {
     "ch": 4,
     "v": 12,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 4,
+    "v": 12,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 12,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 12,
     "type": "para_break"
   },
   {
@@ -139,6 +331,35 @@
     "ch": 4,
     "v": 23,
     "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 26,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 4,
+    "v": 26,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 26,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 27,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 27,
+    "type": "poetry",
+    "indent": 3
   },
   {
     "ch": 4,
@@ -224,6 +445,64 @@
   },
   {
     "ch": 7,
+    "v": 43,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 7,
+    "v": 43,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 43,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 44,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 44,
+    "type": "poetry",
+    "indent": 3
+  },
+  {
+    "ch": 7,
+    "v": 44,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 49,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 7,
+    "v": 49,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 50,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 50,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
     "v": 54,
     "type": "heading",
     "text": "The Stoning of Stephen"
@@ -270,6 +549,41 @@
     "ch": 8,
     "v": 26,
     "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 33,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 8,
+    "v": 33,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 8,
+    "v": 33,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 8,
+    "v": 33,
+    "type": "poetry",
+    "indent": 3
+  },
+  {
+    "ch": 8,
+    "v": 34,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 8,
+    "v": 34,
+    "type": "poetry",
+    "indent": 3
   },
   {
     "ch": 8,
@@ -466,7 +780,35 @@
   {
     "ch": 13,
     "v": 34,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 13,
+    "v": 34,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 13,
+    "v": 34,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 13,
+    "v": 34,
     "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 35,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 13,
+    "v": 35,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 13,
@@ -476,7 +818,58 @@
   {
     "ch": 13,
     "v": 36,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 13,
+    "v": 36,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 13,
+    "v": 36,
     "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 41,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 13,
+    "v": 41,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 13,
+    "v": 42,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 13,
+    "v": 42,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 13,
+    "v": 48,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 13,
+    "v": 48,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 13,
+    "v": 48,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 14,
@@ -521,6 +914,47 @@
     "ch": 15,
     "v": 1,
     "type": "para_break"
+  },
+  {
+    "ch": 15,
+    "v": 16,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 15,
+    "v": 16,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 15,
+    "v": 17,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 15,
+    "v": 17,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 15,
+    "v": 17,
+    "type": "poetry",
+    "indent": 3
+  },
+  {
+    "ch": 15,
+    "v": 18,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 15,
+    "v": 18,
+    "type": "poetry",
+    "indent": 3
   },
   {
     "ch": 15,
@@ -625,6 +1059,17 @@
     "ch": 17,
     "v": 16,
     "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 29,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 17,
+    "v": 29,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 17,
@@ -1047,6 +1492,47 @@
     "ch": 28,
     "v": 23,
     "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 26,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 28,
+    "v": 26,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 28,
+    "v": 27,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 28,
+    "v": 27,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 28,
+    "v": 28,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 28,
+    "v": 28,
+    "type": "poetry",
+    "indent": 3
+  },
+  {
+    "ch": 28,
+    "v": 28,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 28,

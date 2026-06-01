@@ -177,6 +177,23 @@
   },
   {
     "ch": 8,
+    "v": 13,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 8,
+    "v": 13,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 8,
+    "v": 14,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 8,
     "v": 14,
     "type": "heading",
     "text": "Solomon’s Speech"
@@ -317,6 +334,23 @@
     "ch": 12,
     "v": 1,
     "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 17,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 12,
+    "v": 17,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 12,
+    "v": 17,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 12,

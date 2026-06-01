@@ -61,6 +61,11 @@
   },
   {
     "ch": 2,
+    "v": 8,
+    "type": "blockquote"
+  },
+  {
+    "ch": 2,
     "v": 20,
     "type": "heading",
     "text": "Warnings against False Teachers"
@@ -118,5 +123,10 @@
     "ch": 4,
     "v": 7,
     "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 18,
+    "type": "blockquote"
   }
 ]

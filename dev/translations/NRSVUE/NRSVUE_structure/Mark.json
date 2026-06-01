@@ -12,6 +12,29 @@
   },
   {
     "ch": 1,
+    "v": 3,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 1,
+    "v": 3,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 3,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 4,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
     "v": 4,
     "type": "para_break"
   },
@@ -226,6 +249,23 @@
   },
   {
     "ch": 4,
+    "v": 13,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 4,
+    "v": 13,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 13,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
     "v": 21,
     "type": "heading",
     "text": "A Lamp under a Bushel Basket"
@@ -377,6 +417,29 @@
     "ch": 7,
     "v": 1,
     "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 7,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 7,
+    "v": 7,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 7,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 8,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 7,
@@ -632,6 +695,29 @@
   },
   {
     "ch": 11,
+    "v": 10,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 11,
+    "v": 10,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 11,
+    "v": 10,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 11,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 11,
     "v": 12,
     "type": "heading",
     "text": "Jesus Curses the Fig Tree"
@@ -651,6 +737,23 @@
     "ch": 11,
     "v": 15,
     "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 18,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 11,
+    "v": 18,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 11,
+    "v": 18,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 11,
@@ -689,6 +792,29 @@
     "ch": 12,
     "v": 1,
     "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 11,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 12,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 12,
+    "v": 11,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 12,
+    "v": 12,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 12,
@@ -733,6 +859,23 @@
     "ch": 12,
     "v": 35,
     "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 37,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 12,
+    "v": 37,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 12,
+    "v": 37,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 12,
@@ -804,6 +947,29 @@
     "ch": 13,
     "v": 24,
     "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 25,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 13,
+    "v": 25,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 13,
+    "v": 25,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 13,
+    "v": 26,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 13,
@@ -901,6 +1067,23 @@
   {
     "ch": 14,
     "v": 28,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 14,
+    "v": 28,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 14,
+    "v": 28,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 14,
+    "v": 28,
     "type": "para_break"
   },
   {
@@ -935,6 +1118,17 @@
     "ch": 14,
     "v": 53,
     "type": "para_break"
+  },
+  {
+    "ch": 14,
+    "v": 63,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 14,
+    "v": 63,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 14,
@@ -1032,13 +1226,25 @@
   {
     "ch": 16,
     "v": 9,
-    "type": "heading",
-    "text": "Jesus Appears to Mary Magdalene"
+    "type": "heading_minor",
+    "text": "The Intermediate Ending of Mark"
   },
   {
     "ch": 16,
     "v": 9,
     "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 9,
+    "type": "heading_minor",
+    "text": "The Long Ending of Mark"
+  },
+  {
+    "ch": 16,
+    "v": 9,
+    "type": "heading",
+    "text": "Jesus Appears to Mary Magdalene"
   },
   {
     "ch": 16,

@@ -34,6 +34,65 @@
   },
   {
     "ch": 2,
+    "v": 20,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 2,
+    "v": 20,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 21,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 21,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 22,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 22,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 23,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 23,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 24,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
+    "v": 24,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
     "v": 24,
     "type": "heading",
     "text": "Daniel Interprets the Dream"
@@ -89,6 +148,129 @@
   },
   {
     "ch": 4,
+    "v": 3,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 4,
+    "v": 3,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 4,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 4,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 10,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 4,
+    "v": 10,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 11,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 12,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 12,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 13,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 13,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 15,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 4,
+    "v": 15,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 15,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 16,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 16,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 17,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 17,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 18,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 18,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
     "v": 19,
     "type": "heading",
     "text": "Daniel Interprets the Second Dream"
@@ -122,8 +304,54 @@
   },
   {
     "ch": 4,
+    "v": 35,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 4,
+    "v": 35,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 35,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 36,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 36,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
     "v": 36,
     "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 1,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 5,
+    "v": 1,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 5,
+    "v": 1,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 5,
@@ -157,6 +385,42 @@
     "ch": 5,
     "v": 13,
     "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 26,
+    "type": "inscription",
+    "text": "MENE"
+  },
+  {
+    "ch": 5,
+    "v": 26,
+    "type": "inscription",
+    "text": "TEKEL"
+  },
+  {
+    "ch": 5,
+    "v": 26,
+    "type": "inscription",
+    "text": "PARSIN"
+  },
+  {
+    "ch": 5,
+    "v": 27,
+    "type": "inscription",
+    "text": "MENE"
+  },
+  {
+    "ch": 5,
+    "v": 28,
+    "type": "inscription",
+    "text": "TEKEL"
+  },
+  {
+    "ch": 5,
+    "v": 29,
+    "type": "inscription",
+    "text": "PERES"
   },
   {
     "ch": 6,
@@ -193,6 +457,35 @@
   },
   {
     "ch": 6,
+    "v": 27,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 6,
+    "v": 27,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 6,
+    "v": 27,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 6,
+    "v": 28,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 6,
+    "v": 28,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 6,
     "v": 28,
     "type": "para_break"
   },
@@ -215,8 +508,77 @@
   },
   {
     "ch": 7,
+    "v": 9,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 9,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 7,
+    "v": 9,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 10,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 10,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 11,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
     "v": 11,
     "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 14,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 7,
+    "v": 14,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 14,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 15,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 15,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 7,
@@ -228,6 +590,71 @@
     "ch": 7,
     "v": 15,
     "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 24,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 7,
+    "v": 24,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 24,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 25,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 25,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 26,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 26,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 27,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 27,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 28,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 28,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 8,
@@ -250,6 +677,53 @@
     "ch": 8,
     "v": 15,
     "type": "para_break"
+  },
+  {
+    "ch": 8,
+    "v": 23,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 8,
+    "v": 23,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 8,
+    "v": 24,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 8,
+    "v": 24,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 8,
+    "v": 25,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 8,
+    "v": 25,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 8,
+    "v": 26,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 8,
+    "v": 26,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 8,

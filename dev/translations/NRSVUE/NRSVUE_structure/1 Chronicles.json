@@ -315,6 +315,23 @@
   {
     "ch": 12,
     "v": 19,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 12,
+    "v": 19,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 12,
+    "v": 19,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 12,
+    "v": 19,
     "type": "para_break"
   },
   {
@@ -396,7 +413,364 @@
   },
   {
     "ch": 16,
+    "v": 8,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 16,
+    "v": 8,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 9,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 9,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 10,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 10,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 11,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 12,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 12,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 13,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 13,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 14,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 14,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 15,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 15,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 16,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 16,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 17,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 17,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 18,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 18,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 19,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 19,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 20,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 20,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 21,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 21,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 22,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 22,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 23,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 23,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 24,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 24,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 25,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 25,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 26,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 26,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 27,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 27,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 28,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 28,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 29,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 29,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 30,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 30,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 31,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 31,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 32,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 32,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 33,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 33,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 34,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 34,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
     "v": 35,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 35,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 36,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 16,
+    "v": 36,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 36,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 37,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 37,
     "type": "para_break"
   },
   {
@@ -404,11 +778,6 @@
     "v": 37,
     "type": "heading",
     "text": "Regular Worship Maintained"
-  },
-  {
-    "ch": 16,
-    "v": 37,
-    "type": "para_break"
   },
   {
     "ch": 17,

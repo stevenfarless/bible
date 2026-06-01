@@ -45,6 +45,23 @@
   },
   {
     "ch": 2,
+    "v": 6,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 2,
+    "v": 6,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 6,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
     "v": 7,
     "type": "para_break"
   },
@@ -80,6 +97,29 @@
     "ch": 3,
     "v": 14,
     "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 1,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 4,
+    "v": 1,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 1,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 1,
+    "type": "poetry",
+    "indent": 3
   },
   {
     "ch": 4,

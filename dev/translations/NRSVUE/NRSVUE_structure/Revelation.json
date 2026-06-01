@@ -12,6 +12,34 @@
   },
   {
     "ch": 1,
+    "v": 4,
+    "type": "blockquote"
+  },
+  {
+    "ch": 1,
+    "v": 7,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 1,
+    "v": 7,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 8,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 8,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
     "v": 8,
     "type": "para_break"
   },
@@ -72,6 +100,23 @@
   },
   {
     "ch": 2,
+    "v": 27,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 2,
+    "v": 27,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 2,
+    "v": 28,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 2,
     "v": 28,
     "type": "para_break"
   },
@@ -99,6 +144,29 @@
   },
   {
     "ch": 3,
+    "v": 8,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 3,
+    "v": 8,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 3,
+    "v": 8,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 3,
+    "v": 8,
+    "type": "poetry",
+    "indent": 3
+  },
+  {
+    "ch": 3,
     "v": 14,
     "type": "heading",
     "text": "The Message to Laodicea"
@@ -122,7 +190,47 @@
   {
     "ch": 4,
     "v": 9,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 4,
+    "v": 9,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 4,
+    "v": 9,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 4,
+    "v": 9,
     "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 11,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 4,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 5,
+    "v": 1,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 5,
+    "v": 1,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 5,
@@ -137,8 +245,53 @@
   },
   {
     "ch": 5,
+    "v": 10,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 5,
+    "v": 10,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 5,
+    "v": 10,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 5,
+    "v": 11,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 5,
+    "v": 13,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 5,
+    "v": 13,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 5,
     "v": 13,
     "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 14,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 5,
+    "v": 14,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 5,
@@ -169,6 +322,31 @@
   },
   {
     "ch": 7,
+    "v": 5,
+    "type": "list_item"
+  },
+  {
+    "ch": 7,
+    "v": 6,
+    "type": "list_item"
+  },
+  {
+    "ch": 7,
+    "v": 7,
+    "type": "list_item"
+  },
+  {
+    "ch": 7,
+    "v": 8,
+    "type": "list_item"
+  },
+  {
+    "ch": 7,
+    "v": 9,
+    "type": "list_item"
+  },
+  {
+    "ch": 7,
     "v": 9,
     "type": "heading",
     "text": "The Multitude from Every Nation"
@@ -181,7 +359,76 @@
   {
     "ch": 7,
     "v": 11,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 7,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 11,
     "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 13,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 7,
+    "v": 13,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 15,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 7,
+    "v": 15,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 16,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 16,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 7,
+    "v": 17,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 7,
+    "v": 17,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 8,
+    "v": 1,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 8,
+    "v": 1,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 8,
@@ -223,6 +470,23 @@
   },
   {
     "ch": 10,
+    "v": 6,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 10,
+    "v": 6,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 10,
+    "v": 6,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 10,
     "v": 7,
     "type": "para_break"
   },
@@ -249,6 +513,52 @@
     "type": "para_break"
   },
   {
+    "ch": 11,
+    "v": 16,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 11,
+    "v": 16,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 11,
+    "v": 16,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 11,
+    "v": 18,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 11,
+    "v": 18,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 11,
+    "v": 18,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 11,
+    "v": 19,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 11,
+    "v": 19,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
     "ch": 12,
     "v": 1,
     "type": "heading",
@@ -269,6 +579,47 @@
     "ch": 12,
     "v": 7,
     "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 11,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 12,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 12,
+    "v": 11,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 12,
+    "v": 12,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 12,
+    "v": 12,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 12,
+    "v": 13,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 12,
+    "v": 13,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 12,
@@ -299,14 +650,37 @@
   },
   {
     "ch": 13,
+    "v": 10,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 13,
+    "v": 10,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 13,
     "v": 11,
-    "type": "heading",
-    "text": "The Second Beast"
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 13,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 13,
     "v": 11,
     "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 11,
+    "type": "heading",
+    "text": "The Second Beast"
   },
   {
     "ch": 14,
@@ -353,6 +727,35 @@
     "type": "para_break"
   },
   {
+    "ch": 15,
+    "v": 4,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 15,
+    "v": 4,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 15,
+    "v": 4,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 15,
+    "v": 5,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 15,
+    "v": 5,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
     "ch": 16,
     "v": 1,
     "type": "heading",
@@ -365,8 +768,54 @@
   },
   {
     "ch": 16,
+    "v": 6,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 16,
+    "v": 6,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 6,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 7,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 16,
+    "v": 7,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
     "v": 7,
     "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 8,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 16,
+    "v": 8,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 16,
+    "v": 8,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 17,
@@ -392,13 +841,251 @@
   },
   {
     "ch": 18,
+    "v": 3,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 18,
+    "v": 3,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 18,
+    "v": 3,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 18,
+    "v": 4,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 18,
+    "v": 4,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 18,
+    "v": 5,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 18,
+    "v": 5,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 18,
+    "v": 5,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 18,
+    "v": 6,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 18,
+    "v": 6,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 18,
+    "v": 7,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 18,
+    "v": 7,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 18,
+    "v": 8,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 18,
+    "v": 8,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 18,
+    "v": 9,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 18,
+    "v": 9,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 18,
+    "v": 11,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 18,
+    "v": 11,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 18,
+    "v": 11,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 18,
+    "v": 14,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 18,
+    "v": 14,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 18,
+    "v": 15,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 18,
+    "v": 15,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 18,
     "v": 15,
     "type": "para_break"
   },
   {
     "ch": 18,
+    "v": 16,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 18,
+    "v": 16,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 18,
+    "v": 17,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 18,
+    "v": 17,
+    "type": "poetry",
+    "indent": 3
+  },
+  {
+    "ch": 18,
+    "v": 17,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 18,
+    "v": 19,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 18,
+    "v": 19,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 18,
     "v": 19,
     "type": "para_break"
+  },
+  {
+    "ch": 18,
+    "v": 20,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 18,
+    "v": 20,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 18,
+    "v": 20,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 18,
+    "v": 22,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 18,
+    "v": 22,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 18,
+    "v": 22,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 18,
+    "v": 23,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 18,
+    "v": 23,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 18,
+    "v": 24,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 18,
+    "v": 24,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 19,
+    "v": 1,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 19,
@@ -413,8 +1100,48 @@
   },
   {
     "ch": 19,
+    "v": 2,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 19,
+    "v": 2,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 19,
+    "v": 2,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 19,
+    "v": 3,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 19,
+    "v": 3,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 19,
     "v": 3,
     "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 4,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 19,
+    "v": 4,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 19,
@@ -423,8 +1150,71 @@
   },
   {
     "ch": 19,
+    "v": 5,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 19,
+    "v": 5,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 19,
+    "v": 6,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 19,
+    "v": 6,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 19,
+    "v": 6,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 19,
     "v": 6,
     "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 7,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 19,
+    "v": 7,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 19,
+    "v": 7,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 19,
+    "v": 8,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 19,
+    "v": 8,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 19,
+    "v": 9,
+    "type": "poetry",
+    "indent": 2
   },
   {
     "ch": 19,
@@ -499,6 +1289,23 @@
   },
   {
     "ch": 21,
+    "v": 4,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 21,
+    "v": 4,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 21,
+    "v": 5,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 21,
     "v": 9,
     "type": "heading",
     "text": "Vision of the New Jerusalem"
@@ -529,5 +1336,32 @@
     "ch": 22,
     "v": 8,
     "type": "para_break"
+  },
+  {
+    "ch": 22,
+    "v": 12,
+    "type": "blockquote"
+  },
+  {
+    "ch": 22,
+    "v": 14,
+    "type": "blockquote"
+  },
+  {
+    "ch": 22,
+    "v": 17,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 22,
+    "v": 17,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 22,
+    "v": 18,
+    "type": "poetry",
+    "indent": 1
   }
 ]

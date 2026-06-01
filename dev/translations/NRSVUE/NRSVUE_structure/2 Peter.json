@@ -46,13 +46,24 @@
   {
     "ch": 3,
     "v": 1,
-    "type": "heading",
-    "text": "The Promise of the Lord’s Coming"
+    "type": "stanza_break"
+  },
+  {
+    "ch": 3,
+    "v": 1,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 3,
     "v": 1,
     "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 1,
+    "type": "heading",
+    "text": "The Promise of the Lord’s Coming"
   },
   {
     "ch": 3,

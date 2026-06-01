@@ -2,6 +2,12 @@
   {
     "ch": 1,
     "v": 1,
+    "type": "inscription",
+    "text": "END OF ADDITION"
+  },
+  {
+    "ch": 1,
+    "v": 1,
     "type": "heading",
     "text": "Artaxerxes’ Banquet"
   },
@@ -68,6 +74,12 @@
   {
     "ch": 3,
     "v": 14,
+    "type": "inscription",
+    "text": "END OF ADDITION"
+  },
+  {
+    "ch": 3,
+    "v": 14,
     "type": "para_break"
   },
   {
@@ -80,6 +92,12 @@
     "ch": 4,
     "v": 1,
     "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 3,
+    "type": "inscription",
+    "text": "END OF ADDITION"
   },
   {
     "ch": 5,
@@ -149,6 +167,12 @@
   {
     "ch": 8,
     "v": 13,
+    "type": "inscription",
+    "text": "END OF ADDITION"
+  },
+  {
+    "ch": 8,
+    "v": 13,
     "type": "para_break"
   },
   {
@@ -181,6 +205,12 @@
   {
     "ch": 10,
     "v": 4,
+    "type": "inscription",
+    "text": "ADDITION"
+  },
+  {
+    "ch": 10,
+    "v": 4,
     "type": "heading",
     "text": "Mordecai’s Dream Fulfilled"
   },
@@ -199,6 +229,12 @@
     "ch": 11,
     "v": 1,
     "type": "para_break"
+  },
+  {
+    "ch": 11,
+    "v": 2,
+    "type": "inscription",
+    "text": "ADDITION"
   },
   {
     "ch": 11,
@@ -225,6 +261,12 @@
   {
     "ch": 13,
     "v": 1,
+    "type": "inscription",
+    "text": "ADDITION"
+  },
+  {
+    "ch": 13,
+    "v": 1,
     "type": "heading",
     "text": "The King’s Letter"
   },
@@ -232,6 +274,12 @@
     "ch": 13,
     "v": 1,
     "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 8,
+    "type": "inscription",
+    "text": "ADDITION"
   },
   {
     "ch": 13,
@@ -258,6 +306,18 @@
   {
     "ch": 15,
     "v": 1,
+    "type": "inscription",
+    "text": "END OF ADDITION"
+  },
+  {
+    "ch": 15,
+    "v": 1,
+    "type": "inscription",
+    "text": "ADDITION"
+  },
+  {
+    "ch": 15,
+    "v": 1,
     "type": "heading",
     "text": "Esther Is Received by the King"
   },
@@ -265,6 +325,12 @@
     "ch": 15,
     "v": 1,
     "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 1,
+    "type": "inscription",
+    "text": "ADDITION"
   },
   {
     "ch": 16,

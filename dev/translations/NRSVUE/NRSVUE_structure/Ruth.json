@@ -23,8 +23,66 @@
   },
   {
     "ch": 1,
+    "v": 17,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 1,
+    "v": 17,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 17,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 18,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 18,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
     "v": 18,
     "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 21,
+    "type": "stanza_break"
+  },
+  {
+    "ch": 1,
+    "v": 21,
+    "type": "poetry",
+    "indent": 1
+  },
+  {
+    "ch": 1,
+    "v": 21,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 22,
+    "type": "poetry",
+    "indent": 2
+  },
+  {
+    "ch": 1,
+    "v": 22,
+    "type": "poetry",
+    "indent": 1
   },
   {
     "ch": 2,
