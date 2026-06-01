@@ -1,0 +1,73 @@
+[
+  {
+    "ch": 1,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 2,
+    "type": "heading",
+    "text": "Colloquy of the Young Woman and Friends"
+  },
+  {
+    "ch": 1,
+    "v": 9,
+    "type": "heading",
+    "text": "Colloquy of the Young Man, Friends, and the Young Woman"
+  },
+  {
+    "ch": 2,
+    "v": 8,
+    "type": "heading",
+    "text": "Springtime Rhapsody"
+  },
+  {
+    "ch": 3,
+    "v": 1,
+    "type": "heading",
+    "text": "Love’s Dream"
+  },
+  {
+    "ch": 3,
+    "v": 6,
+    "type": "heading",
+    "text": "The Young Man and His Party Approach"
+  },
+  {
+    "ch": 4,
+    "v": 1,
+    "type": "heading",
+    "text": "The Young Woman’s Beauty Extolled"
+  },
+  {
+    "ch": 5,
+    "v": 2,
+    "type": "heading",
+    "text": "Another Dream"
+  },
+  {
+    "ch": 5,
+    "v": 9,
+    "type": "heading",
+    "text": "Colloquy of Friends and the Young Woman"
+  },
+  {
+    "ch": 6,
+    "v": 4,
+    "type": "heading",
+    "text": "The Young Woman’s Matchless Beauty"
+  },
+  {
+    "ch": 7,
+    "v": 1,
+    "type": "heading",
+    "text": "Expressions of Praise"
+  },
+  {
+    "ch": 8,
+    "v": 5,
+    "type": "heading",
+    "text": "Homecoming"
+  }
+]

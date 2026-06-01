@@ -1,0 +1,47 @@
+[
+  {
+    "ch": 1,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 2,
+    "type": "heading",
+    "text": "The Prophet’s Complaint"
+  },
+  {
+    "ch": 2,
+    "v": 1,
+    "type": "heading",
+    "text": "God’s Reply to the Prophet’s Complaint"
+  },
+  {
+    "ch": 2,
+    "v": 6,
+    "type": "heading",
+    "text": "The Woes of the Wicked"
+  },
+  {
+    "ch": 2,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 2,
+    "type": "heading",
+    "text": "The Prophet’s Prayer"
+  },
+  {
+    "ch": 3,
+    "v": 17,
+    "type": "heading",
+    "text": "Trust and Joy in the Midst of Trouble"
+  }
+]

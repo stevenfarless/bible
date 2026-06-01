@@ -1,0 +1,435 @@
+[
+  {
+    "ch": 1,
+    "v": 1,
+    "type": "heading",
+    "text": "Job and His Family"
+  },
+  {
+    "ch": 1,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 6,
+    "type": "heading",
+    "text": "Attack on Job’s Character"
+  },
+  {
+    "ch": 1,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 1,
+    "v": 13,
+    "type": "heading",
+    "text": "Job Loses Property and Children"
+  },
+  {
+    "ch": 1,
+    "v": 13,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 1,
+    "type": "heading",
+    "text": "Attack on Job’s Health"
+  },
+  {
+    "ch": 2,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 2,
+    "v": 11,
+    "type": "heading",
+    "text": "Job’s Three Friends"
+  },
+  {
+    "ch": 2,
+    "v": 11,
+    "type": "para_break"
+  },
+  {
+    "ch": 3,
+    "v": 1,
+    "type": "heading",
+    "text": "Job Curses the Day He Was Born"
+  },
+  {
+    "ch": 3,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 4,
+    "v": 1,
+    "type": "heading",
+    "text": "Eliphaz Speaks: Job Has Sinned"
+  },
+  {
+    "ch": 4,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 5,
+    "v": 1,
+    "type": "heading",
+    "text": "Job Is Corrected by God"
+  },
+  {
+    "ch": 6,
+    "v": 1,
+    "type": "heading",
+    "text": "Job Replies: My Complaint Is Just"
+  },
+  {
+    "ch": 6,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 7,
+    "v": 1,
+    "type": "heading",
+    "text": "Job: My Suffering Is without End"
+  },
+  {
+    "ch": 8,
+    "v": 1,
+    "type": "heading",
+    "text": "Bildad Speaks: Job Should Repent"
+  },
+  {
+    "ch": 8,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 9,
+    "v": 1,
+    "type": "heading",
+    "text": "Job Replies: There Is No Mediator"
+  },
+  {
+    "ch": 9,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 10,
+    "v": 1,
+    "type": "heading",
+    "text": "Job: I Loathe My Life"
+  },
+  {
+    "ch": 11,
+    "v": 1,
+    "type": "heading",
+    "text": "Zophar Speaks: Job’s Guilt Deserves Punishment"
+  },
+  {
+    "ch": 11,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 12,
+    "v": 1,
+    "type": "heading",
+    "text": "Job Replies: I Am a Laughingstock"
+  },
+  {
+    "ch": 12,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 13,
+    "v": 20,
+    "type": "heading",
+    "text": "Job’s Despondent Prayer"
+  },
+  {
+    "ch": 15,
+    "v": 1,
+    "type": "heading",
+    "text": "Eliphaz Speaks: Job Undermines Religion"
+  },
+  {
+    "ch": 15,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 16,
+    "v": 1,
+    "type": "heading",
+    "text": "Job Reaffirms His Innocence"
+  },
+  {
+    "ch": 16,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 17,
+    "v": 1,
+    "type": "heading",
+    "text": "Job Prays for Relief"
+  },
+  {
+    "ch": 18,
+    "v": 1,
+    "type": "heading",
+    "text": "Bildad Speaks: God Punishes the Wicked"
+  },
+  {
+    "ch": 18,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 19,
+    "v": 1,
+    "type": "heading",
+    "text": "Job Replies: I Know That My Vindicator Lives"
+  },
+  {
+    "ch": 19,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 20,
+    "v": 1,
+    "type": "heading",
+    "text": "Zophar Speaks: Wickedness Receives Just Retribution"
+  },
+  {
+    "ch": 20,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 21,
+    "v": 1,
+    "type": "heading",
+    "text": "Job Replies: The Wicked Often Go Unpunished"
+  },
+  {
+    "ch": 21,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 22,
+    "v": 1,
+    "type": "heading",
+    "text": "Eliphaz Speaks: Job’s Wickedness Is Great"
+  },
+  {
+    "ch": 22,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 23,
+    "v": 1,
+    "type": "heading",
+    "text": "Job Replies: My Complaint Is Bitter"
+  },
+  {
+    "ch": 23,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 24,
+    "v": 1,
+    "type": "heading",
+    "text": "Job Complains of Violence on the Earth"
+  },
+  {
+    "ch": 25,
+    "v": 1,
+    "type": "heading",
+    "text": "Bildad Speaks: How Can a Mortal Be Righteous Before God?"
+  },
+  {
+    "ch": 25,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 26,
+    "v": 1,
+    "type": "heading",
+    "text": "Job Replies: God’s Majesty Is Unsearchable"
+  },
+  {
+    "ch": 26,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 27,
+    "v": 1,
+    "type": "heading",
+    "text": "Job Maintains His Integrity"
+  },
+  {
+    "ch": 27,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 28,
+    "v": 1,
+    "type": "heading",
+    "text": "Interlude: Where Wisdom Is Found"
+  },
+  {
+    "ch": 29,
+    "v": 1,
+    "type": "heading",
+    "text": "Job Finishes His Defense"
+  },
+  {
+    "ch": 29,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 32,
+    "v": 1,
+    "type": "heading",
+    "text": "Elihu Rebukes Job’s Friends"
+  },
+  {
+    "ch": 32,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 33,
+    "v": 1,
+    "type": "heading",
+    "text": "Elihu Rebukes Job"
+  },
+  {
+    "ch": 34,
+    "v": 1,
+    "type": "heading",
+    "text": "Elihu Proclaims God’s Justice"
+  },
+  {
+    "ch": 34,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 35,
+    "v": 1,
+    "type": "heading",
+    "text": "Elihu Condemns Self-Righteousness"
+  },
+  {
+    "ch": 35,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 36,
+    "v": 1,
+    "type": "heading",
+    "text": "Elihu Exalts God’s Goodness"
+  },
+  {
+    "ch": 36,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 36,
+    "v": 24,
+    "type": "heading",
+    "text": "Elihu Proclaims God’s Majesty"
+  },
+  {
+    "ch": 38,
+    "v": 1,
+    "type": "heading",
+    "text": "TheLORDAnswers Job"
+  },
+  {
+    "ch": 38,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 40,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 40,
+    "v": 3,
+    "type": "heading",
+    "text": "Job’s Response to God"
+  },
+  {
+    "ch": 40,
+    "v": 3,
+    "type": "para_break"
+  },
+  {
+    "ch": 40,
+    "v": 6,
+    "type": "heading",
+    "text": "God’s Challenge to Job"
+  },
+  {
+    "ch": 40,
+    "v": 6,
+    "type": "para_break"
+  },
+  {
+    "ch": 42,
+    "v": 1,
+    "type": "heading",
+    "text": "Job Is Humbled and Satisfied"
+  },
+  {
+    "ch": 42,
+    "v": 1,
+    "type": "para_break"
+  },
+  {
+    "ch": 42,
+    "v": 7,
+    "type": "heading",
+    "text": "Job’s Friends Are Humiliated"
+  },
+  {
+    "ch": 42,
+    "v": 7,
+    "type": "para_break"
+  },
+  {
+    "ch": 42,
+    "v": 10,
+    "type": "heading",
+    "text": "Job’s Fortunes Are Restored Twofold"
+  },
+  {
+    "ch": 42,
+    "v": 10,
+    "type": "para_break"
+  }
+]
