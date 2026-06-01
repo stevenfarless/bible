@@ -62,6 +62,70 @@
     font-display: swap;
 }
 
+@font-face {
+    font-family: 'Andika';
+    src: url('./fonts/Andika-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Andika';
+    src: url('./fonts/Andika-Italic.woff2') format('woff2');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Andika';
+    src: url('./fonts/Andika-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Andika';
+    src: url('./fonts/Andika-BoldItalic.woff2') format('woff2');
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('./fonts/Ubuntu-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('./fonts/Ubuntu-Italic.woff2') format('woff2');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('./fonts/Ubuntu-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('./fonts/Ubuntu-BoldItalic.woff2') format('woff2');
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
+
 
 /* ================================
    1. CSS RESET & BASE
@@ -2291,6 +2355,18 @@ body.hide-verse-numbers .passage-text .verse-num {
     margin-bottom: 0.75rem;
 }
 
+/* Reading font family */
+body.font-andika .passage-text,
+body.font-andika .passage,
+body.font-andika .search-result-content {
+    font-family: 'Andika', sans-serif;
+}
+
+body.font-ubuntu .passage-text,
+body.font-ubuntu .passage,
+body.font-ubuntu .search-result-content {
+    font-family: 'Ubuntu', sans-serif;
+}
 
 
 /* ================================
