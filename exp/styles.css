@@ -691,6 +691,14 @@ body.chrome-no-transition .top-chrome {
     letter-spacing: -0.025em;
 }
 
+/* Dracula dark: logo uses orange (--dracula-orange) instead of purple.
+   Dracula dark = no theme class + no .light-mode. */
+:root:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.light-mode) .logo,
+html:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.light-mode) .logo,
+body:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.light-mode) .logo {
+    color: var(--dracula-orange);
+}
+
 /* Navigation */
 .navigation {
     background-color: var(--bg-secondary);
