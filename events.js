@@ -89,6 +89,23 @@ export function attachEventListeners(app) {
 
     app.verseByVerseToggle?.addEventListener('change', () => app.toggleVerseByVerse());
     app.fontSizeSlider?.addEventListener('input',  (e) => app.updateFontSize(e.target.value));
+
+    const readingFontSelector = document.getElementById('readingFontSelector');
+if (readingFontSelector) {
+    readingFontSelector.addEventListener('change', async () => {
+        const font = readingFontSelector.value;
+        app.state.readingFont = font;
+        localStorage.setItem('readingFont', font);
+        applyReadingFont(app, font);
+
+        if (app.currentUser) {
+            await app.database
+                .ref(`users/${app.currentUser.uid}/settings/readingFont`)
+                .set(font);
+        }
+    });
+}
+    
     // Settings <select> still works as a secondary route
     app.translationSelector?.addEventListener('change', async (e) => app.changeTranslation(e.target.value));
 
