@@ -164,6 +164,7 @@ export async function toggleVerseByVerse(app) {
 
     app.passageText.classList.toggle('verse-by-verse', app.state.verseByVerse);
 }
+
 export function applyReadingFont(app, font) {
     document.body.classList.remove('font-andika', 'font-ubuntu');
     if (font === 'andika') document.body.classList.add('font-andika');
