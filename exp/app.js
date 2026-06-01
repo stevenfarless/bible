@@ -651,7 +651,9 @@ class BibleApp {
         setTimeout(next, 1000);
     }
 
-    _prefetchAdjacentChapters() {
+    // Prefetches the previous and next books relative to the current one so
+    // chapter navigation across book boundaries feels instant.
+    _prefetchAdjacentBooks() {
         const { currentBook, translation } = this.state;
         const books = this.getAllBooks();
         const idx = books.indexOf(currentBook);
@@ -750,7 +752,7 @@ class BibleApp {
                 this._dbgEvent('init: cache hit + position match — skipping fetch');
                 this._loadTranslationRegistry();
                 this._prefetchCurrentBook();
-                this._prefetchAdjacentChapters();
+                this._prefetchAdjacentBooks();
             } else if (cacheHit && !posMatchesCache) {
                 this._dbg.t_reveal_first = ms();
                 revealApp();
@@ -763,7 +765,7 @@ class BibleApp {
                 this._dbg.t_passage_fetch_end = ms();
                 this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
                 this._prefetchCurrentBook();
-                this._prefetchAdjacentChapters();
+                this._prefetchAdjacentBooks();
             } else {
                 this._dbg.t_passage_fetch_start = ms();
                 this._dbg.t_reveal_second = ms();
@@ -776,7 +778,7 @@ class BibleApp {
                 this._dbg.t_passage_fetch_end = ms();
                 this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
                 this._prefetchCurrentBook();
-                this._prefetchAdjacentChapters();
+                this._prefetchAdjacentBooks();
             }
 
             if (this.auth && this.database) {
@@ -1156,6 +1158,11 @@ async function registerServiceWorker(appInstance) {
         }
         setInterval(_checkVersion, 5 * 60 * 1000);
 
+        // On iOS PWA, switching apps and returning fires visibilitychange but
+        // the page context may be frozen — version.txt fetch and reg.update()
+        // are both no-ops if the network is unavailable, so failures are
+        // silently swallowed. The reload only triggers when the remote SHA
+        // genuinely differs, so stale-cache reloads don't happen spuriously.
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState !== 'visible') return;
             fetch('./version.txt', { cache: 'no-store' })
