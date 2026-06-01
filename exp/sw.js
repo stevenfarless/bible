@@ -1,4 +1,4 @@
-const BUILD_ID = "04832b6f37d2da3f93296491d829c9fe705b1b1d";
+const BUILD_ID = "e07ca26a3ce177fa2f64d4f6c38bc8a9e6a1d4aa";
 const CACHE_NAME = `bible-${BUILD_ID}`;
 
 // App shell assets (JS modules + CSS): network-first, bypass the browser
@@ -10,12 +10,10 @@ const APP_SHELL_PATTERN = /^(?!\..*\/vendor\/).*\.(js|mjs|css)$/;
 const TRANSLATIONS = ['ASV', 'BLB', 'BSB', 'KJV', 'LEB', 'MSB', 'NET', 'WEB'];
 
 // High-value per-book files to precache on activation.
-// These are the books users most commonly open on a fresh load.
-// ~40 files × ~80KB avg = ~3MB total, vs 35MB for all 8 monoliths.
-// NOTE: names must match filenames emitted by split_translations.py, which
-// uses BOOK_ORDER as the output filename. BOOK_ORDER contains 'Psalm' (not
-// 'Psalms'), so the file on disk is Psalm.json.
-const HIGH_VALUE_BOOKS = ['John', 'Genesis', 'Psalm', 'Matthew', 'Romans'];
+// Genesis covers the default landing page; John covers the most commonly
+// read book. Everything else loads on demand and caches after first open.
+// 2 books × 8 translations × ~80KB avg = ~1.3MB total install payload.
+const HIGH_VALUE_BOOKS = ['John', 'Genesis'];
 
 const PER_BOOK_PRECACHE = TRANSLATIONS.flatMap(t =>
   HIGH_VALUE_BOOKS.map(b => `./translations/${t}/${b}.json`)
