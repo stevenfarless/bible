@@ -1,11 +1,11 @@
-const BUILD_ID = "d8acff5210eec9a3023359a27c8d2814feac0ac0";
+const BUILD_ID = "77acf2ba9e6860e42e5d52e25e8b09dfaf84ba7e";
 const CACHE_NAME = `bible-${BUILD_ID}`;
 
 // App shell assets (JS modules + CSS): network-first, bypass the browser
 // HTTP cache entirely so style and code changes deploy immediately.
 // vendor/ files are third-party SDKs that never change for a given
 // version — they go through the cache-first path below.
-const APP_SHELL_PATTERN = /^(?!\..*\/vendor\/).*\.(js|mjs|css)$/;
+const APP_SHELL_PATTERN = /^(?!\\..*\/vendor\/).*\.(js|mjs|css)$/;
 
 const TRANSLATIONS = ['ASV', 'BLB', 'BSB', 'KJV', 'LEB', 'MSB', 'NET', 'WEB'];
 
@@ -121,6 +121,18 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+
+  // Pass through all cross-origin requests the SW has no business handling.
+  // Add trusted CDN hostnames to the allowlist if you want the SW to cache them.
+  // const ALLOWED_CROSS_ORIGIN = [
+  //   'fonts.googleapis.com',
+  //   'fonts.gstatic.com',
+  // ];
+  if (url.origin !== self.location.origin &&
+      !url.hostname.endsWith('.firebaseio.com') &&
+      !url.hostname.endsWith('.firebase.google.com')) {
+    return;
+  }
 
   if (url.pathname.endsWith('/sw.js') || url.pathname.endsWith('/version.txt')) {
     event.respondWith(fetch(event.request));
