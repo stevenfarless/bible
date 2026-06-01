@@ -1,11 +1,11 @@
-const BUILD_ID = "ae5411e485e3e2f31f1fdbfbd36ef0e21b2b2fb8";
+const BUILD_ID = "35ffd65b87bc7bb3816d1cd3c410120aa1d2f45f";
 const CACHE_NAME = `bible-${BUILD_ID}`;
 
 // App shell assets (JS modules + CSS): network-first, bypass the browser
 // HTTP cache entirely so style and code changes deploy immediately.
 // vendor/ files are third-party SDKs that never change for a given
 // version — they go through the cache-first path below.
-const APP_SHELL_PATTERN = /^(?!\\..*\/vendor\/).*\.(js|mjs|css)$/;
+const APP_SHELL_PATTERN = /^(?!\..*\/vendor\/).*\.(js|mjs|css)$/;
 
 const TRANSLATIONS = ['ASV', 'BLB', 'BSB', 'KJV', 'LEB', 'MSB', 'NET', 'WEB'];
 
@@ -63,6 +63,12 @@ const APP_SHELL = [
   './favicon-16x16.png',
   './favicon-32x32.png',
   './favicon.ico',
+  // Self-hosted fonts — precached so they load offline with no latency.
+  './fonts/Cinzel-Regular.woff2',
+  './fonts/GentiumBookPlus-Regular.woff2',
+  './fonts/GentiumBookPlus-Italic.woff2',
+  './fonts/GentiumBookPlus-Bold.woff2',
+  './fonts/GentiumBookPlus-BoldItalic.woff2',
 ];
 
 // Firebase RTDB paths that are safe to cache indefinitely.
