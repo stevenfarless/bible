@@ -7,12 +7,15 @@ const CACHE_NAME = `bible-${BUILD_ID}`;
 // version — they go through the cache-first path below.
 const APP_SHELL_PATTERN = /^(?!\..*\/vendor\/).*\.(js|mjs|css)$/;
 
-const TRANSLATIONS = ['ASV', 'BLB', 'BSB', 'KJV', 'LEB', 'MSB', 'NET', 'WEB'];
+const TRANSLATIONS = [
+  'ASV', 'BLB', 'BSB', 'CSB', 'ESV', 'ISV', 'KJV', 'LEB',
+  'MEV', 'MSB', 'NET', 'NIV', 'NKJV', 'NLT', 'NRSVUE', 'WEB',
+];
 
 // High-value per-book files to precache on activation.
 // Genesis covers the default landing page; John covers the most commonly
 // read book. Everything else loads on demand and caches after first open.
-// 2 books × 8 translations × ~80KB avg = ~1.3MB total install payload.
+// 2 books × 16 translations × ~80KB avg = ~2.6MB total install payload.
 const HIGH_VALUE_BOOKS = ['John', 'Genesis'];
 
 const PER_BOOK_PRECACHE = TRANSLATIONS.flatMap(t =>
