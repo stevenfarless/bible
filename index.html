@@ -31,6 +31,11 @@
         <link rel="modulepreload" href="settings.js" />
         <link rel="modulepreload" href="keyboard.js" />
         <link rel="modulepreload" href="events.js" />
+        <!-- Preload reading fonts so the browser fetches them early,
+             preventing a late font-discovery stall that inflates LCP. -->
+        <link rel="preload" href="./fonts/GentiumBookPlus-Regular.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="./fonts/Andika-Regular.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="./fonts/Ubuntu-Regular.woff2" as="font" type="font/woff2" crossorigin />
         <link rel="stylesheet" href="styles.css" />
         <!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
         <script src="https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV" async defer></script>
