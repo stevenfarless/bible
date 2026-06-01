@@ -1,7 +1,20 @@
 {
-  "id": "BSB",
-  "label": "BSB — Berean Standard Bible",
-  "copyright": "The Holy Bible, Berean Standard Bible, BSB is produced in cooperation with Bible Hub, Discovery Bible, OpenBible.com, and the Berean Bible Translation Committee. This text of God's Word has been dedicated to the public domain.",
+  "info": {
+    "id": "BSB",
+    "label": "Berean Standard Bible",
+    "abbreviation": "BSB",
+    "language": "en",
+    "textDirection": "ltr",
+    "year": 2016,
+    "canon": "protestant",
+    "philosophy": "dynamic",
+    "manuscriptTradition": [
+      "Masoretic Text",
+      "Critical Text"
+    ],
+    "textualBasis": "OT translated from the Masoretic Text. NT translated from the modern critical Greek text (NA28/UBS5). Balances accuracy with readability, aiming for a natural English rendering faithful to the original languages.",
+    "copyright": "The Holy Bible, Berean Standard Bible, BSB is produced in cooperation with Bible Hub, Discovery Bible, OpenBible.com, and the Berean Bible Translation Committee. This text of God's Word has been dedicated to the public domain."
+  },
   "books": [
     {
       "name": "Genesis",
@@ -332,11 +345,6 @@
       "name": "Revelation",
       "testament": "New Testament",
       "chapters": 22
-    },
-    {
-      "name": "BSB_search_index",
-      "testament": "Deuterocanon",
-      "chapters": 31086
     }
   ]
 }
