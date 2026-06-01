@@ -1,0 +1,770 @@
+[
+  {
+    "ch": 1,
+    "v": 1,
+    "type": "heading",
+    "text": "In Praise of Wisdom"
+  },
+  {
+    "ch": 1,
+    "v": 11,
+    "type": "heading",
+    "text": "Fear of the Lord Is True Wisdom"
+  },
+  {
+    "ch": 2,
+    "v": 1,
+    "type": "heading",
+    "text": "Duties toward God"
+  },
+  {
+    "ch": 3,
+    "v": 1,
+    "type": "heading",
+    "text": "Duties toward Parents"
+  },
+  {
+    "ch": 3,
+    "v": 17,
+    "type": "heading",
+    "text": "Humility"
+  },
+  {
+    "ch": 3,
+    "v": 30,
+    "type": "heading",
+    "text": "Alms for the Poor"
+  },
+  {
+    "ch": 4,
+    "v": 1,
+    "type": "heading",
+    "text": "Duties toward the Poor and the Oppressed"
+  },
+  {
+    "ch": 4,
+    "v": 11,
+    "type": "heading",
+    "text": "The Rewards of Wisdom"
+  },
+  {
+    "ch": 5,
+    "v": 1,
+    "type": "heading",
+    "text": "Precepts for Everyday Living"
+  },
+  {
+    "ch": 6,
+    "v": 5,
+    "type": "heading",
+    "text": "Friendship, False and True"
+  },
+  {
+    "ch": 6,
+    "v": 18,
+    "type": "heading",
+    "text": "Blessings of Wisdom"
+  },
+  {
+    "ch": 7,
+    "v": 1,
+    "type": "heading",
+    "text": "Miscellaneous Advice"
+  },
+  {
+    "ch": 7,
+    "v": 18,
+    "type": "heading",
+    "text": "Relations with Others"
+  },
+  {
+    "ch": 8,
+    "v": 1,
+    "type": "heading",
+    "text": "Prudence and Common Sense"
+  },
+  {
+    "ch": 9,
+    "v": 1,
+    "type": "heading",
+    "text": "Advice concerning Women"
+  },
+  {
+    "ch": 9,
+    "v": 10,
+    "type": "heading",
+    "text": "Choice of Friends"
+  },
+  {
+    "ch": 9,
+    "v": 17,
+    "type": "heading",
+    "text": "Concerning Rulers"
+  },
+  {
+    "ch": 10,
+    "v": 6,
+    "type": "heading",
+    "text": "The Sin of Pride"
+  },
+  {
+    "ch": 10,
+    "v": 19,
+    "type": "heading",
+    "text": "Persons Deserving Honor"
+  },
+  {
+    "ch": 10,
+    "v": 26,
+    "type": "heading",
+    "text": "Concerning Humility"
+  },
+  {
+    "ch": 11,
+    "v": 1,
+    "type": "heading",
+    "text": "The Deceptiveness of Appearances"
+  },
+  {
+    "ch": 11,
+    "v": 7,
+    "type": "heading",
+    "text": "Deliberation and Caution"
+  },
+  {
+    "ch": 11,
+    "v": 29,
+    "type": "heading",
+    "text": "Care in Choosing Friends"
+  },
+  {
+    "ch": 13,
+    "v": 1,
+    "type": "heading",
+    "text": "Caution Regarding Associates"
+  },
+  {
+    "ch": 14,
+    "v": 3,
+    "type": "heading",
+    "text": "Responsible Use of Wealth"
+  },
+  {
+    "ch": 14,
+    "v": 20,
+    "type": "heading",
+    "text": "The Happiness of Seeking Wisdom"
+  },
+  {
+    "ch": 15,
+    "v": 11,
+    "type": "heading",
+    "text": "Freedom of Choice"
+  },
+  {
+    "ch": 16,
+    "v": 1,
+    "type": "heading",
+    "text": "God’s Punishment of Sinners"
+  },
+  {
+    "ch": 16,
+    "v": 24,
+    "type": "heading",
+    "text": "God’s Wisdom Seen in Creation"
+  },
+  {
+    "ch": 17,
+    "v": 25,
+    "type": "heading",
+    "text": "A Call to Repentance"
+  },
+  {
+    "ch": 18,
+    "v": 1,
+    "type": "heading",
+    "text": "The Majesty of God"
+  },
+  {
+    "ch": 18,
+    "v": 15,
+    "type": "heading",
+    "text": "The Right Spirit in Giving Alms"
+  },
+  {
+    "ch": 18,
+    "v": 19,
+    "type": "heading",
+    "text": "The Need of Reflection and Self-control"
+  },
+  {
+    "ch": 19,
+    "v": 4,
+    "type": "heading",
+    "text": "Against Loose Talk"
+  },
+  {
+    "ch": 19,
+    "v": 20,
+    "type": "heading",
+    "text": "True and False Wisdom"
+  },
+  {
+    "ch": 20,
+    "v": 1,
+    "type": "heading",
+    "text": "Silence and Speech"
+  },
+  {
+    "ch": 20,
+    "v": 9,
+    "type": "heading",
+    "text": "Paradoxes"
+  },
+  {
+    "ch": 20,
+    "v": 18,
+    "type": "heading",
+    "text": "Inappropriate Speech"
+  },
+  {
+    "ch": 20,
+    "v": 24,
+    "type": "heading",
+    "text": "Lying"
+  },
+  {
+    "ch": 21,
+    "v": 1,
+    "type": "heading",
+    "text": "Various Sins"
+  },
+  {
+    "ch": 21,
+    "v": 11,
+    "type": "heading",
+    "text": "Wisdom and Foolishness"
+  },
+  {
+    "ch": 22,
+    "v": 1,
+    "type": "heading",
+    "text": "The Idler"
+  },
+  {
+    "ch": 22,
+    "v": 3,
+    "type": "heading",
+    "text": "Degenerate Children"
+  },
+  {
+    "ch": 22,
+    "v": 9,
+    "type": "heading",
+    "text": "Wisdom and Folly"
+  },
+  {
+    "ch": 22,
+    "v": 19,
+    "type": "heading",
+    "text": "The Preservation of Friendship"
+  },
+  {
+    "ch": 22,
+    "v": 27,
+    "type": "heading",
+    "text": "A Prayer for Help against Sinning"
+  },
+  {
+    "ch": 23,
+    "v": 12,
+    "type": "heading",
+    "text": "Foul Language"
+  },
+  {
+    "ch": 23,
+    "v": 16,
+    "type": "heading",
+    "text": "Concerning Sexual Sins"
+  },
+  {
+    "ch": 24,
+    "v": 23,
+    "type": "heading",
+    "text": "Wisdom and the Law"
+  },
+  {
+    "ch": 25,
+    "v": 1,
+    "type": "heading",
+    "text": "Those Who Are Worthy of Praise"
+  },
+  {
+    "ch": 25,
+    "v": 13,
+    "type": "heading",
+    "text": "Some Extreme Forms of Evil"
+  },
+  {
+    "ch": 25,
+    "v": 16,
+    "type": "heading",
+    "text": "The Evil of a Wicked Woman"
+  },
+  {
+    "ch": 26,
+    "v": 1,
+    "type": "heading",
+    "text": "The Joy of a Good Wife"
+  },
+  {
+    "ch": 26,
+    "v": 5,
+    "type": "heading",
+    "text": "The Worst of Evils: A Wicked Wife"
+  },
+  {
+    "ch": 26,
+    "v": 13,
+    "type": "heading",
+    "text": "The Blessing of a Good Wife"
+  },
+  {
+    "ch": 26,
+    "v": 28,
+    "type": "heading",
+    "text": "Three Depressing Things"
+  },
+  {
+    "ch": 26,
+    "v": 29,
+    "type": "heading",
+    "text": "The Temptations of Commerce"
+  },
+  {
+    "ch": 27,
+    "v": 4,
+    "type": "heading",
+    "text": "Tests in Life"
+  },
+  {
+    "ch": 27,
+    "v": 8,
+    "type": "heading",
+    "text": "Reward and Retribution"
+  },
+  {
+    "ch": 27,
+    "v": 11,
+    "type": "heading",
+    "text": "Varieties of Speech"
+  },
+  {
+    "ch": 27,
+    "v": 16,
+    "type": "heading",
+    "text": "Betraying Secrets"
+  },
+  {
+    "ch": 27,
+    "v": 22,
+    "type": "heading",
+    "text": "Hypocrisy and Retribution"
+  },
+  {
+    "ch": 27,
+    "v": 30,
+    "type": "heading",
+    "text": "Anger and Vengeance"
+  },
+  {
+    "ch": 28,
+    "v": 12,
+    "type": "heading",
+    "text": "The Evil Tongue"
+  },
+  {
+    "ch": 29,
+    "v": 1,
+    "type": "heading",
+    "text": "On Lending and Borrowing"
+  },
+  {
+    "ch": 29,
+    "v": 14,
+    "type": "heading",
+    "text": "On Guaranteeing Debts"
+  },
+  {
+    "ch": 29,
+    "v": 21,
+    "type": "heading",
+    "text": "Home and Hospitality"
+  },
+  {
+    "ch": 31,
+    "v": 1,
+    "type": "heading",
+    "text": "Right Attitude toward Riches"
+  },
+  {
+    "ch": 31,
+    "v": 12,
+    "type": "heading",
+    "text": "Table Etiquette"
+  },
+  {
+    "ch": 31,
+    "v": 25,
+    "type": "heading",
+    "text": "Temperance in Drinking Wine"
+  },
+  {
+    "ch": 32,
+    "v": 1,
+    "type": "heading",
+    "text": "Etiquette at a Banquet"
+  },
+  {
+    "ch": 32,
+    "v": 14,
+    "type": "heading",
+    "text": "The Providence of God"
+  },
+  {
+    "ch": 33,
+    "v": 7,
+    "type": "heading",
+    "text": "Differences in Nature and in Humankind"
+  },
+  {
+    "ch": 33,
+    "v": 20,
+    "type": "heading",
+    "text": "The Advantage of Independence"
+  },
+  {
+    "ch": 33,
+    "v": 25,
+    "type": "heading",
+    "text": "The Treatment of Slaves"
+  },
+  {
+    "ch": 34,
+    "v": 1,
+    "type": "heading",
+    "text": "Dreams Mean Nothing"
+  },
+  {
+    "ch": 34,
+    "v": 9,
+    "type": "heading",
+    "text": "Experience as a Teacher"
+  },
+  {
+    "ch": 34,
+    "v": 14,
+    "type": "heading",
+    "text": "Fear the Lord"
+  },
+  {
+    "ch": 34,
+    "v": 21,
+    "type": "heading",
+    "text": "Offering Sacrifices"
+  },
+  {
+    "ch": 35,
+    "v": 1,
+    "type": "heading",
+    "text": "The Law and Sacrifices"
+  },
+  {
+    "ch": 35,
+    "v": 14,
+    "type": "heading",
+    "text": "Divine Justice"
+  },
+  {
+    "ch": 36,
+    "v": 1,
+    "type": "heading",
+    "text": "A Prayer for God’s People"
+  },
+  {
+    "ch": 36,
+    "v": 23,
+    "type": "heading",
+    "text": "Concerning Discrimination"
+  },
+  {
+    "ch": 37,
+    "v": 1,
+    "type": "heading",
+    "text": "False Friends"
+  },
+  {
+    "ch": 37,
+    "v": 7,
+    "type": "heading",
+    "text": "Caution in Taking Advice"
+  },
+  {
+    "ch": 37,
+    "v": 16,
+    "type": "heading",
+    "text": "True and False Wisdom"
+  },
+  {
+    "ch": 37,
+    "v": 27,
+    "type": "heading",
+    "text": "Concerning Moderation"
+  },
+  {
+    "ch": 38,
+    "v": 1,
+    "type": "heading",
+    "text": "Concerning Physicians and Health"
+  },
+  {
+    "ch": 38,
+    "v": 16,
+    "type": "heading",
+    "text": "On Mourning for the Dead"
+  },
+  {
+    "ch": 38,
+    "v": 24,
+    "type": "heading",
+    "text": "Trades and Crafts"
+  },
+  {
+    "ch": 39,
+    "v": 1,
+    "type": "heading",
+    "text": "The Activity of the Scribe"
+  },
+  {
+    "ch": 39,
+    "v": 12,
+    "type": "heading",
+    "text": "A Hymn of Praise to God"
+  },
+  {
+    "ch": 40,
+    "v": 1,
+    "type": "heading",
+    "text": "Human Wretchedness"
+  },
+  {
+    "ch": 40,
+    "v": 12,
+    "type": "heading",
+    "text": "Injustice Will Not Prosper"
+  },
+  {
+    "ch": 40,
+    "v": 18,
+    "type": "heading",
+    "text": "The Joys of Life"
+  },
+  {
+    "ch": 40,
+    "v": 28,
+    "type": "heading",
+    "text": "The Disgrace of Begging"
+  },
+  {
+    "ch": 41,
+    "v": 1,
+    "type": "heading",
+    "text": "Concerning Death"
+  },
+  {
+    "ch": 41,
+    "v": 5,
+    "type": "heading",
+    "text": "The Fate of the Wicked"
+  },
+  {
+    "ch": 41,
+    "v": 15,
+    "type": "heading",
+    "text": "A Series of Contrasts"
+  },
+  {
+    "ch": 42,
+    "v": 9,
+    "type": "heading",
+    "text": "Daughters and Fathers"
+  },
+  {
+    "ch": 42,
+    "v": 15,
+    "type": "heading",
+    "text": "The Works of God in Nature"
+  },
+  {
+    "ch": 43,
+    "v": 1,
+    "type": "heading",
+    "text": "The Splendor of the Sun"
+  },
+  {
+    "ch": 43,
+    "v": 6,
+    "type": "heading",
+    "text": "The Splendor of the Moon"
+  },
+  {
+    "ch": 43,
+    "v": 9,
+    "type": "heading",
+    "text": "The Glory of the Stars and the Rainbow"
+  },
+  {
+    "ch": 43,
+    "v": 13,
+    "type": "heading",
+    "text": "The Marvels of Nature"
+  },
+  {
+    "ch": 44,
+    "v": 16,
+    "type": "heading",
+    "text": "Enoch"
+  },
+  {
+    "ch": 44,
+    "v": 17,
+    "type": "heading",
+    "text": "Noah"
+  },
+  {
+    "ch": 44,
+    "v": 19,
+    "type": "heading",
+    "text": "Abraham"
+  },
+  {
+    "ch": 44,
+    "v": 22,
+    "type": "heading",
+    "text": "Isaac and Jacob"
+  },
+  {
+    "ch": 45,
+    "v": 1,
+    "type": "heading",
+    "text": "Moses"
+  },
+  {
+    "ch": 45,
+    "v": 6,
+    "type": "heading",
+    "text": "Aaron"
+  },
+  {
+    "ch": 45,
+    "v": 23,
+    "type": "heading",
+    "text": "Phinehas"
+  },
+  {
+    "ch": 46,
+    "v": 1,
+    "type": "heading",
+    "text": "Joshua and Caleb"
+  },
+  {
+    "ch": 46,
+    "v": 11,
+    "type": "heading",
+    "text": "The Judges"
+  },
+  {
+    "ch": 47,
+    "v": 1,
+    "type": "heading",
+    "text": "Nathan"
+  },
+  {
+    "ch": 47,
+    "v": 2,
+    "type": "heading",
+    "text": "David"
+  },
+  {
+    "ch": 47,
+    "v": 12,
+    "type": "heading",
+    "text": "Solomon"
+  },
+  {
+    "ch": 47,
+    "v": 23,
+    "type": "heading",
+    "text": "Rehoboam and Jeroboam"
+  },
+  {
+    "ch": 48,
+    "v": 1,
+    "type": "heading",
+    "text": "Elijah"
+  },
+  {
+    "ch": 48,
+    "v": 12,
+    "type": "heading",
+    "text": "Elisha"
+  },
+  {
+    "ch": 48,
+    "v": 17,
+    "type": "heading",
+    "text": "Hezekiah"
+  },
+  {
+    "ch": 48,
+    "v": 23,
+    "type": "heading",
+    "text": "Isaiah"
+  },
+  {
+    "ch": 49,
+    "v": 1,
+    "type": "heading",
+    "text": "Josiah and Other Worthies"
+  },
+  {
+    "ch": 49,
+    "v": 14,
+    "type": "heading",
+    "text": "Retrospect"
+  },
+  {
+    "ch": 50,
+    "v": 1,
+    "type": "heading",
+    "text": "Simon Son of Onias"
+  },
+  {
+    "ch": 50,
+    "v": 22,
+    "type": "heading",
+    "text": "A Benediction"
+  },
+  {
+    "ch": 50,
+    "v": 25,
+    "type": "heading",
+    "text": "Epilogue"
+  },
+  {
+    "ch": 51,
+    "v": 13,
+    "type": "heading",
+    "text": "Autobiographical Poem on Wisdom"
+  }
+]
