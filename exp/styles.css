@@ -106,25 +106,9 @@
 
 @font-face {
     font-family: 'OpenDyslexic3';
-    src: url('./fonts/OpenDyslexic3-Regular.woff2') format('woff2');
-    font-weight: 400;
-    font-style: italic;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'OpenDyslexic3';
-    src: url('./fonts/Andika-Bold.woff2') format('woff2');
+    src: url('./fonts/OpenDyslexic3-Bold') format('woff2');
     font-weight: 700;
     font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'OpenDyslexic3';
-    src: url('./fonts/Andika-BoldItalic.woff2') format('woff2');
-    font-weight: 700;
-    font-style: italic;
     font-display: swap;
 }
 
@@ -2402,6 +2386,12 @@ body.font-ubuntu .passage-text,
 body.font-ubuntu .passage,
 body.font-ubuntu .search-result-content {
     font-family: 'Ubuntu', sans-serif;
+}
+
+body.font-opendyslexic3 .passage-text,
+body.font-opendyslexic3 .passage,
+body.font-opendyslexic3 .search-result-content {
+    font-family: 'OpenDyslexic3', sans-serif;
 }
 
 
