@@ -88,11 +88,47 @@
 
 @font-face {
     font-family: 'Andika';
+    src: url('./fonts/Andika-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* Open Dyslexic */
+
+@font-face {
+    font-family: 'OpenDyslexic3';
+    src: url('./fonts/OpenDyslexic3-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'OpenDyslexic3';
+    src: url('./fonts/OpenDyslexic3-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'OpenDyslexic3';
+    src: url('./fonts/Andika-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'OpenDyslexic3';
     src: url('./fonts/Andika-BoldItalic.woff2') format('woff2');
     font-weight: 700;
     font-style: italic;
     font-display: swap;
 }
+
+/* Ubuntu */
 
 @font-face {
     font-family: 'Ubuntu';
