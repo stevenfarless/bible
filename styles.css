@@ -1353,7 +1353,7 @@ body.light-mode .crossref-item {
 }
 
 .passage-text p {
-    margin-bottom: var(--spacing-md);
+    margin-bottom: 0;
 }
 
 /* Section headings inside the passage use --secondary-color so they are
