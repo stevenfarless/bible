@@ -17,7 +17,7 @@ const DEFAULTS = {
 };
 
 const RECAPTCHA_STYLE_ID = 'recaptcha-badge-style';
-const RECAPTCHA_DISCLOSURE_HTML = 'This site is protected by reCAPTCHA and the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a> apply.';
+const RECAPTCHA_DISCLOSURE_HTML = '<div style="margin-top: 1rem; font-size: 0.875rem;">This site is protected by reCAPTCHA and the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a> apply.</div>';
 
 function readBool(key, defaultValue) {
     try {
