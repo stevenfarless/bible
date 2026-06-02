@@ -424,13 +424,8 @@ export class BibleApi {
                     closeP();
                 }
             }
-            const text = chapterData[String(v)] || '';
-            if (text.trim() === '') {
-                closeP();
-                parts.push('<div class="verse-spacer"></div>');
-                continue;
-            }
             if (!inParagraph) openP();
+            const text = chapterData[String(v)] || '';
             parts.push(
                 `<span class="verse" data-verse="${v}" id="v${chapter}-${v}">` +
                 `<sup class="verse-num">${v}</sup> ${escapeHtml(text)} ` +
