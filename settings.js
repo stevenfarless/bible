@@ -13,10 +13,11 @@ const DEFAULTS = {
     lightMode:           false,
     colorTheme:          'dracula',
     translation:         'KJV',
+    readingFont:         'gentium',
 };
 
 const RECAPTCHA_STYLE_ID = 'recaptcha-badge-style';
-const RECAPTCHA_DISCLOSURE_HTML = 'This site is protected by reCAPTCHA and the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a> apply.';
+const RECAPTCHA_DISCLOSURE_HTML = '<div style="margin-top: 1rem; font-size: 0.875rem;">This site is protected by reCAPTCHA and the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a> apply.</div>';
 
 function readBool(key, defaultValue) {
     try {
@@ -63,6 +64,9 @@ export function loadLocalSettings(app) {
 
     try { app.state.colorTheme = localStorage.getItem('colorTheme') || DEFAULTS.colorTheme; }
     catch (_) { app.state.colorTheme = DEFAULTS.colorTheme; }
+
+    try { app.state.readingFont = localStorage.getItem('readingFont') || DEFAULTS.readingFont; }
+    catch (_) { app.state.readingFont = DEFAULTS.readingFont; }
 
     try { app.state.translation = app._normalizeTranslation(localStorage.getItem('translation') || DEFAULTS.translation); }
     catch (_) { app.state.translation = DEFAULTS.translation; }
@@ -113,6 +117,8 @@ export function applySettings(app) {
     if (app.fontSizeSlider) app.fontSizeSlider.value = fontSize;
     if (app.fontSizeValue)  app.fontSizeValue.textContent = `${fontSize}px`;
     if (app.passageText)    app.passageText.style.fontSize = `${fontSize}px`;
+    const readingFont = app.state.readingFont || DEFAULTS.readingFont;
+    applyReadingFont(app, readingFont);
 
     updateCopyright(app);
 }
@@ -157,6 +163,16 @@ export async function toggleVerseByVerse(app) {
     }
 
     app.passageText.classList.toggle('verse-by-verse', app.state.verseByVerse);
+}
+
+export function applyReadingFont(app, font) {
+    document.body.classList.remove('font-andika', 'font-ubuntu', 'font-opendyslexic3');
+    if (font === 'andika') document.body.classList.add('font-andika');
+    if (font === 'ubuntu') document.body.classList.add('font-ubuntu');
+    if (font === 'opendyslexic3') document.body.classList.add('font-opendyslexic3');
+
+    const selector = document.getElementById('readingFontSelector');
+    if (selector) selector.value = font;
 }
 
 export async function updateFontSize(app, size) {

@@ -31,6 +31,12 @@
         <link rel="modulepreload" href="settings.js" />
         <link rel="modulepreload" href="keyboard.js" />
         <link rel="modulepreload" href="events.js" />
+        <!-- Preload reading fonts so the browser fetches them early,
+             preventing a late font-discovery stall that inflates LCP. -->
+        <link rel="preload" href="./fonts/GentiumBookPlus-Regular.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="./fonts/Andika-Regular.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="./fonts/OpenDyslexic3-Regular.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="./fonts/Ubuntu-Regular.woff2" as="font" type="font/woff2" crossorigin />
         <link rel="stylesheet" href="styles.css" />
         <!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
         <script src="https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV" async defer></script>
@@ -271,6 +277,16 @@
                                                                 <label for="fontSizeSlider">Font Size</label>
                                                                 <input type="range" id="fontSizeSlider" class="slider" min="12" max="32" value="18" />
                                                                 <span id="fontSizeValue">18px</span>
+                                                        </div>
+                                                         <div class="setting-item">
+                                                                <label for="readingFontSelector">Reading Font</label>
+                                                                <select id="readingFontSelector" class="input-field">
+                                                                        <option value="gentium">Gentium Book Plus (Serif)</option>
+                                                                        <option value="andika">Andika (Sans Serif)</option>
+                                                                        <option value="ubuntu">Ubuntu</option>
+                                                                        <option value="opendyslexic3">Open Dyslexic 3</option>
+                                                                </select>
+                                                                <small class="help-text">Choose the typeface used for passage text.</small>
                                                         </div>
                                                         <div class="setting-item">
                                                                 <label class="checkbox-label">

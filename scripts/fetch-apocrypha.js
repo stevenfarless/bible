@@ -140,6 +140,7 @@ async function fetchSet(books, translation, outSubdir) {
         }
 
         const outPath = join(outDir, `${book.name}.json`);
+        // lgtm[js/http-to-file-access] -- intentional data pipeline: fetches public domain Bible text from known API
         writeFileSync(outPath, JSON.stringify(data) + '\n');
         console.log(`  [OK]   ${book.name}`);
     }
