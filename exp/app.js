@@ -79,6 +79,25 @@ function ts(t) { return t == null ? 'n/a' : `+${t}ms`; }
 // Installed once at module load. Records every fetch with timing, status,
 // and whether it hit a local file or Firebase.
 
+const _FIREBASE_HOSTS = new Set([
+    'esv-bible-6dffb-default-rtdb.firebaseio.com',
+    'esv-bible-6dffb.firebaseapp.com',
+    'esv-bible-6dffb.web.app',
+]);
+
+function _classifyFetchUrl(rawUrl) {
+    let parsed;
+    try {
+        parsed = new URL(rawUrl, location.href);
+    } catch (_) {
+        return 'other';
+    }
+    if (_FIREBASE_HOSTS.has(parsed.hostname)) return 'firebase';
+    const path = parsed.pathname;
+    if (path.endsWith('_bible.json') || path.includes('/translations/')) return 'local';
+    return 'other';
+}
+
 const _fetchLog = [];
 const _originalFetch = window.fetch.bind(window);
 window.fetch = async function patchedFetch(input, init) {
@@ -96,10 +115,7 @@ window.fetch = async function patchedFetch(input, init) {
         throw err;
     } finally {
         const dur = ms() - start;
-        const src = url.includes('firebaseio.com') ? 'firebase'
-                  : url.includes('_bible.json')    ? 'local'
-                  : url.includes('translations/')  ? 'local'
-                  : 'other';
+        const src = _classifyFetchUrl(url);
         _fetchLog.push({ t: start, dur, url, status, ok, src });
     }
 };
