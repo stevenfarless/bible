@@ -2493,6 +2493,9 @@ body.font-ubuntu .search-result-content {
     margin: 0 0 0.6em 0;
     padding: 0;
 }
+.verse-spacer {
+    height: 0.3em;
+}
 
 /* Update-toast action buttons */
 .toast {
