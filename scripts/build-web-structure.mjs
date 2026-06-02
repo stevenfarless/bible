@@ -134,6 +134,7 @@ for (const { filename: f, content: c } of entries) {
   const bn = bookName(ab);
   if (!bn) { console.log(`  SKIP (no book):   ${f} -> ${ab}`); continue; }
   const ev = parseUsfm(c);
+  // lgtm[js/http-to-file-access] -- intentional data pipeline: parses public domain Bible USFM from known source
   fs.writeFileSync(path.join(OUT_DIR, bn + '.json'), JSON.stringify(ev, null, 2));
   console.log(`  ${bn.padEnd(30)} ${ev.length} events`);
   n++;
