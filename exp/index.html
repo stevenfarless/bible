@@ -5,7 +5,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Bible Reader</title>
-        <meta name="build-id" content="56c2c95afb28ad262b3c37414a51bb3b5ea6f6da" />
+        <meta name="build-id" content="78333ab1cbc1cbe2f2106cde24155e18b669c6cf" />
         <link rel="manifest" href="./site.webmanifest" />
         <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -16,7 +16,7 @@
         <link rel="preconnect" href="https://www.gstatic.com" />
         <link rel="preconnect" href="https://www.google.com" />
         <!-- Preload all ES modules so the browser fetches them in parallel
-             before the parser reaches <script type="module" src="app.js?v=56c2c95afb28ad262b3c37414a51bb3b5ea6f6da">.
+             before the parser reaches <script type="module" src="app.js?v=78333ab1cbc1cbe2f2106cde24155e18b669c6cf">.
              This eliminates the sequential module-discovery waterfall. -->
         <link rel="modulepreload" href="app.js" />
         <link rel="modulepreload" href="bible-api.js" />
@@ -35,6 +35,7 @@
              preventing a late font-discovery stall that inflates LCP. -->
         <link rel="preload" href="./fonts/GentiumBookPlus-Regular.woff2" as="font" type="font/woff2" crossorigin />
         <link rel="preload" href="./fonts/Andika-Regular.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="./fonts/OpenDyslexic3-Regular.woff2" as="font" type="font/woff2" crossorigin />
         <link rel="preload" href="./fonts/Ubuntu-Regular.woff2" as="font" type="font/woff2" crossorigin />
         <link rel="stylesheet" href="styles.css" />
         <!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
@@ -46,7 +47,7 @@
                 <header class="header">
                         <div class="header-content">
                                 <h1 class="logo">Lege Lux</h1>
-                                <span id="build-info">exp #1790 · 56c2c95</span>
+                                <span id="build-info">exp #1791 · 78333ab</span>
                                 <div class="header-controls">
                                         <button class="icon-btn" id="searchToggle" title="Search (Ctrl+K)">
                                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -283,6 +284,7 @@
                                                                         <option value="gentium">Gentium Book Plus (Serif)</option>
                                                                         <option value="andika">Andika (Sans Serif)</option>
                                                                         <option value="ubuntu">Ubuntu (Sans Serif)</option>
+                                                                        <option value="ubuntu">Open Dyslexic 3 (Sans Serif)</option>
                                                                 </select>
                                                                 <small class="help-text">Choose the typeface used for passage text.</small>
                                                         </div>
@@ -564,7 +566,7 @@
         <div id="toast" class="toast"></div>
 
 
-        <script type="module" src="app.js?v=56c2c95afb28ad262b3c37414a51bb3b5ea6f6da"></script>
+        <script type="module" src="app.js?v=78333ab1cbc1cbe2f2106cde24155e18b669c6cf"></script>
 </body>
 
 </html>
