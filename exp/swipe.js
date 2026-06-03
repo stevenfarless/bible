@@ -360,7 +360,9 @@ export function initSwipe(app) {
             outgoingPanel.id    = oldId;
             app.passageText     = incomingPanel;
 
-            // Reset outgoing panel transform to its new far-side slot
+            // Reset outgoing panel transform to its new far-side slot.
+            // direction===1 (left swipe, went forward): outgoing goes to prev slot (-W)
+            // direction===-1 (right swipe, went back):  outgoing goes to next slot (+W)
             _clearTranslateX(outgoingPanel);
             outgoingPanel.style.position = 'absolute';
             outgoingPanel.style.top      = '0';
@@ -368,11 +370,11 @@ export function initSwipe(app) {
             outgoingPanel.style.width    = '100%';
             _setTranslateX(outgoingPanel, direction === 1 ? -W : +W);
 
-            // Update app.swipe panel references to reflect the new roles
+            // Update app.swipe panel references to match the physical slots above
             if (direction === 1) {
-                app.swipe.nextPanel = outgoingPanel; // outgoing slides to the right (next slot)
+                app.swipe.prevPanel = outgoingPanel; // outgoing is now in the prev slot
             } else {
-                app.swipe.prevPanel = outgoingPanel; // outgoing slides to the left (prev slot)
+                app.swipe.nextPanel = outgoingPanel; // outgoing is now in the next slot
             }
 
             // Restore viewport to normal flow height
