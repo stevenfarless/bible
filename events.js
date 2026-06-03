@@ -6,6 +6,7 @@ import { toggleTheme, changeColorTheme } from './ui.js';
 import { attachDragToResize } from './modals.js';
 import { runMegasearch, performKeywordSearch } from './search.js';
 import { applyReadingFont } from './settings.js';
+import { initSwipe } from './swipe.js';
 
 /**
  * @param {object} app - BibleApp instance
@@ -41,6 +42,13 @@ export function attachEventListeners(app) {
     app.bookSelector?.addEventListener('click',    () => app.openBookModal());
     app.chapterSelector?.addEventListener('click', () => app.openChapterModal());
     app.verseSelector?.addEventListener('click',   () => app.openVerseModal());
+
+    // Phase 3 three-panel drag-follow swipe navigation.
+    // Replaces the Phase 1/2 touchstart+touchend handler that was inline here.
+    // initSwipe() wraps #passageText in a clipping viewport and pre-renders
+    // adjacent panels after every loadPassage() resolves via
+    // app.swipe.syncAdjacentPanels() (called from app.loadPassage).
+    initSwipe(app);
 
     // ── Translation badge (nav) ──────────────────────────────────
     app.translationSelectorBtn?.addEventListener('click', () => app.openTranslationModal());
