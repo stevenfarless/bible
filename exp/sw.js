@@ -1,4 +1,4 @@
-const BUILD_ID = "c0d9b02a3db5603a97f000364cfc5d858324818e";
+const BUILD_ID = "3f688b050569a151885a661919543d3fe48228d7";
 const CACHE_NAME = `bible-${BUILD_ID}`;
 
 // App shell assets (JS modules + CSS): network-first, bypass the browser
@@ -55,6 +55,7 @@ const APP_SHELL = [
   './settings.js',
   './keyboard.js',
   './events.js',
+  './swipe.js',
   './firebase-config.js',
   './translations/index.json',
   './site.webmanifest',
@@ -130,11 +131,6 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   // Pass through all cross-origin requests the SW has no business handling.
-  // Add trusted CDN hostnames to the allowlist if you want the SW to cache them.
-  // const ALLOWED_CROSS_ORIGIN = [
-  //   'fonts.googleapis.com',
-  //   'fonts.gstatic.com',
-  // ];
   if (url.origin !== self.location.origin &&
       !url.hostname.endsWith('.firebaseio.com') &&
       !url.hostname.endsWith('.firebase.google.com')) {
