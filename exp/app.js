@@ -788,6 +788,7 @@ class BibleApp {
                 this._loadTranslationRegistry();
                 this._prefetchCurrentBook();
                 this._prefetchAdjacentBooks();
+                this.swipe?.syncAdjacentPanels();
             } else if (cacheHit && !posMatchesCache) {
                 this._dbg.t_reveal_first = ms();
                 revealApp();
@@ -988,6 +989,7 @@ class BibleApp {
         this._dbgEvent(`loadPassage: rendered ${book} ${chapter} (${this.state.translation})`);
         this.saveReadingPosition?.();
         this._savePassageCache(book, chapter, this.state.translation || 'KJV', title, this.passageText.innerHTML);
+        this.swipe?.syncAdjacentPanels();
     }
 
     navigateChapter(direction) {
