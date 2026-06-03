@@ -24,6 +24,10 @@
 //   - app.swipe.prevPanel and app.swipe.nextPanel are both reassigned so
 //     the next drag always moves the correct nodes
 //
+// _animating is set true from the moment a commit animation starts until the
+// setTimeout callback completes. Any touchstart while _animating is true is
+// dropped, preventing concurrent panel swaps from corrupting the slot refs.
+//
 // Callers outside this module only need:
 //   import { initSwipe } from './swipe.js';
 //   // in attachEventListeners:
@@ -213,13 +217,19 @@ export function initSwipe(app) {
 
     let _startX = 0;
     let _startY = 0;
-    let _tracking = false; // true once we've confirmed a horizontal gesture
-    let _vetoed   = false; // true once we've confirmed a vertical gesture
+    let _tracking  = false; // true once we've confirmed a horizontal gesture
+    let _vetoed    = false; // true once we've confirmed a vertical gesture
+    let _animating = false; // true while a commit animation setTimeout is pending
     let _currentOffsetPx = 0;
 
     const vw = () => window.innerWidth;
 
     viewport.addEventListener('touchstart', (e) => {
+        // Ignore new touches until the in-flight commit animation settles.
+        if (_animating) {
+            _vetoed = true;
+            return;
+        }
         _startX  = e.changedTouches[0].screenX;
         _startY  = e.changedTouches[0].screenY;
         _tracking = false;
@@ -295,9 +305,9 @@ export function initSwipe(app) {
             return;
         }
 
-        const incomingPanel = direction === 1 ? app.swipe.nextPanel : app.swipe.prevPanel;
+        const incomingPanel   = direction === 1 ? app.swipe.nextPanel : app.swipe.prevPanel;
         const uninvolvedPanel = direction === 1 ? app.swipe.prevPanel : app.swipe.nextPanel;
-        const incomingPos   = direction === 1
+        const incomingPos     = direction === 1
             ? { book: app.swipe.nextPanel.dataset.book, chapter: parseInt(app.swipe.nextPanel.dataset.chapter, 10) }
             : { book: app.swipe.prevPanel.dataset.book,  chapter: parseInt(app.swipe.prevPanel.dataset.chapter,  10) };
 
@@ -320,6 +330,8 @@ export function initSwipe(app) {
             }, ANIMATION_MS);
             return;
         }
+
+        _animating = true;
 
         _addTransition(app.passageText);
         _addTransition(app.swipe.prevPanel);
@@ -402,6 +414,8 @@ export function initSwipe(app) {
             );
             app._dbgEvent?.(`swipe commit: ${incomingPos.book} ${incomingPos.chapter} (direction=${direction})`);
             app._dbgUserAction?.(`swipe: ${direction === 1 ? 'next' : 'prev'} → ${incomingPos.book} ${incomingPos.chapter}`);
+
+            _animating = false;
 
             await app.swipe.syncAdjacentPanels();
         }, ANIMATION_MS);
