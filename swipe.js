@@ -190,7 +190,7 @@ export function initSwipe(app) {
         // Sync class list from current panel to siblings
         _syncClasses() {
             const src = app.passageText;
-            for (const panel of [prevPanel, nextPanel]) {
+            for (const panel of [this.prevPanel, this.nextPanel]) {
                 panel.className = src.className;
             }
         },
@@ -201,13 +201,15 @@ export function initSwipe(app) {
             const prevPos = _adjacentPosition(app, -1);
             const nextPos = _adjacentPosition(app, +1);
             await Promise.all([
-                _renderIntoPanel(app, prevPanel, prevPos),
-                _renderIntoPanel(app, nextPanel, nextPos),
+                _renderIntoPanel(app, this.prevPanel, prevPos),
+                _renderIntoPanel(app, this.nextPanel, nextPos),
             ]);
         },
     };
 
     // ── Touch handling ────────────────────────────────────────────────────
+    // All panel references go through app.swipe so they stay current after
+    // each commit swaps which DOM node is prev/next.
 
     let _startX = 0;
     let _startY = 0;
@@ -258,8 +260,8 @@ export function initSwipe(app) {
         _currentOffsetPx = dx;
         const W = vw();
         _setTranslateX(app.passageText, dx);
-        _setTranslateX(prevPanel, dx - W);
-        _setTranslateX(nextPanel, dx + W);
+        _setTranslateX(app.swipe.prevPanel, dx - W);
+        _setTranslateX(app.swipe.nextPanel, dx + W);
     }, { passive: false });
 
     viewport.addEventListener('touchend', (e) => {
@@ -278,17 +280,17 @@ export function initSwipe(app) {
         if (!commit || Math.abs(dx) < 50) {
             // Cancel: animate back to origin
             _addTransition(app.passageText);
-            _addTransition(prevPanel);
-            _addTransition(nextPanel);
+            _addTransition(app.swipe.prevPanel);
+            _addTransition(app.swipe.nextPanel);
 
             _setTranslateX(app.passageText, 0);
-            _setTranslateX(prevPanel, -W);
-            _setTranslateX(nextPanel, +W);
+            _setTranslateX(app.swipe.prevPanel, -W);
+            _setTranslateX(app.swipe.nextPanel, +W);
 
             const cleanup = () => {
                 _removeTransition(app.passageText);
-                _removeTransition(prevPanel);
-                _removeTransition(nextPanel);
+                _removeTransition(app.swipe.prevPanel);
+                _removeTransition(app.swipe.nextPanel);
                 // Restore current panel to normal flow
                 app.passageText.style.position = '';
                 app.passageText.style.top      = '';
@@ -301,23 +303,23 @@ export function initSwipe(app) {
         }
 
         // Commit: determine incoming panel
-        const incomingPanel = direction === 1 ? nextPanel : prevPanel;
+        const incomingPanel = direction === 1 ? app.swipe.nextPanel : app.swipe.prevPanel;
         const incomingPos   = direction === 1
-            ? { book: nextPanel.dataset.book, chapter: parseInt(nextPanel.dataset.chapter, 10) }
-            : { book: prevPanel.dataset.book,  chapter: parseInt(prevPanel.dataset.chapter,  10) };
+            ? { book: app.swipe.nextPanel.dataset.book, chapter: parseInt(app.swipe.nextPanel.dataset.chapter, 10) }
+            : { book: app.swipe.prevPanel.dataset.book,  chapter: parseInt(app.swipe.prevPanel.dataset.chapter,  10) };
 
         // If the incoming panel has no content (boundary of canon), cancel
         if (!incomingPos.book) {
             _addTransition(app.passageText);
-            _addTransition(prevPanel);
-            _addTransition(nextPanel);
+            _addTransition(app.swipe.prevPanel);
+            _addTransition(app.swipe.nextPanel);
             _setTranslateX(app.passageText, 0);
-            _setTranslateX(prevPanel, -W);
-            _setTranslateX(nextPanel, +W);
+            _setTranslateX(app.swipe.prevPanel, -W);
+            _setTranslateX(app.swipe.nextPanel, +W);
             setTimeout(() => {
                 _removeTransition(app.passageText);
-                _removeTransition(prevPanel);
-                _removeTransition(nextPanel);
+                _removeTransition(app.swipe.prevPanel);
+                _removeTransition(app.swipe.nextPanel);
                 app.passageText.style.position = '';
                 app.passageText.style.top      = '';
                 app.passageText.style.left     = '';
@@ -329,18 +331,18 @@ export function initSwipe(app) {
 
         // Animate slide to completion
         _addTransition(app.passageText);
-        _addTransition(prevPanel);
-        _addTransition(nextPanel);
+        _addTransition(app.swipe.prevPanel);
+        _addTransition(app.swipe.nextPanel);
 
         const outOffset = direction === 1 ? -W : +W;
         _setTranslateX(app.passageText, outOffset);
-        _setTranslateX(prevPanel,  outOffset - W);
-        _setTranslateX(nextPanel,  outOffset + W);
+        _setTranslateX(app.swipe.prevPanel,  outOffset - W);
+        _setTranslateX(app.swipe.nextPanel,  outOffset + W);
 
         setTimeout(async () => {
             _removeTransition(app.passageText);
-            _removeTransition(prevPanel);
-            _removeTransition(nextPanel);
+            _removeTransition(app.swipe.prevPanel);
+            _removeTransition(app.swipe.nextPanel);
 
             // Swap DOM roles: incoming becomes new current
             const outgoingPanel = app.passageText;
@@ -365,6 +367,13 @@ export function initSwipe(app) {
             outgoingPanel.style.left     = '0';
             outgoingPanel.style.width    = '100%';
             _setTranslateX(outgoingPanel, direction === 1 ? -W : +W);
+
+            // Update app.swipe panel references to reflect the new roles
+            if (direction === 1) {
+                app.swipe.nextPanel = outgoingPanel; // outgoing slides to the right (next slot)
+            } else {
+                app.swipe.prevPanel = outgoingPanel; // outgoing slides to the left (prev slot)
+            }
 
             // Restore viewport to normal flow height
             viewport.style.height = '';
@@ -395,8 +404,6 @@ export function initSwipe(app) {
             app._dbgUserAction?.(`swipe: ${direction === 1 ? 'next' : 'prev'} → ${incomingPos.book} ${incomingPos.chapter}`);
 
             // Pre-render new adjacent panels
-            app.swipe.prevPanel = outgoingPanel.id === 'swipePrev' ? outgoingPanel : prevPanel;
-            app.swipe.nextPanel = outgoingPanel.id === 'swipeNext' ? outgoingPanel : nextPanel;
             await app.swipe.syncAdjacentPanels();
         }, ANIMATION_MS);
     }, { passive: true });
