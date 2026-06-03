@@ -42,6 +42,35 @@ export function attachEventListeners(app) {
     app.chapterSelector?.addEventListener('click', () => app.openChapterModal());
     app.verseSelector?.addEventListener('click',   () => app.openVerseModal());
 
+    // Swipe left/right on the passage area to navigate chapters.
+    // Scoped to #passageText so horizontal scrolling inside any sibling
+    // elements (e.g. a translation strip) does not bubble up and trigger
+    // an unintended chapter jump.
+    const passageText = document.getElementById('passageText');
+    if (passageText) {
+        let _swipeStartX = 0;
+        let _swipeStartY = 0;
+
+        passageText.addEventListener('touchstart', (e) => {
+            _swipeStartX = e.changedTouches[0].screenX;
+            _swipeStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        passageText.addEventListener('touchend', (e) => {
+            const dx = e.changedTouches[0].screenX - _swipeStartX;
+            const dy = e.changedTouches[0].screenY - _swipeStartY;
+
+            // Ignore if the gesture is primarily vertical (user is scrolling).
+            if (Math.abs(dy) > Math.abs(dx)) return;
+            // Ignore if the swipe is too short (accidental tap/drag).
+            if (Math.abs(dx) < 50) return;
+            // Ignore if any modal is currently open.
+            if (document.querySelector('.modal.active')) return;
+
+            app.navigateChapter(dx < 0 ? 1 : -1);
+        }, { passive: true });
+    }
+
     // ── Translation badge (nav) ──────────────────────────────────
     app.translationSelectorBtn?.addEventListener('click', () => app.openTranslationModal());
 
