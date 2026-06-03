@@ -6,68 +6,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create v1.10.0-dev prerelease
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.repos.createRelease({
-              owner: 'stevenfarless',
-              repo: 'bible',
-              tag_name: 'v1.10.0-dev',
-              target_commitish: 'exp',
-              name: 'v1.10.0-dev',
-              prerelease: true,
-              body: `## v1.10.0-dev — Dev Prerelease
-
-> **Pre-release** — Preview build from the \`exp\` branch.
-
-**Continues from:** [\`v1.9.0-dev\`](https://github.com/stevenfarless/bible/releases/tag/v1.9.0-dev)
-
----
-
-### Swipe gesture chapter navigation
-
-- Three-panel drag-follow navigation (\`swipe.js\`) wraps \`#passageText\` in a \`#swipeViewport\` clipping container on init
-- Prev/next panels pre-rendered after every \`loadPassage()\` resolves via \`syncAdjacentPanels()\`
-- \`touchmove\` translates all three panels in real time with a 30° angle guard to avoid conflicting with vertical scroll
-- \`touchend\` commits (≥35% vw) with a slide animation that promotes the incoming panel, or cancels with a spring-back
-- Modal-open and search-open states suppress swipe; gesture lock prevents concurrent panel swaps during commit animation
-- Font size copied to incoming panel on commit; \`swipe.js\` added to SW \`APP_SHELL\` precache
-
-### Reading font selector
-
-- New font selector in Settings: Gentium Book Plus (default serif), Andika, Ubuntu, OpenDyslexic3
-- Selection persists to \`localStorage\` and Firebase for signed-in users
-- All four fonts ship as self-hosted \`woff2\` files with \`@font-face\` declarations; preloaded via \`<link rel="preload">\` to reduce LCP
-- \`applyReadingFont()\` in \`settings.js\` manages body class swaps
-
-### Typography
-
-- Default passage font changed from Crimson Text to **Gentium Book Plus** — updates \`--font-serif\` CSS token; affects \`.passage\`, \`.passage-text\`, and \`.search-result-content\`
-- Dracula dark mode: logo now renders in Dracula orange
-
-### Bug fixes
-
-- **SW translation coverage** — \`TRANSLATIONS\` array updated from 8 to 16 entries; CSB, ESV, ISV, MEV, NIV, NKJV, NLT, NRSVUE were missing from \`PER_BOOK_PRECACHE\` logic
-- **Passage paragraph spacing** — removed bottom margin from \`.passage-para\`; restored heading clearance (\`margin-top\`)
-- **Empty verses** — \`bible-api.js\` now emits a \`.verse-spacer\` div for empty verse slots to preserve paragraph structure
-- **Deuterocanon testament label** — renamed \`'Other'\` to \`'Deuterocanon'\` in NRSVUE and WEB \`meta.json\`
-- **OpenDyslexic3 font URL** — corrected broken \`src\` URL for \`OpenDyslexic3-Bold\` \`@font-face\`
-- **Font class typo** — fixed \`classList.remove\` referencing wrong class during font switching
-- **Swipe panel refs** — touch handlers now read from \`app.swipe\` to prevent stale-closure breakage; corrected inverted ref assignment post-commit
-
-### Performance
-
-- **SW precache reduced** — \`HIGH_VALUE_BOOKS\` trimmed to Genesis + John only (was + Matthew, Romans, Psalm), saving ~1.8 MB from the install payload
-
-### CI / Security
-
-- CodeQL \`js/http-to-file-access\` false positives suppressed in \`build-web-structure.mjs\` and \`fetch-apocrypha.js\`
-- CodeQL \`js/incomplete-url-substring-sanitization\` fixed in fetch log classifier via \`URL\` parsing
-- CodeQL workflow now triggers on \`workflow_dispatch\` and the \`exp\` branch
-- \`upload-all\` workflow added to upload translations then index from \`exp\` in a single run
-
----
-
-**Full Changelog**: https://github.com/stevenfarless/bible/compare/v1.9.0-dev...v1.10.0-dev`
-            });
+        run: |
+          curl -s -X POST \
+            -H "Authorization: token ${{ secrets.RELEASE_PAT }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/stevenfarless/bible/releases \
+            -d '{
+              "tag_name": "v1.10.0-dev",
+              "target_commitish": "exp",
+              "name": "v1.10.0-dev",
+              "prerelease": true,
+              "body": "## v1.10.0-dev \u2014 Dev Prerelease\n\n> **Pre-release** \u2014 Preview build from the `exp` branch.\n\n**Continues from:** [`v1.9.0-dev`](https://github.com/stevenfarless/bible/releases/tag/v1.9.0-dev)\n\n---\n\n### Swipe gesture chapter navigation\n\n- Three-panel drag-follow navigation (`swipe.js`) wraps `#passageText` in a `#swipeViewport` clipping container on init\n- Prev/next panels pre-rendered after every `loadPassage()` resolves via `syncAdjacentPanels()`\n- `touchmove` translates all three panels in real time with a 30\u00b0 angle guard to avoid conflicting with vertical scroll\n- `touchend` commits (\u226535% vw) with a slide animation that promotes the incoming panel, or cancels with a spring-back\n- Modal-open and search-open states suppress swipe; gesture lock prevents concurrent panel swaps during commit animation\n- Font size copied to incoming panel on commit; `swipe.js` added to SW `APP_SHELL` precache\n\n### Reading font selector\n\n- New font selector in Settings: Gentium Book Plus (default serif), Andika, Ubuntu, OpenDyslexic3\n- Selection persists to `localStorage` and Firebase for signed-in users\n- All four fonts ship as self-hosted `woff2` files with `@font-face` declarations; preloaded via `<link rel=\\\"preload\\\">` to reduce LCP\n- `applyReadingFont()` in `settings.js` manages body class swaps\n\n### Typography\n\n- Default passage font changed from Crimson Text to **Gentium Book Plus** \u2014 updates `--font-serif` CSS token; affects `.passage`, `.passage-text`, and `.search-result-content`\n- Dracula dark mode: logo now renders in Dracula orange\n\n### Bug fixes\n\n- **SW translation coverage** \u2014 `TRANSLATIONS` array updated from 8 to 16 entries; CSB, ESV, ISV, MEV, NIV, NKJV, NLT, NRSVUE were missing from `PER_BOOK_PRECACHE` logic\n- **Passage paragraph spacing** \u2014 removed bottom margin from `.passage-para`; restored heading clearance (`margin-top`)\n- **Empty verses** \u2014 `bible-api.js` now emits a `.verse-spacer` div for empty verse slots to preserve paragraph structure\n- **Deuterocanon testament label** \u2014 renamed `Other` to `Deuterocanon` in NRSVUE and WEB `meta.json`\n- **OpenDyslexic3 font URL** \u2014 corrected broken `src` URL for `OpenDyslexic3-Bold` `@font-face`\n- **Font class typo** \u2014 fixed `classList.remove` referencing wrong class during font switching\n- **Swipe panel refs** \u2014 touch handlers now read from `app.swipe` to prevent stale-closure breakage; corrected inverted ref assignment post-commit\n\n### Performance\n\n- **SW precache reduced** \u2014 `HIGH_VALUE_BOOKS` trimmed to Genesis + John only (was + Matthew, Romans, Psalm), saving ~1.8 MB from the install payload\n\n### CI / Security\n\n- CodeQL `js/http-to-file-access` false positives suppressed in `build-web-structure.mjs` and `fetch-apocrypha.js`\n- CodeQL `js/incomplete-url-substring-sanitization` fixed in fetch log classifier via `URL` parsing\n- CodeQL workflow now triggers on `workflow_dispatch` and the `exp` branch\n- `upload-all` workflow added to upload translations then index from `exp` in a single run\n\n---\n\n**Full Changelog**: https://github.com/stevenfarless/bible/compare/v1.9.0-dev...v1.10.0-dev"
+            }'
