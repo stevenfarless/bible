@@ -55,6 +55,7 @@ const APP_SHELL = [
   './settings.js',
   './keyboard.js',
   './events.js',
+  './swipe.js',
   './firebase-config.js',
   './translations/index.json',
   './site.webmanifest',
@@ -130,11 +131,6 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   // Pass through all cross-origin requests the SW has no business handling.
-  // Add trusted CDN hostnames to the allowlist if you want the SW to cache them.
-  // const ALLOWED_CROSS_ORIGIN = [
-  //   'fonts.googleapis.com',
-  //   'fonts.gstatic.com',
-  // ];
   if (url.origin !== self.location.origin &&
       !url.hostname.endsWith('.firebaseio.com') &&
       !url.hostname.endsWith('.firebase.google.com')) {

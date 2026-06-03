@@ -177,8 +177,6 @@ export function initSwipe(app) {
         transform: 'translateX(100vw)',
     });
 
-    // Current panel needs absolute positioning too while dragging
-    // (we restore it to relative after commit/cancel so page height works)
     viewport.insertBefore(prevPanel, currentPanel);
     viewport.appendChild(nextPanel);
 
@@ -187,11 +185,12 @@ export function initSwipe(app) {
         viewport,
         prevPanel,
         nextPanel,
-        // Sync class list from current panel to siblings
+        // Sync class list and inline font size from current panel to siblings
         _syncClasses() {
             const src = app.passageText;
             for (const panel of [this.prevPanel, this.nextPanel]) {
                 panel.className = src.className;
+                panel.style.fontSize = src.style.fontSize;
             }
         },
         // Re-render both adjacent panels after the current passage changes.
@@ -235,26 +234,21 @@ export function initSwipe(app) {
         const dy = e.changedTouches[0].screenY - _startY;
 
         if (!_tracking) {
-            // Not enough movement yet to classify
             if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
 
-            // Angle check: veto if too vertical
             if (Math.abs(dy) > Math.abs(dx) * TAN_30 || Math.abs(dy) > Math.abs(dx)) {
                 _vetoed = true;
                 return;
             }
             _tracking = true;
 
-            // Enter drag mode: make current panel absolute so siblings align
             app.passageText.style.position = 'absolute';
             app.passageText.style.top      = '0';
             app.passageText.style.left     = '0';
             app.passageText.style.width    = '100%';
-            // Freeze viewport height to current panel height so page doesn't jump
             viewport.style.height = app.passageText.offsetHeight + 'px';
         }
 
-        // Prevent scroll while dragging horizontally
         e.preventDefault();
 
         _currentOffsetPx = dx;
@@ -278,7 +272,6 @@ export function initSwipe(app) {
         const direction = dx < 0 ? 1 : -1; // left swipe = next = +1
 
         if (!commit || Math.abs(dx) < 50) {
-            // Cancel: animate back to origin
             _addTransition(app.passageText);
             _addTransition(app.swipe.prevPanel);
             _addTransition(app.swipe.nextPanel);
@@ -291,7 +284,6 @@ export function initSwipe(app) {
                 _removeTransition(app.passageText);
                 _removeTransition(app.swipe.prevPanel);
                 _removeTransition(app.swipe.nextPanel);
-                // Restore current panel to normal flow
                 app.passageText.style.position = '';
                 app.passageText.style.top      = '';
                 app.passageText.style.left     = '';
@@ -302,13 +294,11 @@ export function initSwipe(app) {
             return;
         }
 
-        // Commit: determine incoming panel
         const incomingPanel = direction === 1 ? app.swipe.nextPanel : app.swipe.prevPanel;
         const incomingPos   = direction === 1
             ? { book: app.swipe.nextPanel.dataset.book, chapter: parseInt(app.swipe.nextPanel.dataset.chapter, 10) }
             : { book: app.swipe.prevPanel.dataset.book,  chapter: parseInt(app.swipe.prevPanel.dataset.chapter,  10) };
 
-        // If the incoming panel has no content (boundary of canon), cancel
         if (!incomingPos.book) {
             _addTransition(app.passageText);
             _addTransition(app.swipe.prevPanel);
@@ -329,7 +319,6 @@ export function initSwipe(app) {
             return;
         }
 
-        // Animate slide to completion
         _addTransition(app.passageText);
         _addTransition(app.swipe.prevPanel);
         _addTransition(app.swipe.nextPanel);
@@ -344,23 +333,23 @@ export function initSwipe(app) {
             _removeTransition(app.swipe.prevPanel);
             _removeTransition(app.swipe.nextPanel);
 
-            // Swap DOM roles: incoming becomes new current
             const outgoingPanel = app.passageText;
 
-            // Place incoming at centre (no transform), outgoing at far side
+            // Copy inline font size before promoting so the incoming panel
+            // matches whatever size the app has applied to the current panel.
+            incomingPanel.style.fontSize = outgoingPanel.style.fontSize;
+
             _clearTranslateX(incomingPanel);
             incomingPanel.style.position = '';
             incomingPanel.style.top      = '';
             incomingPanel.style.left     = '';
             incomingPanel.style.width    = '';
 
-            // Reassign app.passageText to the incoming panel
             const oldId         = incomingPanel.id;
             incomingPanel.id    = 'passageText';
             outgoingPanel.id    = oldId;
             app.passageText     = incomingPanel;
 
-            // Reset outgoing panel transform to its new far-side slot.
             // direction===1 (left swipe, went forward): outgoing goes to prev slot (-W)
             // direction===-1 (right swipe, went back):  outgoing goes to next slot (+W)
             _clearTranslateX(outgoingPanel);
@@ -370,17 +359,14 @@ export function initSwipe(app) {
             outgoingPanel.style.width    = '100%';
             _setTranslateX(outgoingPanel, direction === 1 ? -W : +W);
 
-            // Update app.swipe panel references to match the physical slots above
             if (direction === 1) {
-                app.swipe.prevPanel = outgoingPanel; // outgoing is now in the prev slot
+                app.swipe.prevPanel = outgoingPanel;
             } else {
-                app.swipe.nextPanel = outgoingPanel; // outgoing is now in the next slot
+                app.swipe.nextPanel = outgoingPanel;
             }
 
-            // Restore viewport to normal flow height
             viewport.style.height = '';
 
-            // Update app state without triggering a network fetch
             app.state.currentBook    = incomingPos.book;
             app.state.currentChapter = incomingPos.chapter;
 
@@ -405,7 +391,6 @@ export function initSwipe(app) {
             app._dbgEvent?.(`swipe commit: ${incomingPos.book} ${incomingPos.chapter} (direction=${direction})`);
             app._dbgUserAction?.(`swipe: ${direction === 1 ? 'next' : 'prev'} → ${incomingPos.book} ${incomingPos.chapter}`);
 
-            // Pre-render new adjacent panels
             await app.swipe.syncAdjacentPanels();
         }, ANIMATION_MS);
     }, { passive: true });
