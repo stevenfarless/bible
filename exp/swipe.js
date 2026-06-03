@@ -20,8 +20,9 @@
 // On commit the incoming panel is promoted to current:
 //   - its node is swapped with #passageText in the DOM
 //   - app.passageText is reassigned to the new centre node
-//   - the vacated panel is moved to the far side and pre-rendered with the
-//     new adjacent chapter
+//   - the outgoing panel moves to the far side
+//   - app.swipe.prevPanel and app.swipe.nextPanel are both reassigned so
+//     the next drag always moves the correct nodes
 //
 // Callers outside this module only need:
 //   import { initSwipe } from './swipe.js';
@@ -295,6 +296,7 @@ export function initSwipe(app) {
         }
 
         const incomingPanel = direction === 1 ? app.swipe.nextPanel : app.swipe.prevPanel;
+        const uninvolvedPanel = direction === 1 ? app.swipe.prevPanel : app.swipe.nextPanel;
         const incomingPos   = direction === 1
             ? { book: app.swipe.nextPanel.dataset.book, chapter: parseInt(app.swipe.nextPanel.dataset.chapter, 10) }
             : { book: app.swipe.prevPanel.dataset.book,  chapter: parseInt(app.swipe.prevPanel.dataset.chapter,  10) };
@@ -350,8 +352,9 @@ export function initSwipe(app) {
             outgoingPanel.id    = oldId;
             app.passageText     = incomingPanel;
 
-            // direction===1 (left swipe, went forward): outgoing goes to prev slot (-W)
-            // direction===-1 (right swipe, went back):  outgoing goes to next slot (+W)
+            // Move the outgoing panel to the far side (opposite to where we came from).
+            // direction===1 (left swipe → went forward): outgoing goes to prev slot
+            // direction===-1 (right swipe → went back):  outgoing goes to next slot
             _clearTranslateX(outgoingPanel);
             outgoingPanel.style.position = 'absolute';
             outgoingPanel.style.top      = '0';
@@ -359,10 +362,19 @@ export function initSwipe(app) {
             outgoingPanel.style.width    = '100%';
             _setTranslateX(outgoingPanel, direction === 1 ? -W : +W);
 
+            // Reassign BOTH slot references.
+            // After a direction===1 commit:
+            //   prev slot → outgoing (just moved there)
+            //   next slot → uninvolved (was prev before; will hold ch+1 after sync)
+            // After a direction===-1 commit:
+            //   next slot → outgoing (just moved there)
+            //   prev slot → uninvolved (was next before; will hold ch-1 after sync)
             if (direction === 1) {
                 app.swipe.prevPanel = outgoingPanel;
+                app.swipe.nextPanel = uninvolvedPanel;
             } else {
                 app.swipe.nextPanel = outgoingPanel;
+                app.swipe.prevPanel = uninvolvedPanel;
             }
 
             viewport.style.height = '';
