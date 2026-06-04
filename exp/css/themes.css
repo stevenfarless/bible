@@ -199,7 +199,7 @@ body.sage-theme.light-mode {
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 14%, transparent);
 
-    --shadow-sm: 0 1px 3px rgba(20, 50, 30, 0.10);
+    --shadow-sm: 0 1px 2px rgba(20, 50, 30, 0.10);
     --shadow-md: 0 4px 6px rgba(20, 50, 30, 0.12);
     --shadow-lg: 0 10px 15px rgba(20, 50, 30, 0.16);
 }
@@ -485,7 +485,7 @@ body.geek-theme {
 :root.geek-theme,
 html.geek-theme,
 body.geek-theme,
-body.geek-theme *  {
+body.geek-theme * {
     font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace !important;
 }
 
@@ -496,4 +496,31 @@ body.geek-theme .passage-container {
     background-color: #000;
     border-radius: 0;
     box-shadow: none;
+}
+
+/* Beat components.css specificity for passage text color.
+   .passage-text and .passage use color: var(--text-primary) which resolves
+   to --text-heading. Both are now #00AA00 in the token block above, but
+   the explicit font-family rules in components.css (font-serif / font-sans)
+   need to be overridden here at matching specificity with !important. */
+body.geek-theme .passage-text,
+body.geek-theme .passage {
+    font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace !important;
+    color: #00AA00 !important;
+}
+
+body.geek-theme .passage-text h2,
+body.geek-theme .passage-text h3,
+body.geek-theme .passage-text h4 {
+    font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace !important;
+    color: #00AA00 !important;
+}
+
+body.geek-theme .passage-title {
+    font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace !important;
+    color: #00AA00 !important;
+}
+
+body.geek-theme .verse-num {
+    color: #007700 !important;
 }
