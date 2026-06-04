@@ -34,6 +34,7 @@ Full copyright and attribution information is in [NOTICE](NOTICE).
 
 **Navigation**
 - Book, chapter, and verse picker modals
+- Swipe left/right for chapter navigation on touch devices
 - Keyboard shortcuts: `<-` `->` chapter navigation, `^` `v` verse navigation, `Ctrl+K` search, `?` help
 
 **Search**
@@ -65,9 +66,21 @@ Full copyright and attribution information is in [NOTICE](NOTICE).
 ├── bible-structure.js      # Book/chapter/testament lookup tables
 ├── bsb-structure.js        # Heading/paragraph scaffold loader (BSB)
 ├── ui.js                   # Theme, element caching, icon updates
+├── swipe.js                # Touch swipe gesture handler for chapter navigation
 ├── firebase-config.js      # Root stub, re-exports from config/firebase-config.js
 ├── sw.js                   # Service worker
-├── styles.css              # All styles
+├── styles.css              # @import hub — loads all files from css/
+├── css/
+│   ├── tokens.css          # CSS custom properties (design tokens)
+│   ├── base.css            # Reset and base element styles
+│   ├── layout.css          # Page and panel layout
+│   ├── components.css      # UI component styles
+│   ├── modals.css          # Modal-specific styles
+│   ├── pericope.css        # Section heading and paragraph styles
+│   ├── fonts.css           # @font-face declarations
+│   ├── themes.css          # Color theme definitions
+│   ├── interactions.css    # Hover, focus, and transition styles
+│   └── utilities.css       # Utility/helper classes
 ├── cross_references.txt    # Cross-reference source data (8 MB)
 ├── package.json            # Dev dependencies (Vitest, Playwright)
 ├── vitest.config.js        # Unit test config
@@ -106,6 +119,9 @@ touch only the modules relevant to that feature:
 | New search capability | `search.js` + `events.js` if it needs a new trigger |
 | New lifecycle step at startup | `app.js` (`init`) |
 | Change to how passages load | `app.js` (`loadPassage`) |
+| Touch/swipe gesture behaviour | `swipe.js` only |
+| Styles for a new component | add a rule in the relevant `css/*.css` file |
+| New design token (color, spacing, etc.) | `css/tokens.css` only |
 
 If you find yourself adding logic directly to `app.js`, it belongs in one of
 the modules above instead.
