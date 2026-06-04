@@ -447,7 +447,7 @@ body.basic-theme.light-mode .passage-container {
 /* ================================
    The Geek Shall Inherit The Earth
    Classic terminal: #00AA00 green on pure black.
-   Reading font stays user-selectable; green text remains enforced.
+   Geek theme changes color only; reading font remains whatever is already active.
    Light mode toggle is intentionally ignored; this theme is always dark.
    ================================ */
 :root.geek-theme,
@@ -520,8 +520,10 @@ body.geek-theme .passage-text h3,
 body.geek-theme .passage-text h4,
 body.geek-theme .passage-title {
     color: #00AA00 !important;
+    font-family: inherit !important;
 }
 
 body.geek-theme .verse-num {
     color: #007700 !important;
+    font-family: inherit !important;
 }
