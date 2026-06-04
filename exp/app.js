@@ -146,6 +146,121 @@ function _logUserAction(msg) {
     _userActionLog.push({ t: ms(), msg });
 }
 
+// ── Styling snapshot ──────────────────────────────────────────────────────
+// Returns a block of lines describing the active theme, computed CSS tokens,
+// and key element styles at the moment the panel is opened.
+function _buildStylingLines() {
+    const lines = [];
+    const body  = document.body;
+    const root  = document.documentElement;
+    const cs    = (el) => el ? getComputedStyle(el) : null;
+    const cv    = (prop) => getComputedStyle(root).getPropertyValue(prop).trim() || '(not set)';
+
+    // ── Theme class state ─────────────────────────────────────────────────
+    const bodyClasses = [...body.classList].join(' ') || '(none)';
+    const htmlClasses = [...root.classList].join(' ') || '(none)';
+    lines.push(`  body classes: ${bodyClasses}`);
+    lines.push(`  html classes: ${htmlClasses}`);
+
+    const activeTheme = (() => {
+        if (body.classList.contains('perplexity-theme')) return 'perplexity';
+        if (body.classList.contains('onyx-theme'))       return 'onyx';
+        if (body.classList.contains('sage-theme'))       return 'sage';
+        if (body.classList.contains('ember-theme'))      return 'ember';
+        return 'dracula (default)';
+    })();
+    const lightMode = body.classList.contains('light-mode') ? 'yes' : 'no';
+    lines.push(`  active theme: ${activeTheme}`);
+    lines.push(`  light mode:   ${lightMode}`);
+
+    // ── Media queries ─────────────────────────────────────────────────────
+    const mq = (q) => window.matchMedia(q).matches ? 'yes' : 'no';
+    lines.push(`  prefers-color-scheme dark:      ${mq('(prefers-color-scheme: dark)')}`);
+    lines.push(`  prefers-reduced-motion:         ${mq('(prefers-reduced-motion: reduce)')}`);
+    lines.push(`  display-mode standalone (PWA):  ${mq('(display-mode: standalone)')}`);
+
+    // ── Semantic CSS custom properties (computed) ─────────────────────────
+    lines.push('  -- semantic tokens (computed from :root) --');
+    const tokens = [
+        '--bg-base', '--bg-card', '--bg-raised',
+        '--text-heading', '--text-body', '--text-muted-2',
+        '--border-neutral', '--highlight-border',
+        '--primary-color', '--primary-dark', '--primary-light',
+        '--secondary-color', '--accent-color',
+        '--success-color', '--warning-color', '--error-color',
+        '--font-sans', '--font-serif', '--font-size-base',
+        '--border-radius', '--border-radius-lg',
+        '--transition-fast', '--transition-normal',
+        '--shadow-sm', '--shadow-md', '--shadow-lg',
+        '--max-width', '--header-height', '--nav-height',
+    ];
+    for (const t of tokens) {
+        lines.push(`  ${t}: ${cv(t)}`);
+    }
+
+    // ── Element-level computed styles ─────────────────────────────────────
+    lines.push('  -- computed element styles --');
+
+    const elMap = {
+        body:               body,
+        '.header':          document.querySelector('.header'),
+        '.nav':             document.querySelector('.nav'),
+        '.passage-container': document.querySelector('.passage-container'),
+        '.passage-text':    document.querySelector('.passage-text'),
+        '.passage-title':   document.querySelector('.passage-title'),
+        'button.primary (first)': document.querySelector('button.primary, .btn-primary'),
+        '.modal.active (first)':  document.querySelector('.modal.active'),
+    };
+
+    for (const [label, el] of Object.entries(elMap)) {
+        if (!el) {
+            lines.push(`  [${label}]: not found in DOM`);
+            continue;
+        }
+        const s = cs(el);
+        lines.push(`  [${label}]`);
+        lines.push(`    background-color: ${s.backgroundColor}`);
+        lines.push(`    color:            ${s.color}`);
+        lines.push(`    font-family:      ${s.fontFamily}`);
+        lines.push(`    font-size:        ${s.fontSize}`);
+        lines.push(`    line-height:      ${s.lineHeight}`);
+        lines.push(`    border:           ${s.border || s.borderTop}`);
+        if (label.includes('passage-text') || label.includes('passage-container')) {
+            lines.push(`    max-width:        ${s.maxWidth}`);
+            lines.push(`    padding:          ${s.padding}`);
+        }
+        if (label.includes('header') || label.includes('nav')) {
+            lines.push(`    height:           ${s.height}`);
+            lines.push(`    position:         ${s.position}`);
+        }
+    }
+
+    // ── Layout measurements ───────────────────────────────────────────────
+    lines.push('  -- layout measurements --');
+    const headerEl = document.querySelector('.header');
+    const navEl    = document.querySelector('.nav');
+    lines.push(`  header offsetHeight: ${headerEl?.offsetHeight ?? 'n/a'}px`);
+    lines.push(`  nav offsetHeight:    ${navEl?.offsetHeight ?? 'n/a'}px`);
+    lines.push(`  window.scrollY:      ${window.scrollY}px`);
+    lines.push(`  document height:     ${document.documentElement.scrollHeight}px`);
+    lines.push(`  chrome-hidden:       ${body.classList.contains('chrome-hidden') ? 'yes' : 'no'}`);
+    lines.push(`  initializing:        ${body.classList.contains('initializing') ? 'yes (still hidden)' : 'no'}`);
+
+    // ── Stylesheet load check ─────────────────────────────────────────────
+    lines.push('  -- stylesheets loaded --');
+    const sheets = [...document.styleSheets].map(s => {
+        try { return s.href ? s.href.replace(/^https?:\/\/[^/]+/, '') : '(inline)'; }
+        catch (_) { return '(cross-origin, inaccessible)'; }
+    });
+    if (sheets.length) {
+        sheets.forEach(h => lines.push(`  ${h}`));
+    } else {
+        lines.push('  (none detected)');
+    }
+
+    return lines;
+}
+
 function buildDebugReport(app) {
     const dbg = app._dbg || {};
     const now = ms();
@@ -341,6 +456,9 @@ function buildDebugReport(app) {
         `  localStorage font: ${storedFont}`,
         `  computed (passage): ${computedFont}`,
         `  computed (body): ${bodyFont}`,
+        '',
+        '=== styling ===',
+        ..._buildStylingLines(),
     ];
     return { text: lines.join('\n'), swCacheLines };
 }
