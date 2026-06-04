@@ -36,9 +36,9 @@ body.light-mode {
 /* Alucard — official Dracula light mode (https://spec.draculatheme.com)
    Targets Dracula (default theme, no theme class) in light mode only.
    Higher specificity than the generic .light-mode block above. */
-:root.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.basic-theme),
-html.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.basic-theme),
-body.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.basic-theme) {
+:root.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.basic-theme):not(.geek-theme),
+html.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.basic-theme):not(.geek-theme),
+body.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.basic-theme):not(.geek-theme) {
     --bg-base:    var(--alucard-bg);
     --bg-card:    var(--alucard-bg-lighter);
     --bg-raised:  var(--alucard-bg-light);
@@ -442,4 +442,58 @@ body.basic-theme.light-mode {
 html.basic-theme.light-mode .passage-container,
 body.basic-theme.light-mode .passage-container {
     background-color: #fff;
+}
+
+/* ================================
+   The Geek Shall Inherit The Earth
+   Classic terminal: #00AA00 green on pure black.
+   IBM Plex Mono forced as the reading font — overrides user selection.
+   Light mode toggle is intentionally ignored; this theme is always dark.
+   ================================ */
+:root.geek-theme,
+html.geek-theme,
+body.geek-theme {
+    --bg-base:   #000000;
+    --bg-card:   #000000;
+    --bg-raised: #000000;
+
+    --text-heading: #00AA00;
+    --text-body:    #00AA00;
+    --text-muted-2: #007700;
+
+    --border-neutral:   #004400;
+    --highlight-border: #006600;
+
+    --primary-color:   #00AA00;
+    --primary-dark:    #007700;
+    --primary-light:   #00CC00;
+    --secondary-color: #00AA00;
+    --accent-color:    #00AA00;
+
+    --success-color: #00AA00;
+    --warning-color: #00AA00;
+    --error-color:   #00AA00;
+
+    --footnote-hover-bg: rgba(0, 170, 0, 0.15);
+
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
+}
+
+/* Force IBM Plex Mono across all text — overrides reading font classes */
+:root.geek-theme,
+html.geek-theme,
+body.geek-theme,
+body.geek-theme *  {
+    font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace !important;
+}
+
+/* Passage container: pure black, no rounding or shadow */
+:root.geek-theme .passage-container,
+html.geek-theme .passage-container,
+body.geek-theme .passage-container {
+    background-color: #000;
+    border-radius: 0;
+    box-shadow: none;
 }

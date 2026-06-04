@@ -166,13 +166,26 @@ export async function toggleVerseByVerse(app) {
 }
 
 export function applyReadingFont(app, font) {
+    const isGeek = app.state.colorTheme === 'geek';
+
     document.body.classList.remove('font-andika', 'font-ubuntu', 'font-opendyslexic3');
-    if (font === 'andika') document.body.classList.add('font-andika');
-    if (font === 'ubuntu') document.body.classList.add('font-ubuntu');
-    if (font === 'opendyslexic3') document.body.classList.add('font-opendyslexic3');
+    if (!isGeek) {
+        if (font === 'andika')        document.body.classList.add('font-andika');
+        if (font === 'ubuntu')        document.body.classList.add('font-ubuntu');
+        if (font === 'opendyslexic3') document.body.classList.add('font-opendyslexic3');
+    }
 
     const selector = document.getElementById('readingFontSelector');
-    if (selector) selector.value = font;
+    const helpText = document.getElementById('readingFontHelpText');
+    if (selector) {
+        selector.value    = font;
+        selector.disabled = isGeek;
+    }
+    if (helpText) {
+        helpText.textContent = isGeek
+            ? 'Font locked to IBM Plex Mono while The Geek Shall Inherit The Earth theme is active.'
+            : 'Choose the typeface used for passage text.';
+    }
 }
 
 export async function updateFontSize(app, size) {

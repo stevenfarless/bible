@@ -5,7 +5,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Bible Reader</title>
-        <meta name="build-id" content="ea4cc16639f3e63d1666363f640a534bb4ecbef5" />
+        <meta name="build-id" content="6c0de50f7b145c85d4ea1d11165aae468af35be7" />
         <link rel="manifest" href="./site.webmanifest" />
         <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -15,8 +15,11 @@
         <link rel="preconnect" href="https://esv-bible-6dffb-default-rtdb.firebaseio.com" />
         <link rel="preconnect" href="https://www.gstatic.com" />
         <link rel="preconnect" href="https://www.google.com" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
         <!-- Preload all ES modules so the browser fetches them in parallel
-             before the parser reaches <script type="module" src="app.js?v=ea4cc16639f3e63d1666363f640a534bb4ecbef5">.
+             before the parser reaches <script type="module" src="app.js?v=6c0de50f7b145c85d4ea1d11165aae468af35be7">.
              This eliminates the sequential module-discovery waterfall. -->
         <link rel="modulepreload" href="app.js" />
         <link rel="modulepreload" href="bible-api.js" />
@@ -58,7 +61,7 @@
                 <header class="header">
                         <div class="header-content">
                                 <h1 class="logo">Lege Lux</h1>
-                                <span id="build-info">exp #1850 · ea4cc16</span>
+                                <span id="build-info">exp #1851 · 6c0de50</span>
                                 <div class="header-controls">
                                         <button class="icon-btn" id="searchToggle" title="Search (Ctrl+K)">
                                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -276,6 +279,7 @@
                                                                         <option value="ember">Ember (Amber/Candlelit)</option>
                                                                         <option value="perplexity">Perplexity (Teal/Minimal)</option>
                                                                         <option value="basic">Basic (Black &amp; White)</option>
+                                                                        <option value="geek">The Geek Shall Inherit The Earth</option>
                                                                 </select>
                                                                 <small class="help-text">Choose your preferred color scheme.</small>
                                                         </div>
@@ -298,7 +302,7 @@
                                                                         <option value="ubuntu">Ubuntu</option>
                                                                         <option value="opendyslexic3">Open Dyslexic 3</option>
                                                                 </select>
-                                                                <small class="help-text">Choose the typeface used for passage text.</small>
+                                                                <small class="help-text" id="readingFontHelpText">Choose the typeface used for passage text.</small>
                                                         </div>
                                                         <div class="setting-item">
                                                                 <label class="checkbox-label">
@@ -578,7 +582,7 @@
         <div id="toast" class="toast"></div>
 
 
-        <script type="module" src="app.js?v=ea4cc16639f3e63d1666363f640a534bb4ecbef5"></script>
+        <script type="module" src="app.js?v=6c0de50f7b145c85d4ea1d11165aae468af35be7"></script>
 </body>
 
 </html>
