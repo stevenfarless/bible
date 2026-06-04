@@ -2,32 +2,36 @@
    1. CSS RESET & BASE
    ================================ */
 
-* {
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
 }
 
-/* html owns the scroll — body must NOT be an independent scroll container.
-   If body also has overflow:scroll, mobile browsers make body the scroller
-   and window.scrollY stays 0, breaking the chrome hide/show logic. */
 html {
-    overflow-y: auto;
-    scrollbar-width: none;
-}
-
-html::-webkit-scrollbar {
-    display: none;
+    scroll-behavior: smooth;
 }
 
 body {
-    overflow: visible;
+    min-height: 100vh;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* Lock scrolling while a modal is open.
-   Applied to html (not body) so the scroll container owner never changes.
-   body.style.overflow writes were the previous approach; they corrupted
-   iOS Safari's scroll-container resolution after modal close. */
-body.modal-open {
-    overflow: hidden;
+img,
+picture,
+video,
+canvas,
+svg {
+    display: block;
+    max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+    font: inherit;
 }

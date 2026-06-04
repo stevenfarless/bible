@@ -1,56 +1,76 @@
 /* ================================
    2. CSS CUSTOM PROPERTIES (VARIABLES)
-   Official Dracula colors from https://spec.draculatheme.com
    ================================ */
 
 :root {
-    /* ================================
-       Core tokens
-       - Dracula palette constants are the only theme-specific constants.
-       - Semantic tokens are the single source of truth.
-       - Existing app tokens (bg/text/border) are one-way aliases.
-       ================================ */
-
-    /* Dracula palette constants (official) */
-    --dracula-bg: #282A36;
+    /* Official Dracula colors from https://spec.draculatheme.com */
+    --dracula-bg:           #282A36;
+    --dracula-bg-dark:      #21222C;
+    --dracula-bg-darker:    #191A21;
+    --dracula-bg-lighter:   #343746;
     --dracula-current-line: #44475A;
-    --dracula-fg: #F8F8F2;
-    --dracula-comment: #6272A4;
-    --dracula-cyan: #8BE9FD;
-    --dracula-green: #50FA7B;
-    --dracula-orange: #FFB86C;
-    --dracula-pink: #FF79C6;
-    --dracula-purple: #BD93F9;
-    --dracula-red: #FF5555;
-    --dracula-yellow: #F1FA8C;
+    --dracula-fg:           #F8F8F2;
+    --dracula-comment:      #6272A4;
+    --dracula-cyan:         #8BE9FD;
+    --dracula-green:        #50FA7B;
+    --dracula-orange:       #FFB86C;
+    --dracula-pink:         #FF79C6;
+    --dracula-purple:       #BD93F9;
+    --dracula-red:          #FF5555;
+    --dracula-yellow:       #F1FA8C;
 
-    /* Dracula UI shades */
-    --dracula-bg-dark: #21222C;
-    --dracula-bg-darker: #191A21;
-    --dracula-bg-light: #343746;
-    --dracula-bg-lighter: #424450;
+    /* Alucard (Dracula light) palette */
+    --alucard-bg:           #F8F8F2;
+    --alucard-bg-lighter:   #FFFFF4;
+    --alucard-bg-light:     #F2F2E8;
+    --alucard-bg-dark:      #E0DED5;
+    --alucard-selection:    #D5D3C8;
+    --alucard-fg:           #282A36;
+    --alucard-comment:      #6272A4;
+    --alucard-cyan:         #0984A8;
+    --alucard-green:        #1A8A3C;
+    --alucard-orange:       #C47C10;
+    --alucard-pink:         #C4489A;
+    --alucard-purple:       #6C4FBF;
+    --alucard-red:          #CC3333;
+    --alucard-yellow:       #8A8A00;
+    --alucard-selection:    #D5D3C8;
 
-    /* Alucard palette constants (official Dracula light mode) */
-    --alucard-bg:         #FFFBEB;
-    --alucard-bg-lighter: #ECE9DF;
-    --alucard-bg-light:   #DEDCCF;
-    --alucard-bg-dark:    #CECCC0;
-    --alucard-bg-darker:  #BCBAB3;
-    --alucard-fg:         #1F1F1F;
-    --alucard-comment:    #6C664B;
-    --alucard-selection:  #CFCFDE;
-    --alucard-red:        #CB3A2A;
-    --alucard-orange:     #A34D14;
-    --alucard-yellow:     #846E15;
-    --alucard-green:      #14710A;
-    --alucard-cyan:       #036A96;
-    --alucard-purple:     #644AC9;
-    --alucard-pink:       #A3144D;
+    /* Semantic tokens — default (Dracula dark) */
+    --bg-primary:   var(--dracula-bg);
+    --bg-secondary: var(--dracula-bg-dark);
+    --bg-tertiary:  var(--dracula-current-line);
+    --bg-base:      var(--dracula-bg);
+    --bg-card:      var(--dracula-bg-dark);
+    --bg-raised:    var(--dracula-current-line);
+
+    --text-primary:   var(--dracula-fg);
+    --text-secondary: var(--dracula-comment);
+    --text-heading:   var(--dracula-fg);
+    --text-body:      var(--dracula-fg);
+    --text-muted:     var(--dracula-comment);
+    --text-muted-2:   #7a84a8;
+
+    --border-color:   var(--dracula-current-line);
+    --border-neutral: var(--dracula-current-line);
+    --highlight-border: var(--dracula-bg-lighter);
+
+    --primary-color: var(--dracula-purple);
+    --primary-dark:  #9D70F2;
+    --primary-light: #CEB5FD;
+    --secondary-color: var(--dracula-orange);
+    --accent-color:  var(--dracula-cyan);
+
+    --success-color: var(--dracula-green);
+    --warning-color: var(--dracula-yellow);
+    --error-color:   var(--dracula-red);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
 
     /* Typography */
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-serif: 'Gentium Book Plus', Georgia, serif;
-    --font-size-base: 18px;
+    --font-serif: 'Gentium Book Plus', 'Georgia', serif;
+    --font-sans:  system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-size-base: 1.125rem;
 
     /* Spacing */
     --spacing-xs: 0.25rem;
@@ -58,73 +78,25 @@
     --spacing-md: 1rem;
     --spacing-lg: 1.5rem;
     --spacing-xl: 2rem;
-    --spacing-xxl: 3rem;
+    --spacing-2xl: 3rem;
 
     /* Layout */
-    --max-width: 800px;
-    --header-height: 45px;
-    --nav-height: 56px;
+    --max-width: 720px;
+    --header-height: 52px;
+    --nav-height: 48px;
     --chrome-height: calc(var(--header-height) + var(--nav-height));
 
-    /* Transitions */
-    --transition-fast: 150ms ease;
-    --transition-normal: 250ms ease;
-
-    /* Border Radius */
-    --border-radius: 6px;
-    --border-radius-lg: 12px;
-
-    /* Shadows (defaults tuned for dark UI) */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
-    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
-
-    /* ================================
-       Semantic tokens (canonical)
-       Default = Dracula Dark
-       ================================ */
-
-    /* Surfaces */
-    --bg-base: var(--dracula-bg-darker);
-    --bg-card: var(--dracula-bg-dark);
-    --bg-raised: var(--dracula-bg);
-
-    /* Text */
-    --text-heading: var(--dracula-fg);
-    --text-body: var(--dracula-comment);
-    --text-muted-2: var(--dracula-comment);
-
     /* Borders */
-    --border-neutral: var(--dracula-current-line);
-    --highlight-border: color-mix(in srgb, var(--border-neutral) 60%, white);
+    --border-radius: 8px;
+    --border-radius-lg: 16px;
 
-    /* Brand */
-    --primary-color: var(--dracula-purple);
-    --primary-dark: hsl(265, 89%, 64%);
-    --primary-light: var(--dracula-pink);
-    --secondary-color: var(--dracula-orange);
-    --accent-color: var(--dracula-cyan);
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.3);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.4);
 
-    /* Functional */
-    --success-color: var(--dracula-green);
-    --warning-color: var(--dracula-yellow);
-    --error-color: var(--dracula-red);
-
-    /* Component tokens */
-    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
-
-    /* ================================
-       Legacy aliases (existing component contract)
-       Do not theme these directly; theme the semantic tokens above.
-       ================================ */
-
-    --bg-primary: var(--bg-base);
-    --bg-secondary: var(--bg-card);
-    --bg-tertiary: var(--bg-raised);
-
-    --text-primary: var(--text-heading);
-    --text-secondary: var(--text-body);
-    --text-muted: var(--text-muted-2);
-
-    --border-color: var(--border-neutral);
+    /* Transitions */
+    --transition-fast:   150ms ease;
+    --transition-normal: 250ms ease;
+    --transition-slow:   400ms ease;
 }
