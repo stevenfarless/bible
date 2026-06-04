@@ -530,6 +530,15 @@ body.geek-theme .passage-title {
     color: #00AA00 !important;
 }
 
+body.geek-theme .passage-text,
+body.geek-theme .passage,
+body.geek-theme .passage-text h2,
+body.geek-theme .passage-text h3,
+body.geek-theme .passage-text h4,
+body.geek-theme .passage-title {
+    color: #00AA00 !important;
+}
+
 body.geek-theme .verse-num {
     color: #007700 !important;
 }
