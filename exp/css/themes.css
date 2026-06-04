@@ -444,38 +444,6 @@ body.basic-theme.light-mode .passage-container {
     background-color: #fff;
 }
 
-@font-face {
-    font-family: 'UbuntuGeek';
-    src: url('../fonts/Ubuntu-Regular.woff2') format('woff2');
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'UbuntuGeek';
-    src: url('../fonts/Ubuntu-Italic.woff2') format('woff2');
-    font-weight: 400;
-    font-style: italic;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'UbuntuGeek';
-    src: url('../fonts/Ubuntu-Bold.woff2') format('woff2');
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'UbuntuGeek';
-    src: url('../fonts/Ubuntu-BoldItalic.woff2') format('woff2');
-    font-weight: 700;
-    font-style: italic;
-    font-display: swap;
-}
-
 /* ================================
    The Geek Shall Inherit The Earth
    Classic terminal: #00AA00 green on pure black.
@@ -550,6 +518,15 @@ body.geek-theme .passage-text h4 {
 
 body.geek-theme .passage-title {
     font-family: 'Retrocide', 'Courier New', Courier, monospace !important;
+    color: #00AA00 !important;
+}
+
+body.geek-theme .passage-text,
+body.geek-theme .passage,
+body.geek-theme .passage-text h2,
+body.geek-theme .passage-text h3,
+body.geek-theme .passage-text h4,
+body.geek-theme .passage-title {
     color: #00AA00 !important;
 }
 
