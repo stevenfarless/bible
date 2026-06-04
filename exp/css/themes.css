@@ -447,7 +447,7 @@ body.basic-theme.light-mode .passage-container {
 /* ================================
    The Geek Shall Inherit The Earth
    Classic terminal: #00AA00 green on pure black.
-   Retrocide forced as the reading font — overrides user selection.
+   Geek theme changes color only; reading font remains whatever is already active.
    Light mode toggle is intentionally ignored; this theme is always dark.
    ================================ */
 :root.geek-theme,
@@ -481,14 +481,6 @@ body.geek-theme {
     --shadow-lg: none;
 }
 
-/* Force Retrocide across all text — overrides reading font classes */
-:root.geek-theme,
-html.geek-theme,
-body.geek-theme,
-body.geek-theme * {
-    font-family: 'Retrocide', 'Courier New', Courier, monospace !important;
-}
-
 /* Passage container: pure black, no rounding or shadow */
 :root.geek-theme .passage-container,
 html.geek-theme .passage-container,
@@ -504,20 +496,11 @@ body.geek-theme .passage-container {
    the explicit font-family rules in components.css (font-serif / font-sans)
    need to be overridden here at matching specificity with !important. */
 body.geek-theme .passage-text,
-body.geek-theme .passage {
-    font-family: 'Retrocide', 'Courier New', Courier, monospace !important;
-    color: #00AA00 !important;
-}
-
+body.geek-theme .passage,
 body.geek-theme .passage-text h2,
 body.geek-theme .passage-text h3,
-body.geek-theme .passage-text h4 {
-    font-family: 'Retrocide', 'Courier New', Courier, monospace !important;
-    color: #00AA00 !important;
-}
-
+body.geek-theme .passage-text h4,
 body.geek-theme .passage-title {
-    font-family: 'Retrocide', 'Courier New', Courier, monospace !important;
     color: #00AA00 !important;
 }
 
@@ -537,8 +520,10 @@ body.geek-theme .passage-text h3,
 body.geek-theme .passage-text h4,
 body.geek-theme .passage-title {
     color: #00AA00 !important;
+    font-family: inherit !important;
 }
 
 body.geek-theme .verse-num {
     color: #007700 !important;
+    font-family: inherit !important;
 }
