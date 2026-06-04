@@ -36,9 +36,9 @@ body.light-mode {
 /* Alucard — official Dracula light mode (https://spec.draculatheme.com)
    Targets Dracula (default theme, no theme class) in light mode only.
    Higher specificity than the generic .light-mode block above. */
-:root.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme),
-html.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme),
-body.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme) {
+:root.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.basic-theme),
+html.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.basic-theme),
+body.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.basic-theme) {
     --bg-base:    var(--alucard-bg);
     --bg-card:    var(--alucard-bg-lighter);
     --bg-raised:  var(--alucard-bg-light);
@@ -353,4 +353,86 @@ body.perplexity-theme.light-mode {
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.14);
 }
 
+/* ================================
+   Basic theme — pure achromatic; zero hue, maximum contrast
+   Dark mode: pure white text on pure black.
+   Light mode: pure black text on pure white.
+   No accent color — links and interactive elements use black/white
+   with an underline or border instead of color.
+   ================================ */
+:root.basic-theme,
+html.basic-theme,
+body.basic-theme {
+    /* Dark mode (default) */
+    --bg-base:   hsl(0, 0%, 0%);
+    --bg-card:   hsl(0, 0%, 4%);
+    --bg-raised: hsl(0, 0%, 9%);
 
+    --text-heading: hsl(0, 0%, 100%);
+    --text-body:    hsl(0, 0%, 100%);
+    --text-muted-2: hsl(0, 0%, 65%);
+
+    --border-neutral:   hsl(0, 0%, 20%);
+    --highlight-border: hsl(0, 0%, 30%);
+
+    --primary-color:   hsl(0, 0%, 90%);
+    --primary-dark:    hsl(0, 0%, 75%);
+    --primary-light:   hsl(0, 0%, 100%);
+    --secondary-color: hsl(0, 0%, 80%);
+    --accent-color:    hsl(0, 0%, 85%);
+
+    --success-color: hsl(0, 0%, 80%);
+    --warning-color: hsl(0, 0%, 80%);
+    --error-color:   hsl(0, 0%, 80%);
+
+    --footnote-hover-bg: rgba(255, 255, 255, 0.10);
+
+    --shadow-sm: 0 1px 3px rgba(255, 255, 255, 0.08);
+    --shadow-md: 0 4px 6px rgba(255, 255, 255, 0.08);
+    --shadow-lg: 0 10px 15px rgba(255, 255, 255, 0.12);
+}
+
+/* Basic: passage container stays pure black in dark mode */
+:root.basic-theme:not(.light-mode) .passage-container,
+html.basic-theme:not(.light-mode) .passage-container,
+body.basic-theme:not(.light-mode) .passage-container {
+    background-color: #000;
+}
+
+:root.basic-theme.light-mode,
+html.basic-theme.light-mode,
+body.basic-theme.light-mode {
+    --bg-base:   hsl(0, 0%, 100%);
+    --bg-card:   hsl(0, 0%, 98%);
+    --bg-raised: hsl(0, 0%, 95%);
+
+    --text-heading: hsl(0, 0%, 0%);
+    --text-body:    hsl(0, 0%, 0%);
+    --text-muted-2: hsl(0, 0%, 40%);
+
+    --border-neutral:   hsl(0, 0%, 80%);
+    --highlight-border: hsl(0, 0%, 92%);
+
+    --primary-color:   hsl(0, 0%, 10%);
+    --primary-dark:    hsl(0, 0%, 0%);
+    --primary-light:   hsl(0, 0%, 30%);
+    --secondary-color: hsl(0, 0%, 20%);
+    --accent-color:    hsl(0, 0%, 15%);
+
+    --success-color: hsl(0, 0%, 20%);
+    --warning-color: hsl(0, 0%, 20%);
+    --error-color:   hsl(0, 0%, 20%);
+
+    --footnote-hover-bg: rgba(0, 0, 0, 0.07);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Basic: passage container stays pure white in light mode */
+:root.basic-theme.light-mode .passage-container,
+html.basic-theme.light-mode .passage-container,
+body.basic-theme.light-mode .passage-container {
+    background-color: #fff;
+}
