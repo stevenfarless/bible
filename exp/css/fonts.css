@@ -1,8 +1,27 @@
 /* ================================
+   ESV Bible Reader - Styles
+
+   TABLE OF CONTENTS
+   0. Web Fonts
+   1. CSS Reset & Base
+   2. CSS Custom Properties (Variables)
+   3. Theme Overrides
+   4. Typography & Base Elements
+   5. Layout Components
+   6. UI Components (Alphabetical)
+   7. Modals & Overlays
+   8. Interactive States & Effects
+   9. Animations
+   10. Responsive Design
+   11. Utility Classes
+   12. Print Styles
+   ================================ */
+
+
+/* ================================
    0. WEB FONTS
    ================================ */
 
-/* Cinzel — display font for logo only */
 @font-face {
     font-family: 'Cinzel';
     src: url('./fonts/Cinzel-Regular.woff2') format('woff2');
@@ -11,15 +30,6 @@
     font-display: swap;
 }
 
-@font-face {
-    font-family: 'Cinzel';
-    src: url('./fonts/Cinzel-Bold.woff2') format('woff2');
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
-}
-
-/* Gentium Book Plus — primary serif reading font */
 @font-face {
     font-family: 'Gentium Book Plus';
     src: url('./fonts/GentiumBookPlus-Regular.woff2') format('woff2');
@@ -52,7 +62,6 @@
     font-display: swap;
 }
 
-/* Andika — dyslexia-friendly sans-serif */
 @font-face {
     font-family: 'Andika';
     src: url('./fonts/Andika-Regular.woff2') format('woff2');
@@ -79,13 +88,32 @@
 
 @font-face {
     font-family: 'Andika';
-    src: url('./fonts/Andika-BoldItalic.woff2') format('woff2');
+    src: url('./fonts/Andika-Bold.woff2') format('woff2');
     font-weight: 700;
     font-style: italic;
     font-display: swap;
 }
 
-/* Ubuntu — clean humanist sans-serif */
+/* Open Dyslexic */
+
+@font-face {
+    font-family: 'OpenDyslexic3';
+    src: url('./fonts/OpenDyslexic3-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'OpenDyslexic3';
+    src: url('./fonts/OpenDyslexic3-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Ubuntu */
+
 @font-face {
     font-family: 'Ubuntu';
     src: url('./fonts/Ubuntu-Regular.woff2') format('woff2');
@@ -110,19 +138,12 @@
     font-display: swap;
 }
 
-/* OpenDyslexic3 — accessibility font */
 @font-face {
-    font-family: 'OpenDyslexic3';
-    src: url('./fonts/OpenDyslexic3-Regular.woff2') format('woff2');
-    font-weight: 400;
-    font-style: normal;
+    font-family: 'Ubuntu';
+    src: url('./fonts/Ubuntu-BoldItalic.woff2') format('woff2');
+    font-weight: 700;
+    font-style: italic;
     font-display: swap;
 }
 
-@font-face {
-    font-family: 'OpenDyslexic3';
-    src: url('./fonts/OpenDyslexic3-Bold.woff2') format('woff2');
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
-}
+

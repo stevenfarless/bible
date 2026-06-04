@@ -82,20 +82,40 @@
     }
 }
 
+@media (max-width: 480px) {
+    .passage-title {
+        font-size: 1.25rem;
+    }
+
+    .book-grid {
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    }
+}
+
 /* ================================
    Responsive book name in nav
    .book-abbr  — short form (e.g. "Gen"), shown below 640 px
-   .book-full   — long form (e.g. "Genesis"), shown above 640 px
+   .book-full  — full name (e.g. "Genesis"), shown at 640 px and above
    ================================ */
-@media (max-width: 640px) {
-    .book-full  { display: none; }
-    .book-abbr  { display: inline; }
+
+/* Mobile default: show abbr, hide full */
+#currentBook .book-abbr { display: inline; }
+#currentBook .book-full { display: none; }
+
+/* Truncate long book names rather than wrapping or overflowing */
+#currentBook {
+    display: inline-block;
+    max-width: 7rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
 }
 
-@media (min-width: 641px) {
-    .book-abbr  { display: none; }
-    .book-full  { display: inline; }
+@media (min-width: 640px) {
+    #currentBook .book-abbr { display: none; }
+    #currentBook .book-full { display: inline; }
 }
+
 
 /* ================================
    11. UTILITY CLASSES
@@ -103,11 +123,6 @@
 
 /* Hide verse numbers when setting is off */
 body.hide-verse-numbers .passage-text .verse-num {
-    display: none !important;
-}
-
-/* Also hide .verse .verse-num inside .passage (local renderer) */
-body.hide-verse-numbers .passage .verse-num {
     display: none !important;
 }
 
@@ -160,62 +175,19 @@ body.font-opendyslexic3 .search-result-content {
 @media print {
     .header,
     .navigation,
-    .search-container,
-    .passage-header button,
-    .modal {
+    .modal,
+    .toast {
         display: none !important;
     }
 
-    body {
-        background-color: white;
-        color: black;
-    }
-
     .main-content {
-        padding-top: 0;
-        max-width: 100%;
+        padding: 0;
     }
 
     .passage-container {
         box-shadow: none;
-        border-radius: 0;
+        border: none;
     }
 }
 
-/* ============================================================
-   PERICOPE HEADING
-   Heading injected by _buildPassageHtml() as <h3 class="pericope-heading">.
-   Rendered as a standalone block line between verse runs.
-   ============================================================ */
 
-.pericope-heading {
-    display: block;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 1.25rem 0 0.4rem;
-    font-family: var(--font-sans);
-    line-height: 1.3;
-    clear: both;
-}
-
-/* ================================
-   Build Info Badge
-   ================================ */
-
-.build-info-badge {
-    position: fixed;
-    bottom: var(--spacing-sm);
-    right: var(--spacing-sm);
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-family: monospace;
-    font-size: 0.65rem;
-    color: var(--text-secondary);
-    opacity: 0.6;
-    z-index: 9999;
-    pointer-events: none;
-    user-select: none;
-}
