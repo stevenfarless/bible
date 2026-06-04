@@ -1,0 +1,43 @@
+/* ================================
+   10. RESPONSIVE DESIGN
+   ================================ */
+
+@media (max-width: 600px) {
+    :root {
+        --font-size-base: 16px;
+        --spacing-md: 0.875rem;
+    }
+
+    .passage-container {
+        padding: var(--spacing-sm);
+    }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+    :root {
+        --font-size-base: 17px;
+    }
+}
+
+@media (min-width: 901px) {
+    :root {
+        --font-size-base: 18px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not(.light-mode) {
+        color-scheme: dark;
+    }
+}

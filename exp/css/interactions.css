@@ -1,0 +1,63 @@
+/* ================================
+   8. INTERACTIVE STATES & EFFECTS
+   ================================ */
+
+.btn {
+    cursor: pointer;
+    border: none;
+    border-radius: var(--border-radius);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color var(--transition-fast),
+                color var(--transition-fast),
+                box-shadow var(--transition-fast);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+}
+
+.btn-secondary {
+    background-color: var(--bg-raised);
+    color: var(--text-heading);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background-color: var(--highlight-border);
+}
+
+
+/* ================================
+   9. ANIMATIONS
+   ================================ */
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.animate-fade-in   { animation: fadeIn  var(--transition-normal) ease both; }
+.animate-slide-up  { animation: slideUp var(--transition-normal) ease both; }
+.animate-slide-down{ animation: slideDown var(--transition-normal) ease both; }

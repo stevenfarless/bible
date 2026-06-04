@@ -1,0 +1,63 @@
+/* ================================
+   5. LAYOUT COMPONENTS
+   ================================ */
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    max-width: var(--max-width);
+    margin: 0 auto;
+    position: relative;
+}
+
+.content-area {
+    flex: 1;
+    padding-top: var(--chrome-height);
+    padding-bottom: var(--nav-height);
+}
+
+.passage-container {
+    padding: var(--spacing-md);
+    max-width: var(--max-width);
+    margin: 0 auto;
+    background-color: var(--bg-base);
+    transition: background-color var(--transition-normal);
+}
+
+.header {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: var(--max-width);
+    height: var(--header-height);
+    background-color: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--spacing-md);
+    z-index: 100;
+    transition: background-color var(--transition-normal),
+                border-color var(--transition-normal);
+}
+
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: var(--max-width);
+    height: var(--nav-height);
+    background-color: var(--bg-card);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 100;
+    transition: background-color var(--transition-normal),
+                border-color var(--transition-normal);
+}

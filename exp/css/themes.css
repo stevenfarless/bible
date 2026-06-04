@@ -1,0 +1,331 @@
+/* ================================
+   3. THEME OVERRIDES
+   ================================ */
+
+/* Light mode (semantic, neutral) — fallback for any theme without its own light block */
+:root.light-mode,
+html.light-mode,
+body.light-mode {
+    --bg-base: hsl(0, 0%, 100%);
+    --bg-card: hsl(210, 30%, 98%);
+    --bg-raised: hsl(210, 20%, 92%);
+
+    --text-heading: hsl(220, 18%, 18%);
+    --text-body: hsl(220, 12%, 34%);
+    --text-muted-2: hsl(220, 10%, 52%);
+
+    --border-neutral: hsl(220, 12%, 84%);
+    --highlight-border: hsl(220, 20%, 94%);
+
+    --primary-color: hsl(265, 60%, 45%);
+    --primary-dark: hsl(265, 62%, 38%);
+    --primary-light: hsl(315, 85%, 55%);
+    /* Darkened from 45% → 36% for WCAG AA contrast on white (#fff) */
+    --secondary-color: hsl(28, 80%, 36%);
+    --accent-color: hsl(190, 70%, 30%);
+
+    --success-color: hsl(140, 50%, 35%);
+    --warning-color: hsl(45, 85%, 40%);
+    --error-color: hsl(6, 70%, 45%);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Alucard — official Dracula light mode (https://spec.draculatheme.com)
+   Targets Dracula (default theme, no theme class) in light mode only.
+   Higher specificity than the generic .light-mode block above. */
+:root.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme),
+html.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme),
+body.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme) {
+    --bg-base:    var(--alucard-bg);
+    --bg-card:    var(--alucard-bg-lighter);
+    --bg-raised:  var(--alucard-bg-light);
+
+    --text-heading: var(--alucard-fg);
+    --text-body:    var(--alucard-comment);
+    --text-muted-2: #9A9580;
+
+    --border-neutral:   var(--alucard-bg-dark);
+    --highlight-border: var(--alucard-selection);
+
+    --primary-color:   var(--alucard-purple);
+    --primary-dark:    #4D38A8;
+    --primary-light:   var(--alucard-pink);
+    --secondary-color: var(--alucard-orange);
+    --accent-color:    var(--alucard-cyan);
+
+    --success-color: var(--alucard-green);
+    --warning-color: var(--alucard-yellow);
+    --error-color:   var(--alucard-red);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--alucard-purple) 14%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(108, 102, 75, 0.12);
+    --shadow-md: 0 4px 6px rgba(108, 102, 75, 0.14);
+    --shadow-lg: 0 10px 15px rgba(108, 102, 75, 0.18);
+}
+
+/* Onyx theme (semantic; OLED-friendly) */
+:root.onyx-theme,
+html.onyx-theme,
+body.onyx-theme {
+    --bg-base: hsl(0, 0%, 0%);
+    --bg-card: hsl(0, 0%, 4%);
+    --bg-raised: hsl(0, 0%, 10%);
+
+    --text-heading: hsl(0, 0%, 96%);
+    --text-body: hsl(0, 0%, 72%);
+    --text-muted-2: hsl(0, 0%, 55%);
+
+    --border-neutral: hsl(0, 0%, 18%);
+    --highlight-border: hsl(0, 0%, 26%);
+
+    --primary-color: hsl(45, 85%, 55%);
+    --primary-dark: hsl(45, 85%, 45%);
+    --primary-light: hsl(45, 95%, 68%);
+    --secondary-color: hsl(30, 70%, 52%);
+    --accent-color: hsl(0, 0%, 78%);
+
+    --success-color: hsl(110, 45%, 50%);
+    --warning-color: hsl(45, 85%, 55%);
+    --error-color: hsl(8, 65%, 56%);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 26%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(255, 255, 255, 0.10);
+    --shadow-md: 0 4px 6px rgba(255, 255, 255, 0.10);
+    --shadow-lg: 0 10px 15px rgba(255, 255, 255, 0.15);
+}
+
+/* Onyx: force passage-container to pure OLED black in dark mode only */
+:root.onyx-theme:not(.light-mode) .passage-container,
+html.onyx-theme:not(.light-mode) .passage-container,
+body.onyx-theme:not(.light-mode) .passage-container {
+    background-color: #000000;
+}
+
+/* Onyx light mode */
+:root.onyx-theme.light-mode,
+html.onyx-theme.light-mode,
+body.onyx-theme.light-mode {
+    --bg-base: hsl(0, 0%, 97%);
+    --bg-card: hsl(0, 0%, 94%);
+    --bg-raised: hsl(0, 0%, 90%);
+
+    --text-heading: hsl(0, 0%, 8%);
+    --text-body: hsl(0, 0%, 28%);
+    --text-muted-2: hsl(0, 0%, 48%);
+
+    --border-neutral: hsl(0, 0%, 82%);
+    --highlight-border: hsl(0, 0%, 90%);
+
+    --primary-color: hsl(45, 80%, 38%);
+    --primary-dark: hsl(45, 80%, 28%);
+    --primary-light: hsl(45, 90%, 52%);
+    --secondary-color: hsl(30, 65%, 38%);
+    --accent-color: hsl(0, 0%, 30%);
+
+    --success-color: hsl(110, 45%, 32%);
+    --warning-color: hsl(45, 80%, 36%);
+    --error-color: hsl(8, 60%, 40%);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.14);
+}
+
+/* Sage theme */
+:root.sage-theme,
+html.sage-theme,
+body.sage-theme {
+    --bg-base: #0f1a14;
+    --bg-card: #162010;
+    --bg-raised: #1c2918;
+
+    --text-heading: #e8f0e4;
+    --text-body: #8aab84;
+    --text-muted-2: #6b8a65;
+
+    --border-neutral: #2e4a28;
+    --highlight-border: #3d6035;
+
+    --primary-color: #6abf5e;
+    --primary-dark: #4fa043;
+    --primary-light: #90d486;
+    --secondary-color: #c8a84b;
+    --accent-color: #7dd4c8;
+
+    --success-color: #50fa7b;
+    --warning-color: #f1c40f;
+    --error-color: #e74c3c;
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 20%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* Sage light mode */
+:root.sage-theme.light-mode,
+html.sage-theme.light-mode,
+body.sage-theme.light-mode {
+    --bg-base: #f4f9f0;
+    --bg-card: #eaf4e4;
+    --bg-raised: #ddeedd;
+
+    --text-heading: #1a3018;
+    --text-body: #3a5c36;
+    --text-muted-2: #6b8a65;
+
+    --border-neutral: #b8d4b0;
+    --highlight-border: #cce4c4;
+
+    --primary-color: #2e7d32;
+    --primary-dark: #1b5e20;
+    --primary-light: #4caf50;
+    --secondary-color: #a0782a;
+    --accent-color: #00897b;
+
+    --success-color: #2e7d32;
+    --warning-color: #f57f17;
+    --error-color: #c62828;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.14);
+}
+
+/* Ember theme */
+:root.ember-theme,
+html.ember-theme,
+body.ember-theme {
+    --bg-base: #1a0f08;
+    --bg-card: #231408;
+    --bg-raised: #2c1a0e;
+
+    --text-heading: #f5e6d0;
+    --text-body: #c4956a;
+    --text-muted-2: #9e7355;
+
+    --border-neutral: #4a2c18;
+    --highlight-border: #6b3f24;
+
+    --primary-color: #e8823a;
+    --primary-dark: #c4642a;
+    --primary-light: #f0a060;
+    --secondary-color: #d4a843;
+    --accent-color: #e84848;
+
+    --success-color: #68b84e;
+    --warning-color: #f0c040;
+    --error-color: #e84848;
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 20%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* Ember light mode */
+:root.ember-theme.light-mode,
+html.ember-theme.light-mode,
+body.ember-theme.light-mode {
+    --bg-base: #fdf6ef;
+    --bg-card: hsl(30, 60%, 93%);
+    --bg-raised: hsl(30, 40%, 87%);
+
+    --text-heading: #2c1a0e;
+    --text-body: #6b3f24;
+    --text-muted-2: #9e7355;
+
+    --border-neutral: #ddb898;
+    --highlight-border: #e8cdb8;
+
+    --primary-color: #c4642a;
+    --primary-dark: #a04e20;
+    --primary-light: #e8823a;
+    --secondary-color: #a08030;
+    --accent-color: #c83030;
+
+    --success-color: #4a8a38;
+    --warning-color: #c88020;
+    --error-color: #c83030;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.14);
+}
+
+/* Perplexity theme */
+:root.perplexity-theme,
+html.perplexity-theme,
+body.perplexity-theme {
+    --pplx-teal:         #33B8C7;
+    --pplx-teal-dark:    #259aaa;
+    --pplx-teal-light:   #4fd0de;
+    --pplx-offblack:     #091717;
+    --pplx-offblack-mid: #0f2020;
+    --pplx-offblack-lt:  #162a2a;
+    --pplx-offblack-ll:  #1e3434;
+
+    --bg-base: var(--pplx-offblack);
+    --bg-card: var(--pplx-offblack-mid);
+    --bg-raised: var(--pplx-offblack-lt);
+
+    --text-heading: #e8f4f4;
+    --text-body: #9ec4c8;
+    --text-muted-2: #6a9ea4;
+
+    --border-neutral: var(--pplx-offblack-ll);
+    --highlight-border: #2a4444;
+
+    --primary-color: var(--pplx-teal);
+    --primary-dark: var(--pplx-teal-dark);
+    --primary-light: var(--pplx-teal-light);
+    --secondary-color: #e8a94a;
+    --accent-color: #7dd4c8;
+
+    --success-color: #4dbb6a;
+    --warning-color: #e8c44a;
+    --error-color: #e05555;
+
+    --footnote-hover-bg: color-mix(in srgb, var(--pplx-teal) 18%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* Perplexity light mode */
+:root.perplexity-theme.light-mode,
+html.perplexity-theme.light-mode,
+body.perplexity-theme.light-mode {
+    --bg-base:   #ffffff;
+    --bg-card:   hsl(50, 12%, 94%);
+    --bg-raised: hsl(50, 10%, 90%);
+
+    --text-heading: #0a1f1f;
+    --text-body: #2a5050;
+    --text-muted-2: #4a7878;
+
+    --border-neutral: #c0d8d8;
+    --highlight-border: #d8eaea;
+
+    --primary-color: #1a8a96;
+    --primary-dark: #126a74;
+    --primary-light: #33B8C7;
+    --secondary-color: #c4822a;
+    --accent-color: #1a8a96;
+
+    --success-color: #2a8a48;
+    --warning-color: #c4922a;
+    --error-color: #c43a3a;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.14);
+}
