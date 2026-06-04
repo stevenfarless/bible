@@ -447,7 +447,7 @@ body.basic-theme.light-mode .passage-container {
 /* ================================
    The Geek Shall Inherit The Earth
    Classic terminal: #00AA00 green on pure black.
-   IBM Plex Mono forced as the reading font — overrides user selection.
+   Retrocide forced as the reading font — overrides user selection.
    Light mode toggle is intentionally ignored; this theme is always dark.
    ================================ */
 :root.geek-theme,
@@ -481,12 +481,12 @@ body.geek-theme {
     --shadow-lg: none;
 }
 
-/* Force IBM Plex Mono across all text — overrides reading font classes */
+/* Force Retrocide across all text — overrides reading font classes */
 :root.geek-theme,
 html.geek-theme,
 body.geek-theme,
 body.geek-theme * {
-    font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace !important;
+    font-family: 'Retrocide', 'Courier New', Courier, monospace !important;
 }
 
 /* Passage container: pure black, no rounding or shadow */
@@ -505,19 +505,19 @@ body.geek-theme .passage-container {
    need to be overridden here at matching specificity with !important. */
 body.geek-theme .passage-text,
 body.geek-theme .passage {
-    font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace !important;
+    font-family: 'Retrocide', 'Courier New', Courier, monospace !important;
     color: #00AA00 !important;
 }
 
 body.geek-theme .passage-text h2,
 body.geek-theme .passage-text h3,
 body.geek-theme .passage-text h4 {
-    font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace !important;
+    font-family: 'Retrocide', 'Courier New', Courier, monospace !important;
     color: #00AA00 !important;
 }
 
 body.geek-theme .passage-title {
-    font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace !important;
+    font-family: 'Retrocide', 'Courier New', Courier, monospace !important;
     color: #00AA00 !important;
 }
 

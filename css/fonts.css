@@ -24,7 +24,7 @@
 
 @font-face {
     font-family: 'Cinzel';
-    src: url('./fonts/Cinzel-Regular.woff2') format('woff2');
+    src: url('../fonts/Cinzel-Regular.woff2') format('woff2');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -32,7 +32,7 @@
 
 @font-face {
     font-family: 'Gentium Book Plus';
-    src: url('./fonts/GentiumBookPlus-Regular.woff2') format('woff2');
+    src: url('../fonts/GentiumBookPlus-Regular.woff2') format('woff2');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -40,7 +40,7 @@
 
 @font-face {
     font-family: 'Gentium Book Plus';
-    src: url('./fonts/GentiumBookPlus-Italic.woff2') format('woff2');
+    src: url('../fonts/GentiumBookPlus-Italic.woff2') format('woff2');
     font-weight: 400;
     font-style: italic;
     font-display: swap;
@@ -48,7 +48,7 @@
 
 @font-face {
     font-family: 'Gentium Book Plus';
-    src: url('./fonts/GentiumBookPlus-Bold.woff2') format('woff2');
+    src: url('../fonts/GentiumBookPlus-Bold.woff2') format('woff2');
     font-weight: 700;
     font-style: normal;
     font-display: swap;
@@ -56,7 +56,7 @@
 
 @font-face {
     font-family: 'Gentium Book Plus';
-    src: url('./fonts/GentiumBookPlus-BoldItalic.woff2') format('woff2');
+    src: url('../fonts/GentiumBookPlus-BoldItalic.woff2') format('woff2');
     font-weight: 700;
     font-style: italic;
     font-display: swap;
@@ -64,7 +64,7 @@
 
 @font-face {
     font-family: 'Andika';
-    src: url('./fonts/Andika-Regular.woff2') format('woff2');
+    src: url('../fonts/Andika-Regular.woff2') format('woff2');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -72,7 +72,7 @@
 
 @font-face {
     font-family: 'Andika';
-    src: url('./fonts/Andika-Italic.woff2') format('woff2');
+    src: url('../fonts/Andika-Italic.woff2') format('woff2');
     font-weight: 400;
     font-style: italic;
     font-display: swap;
@@ -80,7 +80,7 @@
 
 @font-face {
     font-family: 'Andika';
-    src: url('./fonts/Andika-Bold.woff2') format('woff2');
+    src: url('../fonts/Andika-Bold.woff2') format('woff2');
     font-weight: 700;
     font-style: normal;
     font-display: swap;
@@ -88,7 +88,7 @@
 
 @font-face {
     font-family: 'Andika';
-    src: url('./fonts/Andika-Bold.woff2') format('woff2');
+    src: url('../fonts/Andika-Bold.woff2') format('woff2');
     font-weight: 700;
     font-style: italic;
     font-display: swap;
@@ -98,7 +98,7 @@
 
 @font-face {
     font-family: 'OpenDyslexic3';
-    src: url('./fonts/OpenDyslexic3-Regular.woff2') format('woff2');
+    src: url('../fonts/OpenDyslexic3-Regular.woff2') format('woff2');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -106,7 +106,7 @@
 
 @font-face {
     font-family: 'OpenDyslexic3';
-    src: url('./fonts/OpenDyslexic3-Bold.woff2') format('woff2');
+    src: url('../fonts/OpenDyslexic3-Bold.woff2') format('woff2');
     font-weight: 700;
     font-style: normal;
     font-display: swap;
@@ -116,7 +116,7 @@
 
 @font-face {
     font-family: 'Ubuntu';
-    src: url('./fonts/Ubuntu-Regular.woff2') format('woff2');
+    src: url('../fonts/Ubuntu-Regular.woff2') format('woff2');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -124,7 +124,7 @@
 
 @font-face {
     font-family: 'Ubuntu';
-    src: url('./fonts/Ubuntu-Italic.woff2') format('woff2');
+    src: url('../fonts/Ubuntu-Italic.woff2') format('woff2');
     font-weight: 400;
     font-style: italic;
     font-display: swap;
@@ -132,7 +132,7 @@
 
 @font-face {
     font-family: 'Ubuntu';
-    src: url('./fonts/Ubuntu-Bold.woff2') format('woff2');
+    src: url('../fonts/Ubuntu-Bold.woff2') format('woff2');
     font-weight: 700;
     font-style: normal;
     font-display: swap;
@@ -140,9 +140,19 @@
 
 @font-face {
     font-family: 'Ubuntu';
-    src: url('./fonts/Ubuntu-BoldItalic.woff2') format('woff2');
+    src: url('../fonts/Ubuntu-BoldItalic.woff2') format('woff2');
     font-weight: 700;
     font-style: italic;
+    font-display: swap;
+}
+
+/* Retrocide */
+
+@font-face {
+    font-family: 'Retrocide';
+    src: url('../fonts/Retrocide.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
     font-display: swap;
 }
 
