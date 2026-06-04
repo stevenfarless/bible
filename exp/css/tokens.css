@@ -89,11 +89,9 @@
     --bg-card: var(--dracula-bg-dark);
     --bg-raised: var(--dracula-bg);
 
-    /* Text
-       --text-body: primary readable text (passage content, UI labels)
-       --text-muted-2: secondary/muted text (metadata, verse numbers, captions) */
+    /* Text */
     --text-heading: var(--dracula-fg);
-    --text-body: var(--dracula-fg);
+    --text-body: var(--dracula-comment);
     --text-muted-2: var(--dracula-comment);
 
     /* Borders */

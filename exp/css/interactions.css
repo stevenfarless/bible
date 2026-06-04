@@ -2,36 +2,34 @@
    8. INTERACTIVE STATES & EFFECTS
    ================================ */
 
-.btn {
-    cursor: pointer;
-    border: none;
-    border-radius: var(--border-radius);
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-family: var(--font-sans);
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: background-color var(--transition-fast),
-                color var(--transition-fast),
-                box-shadow var(--transition-fast);
+.selected-verse-glow {
+    display: block;
+    width: 100%;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05));
+    border-left: 4px solid rgba(255, 215, 0, 0.6);
+    border-radius: 8px;
+    padding: 12px;
+    margin: 8px 0;
+    box-shadow:
+        0 0 20px rgba(255, 215, 0, 0.3),
+        inset 0 0 10px rgba(255, 215, 0, 0.1);
+    transform: scale(1.02);
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    animation: verseGlowPulse 0.5s ease-out;
 }
 
-.btn-primary {
-    background-color: var(--primary-color);
-    color: #fff;
+.selected-verse-glow+h2,
+.selected-verse-glow+h3,
+.selected-verse-glow+h4 {
+    margin-top: 0.25rem;
 }
 
-.btn-primary:hover {
-    background-color: var(--primary-dark);
-}
-
-.btn-secondary {
-    background-color: var(--bg-raised);
-    color: var(--text-heading);
-    border: 1px solid var(--border-color);
-}
-
-.btn-secondary:hover {
-    background-color: var(--highlight-border);
+body.light-mode .selected-verse-glow {
+    box-shadow: 0 0 12px rgba(255, 165, 0, 0.4),
+        0 0 20px rgba(255, 165, 0, 0.2);
+    background-color: rgba(255, 165, 0, 0.08);
+    border-left: 3px solid rgba(255, 165, 0, 0.8);
+    animation: verse-highlight-light 0.6s ease;
 }
 
 
@@ -41,23 +39,43 @@
 
 @keyframes fadeIn {
     from { opacity: 0; }
-    to   { opacity: 1; }
+    to { opacity: 1; }
 }
 
 @keyframes slideUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideUpFromBottom {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-16px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
+@keyframes slideDownToBottom {
+    from { transform: translateY(0); opacity: 1; }
+    to { transform: translateY(100%); opacity: 0; }
 }
 
-.animate-fade-in   { animation: fadeIn  var(--transition-normal) ease both; }
-.animate-slide-up  { animation: slideUp var(--transition-normal) ease both; }
-.animate-slide-down{ animation: slideDown var(--transition-normal) ease both; }
+@keyframes verseGlowPulse {
+    0% { box-shadow: 0 0 0 rgba(255, 215, 0, 0); transform: scale(1); }
+    50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.6); transform: scale(1.03); }
+    100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); transform: scale(1.02); }
+}
+
+@keyframes verse-highlight {
+    0% { box-shadow: 0 0 0 rgba(255, 215, 0, 0); background-color: transparent; }
+    50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); background-color: rgba(255, 215, 0, 0.1); }
+    100% { box-shadow: 0 0 12px rgba(255, 215, 0, 0.35), 0 0 24px rgba(255, 215, 0, 0.15); background-color: rgba(255, 215, 0, 0.05); }
+}
+
+@keyframes verse-highlight-light {
+    0% { box-shadow: 0 0 0 rgba(255, 165, 0, 0); background-color: transparent; }
+    50% { box-shadow: 0 0 24px rgba(255, 165, 0, 0.6); background-color: rgba(255, 165, 0, 0.15); }
+    100% { box-shadow: 0 0 12px rgba(255, 165, 0, 0.4), 0 0 20px rgba(255, 165, 0, 0.2); background-color: rgba(255, 165, 0, 0.08); }
+}
