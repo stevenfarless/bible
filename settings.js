@@ -166,13 +166,22 @@ export async function toggleVerseByVerse(app) {
 }
 
 export function applyReadingFont(app, font) {
-    document.body.classList.remove('font-andika', 'font-ubuntu', 'font-opendyslexic3');
-    if (font === 'andika') document.body.classList.add('font-andika');
-    if (font === 'ubuntu') document.body.classList.add('font-ubuntu');
+    document.body.classList.remove('font-andika', 'font-ubuntu', 'font-opendyslexic3', 'font-retrocide');
+
+    if (font === 'andika')        document.body.classList.add('font-andika');
+    if (font === 'ubuntu')        document.body.classList.add('font-ubuntu');
     if (font === 'opendyslexic3') document.body.classList.add('font-opendyslexic3');
+    if (font === 'retrocide')     document.body.classList.add('font-retrocide');
 
     const selector = document.getElementById('readingFontSelector');
-    if (selector) selector.value = font;
+    const helpText = document.getElementById('readingFontHelpText');
+    if (selector) {
+        selector.value = font;
+        selector.disabled = false;
+    }
+    if (helpText) {
+        helpText.textContent = 'Choose the typeface used for passage text.';
+    }
 }
 
 export async function updateFontSize(app, size) {
