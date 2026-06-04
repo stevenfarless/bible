@@ -278,13 +278,13 @@ body.ember-theme.light-mode {
 html.perplexity-theme,
 body.perplexity-theme {
     /* Palette constants — sampled from Perplexity app screenshot */
-    --pplx-teal:         #33B8C7;
-    --pplx-teal-dark:    #259aaa;
-    --pplx-teal-light:   #4fd0de;
-    --pplx-offblack:     #091717;
-    --pplx-offblack-mid: #0f2020;
-    --pplx-offblack-lt:  #162a2a;
-    --pplx-offblack-ll:  #1e3434;
+    --pplx-teal:         #3FA8B8;
+    --pplx-teal-dark:    #2D8A99;
+    --pplx-teal-light:   #52BBC9;
+    --pplx-offblack:     #0A1616;
+    --pplx-offblack-mid: #101E1E;
+    --pplx-offblack-lt:  #172828;
+    --pplx-offblack-ll:  #1E3030;
     --pplx-paper:        #f5f5f5;
     --pplx-muted:        #8a8a90;
     --pplx-amber:        #e8a045;
@@ -301,7 +301,7 @@ body.perplexity-theme {
 
     /* Borders */
     --border-neutral:   var(--pplx-offblack-ll);
-    --highlight-border: #2a4444;
+    --highlight-border: #263232;
 
     /* Brand */
     --primary-color:   var(--pplx-teal);
@@ -326,8 +326,8 @@ body.perplexity-theme {
 html.perplexity-theme.light-mode,
 body.perplexity-theme.light-mode {
     --bg-base:   var(--pplx-paper);
-    --bg-card:   hsl(50, 12%, 94%);
-    --bg-raised: hsl(50, 10%, 90%);
+    --bg-card:   hsl(0, 0%, 94%);
+    --bg-raised: hsl(0, 0%, 90%);
 
     --text-heading: var(--pplx-offblack);
     --text-body:    hsl(220, 8%, 30%);
