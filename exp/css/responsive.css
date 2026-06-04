@@ -2,42 +2,82 @@
    10. RESPONSIVE DESIGN
    ================================ */
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
     :root {
         --font-size-base: 16px;
-        --spacing-md: 0.875rem;
+    }
+
+    .header-content {
+        padding: 0 var(--spacing-md);
+    }
+
+    .logo {
+        font-size: 1.25rem;
+    }
+
+    .selector-btn {
+        padding: 0.25rem 0.5rem;
+        min-width: 56px;
+        font-size: 0.8rem;
+    }
+
+    .nav-content {
+        gap: var(--spacing-xs);
+    }
+
+    .passage-selector {
+        flex: 1;
+        justify-content: center;
+        gap: var(--spacing-xs);
+    }
+
+    .nav-btn {
+        padding: 0.35rem 0.7rem;
+        min-width: 44px;
+        justify-content: center;
+    }
+
+    .nav-btn span {
+        display: none;
+    }
+
+    .main-content {
+        padding: 0;
+        padding-top: var(--chrome-height);
     }
 
     .passage-container {
-        padding: var(--spacing-sm);
+        padding: var(--spacing-lg);
     }
-}
 
-@media (min-width: 601px) and (max-width: 900px) {
-    :root {
-        --font-size-base: 17px;
+    .passage-title {
+        font-size: 1.5rem;
     }
-}
 
-@media (min-width: 901px) {
-    :root {
-        --font-size-base: 18px;
+    .book-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     }
-}
 
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
+    .chapter-grid {
+        grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
     }
-}
 
-@media (prefers-color-scheme: dark) {
-    :root:not(.light-mode) {
-        color-scheme: dark;
+    .modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    #settingsModal .modal-content {
+        max-height: 80vh;
+        width: 100%;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .search-container.active {
+        max-height: 80vh;
+    }
+
+    .search-results {
+        max-height: calc(80vh - 100px);
     }
 }

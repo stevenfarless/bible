@@ -103,167 +103,181 @@ body.onyx-theme {
 :root.onyx-theme:not(.light-mode) .passage-container,
 html.onyx-theme:not(.light-mode) .passage-container,
 body.onyx-theme:not(.light-mode) .passage-container {
-    background-color: #000000;
+    background-color: #000;
 }
 
-/* Onyx light mode */
 :root.onyx-theme.light-mode,
 html.onyx-theme.light-mode,
 body.onyx-theme.light-mode {
-    --bg-base: hsl(0, 0%, 97%);
-    --bg-card: hsl(0, 0%, 94%);
-    --bg-raised: hsl(0, 0%, 90%);
+    /* Warm off-white base so gold accents don't sit on jarring stark white */
+    --bg-base: hsl(40, 15%, 97%);
+    --bg-card: hsl(40, 12%, 95%);
+    --bg-raised: hsl(40, 10%, 91%);
 
-    --text-heading: hsl(0, 0%, 8%);
-    --text-body: hsl(0, 0%, 28%);
-    --text-muted-2: hsl(0, 0%, 48%);
+    --text-heading: hsl(0, 0%, 20%);
+    --text-body: hsl(0, 0%, 40%);
+    --text-muted-2: hsl(0, 0%, 58%);
 
-    --border-neutral: hsl(0, 0%, 82%);
-    --highlight-border: hsl(0, 0%, 90%);
+    --border-neutral: hsl(0, 0%, 86%);
+    --highlight-border: hsl(0, 0%, 94%);
 
-    --primary-color: hsl(45, 80%, 38%);
-    --primary-dark: hsl(45, 80%, 28%);
-    --primary-light: hsl(45, 90%, 52%);
-    --secondary-color: hsl(30, 65%, 38%);
-    --accent-color: hsl(0, 0%, 30%);
+    --primary-color: hsl(45, 75%, 34%);
+    --primary-dark: hsl(45, 75%, 28%);
+    --primary-light: hsl(45, 70%, 44%);
+    --secondary-color: hsl(30, 60%, 36%);
+    --accent-color: hsl(35, 50%, 42%);
 
-    --success-color: hsl(110, 45%, 32%);
-    --warning-color: hsl(45, 80%, 36%);
-    --error-color: hsl(8, 60%, 40%);
+    --success-color: hsl(110, 45%, 34%);
+    --warning-color: hsl(45, 75%, 34%);
+    --error-color: hsl(8, 60%, 44%);
 
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.14);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.12);
 }
 
-/* Sage theme */
+/* ================================
+   Sage theme — forest green; organic, calm reading
+   Primary hue: 145° green. No overlap with any other theme (nearest is
+   Perplexity at 187° teal — 42° apart). Surfaces: deep forest dark /
+   warm sage-tinted light.
+   ================================ */
 :root.sage-theme,
 html.sage-theme,
 body.sage-theme {
-    --bg-base: #0f1a14;
-    --bg-card: #162010;
-    --bg-raised: #1c2918;
+    --bg-base:   hsl(150, 18%, 8%);
+    --bg-card:   hsl(150, 16%, 11%);
+    --bg-raised: hsl(150, 14%, 16%);
 
-    --text-heading: #e8f0e4;
-    --text-body: #8aab84;
-    --text-muted-2: #6b8a65;
+    --text-heading: hsl(100, 18%, 90%);
+    --text-body:    hsl(130, 10%, 64%);
+    --text-muted-2: hsl(130,  8%, 46%);
 
-    --border-neutral: #2e4a28;
-    --highlight-border: #3d6035;
+    --border-neutral:   hsl(148, 14%, 22%);
+    --highlight-border: hsl(148, 16%, 30%);
 
-    --primary-color: #6abf5e;
-    --primary-dark: #4fa043;
-    --primary-light: #90d486;
-    --secondary-color: #c8a84b;
-    --accent-color: #7dd4c8;
+    --primary-color:   hsl(145, 48%, 52%);
+    --primary-dark:    hsl(145, 50%, 40%);
+    --primary-light:   hsl(145, 55%, 66%);
+    --secondary-color: hsl(40,  65%, 58%);
+    --accent-color:    hsl(170, 45%, 60%);
 
-    --success-color: #50fa7b;
-    --warning-color: #f1c40f;
-    --error-color: #e74c3c;
+    --success-color: hsl(145, 48%, 52%);
+    --warning-color: hsl(40,  70%, 58%);
+    --error-color:   hsl(4,   62%, 56%);
 
-    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 20%, transparent);
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
 
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
     --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
     --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
 }
 
-/* Sage light mode */
 :root.sage-theme.light-mode,
 html.sage-theme.light-mode,
 body.sage-theme.light-mode {
-    --bg-base: #f4f9f0;
-    --bg-card: #eaf4e4;
-    --bg-raised: #ddeedd;
+    --bg-base:   hsl(90, 14%, 97%);
+    --bg-card:   hsl(90, 12%, 94%);
+    --bg-raised: hsl(90, 10%, 89%);
 
-    --text-heading: #1a3018;
-    --text-body: #3a5c36;
-    --text-muted-2: #6b8a65;
+    --text-heading: hsl(150, 25%, 12%);
+    --text-body:    hsl(150, 14%, 32%);
+    --text-muted-2: hsl(150, 10%, 50%);
 
-    --border-neutral: #b8d4b0;
-    --highlight-border: #cce4c4;
+    --border-neutral:   hsl(130, 14%, 84%);
+    --highlight-border: hsl(130, 18%, 92%);
 
-    --primary-color: #2e7d32;
-    --primary-dark: #1b5e20;
-    --primary-light: #4caf50;
-    --secondary-color: #a0782a;
-    --accent-color: #00897b;
+    --primary-color:   hsl(145, 50%, 30%);
+    --primary-dark:    hsl(145, 52%, 24%);
+    --primary-light:   hsl(145, 48%, 42%);
+    --secondary-color: hsl(32,  70%, 40%);
+    --accent-color:    hsl(170, 45%, 28%);
 
-    --success-color: #2e7d32;
-    --warning-color: #f57f17;
-    --error-color: #c62828;
+    --success-color: hsl(145, 45%, 32%);
+    --warning-color: hsl(38,  72%, 40%);
+    --error-color:   hsl(4,   58%, 44%);
 
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.14);
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 14%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(20, 50, 30, 0.10);
+    --shadow-md: 0 4px 6px rgba(20, 50, 30, 0.12);
+    --shadow-lg: 0 10px 15px rgba(20, 50, 30, 0.16);
 }
 
-/* Ember theme */
+/* ================================
+   Ember theme — candlelit warmth; analogous warm palette
+   Primary hue: 35° amber. Secondary: 8° rust-red. Accent: 50° gold.
+   All three hues within 45° of each other — fully analogous, zero
+   cool colors. Surfaces: dark chocolate / warm cream.
+   ================================ */
 :root.ember-theme,
 html.ember-theme,
 body.ember-theme {
-    --bg-base: #1a0f08;
-    --bg-card: #231408;
-    --bg-raised: #2c1a0e;
+    --bg-base:   hsl(20, 18%,  8%);
+    --bg-card:   hsl(20, 16%, 11%);
+    --bg-raised: hsl(20, 14%, 16%);
 
-    --text-heading: #f5e6d0;
-    --text-body: #c4956a;
-    --text-muted-2: #9e7355;
+    --text-heading: hsl(36, 22%, 88%);
+    --text-body:    hsl(30, 14%, 64%);
+    --text-muted-2: hsl(28, 10%, 46%);
 
-    --border-neutral: #4a2c18;
-    --highlight-border: #6b3f24;
+    --border-neutral:   hsl(24, 16%, 22%);
+    --highlight-border: hsl(26, 18%, 30%);
 
-    --primary-color: #e8823a;
-    --primary-dark: #c4642a;
-    --primary-light: #f0a060;
-    --secondary-color: #d4a843;
-    --accent-color: #e84848;
+    --primary-color:   hsl(35, 72%, 55%);
+    --primary-dark:    hsl(33, 74%, 44%);
+    --primary-light:   hsl(40, 78%, 68%);
+    --secondary-color: hsl(8,  60%, 55%);
+    --accent-color:    hsl(50, 70%, 60%);
 
-    --success-color: #68b84e;
-    --warning-color: #f0c040;
-    --error-color: #e84848;
+    --success-color: hsl(130, 36%, 48%);
+    --warning-color: hsl(40,  72%, 56%);
+    --error-color:   hsl(4,   65%, 56%);
 
-    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 20%, transparent);
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 22%, transparent);
 
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
-    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.55);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.55);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.60);
 }
 
-/* Ember light mode */
 :root.ember-theme.light-mode,
 html.ember-theme.light-mode,
 body.ember-theme.light-mode {
-    --bg-base: #fdf6ef;
-    --bg-card: hsl(30, 60%, 93%);
-    --bg-raised: hsl(30, 40%, 87%);
+    --bg-base:   hsl(38, 30%, 97%);
+    --bg-card:   hsl(38, 26%, 93%);
+    --bg-raised: hsl(36, 22%, 88%);
 
-    --text-heading: #2c1a0e;
-    --text-body: #6b3f24;
-    --text-muted-2: #9e7355;
+    --text-heading: hsl(20, 28%, 14%);
+    --text-body:    hsl(22, 18%, 32%);
+    --text-muted-2: hsl(24, 12%, 50%);
 
-    --border-neutral: #ddb898;
-    --highlight-border: #e8cdb8;
+    --border-neutral:   hsl(32, 18%, 84%);
+    --highlight-border: hsl(36, 24%, 92%);
 
-    --primary-color: #c4642a;
-    --primary-dark: #a04e20;
-    --primary-light: #e8823a;
-    --secondary-color: #a08030;
-    --accent-color: #c83030;
+    --primary-color:   hsl(25, 68%, 34%);
+    --primary-dark:    hsl(22, 70%, 27%);
+    --primary-light:   hsl(30, 65%, 46%);
+    /* Darkened from 40% → 32% for WCAG AA contrast on warm cream bg */
+    --secondary-color: hsl(6,  55%, 32%);
+    --accent-color:    hsl(45, 60%, 32%);
 
-    --success-color: #4a8a38;
-    --warning-color: #c88020;
-    --error-color: #c83030;
+    --success-color: hsl(130, 38%, 34%);
+    --warning-color: hsl(38,  70%, 38%);
+    --error-color:   hsl(2,   58%, 42%);
 
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.14);
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 14%, transparent);
+
+    --shadow-sm: 0 1px 2px hsla(24, 30%, 20%, 0.12);
+    --shadow-md: 0 6px 16px hsla(24, 30%, 20%, 0.16);
+    --shadow-lg: 0 16px 40px hsla(24, 30%, 20%, 0.20);
 }
 
-/* Perplexity theme */
+/* Perplexity theme — sampled directly from the Perplexity app UI */
 :root.perplexity-theme,
 html.perplexity-theme,
 body.perplexity-theme {
+    /* Palette constants — sampled from Perplexity app screenshot */
     --pplx-teal:         #33B8C7;
     --pplx-teal-dark:    #259aaa;
     --pplx-teal-light:   #4fd0de;
@@ -271,61 +285,70 @@ body.perplexity-theme {
     --pplx-offblack-mid: #0f2020;
     --pplx-offblack-lt:  #162a2a;
     --pplx-offblack-ll:  #1e3434;
+    --pplx-paper:        #f5f5f5;
+    --pplx-muted:        #8a8a90;
+    --pplx-amber:        #e8a045;
 
-    --bg-base: var(--pplx-offblack);
-    --bg-card: var(--pplx-offblack-mid);
+    /* Surfaces */
+    --bg-base:   var(--pplx-offblack);
+    --bg-card:   var(--pplx-offblack-mid);
     --bg-raised: var(--pplx-offblack-lt);
 
-    --text-heading: #e8f4f4;
-    --text-body: #9ec4c8;
-    --text-muted-2: #6a9ea4;
+    /* Text */
+    --text-heading: var(--pplx-paper);
+    --text-body:    #c8c8cc;
+    --text-muted-2: var(--pplx-muted);
 
-    --border-neutral: var(--pplx-offblack-ll);
+    /* Borders */
+    --border-neutral:   var(--pplx-offblack-ll);
     --highlight-border: #2a4444;
 
-    --primary-color: var(--pplx-teal);
-    --primary-dark: var(--pplx-teal-dark);
-    --primary-light: var(--pplx-teal-light);
-    --secondary-color: #e8a94a;
-    --accent-color: #7dd4c8;
+    /* Brand */
+    --primary-color:   var(--pplx-teal);
+    --primary-dark:    var(--pplx-teal-dark);
+    --primary-light:   var(--pplx-teal-light);
+    --secondary-color: var(--pplx-teal-light);
+    --accent-color:    var(--pplx-teal-light);
 
-    --success-color: #4dbb6a;
-    --warning-color: #e8c44a;
-    --error-color: #e05555;
+    /* Functional */
+    --success-color: hsl(155, 45%, 48%);
+    --warning-color: var(--pplx-amber);
+    --error-color:   hsl(6, 65%, 56%);
 
     --footnote-hover-bg: color-mix(in srgb, var(--pplx-teal) 18%, transparent);
 
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
-    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.6);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.65);
 }
 
-/* Perplexity light mode */
 :root.perplexity-theme.light-mode,
 html.perplexity-theme.light-mode,
 body.perplexity-theme.light-mode {
-    --bg-base:   #ffffff;
+    --bg-base:   var(--pplx-paper);
     --bg-card:   hsl(50, 12%, 94%);
     --bg-raised: hsl(50, 10%, 90%);
 
-    --text-heading: #0a1f1f;
-    --text-body: #2a5050;
-    --text-muted-2: #4a7878;
+    --text-heading: var(--pplx-offblack);
+    --text-body:    hsl(220, 8%, 30%);
+    --text-muted-2: hsl(220, 6%, 52%);
 
-    --border-neutral: #c0d8d8;
-    --highlight-border: #d8eaea;
+    --border-neutral:   hsl(220, 10%, 84%);
+    --highlight-border: hsl(220, 14%, 92%);
 
-    --primary-color: #1a8a96;
-    --primary-dark: #126a74;
-    --primary-light: #33B8C7;
-    --secondary-color: #c4822a;
-    --accent-color: #1a8a96;
+    --primary-color:   var(--pplx-teal);
+    --primary-dark:    var(--pplx-teal-dark);
+    --primary-light:   var(--pplx-teal-light);
+    --secondary-color: hsl(30, 65%, 38%);
+    --accent-color:    hsl(187, 63%, 30%);
 
-    --success-color: #2a8a48;
-    --warning-color: #c4922a;
-    --error-color: #c43a3a;
+    --success-color: hsl(155, 42%, 34%);
+    --warning-color: hsl(30, 65%, 38%);
+    --error-color:   hsl(6, 60%, 44%);
 
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --footnote-hover-bg: color-mix(in srgb, var(--pplx-teal) 14%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.09);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.14);
 }
