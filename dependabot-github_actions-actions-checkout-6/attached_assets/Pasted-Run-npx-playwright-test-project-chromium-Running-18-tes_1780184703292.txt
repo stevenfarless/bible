@@ -1,0 +1,119 @@
+Run npx playwright test --project=chromium
+Running 18 tests using 1 worker
+  ✓   1 [chromium] › tests/smoke.spec.js:66:1 › page load: main UI elements are visible (737ms)
+  ✓   2 [chromium] › tests/smoke.spec.js:89:1 › book navigation: selecting a book loads its first chapter (1.1s)
+  ✓   3 [chromium] › tests/smoke.spec.js:106:1 › chapter navigation: selecting a chapter loads passage text (1.4s)
+  ✓   4 [chromium] › tests/smoke.spec.js:126:1 › verse navigation: selecting a verse closes the verse modal (1.8s)
+  ✓   5 [chromium] › tests/smoke.spec.js:149:1 › chapter buttons: prev and next navigate correctly (1.2s)
+  ✘   6 [chromium] › tests/smoke.spec.js:173:1 › translation: switching translation reloads passage in new translation (30.0s)
+  ✓   7 [chromium] › tests/smoke.spec.js:202:1 › search: entering a keyword returns results (1.5s)
+  ✓   8 [chromium] › tests/smoke.spec.js:219:1 › search: reference query navigates to correct passage (1.0s)
+  ✓   9 [chromium] › tests/smoke.spec.js:246:1 › search: closing search clears input and hides panel (935ms)
+  ✓  10 [chromium] › tests/smoke.spec.js:262:1 › reading position: localStorage updated after chapter navigation (634ms)
+  ✓  11 [chromium] › tests/smoke.spec.js:287:1 › passage cache: navigating back to a visited passage writes cache (1.0s)
+  ✘  12 [chromium] › tests/smoke.spec.js:317:1 › settings: toggling verse numbers checkbox changes its state (30.0s)
+  ✘  13 [chromium] › tests/smoke.spec.js:332:1 › settings: verse-by-verse mode toggles passage layout class (30.0s)
+  ✘  14 [chromium] › tests/smoke.spec.js:352:1 › settings: font size change updates passage font size (30.0s)
+  ✘  15 [chromium] › tests/smoke.spec.js:371:1 › settings: color theme selector applies theme to body (30.0s)
+  ✘  16 [chromium] › tests/smoke.spec.js:394:1 › theme switch: toggling light mode changes body class (30.1s)
+  ✓  17 [chromium] › tests/smoke.spec.js:414:1 › keyboard: ArrowRight advances to next chapter (1.1s)
+  ✓  18 [chromium] › tests/smoke.spec.js:429:1 › keyboard: ArrowLeft goes to previous chapter (1.5s)
+  1) [chromium] › tests/smoke.spec.js:173:1 › translation: switching translation reloads passage in new translation 
+    Test timeout of 30000ms exceeded.
+    Error: locator.evaluate: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('.accordion-section[data-section="display"]')
+      53 |
+      54 | 	const section = page.locator(`.accordion-section[data-section="${sectionDataValue}"]`);
+    > 55 | 	const isActive = await section.evaluate(el => el.classList.contains('active'));
+         | 	                               ^
+      56 | 	if (!isActive) {
+      57 | 		await section.locator('.accordion-header').click();
+      58 | 		await expect(section).toHaveClass(/active/);
+        at openSettingsSection (/home/runner/work/bible/bible/tests/smoke.spec.js:55:33)
+        at /home/runner/work/bible/bible/tests/smoke.spec.js:178:2
+    Error Context: test-results/tests-smoke-translation-sw-62d91--passage-in-new-translation-chromium/error-context.md
+  2) [chromium] › tests/smoke.spec.js:317:1 › settings: toggling verse numbers checkbox changes its state 
+    Test timeout of 30000ms exceeded.
+    Error: locator.evaluate: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('.accordion-section[data-section="display"]')
+      53 |
+      54 | 	const section = page.locator(`.accordion-section[data-section="${sectionDataValue}"]`);
+    > 55 | 	const isActive = await section.evaluate(el => el.classList.contains('active'));
+         | 	                               ^
+      56 | 	if (!isActive) {
+      57 | 		await section.locator('.accordion-header').click();
+      58 | 		await expect(section).toHaveClass(/active/);
+        at openSettingsSection (/home/runner/work/bible/bible/tests/smoke.spec.js:55:33)
+        at /home/runner/work/bible/bible/tests/smoke.spec.js:321:2
+    Error Context: test-results/tests-smoke-settings-toggl-f7116--checkbox-changes-its-state-chromium/error-context.md
+  3) [chromium] › tests/smoke.spec.js:332:1 › settings: verse-by-verse mode toggles passage layout class 
+    Test timeout of 30000ms exceeded.
+    Error: locator.evaluate: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('.accordion-section[data-section="display"]')
+      53 |
+      54 | 	const section = page.locator(`.accordion-section[data-section="${sectionDataValue}"]`);
+    > 55 | 	const isActive = await section.evaluate(el => el.classList.contains('active'));
+         | 	                               ^
+      56 | 	if (!isActive) {
+      57 | 		await section.locator('.accordion-header').click();
+      58 | 		await expect(section).toHaveClass(/active/);
+        at openSettingsSection (/home/runner/work/bible/bible/tests/smoke.spec.js:55:33)
+        at /home/runner/work/bible/bible/tests/smoke.spec.js:336:2
+    Error Context: test-results/tests-smoke-settings-verse-40c24-oggles-passage-layout-class-chromium/error-context.md
+  4) [chromium] › tests/smoke.spec.js:352:1 › settings: font size change updates passage font size ─
+    Test timeout of 30000ms exceeded.
+    Error: locator.evaluate: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('.accordion-section[data-section="display"]')
+      53 |
+      54 | 	const section = page.locator(`.accordion-section[data-section="${sectionDataValue}"]`);
+    > 55 | 	const isActive = await section.evaluate(el => el.classList.contains('active'));
+         | 	                               ^
+      56 | 	if (!isActive) {
+      57 | 		await section.locator('.accordion-header').click();
+      58 | 		await expect(section).toHaveClass(/active/);
+        at openSettingsSection (/home/runner/work/bible/bible/tests/smoke.spec.js:55:33)
+        at /home/runner/work/bible/bible/tests/smoke.spec.js:356:2
+    Error Context: test-results/tests-smoke-settings-font--98bfa-e-updates-passage-font-size-chromium/error-context.md
+  5) [chromium] › tests/smoke.spec.js:371:1 › settings: color theme selector applies theme to body ─
+    Test timeout of 30000ms exceeded.
+    Error: locator.evaluate: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('.accordion-section[data-section="theme"]')
+      53 |
+      54 | 	const section = page.locator(`.accordion-section[data-section="${sectionDataValue}"]`);
+    > 55 | 	const isActive = await section.evaluate(el => el.classList.contains('active'));
+         | 	                               ^
+      56 | 	if (!isActive) {
+      57 | 		await section.locator('.accordion-header').click();
+      58 | 		await expect(section).toHaveClass(/active/);
+        at openSettingsSection (/home/runner/work/bible/bible/tests/smoke.spec.js:55:33)
+        at /home/runner/work/bible/bible/tests/smoke.spec.js:375:2
+    Error Context: test-results/tests-smoke-settings-color-af8f0-ector-applies-theme-to-body-chromium/error-context.md
+  6) [chromium] › tests/smoke.spec.js:394:1 › theme switch: toggling light mode changes body class ─
+    Test timeout of 30000ms exceeded.
+    Error: locator.evaluate: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('.accordion-section[data-section="theme"]')
+      53 |
+      54 | 	const section = page.locator(`.accordion-section[data-section="${sectionDataValue}"]`);
+    > 55 | 	const isActive = await section.evaluate(el => el.classList.contains('active'));
+         | 	                               ^
+      56 | 	if (!isActive) {
+      57 | 		await section.locator('.accordion-header').click();
+      58 | 		await expect(section).toHaveClass(/active/);
+        at openSettingsSection (/home/runner/work/bible/bible/tests/smoke.spec.js:55:33)
+        at /home/runner/work/bible/bible/tests/smoke.spec.js:398:2
+    Error Context: test-results/tests-smoke-theme-switch-t-ca7cb-ght-mode-changes-body-class-chromium/error-context.md
+  6 failed
+    [chromium] › tests/smoke.spec.js:173:1 › translation: switching translation reloads passage in new translation 
+    [chromium] › tests/smoke.spec.js:317:1 › settings: toggling verse numbers checkbox changes its state 
+    [chromium] › tests/smoke.spec.js:332:1 › settings: verse-by-verse mode toggles passage layout class 
+    [chromium] › tests/smoke.spec.js:352:1 › settings: font size change updates passage font size ──
+    [chromium] › tests/smoke.spec.js:371:1 › settings: color theme selector applies theme to body ──
+    [chromium] › tests/smoke.spec.js:394:1 › theme switch: toggling light mode changes body class ──
+  12 passed (3.3m)
+Error: Process completed with exit code 1.
