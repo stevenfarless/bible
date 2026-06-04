@@ -15,6 +15,9 @@
         <link rel="preconnect" href="https://esv-bible-6dffb-default-rtdb.firebaseio.com" />
         <link rel="preconnect" href="https://www.gstatic.com" />
         <link rel="preconnect" href="https://www.google.com" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
         <!-- Preload all ES modules so the browser fetches them in parallel
              before the parser reaches <script type="module" src="app.js">.
              This eliminates the sequential module-discovery waterfall. -->
@@ -276,6 +279,7 @@
                                                                         <option value="ember">Ember (Amber/Candlelit)</option>
                                                                         <option value="perplexity">Perplexity (Teal/Minimal)</option>
                                                                         <option value="basic">Basic (Black &amp; White)</option>
+                                                                        <option value="geek">The Geek Shall Inherit The Earth</option>
                                                                 </select>
                                                                 <small class="help-text">Choose your preferred color scheme.</small>
                                                         </div>
@@ -298,7 +302,7 @@
                                                                         <option value="ubuntu">Ubuntu</option>
                                                                         <option value="opendyslexic3">Open Dyslexic 3</option>
                                                                 </select>
-                                                                <small class="help-text">Choose the typeface used for passage text.</small>
+                                                                <small class="help-text" id="readingFontHelpText">Choose the typeface used for passage text.</small>
                                                         </div>
                                                         <div class="setting-item">
                                                                 <label class="checkbox-label">
