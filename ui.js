@@ -197,12 +197,13 @@ export function updateThemeIcon(isLightMode) {
 }
 
 export async function changeColorTheme(app, theme) {
-	document.body.classList.remove('onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme');
+	document.body.classList.remove('onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme');
 
 	if (theme === 'onyx')            document.body.classList.add('onyx-theme');
 	else if (theme === 'sage')       document.body.classList.add('sage-theme');
 	else if (theme === 'ember')      document.body.classList.add('ember-theme');
 	else if (theme === 'perplexity') document.body.classList.add('perplexity-theme');
+	else if (theme === 'basic')      document.body.classList.add('basic-theme');
 
 	// Always write locally so cold loads get the correct value immediately.
 	try { localStorage.setItem('colorTheme', theme); } catch (_) {}
