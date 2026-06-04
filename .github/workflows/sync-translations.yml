@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout branch_a (full history)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.inputs.branch_a }}
           fetch-depth: 0
@@ -57,7 +57,7 @@ jobs:
           fi
 
       - name: Checkout branch_b
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.inputs.branch_b }}
           fetch-depth: 0
