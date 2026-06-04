@@ -322,6 +322,13 @@ body.perplexity-theme {
     --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.65);
 }
 
+/* Perplexity: passage-container background in dark mode */
+:root.perplexity-theme:not(.light-mode) .passage-container,
+html.perplexity-theme:not(.light-mode) .passage-container,
+body.perplexity-theme:not(.light-mode) .passage-container {
+    background-color: #191A1A;
+}
+
 :root.perplexity-theme.light-mode,
 html.perplexity-theme.light-mode,
 body.perplexity-theme.light-mode {
