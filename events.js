@@ -162,7 +162,7 @@ export function attachEventListeners(app) {
         app.bookModal, app.chapterModal, app.verseModal,
         app.settingsModal, app.helpModal, app.loginModal,
         app.signupModal, app.userMenuModal, app.referencesModal,
-        app.translationModal,
+        app.translationModal, app.deuterocanonInfoModal,
     ].forEach((modal) => {
         if (!modal) return;
         modal.addEventListener('click', (e) => { if (e.target === modal) app.closeModal(modal); });
