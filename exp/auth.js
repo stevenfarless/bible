@@ -109,17 +109,20 @@ export function handleUserButtonClick(app) {
     if (app.currentUser) {
         document.getElementById('userEmail').textContent = app.currentUser.email;
         const isLight = document.body.classList.contains('light-mode');
-        let colorTheme = app.state?.colorTheme || 'dracula';
+        let colorTheme = app.state?.colorTheme || '';
 
-        try { colorTheme = app.state?.colorTheme || localStorage.getItem('colorTheme') || 'dracula'; } catch (_) {}
+        try { colorTheme = app.state?.colorTheme || localStorage.getItem('colorTheme') || ''; } catch (_) {}
         const themeNameMap = {
-            dracula: isLight ? 'Alucard (Light)' : 'Dracula (Dark)',
-            steel:   `Steel (${isLight ? 'Light' : 'Dark'})`,
-            onyx:    `Onyx (${isLight ? 'Light' : 'Dark'})`,
-            reader:  `Reader (${isLight ? 'Parchment' : 'Night'})`,
+            dracula:    'Dracula (Purple/Pink)',
+            onyx:       'Onyx (Gold/OLED)',
+            sage:       'Sage (Green/Forest)',
+            ember:      'Ember (Amber/Candlelit)',
+            perplexity: 'Perplexity (Teal/Minimal)',
+            basic:      'Basic (Black & White)',
+            geek:       'The Geek Shall Inherit The Earth',
         };
         document.getElementById('userTheme').textContent =
-            themeNameMap[colorTheme] || (isLight ? 'Alucard (Light)' : 'Dracula (Dark)');
+            themeNameMap[colorTheme] || colorTheme;
         app.openModal(app.userMenuModal);
     } else {
         app.openModal(app.loginModal);
