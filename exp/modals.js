@@ -185,6 +185,10 @@ const _SVG_TRASH = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.or
 const _downloading = new Set();
 const _hasHover = window.matchMedia('(hover: hover)').matches;
 
+// ease-in-out: starts slow, builds momentum, eases to stop
+const _FLY_EASING   = 'cubic-bezier(0.4, 0, 0.2, 1)';
+const _FLY_DURATION = '420ms';
+
 export function openTranslationModal(app) {
     populateTranslationModal(app);
     openModal(app, app.translationModal);
@@ -338,16 +342,18 @@ export async function populateTranslationModal(app) {
     }
 }
 
-// ── Fly-to-installed animation ────────────────────────────────────────────────
+// ── Shared fly animation ────────────────────────────────────────────────────────
 
-async function _flyToInstalled(app, t, sourceWrapper) {
-    // Snapshot where the item is right now
+/**
+ * Flies sourceWrapper to the position of the rebuilt list entry for t.id.
+ * Called after populateTranslationModal has already been invoked so the
+ * destination node exists at its new location.
+ */
+async function _flyItem(app, t, sourceWrapper) {
     const fromRect = sourceWrapper.getBoundingClientRect();
 
-    // Rebuild the list — the item now appears in the Installed section
     await populateTranslationModal(app);
 
-    // Find the newly inserted wrapper in Installed
     const targetWrapper = Array.from(app.translationList.querySelectorAll('.translation-modal-item-wrapper'))
         .find((w) => {
             const name = w.querySelector('.translation-modal-item__name');
@@ -357,39 +363,33 @@ async function _flyToInstalled(app, t, sourceWrapper) {
     if (!targetWrapper) return;
 
     const toRect = targetWrapper.getBoundingClientRect();
-
-    // Hide the destination while the clone flies
     targetWrapper.style.opacity = '0';
 
-    // Build a flying clone sized and positioned to match the source
     const clone = sourceWrapper.cloneNode(true);
-    clone.style.cssText = `
-        position: fixed;
-        top: ${fromRect.top}px;
-        left: ${fromRect.left}px;
-        width: ${fromRect.width}px;
-        height: ${fromRect.height}px;
-        margin: 0;
-        pointer-events: none;
-        z-index: 9999;
-        border-radius: var(--radius-md, 8px);
-        background: var(--surface-primary, var(--color-surface));
-        box-shadow: var(--shadow-lg, 0 12px 32px rgba(0,0,0,.2));
-        transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
-                    opacity  380ms cubic-bezier(0.22, 1, 0.36, 1),
-                    box-shadow 380ms cubic-bezier(0.22, 1, 0.36, 1);
-        will-change: transform, opacity;
-    `;
+    clone.style.cssText = [
+        `position:fixed`,
+        `top:${fromRect.top}px`,
+        `left:${fromRect.left}px`,
+        `width:${fromRect.width}px`,
+        `height:${fromRect.height}px`,
+        `margin:0`,
+        `pointer-events:none`,
+        `z-index:9999`,
+        `border-radius:var(--radius-md,8px)`,
+        `background:var(--surface-primary,var(--color-surface))`,
+        `box-shadow:var(--shadow-lg,0 12px 32px rgba(0,0,0,.2))`,
+        `transition:transform ${_FLY_DURATION} ${_FLY_EASING},opacity ${_FLY_DURATION} ${_FLY_EASING},box-shadow ${_FLY_DURATION} ${_FLY_EASING}`,
+        `will-change:transform,opacity`,
+    ].join(';');
     document.body.appendChild(clone);
 
     const dx = toRect.left - fromRect.left;
     const dy = toRect.top  - fromRect.top;
 
-    // Force a paint before setting transform so transition fires
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-            clone.style.transform = `translate(${dx}px, ${dy}px)`;
-            clone.style.boxShadow = 'var(--shadow-sm, 0 1px 2px rgba(0,0,0,.06))';
+            clone.style.transform  = `translate(${dx}px,${dy}px)`;
+            clone.style.boxShadow  = 'var(--shadow-sm,0 1px 2px rgba(0,0,0,.06))';
         });
     });
 
@@ -399,13 +399,19 @@ async function _flyToInstalled(app, t, sourceWrapper) {
     }, { once: true });
 }
 
+async function _flyToInstalled(app, t, sourceWrapper) {
+    await _flyItem(app, t, sourceWrapper);
+}
+
+async function _flyToAvailable(app, t, sourceWrapper) {
+    await _flyItem(app, t, sourceWrapper);
+}
+
 // ── Swipe-to-reveal delete (touch only) ──────────────────────────────────────
 
 const _SWIPE_THRESHOLD = 60;
 const _DELETE_BTN_W   = 72;
 
-// Tracks the currently open swipe wrapper so we can close it when another opens
-// or when the user taps outside. Scoped to the module — one open item at a time.
 let _openWrapper = null;
 
 function _closeOpenWrapper() {
@@ -425,7 +431,7 @@ function _attachSwipe(wrapper, li) {
     let startY = 0;
     let isDragging = false;
     let currentX = 0;
-    let axis = null; // null=undecided, true=horizontal, false=vertical
+    let axis = null;
 
     const clampX = (x) => Math.max(-_DELETE_BTN_W, Math.min(0, x));
 
@@ -461,7 +467,6 @@ function _attachSwipe(wrapper, li) {
     }
 
     li.addEventListener('touchstart', (e) => {
-        // If another wrapper is open, close it and absorb this touch
         if (_openWrapper && _openWrapper !== wrapper) {
             _closeOpenWrapper();
             return;
@@ -483,7 +488,6 @@ function _attachSwipe(wrapper, li) {
                 if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
                 axis = Math.abs(dx) > Math.abs(dy);
                 if (!axis) {
-                    // Vertical — bail out and let the list scroll
                     isDragging = false;
                     cleanup();
                     return;
@@ -505,7 +509,6 @@ function _attachSwipe(wrapper, li) {
             cleanup();
         };
 
-        // Listen on the li element only — never on document
         li.addEventListener('touchmove',   _onMove, { passive: false });
         li.addEventListener('touchend',    _onEnd,  { passive: true });
         li.addEventListener('touchcancel', _onEnd,  { passive: true });
@@ -526,14 +529,8 @@ async function _handleUninstall(app, t, wrapper) {
         if (fallback) app.changeTranslation(fallback);
     }
 
-    wrapper.style.transition = 'opacity 200ms ease, max-height 250ms ease 200ms';
-    wrapper.style.overflow = 'hidden';
-    wrapper.style.maxHeight = wrapper.offsetHeight + 'px';
-    requestAnimationFrame(() => {
-        wrapper.style.opacity = '0';
-        wrapper.style.maxHeight = '0';
-    });
-    setTimeout(() => wrapper.remove(), 460);
+    // Fly to Available section, then let _flyItem handle the list rebuild
+    _flyToAvailable(app, t, wrapper);
 }
 
 async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progressBar, progressLabel) {
@@ -571,12 +568,9 @@ async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progre
         iconEl.innerHTML = _SVG_DOWNLOADED;
         progressWrap.hidden = true;
 
-        // Let the checkmark sit for 500ms, then fly the item to Installed
         const sourceWrapper = li.closest('.translation-modal-item-wrapper');
         setTimeout(() => {
-            if (sourceWrapper) {
-                _flyToInstalled(app, t, sourceWrapper);
-            }
+            if (sourceWrapper) _flyToInstalled(app, t, sourceWrapper);
         }, 500);
     } catch (err) {
         _downloading.delete(t.id);
