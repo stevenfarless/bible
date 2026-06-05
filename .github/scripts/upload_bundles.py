@@ -34,7 +34,27 @@ for bundle_path in bundle_files:
     for key, value in bundle.items():
         size = len(json.dumps(value))
         print(f"  Writing {key} ({size:,} bytes)...")
-        ref.child(key).set(value)
+
+        if key == "books":
+            # write one book at a time
+            for book_key, book_data in value.items():
+                ref.child("books").child(book_key).set(book_data)
+            print(f"    wrote {len(value)} books individually")
+
+        elif key == "index":
+            # group by first character of each word key
+            chunks = {}
+            for word, refs in value.items():
+                bucket = word[0].lower() if word else "_"
+                if bucket not in chunks:
+                    chunks[bucket] = {}
+                chunks[bucket][word] = refs
+            for bucket, chunk in sorted(chunks.items()):
+                ref.child("index").child(bucket).set(chunk)
+            print(f"    wrote index in {len(chunks)} chunks")
+
+        else:
+            ref.child(key).set(value)
 
     print(f"  Done.")
 
