@@ -1,8 +1,8 @@
 // ====================
-// ESV Bible Reader App
+// Bible Reader App
 // ====================
 
-import { BibleApi, loadTranslationIndex } from './bible-api.js';
+import { BibleApi, LOCAL_TRANSLATIONS } from './bible-api.js';
 import { loadStructure, eventsForChapter } from './bsb-structure.js';
 import {
     initializeState,
@@ -10,42 +10,485 @@ import {
     scrollToVerse as scrollVerse,
     applyVerseGlow as glowVerse,
 } from './reading-state.js';
-import { loadUserData as loadUserDataFromFirebase } from './config/firebase-config.js';
+import { cacheElements, loadTheme, toggleTheme, changeColorTheme } from './ui.js';
 import {
-    cacheElements,
-    loadTheme,
-    toggleTheme,
-    updateThemeIcon,
-    changeColorTheme,
-} from './ui.js';
+    initializeBibleStructure,
+    buildBibleBooks,
+    getAllBooks,
+    getChapterCount,
+    getTestament,
+    getDisplayName,
+    PROTESTANT_BOOKS,
+} from './bible-structure.js';
+import { updateNavigationState, navigateToNextVerse, navigateToPreviousVerse } from './navigation.js';
+import {
+    toggleSearch, closeSearch, handleSearch, handleSearchKeydown,
+    refreshSearchResultItems, setSearchSelectedIndex, activateSelectedSearchResult,
+    isPassageReference, handlePassageReference, fetchAllSearchResults,
+    groupSearchResultsByCanon, performKeywordSearch, displaySearchResults,
+    parseReference, loadPassageFromReference, escapeRegExp, highlightSearchTerm, stripHTML,
+} from './search.js';
+import {
+    loadSavedPositionIfChanged, loadSavedReadingPosition, saveReadingPosition,
+    checkApiKey, handleUserButtonClick, handleLogin, handleSignup, handleLogout, loadUserData,
+} from './auth.js';
+import {
+    openModal, closeModal,
+    openBookModal, populateBookModal,
+    openChapterModal, populateChapterModal,
+    openVerseModal, populateVerseModal,
+    openTranslationModal, populateTranslationModal,
+    translationKbMove, translationKbSelect,
+    getCurrentVerseCount,
+} from './modals.js';
+import {
+    loadLocalSettings, applySettings, toggleSetting,
+    toggleVerseByVerse, updateFontSize, changeTranslation, updateCopyright,
+} from './settings.js';
+import { handleKeyboardShortcuts } from './keyboard.js';
+import { attachEventListeners } from './events.js';
 
-function readBool(key, defaultValue) {
-    const v = localStorage.getItem(key);
-    if (v === null) return defaultValue;
-    if (v === 'true') return true;
-    if (v === 'false') return false;
-    return defaultValue;
+const TRANSLATION_ALIASES = { NRSVue: 'NRSVUE' };
+function normalizeTranslation(t) { return TRANSLATION_ALIASES[t] || t; }
+
+const PASSAGE_CACHE_KEY = 'passageCache';
+
+function withTimeout(promise, ms, fallback = null) {
+    return Promise.race([
+        promise.catch(() => fallback),
+        new Promise(resolve => setTimeout(() => resolve(fallback), ms)),
+    ]);
 }
 
-const TRANSLATION_ALIASES = {
-    NRSVue: 'NRSVUE',
+function revealApp() {
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            document.body.classList.remove('initializing');
+        });
+    });
+}
+
+// ── Debug panel ────────────────────────────────────────────────────────────
+// Triple-tap the header bar to open. Tap the panel to copy. Tap outside to close.
+// REMOVE BEFORE MERGING TO MAIN.
+
+function ms() { return Math.round(performance.now()); }
+function ts(t) { return t == null ? 'n/a' : `+${t}ms`; }
+
+// ── Network fetch interceptor ──────────────────────────────────────────────
+// Installed once at module load. Records every fetch with timing, status,
+// and whether it hit a local file or Firebase.
+
+const _FIREBASE_HOSTS = new Set([
+    'esv-bible-6dffb-default-rtdb.firebaseio.com',
+    'esv-bible-6dffb.firebaseapp.com',
+    'esv-bible-6dffb.web.app',
+]);
+
+function _classifyFetchUrl(rawUrl) {
+    let parsed;
+    try {
+        parsed = new URL(rawUrl, location.href);
+    } catch (_) {
+        return 'other';
+    }
+    if (_FIREBASE_HOSTS.has(parsed.hostname)) return 'firebase';
+    const path = parsed.pathname;
+    if (path.endsWith('_bible.json') || path.includes('/translations/')) return 'local';
+    return 'other';
+}
+
+const _fetchLog = [];
+const _originalFetch = window.fetch.bind(window);
+window.fetch = async function patchedFetch(input, init) {
+    const url   = typeof input === 'string' ? input : (input?.url ?? String(input));
+    const start = ms();
+    let status  = '?';
+    let ok      = false;
+    try {
+        const res = await _originalFetch(input, init);
+        status = res.status;
+        ok     = res.ok;
+        return res;
+    } catch (err) {
+        status = `ERR(${err.message})`;
+        throw err;
+    } finally {
+        const dur = ms() - start;
+        const src = _classifyFetchUrl(url);
+        _fetchLog.push({ t: start, dur, url, status, ok, src });
+    }
 };
 
-function normalizeTranslation(t) {
-    return TRANSLATION_ALIASES[t] || t;
+// ── JS error log ──────────────────────────────────────────────────────────
+// Captures uncaught exceptions and unhandled promise rejections so they
+// appear in the debug panel even if DevTools isn't open.
+
+const _errorLog = [];
+window.addEventListener('error', (e) => {
+    _errorLog.push({
+        t: ms(),
+        msg: `${e.message}`,
+        src: `${e.filename?.replace(/^https?:\/\/[^/]+/, '') ?? '?'}:${e.lineno}`,
+    });
+});
+window.addEventListener('unhandledrejection', (e) => {
+    const msg = e.reason?.message ?? String(e.reason ?? 'unhandled rejection');
+    _errorLog.push({ t: ms(), msg, src: 'promise' });
+});
+
+// ── User action log ───────────────────────────────────────────────────────
+// Tracks meaningful UI interactions: translation changes, navigation,
+// modal opens, search queries. Wired via _dbgUserAction() on the app instance.
+
+const _userActionLog = [];
+function _logUserAction(msg) {
+    _userActionLog.push({ t: ms(), msg });
 }
+
+function buildDebugReport(app) {
+    const dbg = app._dbg || {};
+    const now = ms();
+
+    // ── Device / browser ──────────────────────────────────────────────────
+    const ua        = navigator.userAgent;
+    const platform  = navigator.platform || 'unknown';
+    const vw        = window.innerWidth;
+    const vh        = window.innerHeight;
+    const dpr       = window.devicePixelRatio ?? 1;
+    const touchDev  = ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 'yes' : 'no';
+    const online    = navigator.onLine ? 'online' : 'OFFLINE';
+    const connType  = navigator.connection?.effectiveType ?? 'unknown';
+    const connDown  = navigator.connection?.downlink != null ? `${navigator.connection.downlink} Mbps` : 'unknown';
+    const buildId   = document.querySelector('meta[name="build-id"]')?.content || '__BUILD_ID__';
+
+    // ── Firebase connectivity ─────────────────────────────────────────────
+    const fbConnected = dbg.firebaseConnected === true  ? 'connected ✓'
+                      : dbg.firebaseConnected === false ? 'DISCONNECTED ✗'
+                      : 'unknown (listener not yet fired)';
+
+    const LS_KEYS = [
+        'readingPosition', 'passageCache',
+        'translation', 'colorTheme', 'lightMode',
+        'fontSize', 'showVerseNumbers', 'showHeadings',
+        'showFootnotes', 'showCrossReferences', 'verseByVerse',
+    ];
+    const ls = {};
+    for (const k of LS_KEYS) {
+        try {
+            const raw = localStorage.getItem(k);
+            if (k === 'passageCache' && raw) {
+                const p = JSON.parse(raw);
+                ls[k] = `book=${p.book} ch=${p.chapter} translation=${p.translation} (html ${p.html?.length ?? 0} chars)`;
+            } else if (k === 'readingPosition' && raw) {
+                const p = JSON.parse(raw);
+                ls[k] = `book=${p.book} ch=${p.chapter} scrollY=${p.scrollY}`;
+            } else {
+                ls[k] = raw ?? '(not set)';
+            }
+        } catch (_) {
+            ls[k] = '(error reading)';
+        }
+    }
+
+    let cacheMatch = 'N/A';
+    try {
+        const raw = localStorage.getItem(PASSAGE_CACHE_KEY);
+        if (raw) {
+            const { book, chapter, translation } = JSON.parse(raw);
+            const sb = app?.state?.currentBook;
+            const sc = app?.state?.currentChapter;
+            const st = app?.state?.translation || 'KJV';
+            const hit = book === sb && parseInt(chapter, 10) === sc && translation === st;
+            cacheMatch = hit ? 'HIT ✓' : `MISS ✗ cache=(${book} ${chapter} ${translation}) state=(${sb} ${sc} ${st})`;
+        } else {
+            cacheMatch = 'MISS ✗ (no cache entry)';
+        }
+    } catch (_) { cacheMatch = 'MISS ✗ (parse error)'; }
+
+    const snap = dbg.stateAtLoad || {};
+    const diffs = [];
+    const cur = {
+        book:        app?.state?.currentBook,
+        chapter:     app?.state?.currentChapter,
+        translation: app?.state?.translation,
+        colorTheme:  app?.state?.colorTheme,
+        lightMode:   app?.state?.lightMode,
+        fontSize:    app?.state?.fontSize,
+        scrollY:     window.scrollY,
+    };
+    for (const [k, v] of Object.entries(cur)) {
+        const was = snap[k];
+        if (was !== undefined && String(was) !== String(v)) diffs.push(`  ${k}: ${was} → ${v}`);
+    }
+
+    const api = app?.bibleApi;
+    const bookCacheKeys   = api?._bookCache         ? [...api._bookCache.keys()]         : [];
+    const searchCacheKeys = api?._searchIndexCache  ? [...api._searchIndexCache.keys()]  : [];
+
+    // ── Network log: group by source ──────────────────────────────────────
+    const localFetches    = _fetchLog.filter(f => f.src === 'local');
+    const firebaseFetches = _fetchLog.filter(f => f.src === 'firebase');
+    const otherFetches    = _fetchLog.filter(f => f.src === 'other');
+    const errorFetches    = _fetchLog.filter(f => !f.ok);
+
+    const fmtFetch = (f) => {
+        const shortUrl = f.url.replace(/^https?:\/\/[^/]+/, '').replace(/\.json(\?.*)?$/, '.json');
+        return `  ${ts(f.t)}  [${f.status}] ${f.dur}ms  ${shortUrl}`;
+    };
+
+    // ── Verse count in current passage ────────────────────────────────────
+    const verseCount = app?.passageText
+        ? app.passageText.querySelectorAll('.verse').length
+        : 'n/a';
+
+    // ── SW cache keys ─────────────────────────────────────────────────────
+    const swCacheLines = ['  (loading...)'];
+
+    // ── Active font ───────────────────────────────────────────────────────
+    const passageEl = app?.passageText ?? document.querySelector('.passage-text');
+    const computedFont = passageEl
+        ? getComputedStyle(passageEl).fontFamily
+        : getComputedStyle(document.body).fontFamily;
+    const storedFont = (() => {
+        try { return localStorage.getItem('font') ?? '(not set)'; } catch (_) { return '(error)'; }
+    })();
+    const bodyFont = getComputedStyle(document.body).fontFamily;
+
+    const timings = [
+        `  scriptStart:          ${ts(dbg.t_script_start)}`,
+        `  domReady:             ${ts(dbg.t_dom_ready)}`,
+        `  swRegistered:         ${ts(dbg.t_sw_registered)} (background)`,
+        `  settingsLoaded:       ${ts(dbg.t_settings_loaded)}`,
+        `  cacheRestoreResult:   ${dbg.cacheRestoreResult ?? 'n/a'} at ${ts(dbg.t_cache_restore)}`,
+        `  revealApp (1st):      ${ts(dbg.t_reveal_first)}`,
+        `  passageFetchStart:    ${ts(dbg.t_passage_fetch_start)}`,
+        `  passageFetchEnd:      ${ts(dbg.t_passage_fetch_end)}  (${dbg.passageFetchMs != null ? dbg.passageFetchMs + 'ms' : 'n/a'})`,
+        `  revealApp (2nd):      ${ts(dbg.t_reveal_second)}`,
+        `  authStateChanged:     ${ts(dbg.t_auth_state)} (${dbg.authStateUser ?? 'n/a'})`,
+        `  userDataLoaded:       ${ts(dbg.t_user_data_loaded)}`,
+        `  firebasePositionEnd:  ${ts(dbg.t_firebase_position_end)} (${dbg.firebasePositionChanged ? 'changed passage' : 'no change'})`,
+        `  panelOpened:          +${now}ms (session age)`,
+    ];
+
+    const lines = [
+        '=== environment ===',
+        `  buildId: ${buildId}`,
+        `  userAgent: ${ua}`,
+        `  platform: ${platform}`,
+        `  viewport: ${vw}x${vh}  dpr: ${dpr}  touch: ${touchDev}`,
+        `  network: ${online}  type: ${connType}  downlink: ${connDown}`,
+        `  firebase: ${fbConnected}`,
+        '',
+        '=== timings (ms since navigation start) ===',
+        ...timings,
+        '',
+        '=== state changes since load ===',
+        diffs.length ? diffs.join('\n') : '  (none)',
+        '',
+        '=== localStorage ===',
+        ...Object.entries(ls).map(([k, v]) => `  ${k}: ${v}`),
+        '',
+        '=== passage cache match (now) ===',
+        `  ${cacheMatch}`,
+        '',
+        '=== current passage ===',
+        `  verses rendered: ${verseCount}`,
+        `  title: ${app?.passageTitle?.textContent ?? 'n/a'}`,
+        `  translation: ${app?.state?.translation ?? 'n/a'}`,
+        '',
+        '=== user actions ===',
+        _userActionLog.length ? _userActionLog.map(e => `  ${ts(e.t)}  ${e.msg}`).join('\n') : '  (none)',
+        '',
+        '=== session event log ===',
+        ...(dbg.events?.length ? dbg.events.map(e => `  ${ts(e.t)}  ${e.msg}`) : ['  (none)']),
+        '',
+        '=== JS errors ===',
+        _errorLog.length
+            ? _errorLog.map(e => `  ${ts(e.t)}  [${e.src}] ${e.msg}`).join('\n')
+            : '  (none ✓)',
+        '',
+        '=== network: local file fetches ===',
+        localFetches.length ? localFetches.map(fmtFetch).join('\n') : '  (none)',
+        '',
+        '=== network: firebase fetches ===',
+        firebaseFetches.length ? firebaseFetches.map(fmtFetch).join('\n') : '  (none — local routing working ✓)',
+        '',
+        '=== network: other fetches ===',
+        otherFetches.length ? otherFetches.map(fmtFetch).join('\n') : '  (none)',
+        '',
+        '=== network: errors ===',
+        errorFetches.length ? errorFetches.map(fmtFetch).join('\n') : '  (none ✓)',
+        '',
+        '=== API memory cache ===',
+        `  bookCache (${bookCacheKeys.length}): ${bookCacheKeys.join(', ') || '(empty)'}`,
+        `  searchIndexCache (${searchCacheKeys.length}): ${searchCacheKeys.join(', ') || '(empty)'}`,
+        '',
+        '=== service worker cache ===',
+        ...swCacheLines,
+        '',
+        '=== app state (now) ===',
+        `  currentBook: ${app?.state?.currentBook}`,
+        `  currentChapter: ${app?.state?.currentChapter}`,
+        `  translation: ${app?.state?.translation}`,
+        `  colorTheme: ${app?.state?.colorTheme}`,
+        `  lightMode: ${app?.state?.lightMode}`,
+        `  fontSize: ${app?.state?.fontSize}`,
+        `  scrollY: ${window.scrollY}`,
+        `  currentUser: ${app?.currentUser?.email ?? 'not signed in'}`,
+        '',
+        '=== active font ===',
+        `  localStorage font: ${storedFont}`,
+        `  computed (passage): ${computedFont}`,
+        `  computed (body): ${bodyFont}`,
+    ];
+    return { text: lines.join('\n'), swCacheLines };
+}
+
+function showDebugPanel(app) {
+    const existing = document.getElementById('debugPanel');
+    if (existing) { existing.remove(); return; }
+
+    const { text, swCacheLines } = buildDebugReport(app);
+
+    const overlay = document.createElement('div');
+    overlay.id = 'debugPanel';
+    Object.assign(overlay.style, {
+        position: 'fixed', inset: '0', background: 'rgba(0,0,0,0.85)',
+        zIndex: '99999', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '1rem', boxSizing: 'border-box',
+    });
+
+    const box = document.createElement('div');
+    Object.assign(box.style, {
+        background: '#1e1e2e', color: '#cdd6f4', fontFamily: 'monospace',
+        fontSize: '13px', lineHeight: '1.6', padding: '1.25rem',
+        borderRadius: '12px', maxWidth: '100%', width: '100%',
+        maxHeight: '80vh', overflowY: 'auto', whiteSpace: 'pre-wrap',
+        wordBreak: 'break-all', userSelect: 'text',
+        border: '1px solid #45475a',
+    });
+    box.textContent = text;
+
+    const hint = document.createElement('div');
+    Object.assign(hint.style, {
+        marginTop: '0.75rem', textAlign: 'center', color: '#a6e3a1',
+        fontSize: '14px', fontFamily: 'monospace',
+    });
+    hint.textContent = 'Tap to copy  ·  Tap outside to close';
+
+    const wrapper = document.createElement('div');
+    Object.assign(wrapper.style, { maxWidth: '600px', width: '100%' });
+    wrapper.appendChild(box);
+    wrapper.appendChild(hint);
+    overlay.appendChild(wrapper);
+
+    // Async: fill in SW cache keys and update the box text.
+    if ('caches' in window) {
+        caches.keys().then(async (cacheNames) => {
+            const allKeys = [];
+            for (const name of cacheNames) {
+                const cache = await caches.open(name);
+                const keys  = await cache.keys();
+                allKeys.push(`  [${name}] ${keys.length} entries`);
+                for (const req of keys.slice(0, 20)) {
+                    const shortUrl = req.url.replace(/^https?:\/\/[^/]+/, '');
+                    allKeys.push(`    ${shortUrl}`);
+                }
+                if (keys.length > 20) allKeys.push(`    ... and ${keys.length - 20} more`);
+            }
+            if (!allKeys.length) allKeys.push('  (no SW caches)');
+            const fullText = box.textContent.replace(
+                /=== service worker cache ===\n  \(loading\.\.\.\)/,
+                `=== service worker cache ===\n${allKeys.join('\n')}`
+            );
+            box.textContent = fullText;
+        }).catch(() => {
+            box.textContent = box.textContent.replace('  (loading...)', '  (cache API unavailable)');
+        });
+    } else {
+        box.textContent = box.textContent.replace('  (loading...)', '  (not supported)');
+    }
+
+    box.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(box.textContent)
+            .then(() => { hint.textContent = 'Copied! ✓'; })
+            .catch(() => { hint.textContent = 'Copy failed — select text manually'; });
+    });
+
+    overlay.addEventListener('click', () => overlay.remove());
+    document.body.appendChild(overlay);
+}
+
+function initDebugTrigger(app) {
+    const target = document.querySelector('.header') || document.querySelector('.logo');
+    if (!target) return;
+
+    let taps = 0;
+    let timer = null;
+
+    target.addEventListener('touchend', (e) => {
+        if (e.target.closest('.header-controls')) return;
+        e.preventDefault();
+        taps++;
+        clearTimeout(timer);
+        timer = setTimeout(() => { taps = 0; }, 700);
+        if (taps >= 3) {
+            taps = 0;
+            clearTimeout(timer);
+            showDebugPanel(app);
+        }
+    }, { passive: false });
+
+    target.addEventListener('click', (e) => {
+        if (e.target.closest('.header-controls')) return;
+        if (e.sourceCapabilities?.firesTouchEvents) return;
+        taps++;
+        clearTimeout(timer);
+        timer = setTimeout(() => { taps = 0; }, 700);
+        if (taps >= 3) {
+            taps = 0;
+            clearTimeout(timer);
+            showDebugPanel(app);
+        }
+    });
+}
+
+// Read readingPosition from localStorage without mutating app state.
+// Returns { book, chapter } or null.
+function _readSavedPosition() {
+    try {
+        const raw = localStorage.getItem('readingPosition');
+        if (!raw) return null;
+        const pos = JSON.parse(raw);
+        if (pos?.book && pos?.chapter) return { book: pos.book, chapter: parseInt(pos.chapter, 10) };
+    } catch (_) {}
+    return null;
+}
+
+// SVG paths for copy/check icon swap
+const _COPY_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+const _CHECK_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
 
 class BibleApp {
     constructor() {
-        this.auth = window.firebaseAuth;
+        this.auth     = window.firebaseAuth;
         this.database = window.firebaseDatabase;
         this.currentUser = null;
-
-        // Populated from translations/index.json.
-        // Keys are translation IDs (e.g. 'ESV'), values are copyright strings.
         this._copyrightMap = {};
+        this._translationRegistry = [];
+        this._normalizeTranslation = normalizeTranslation;
+        this._translationKbIndex = -1;
 
-        this.bibleBooks = this.initializeBibleStructure();
+        // Debug instrumentation — REMOVE BEFORE MERGING TO MAIN.
+        this._dbg = {
+            t_script_start: ms(),
+            events: [],
+            firebaseConnected: null,
+        };
+
+        this.bibleBooks = initializeBibleStructure();
 
         this.bookAbbreviations = {
             Genesis: 'Gen', Exodus: 'Exod', Leviticus: 'Lev', Numbers: 'Num', Deuteronomy: 'Deut',
@@ -63,25 +506,24 @@ class BibleApp {
             '1 John': '1John', '2 John': '2John', '3 John': '3John', Jude: 'Jude', Revelation: 'Rev',
         };
 
-        this.bookDisplayNames = {
-            Psalm: 'Psalms',
-        };
+        this.bookDisplayNames = { Psalm: 'Psalms' };
 
         this.state = initializeState();
         this.searchTimeout = null;
         this.searchSelectedIndex = -1;
         this.searchResultItems = null;
-        this.searchPage = 1;
         this.searchLastQuery = '';
-        this.searchHasMore = false;
         this.currentSearchResults = [];
         this.scrollTimeout = null;
         this.lastScrollPosition = 0;
         this.chromeHidden = false;
-        this.chromeScrollLastY = window.scrollY || 0;
-        this.chromeDelta = 2;
-        this.chromeScrollTicking = false;
-        this.chromeSuspend = false;
+        this.chromeScrollAnchorY  = window.scrollY || 0;
+        this.chromeLastY          = window.scrollY || 0;
+        this.chromeLastDirection  = null;
+        this.chromeDelta          = 8;
+        this.chromeHideOffset     = 80;
+        this.chromeScrollTicking  = false;
+        this.chromeSuspend        = false;
 
         this.showChrome = () => {
             if (!this.chromeHidden) return;
@@ -99,28 +541,33 @@ class BibleApp {
             if (this.chromeScrollTicking) return;
             this.chromeScrollTicking = true;
             if (this.chromeSuspend) {
-                this.chromeScrollLastY = window.scrollY || window.pageYOffset || 0;
+                this.chromeScrollAnchorY = window.scrollY || window.pageYOffset || 0;
+                this.chromeLastY         = window.scrollY || window.pageYOffset || 0;
+                this.chromeLastDirection = null;
                 this.chromeScrollTicking = false;
                 return;
             }
-
             window.requestAnimationFrame(() => {
-                const y = window.scrollY || window.pageYOffset || 0;
-                const delta = y - this.chromeScrollLastY;
-                const modalOpen = !!document.querySelector('.modal.active');
-                const searchOpen = !!this.searchContainer?.classList.contains('active');
+                const y           = window.scrollY || window.pageYOffset || 0;
+                const direction   = y > this.chromeLastY ? 'down' : y < this.chromeLastY ? 'up' : this.chromeLastDirection;
+                const modalOpen   = !!document.querySelector('.modal.active');
+                const searchOpen  = !!this.searchContainer?.classList.contains('active');
 
                 if (y <= 0 || modalOpen || searchOpen) {
                     this.showChrome();
-                    this.chromeScrollLastY = y;
-                    this.chromeScrollTicking = false;
-                    return;
+                    this.chromeScrollAnchorY = y;
+                    this.chromeLastDirection = null;
+                } else {
+                    if (direction !== this.chromeLastDirection) {
+                        this.chromeScrollAnchorY = y;
+                        this.chromeLastDirection = direction;
+                    }
+                    const movement = y - this.chromeScrollAnchorY;
+                    if (movement >  this.chromeDelta && y > this.chromeHideOffset) this.hideChrome();
+                    if (movement < -this.chromeDelta) this.showChrome();
                 }
 
-                if (delta > this.chromeDelta) this.hideChrome();
-                if (delta < -this.chromeDelta) this.showChrome();
-
-                this.chromeScrollLastY = y;
+                this.chromeLastY = y;
                 this.chromeScrollTicking = false;
             });
         };
@@ -128,470 +575,370 @@ class BibleApp {
         this.originalPassageHtml = null;
         this.searchExpandedTestaments = new Set();
         this.searchExpandedBooks = new Set();
-        this.bibleApi = new BibleApi(this.state.translation || 'ESV');
+        this.bibleApi = new BibleApi(this.state.translation || 'KJV');
+
+        // Expose instance for Playwright debug log attachment — REMOVE BEFORE MERGING TO MAIN.
+        window._bibleApp = this;
+
         this.init();
     }
 
-    // ================================
-    // Bible Structure
-    // ================================
-
-    initializeBibleStructure() {
-        return {
-            'Old Testament': {
-                Genesis: 50, Exodus: 40, Leviticus: 27, Numbers: 36, Deuteronomy: 34,
-                Joshua: 24, Judges: 21, Ruth: 4, '1 Samuel': 31, '2 Samuel': 24,
-                '1 Kings': 22, '2 Kings': 25, '1 Chronicles': 29, '2 Chronicles': 36,
-                Ezra: 10, Nehemiah: 13, Esther: 10, Job: 42, Psalm: 150, Proverbs: 31,
-                Ecclesiastes: 12, 'Song of Solomon': 8, Isaiah: 66, Jeremiah: 52,
-                Lamentations: 5, Ezekiel: 48, Daniel: 12, Hosea: 14, Joel: 3, Amos: 9,
-                Obadiah: 1, Jonah: 4, Micah: 7, Nahum: 3, Habakkuk: 3, Zephaniah: 3,
-                Haggai: 2, Zechariah: 14, Malachi: 4,
-            },
-            'New Testament': {
-                Matthew: 28, Mark: 16, Luke: 24, John: 21, Acts: 28, Romans: 16,
-                '1 Corinthians': 16, '2 Corinthians': 13, Galatians: 6, Ephesians: 6,
-                Philippians: 4, Colossians: 4, '1 Thessalonians': 5, '2 Thessalonians': 3,
-                '1 Timothy': 6, '2 Timothy': 4, Titus: 3, Philemon: 1, Hebrews: 13,
-                James: 5, '1 Peter': 5, '2 Peter': 3, '1 John': 5, '2 John': 1,
-                '3 John': 1, Jude: 1, Revelation: 22,
-            },
-        };
+    _dbgEvent(msg) {
+        this._dbg.events.push({ t: ms(), msg });
     }
 
-    getAllBooks() {
-        return [
-            ...Object.keys(this.bibleBooks['Old Testament']),
-            ...Object.keys(this.bibleBooks['New Testament']),
-        ];
+    _dbgUserAction(msg) {
+        _logUserAction(msg);
     }
 
-    getChapterCount(book) {
-        for (const testament in this.bibleBooks) {
-            if (this.bibleBooks[testament][book]) {
-                return this.bibleBooks[testament][book];
+    getAllBooks()          { return getAllBooks(this); }
+    getChapterCount(book) { return getChapterCount(this, book); }
+    getTestament(book)    { return getTestament(this, book); }
+    getDisplayName(book)  { return getDisplayName(this, book); }
+
+    /**
+     * Rebuild app.bibleBooks from a translation's meta.json.
+     * Called by changeTranslation() after it fetches the incoming translation's meta.
+     * If meta is null or has no books array, falls back to the static 66-book structure.
+     * If the book modal is currently open, re-renders it so the user sees the new list.
+     *
+     * @param {object|null} meta  parsed meta.json, or null on fetch failure
+     */
+    _rebuildBibleBooks(meta) {
+        this.bibleBooks = buildBibleBooks(meta);
+        this._dbgEvent(`_rebuildBibleBooks: ${Object.values(this.bibleBooks).reduce((n, t) => n + Object.keys(t).length, 0)} books`);
+        if (this.bookModal?.classList.contains('active')) {
+            populateBookModal(this);
+        }
+    }
+
+    // ── Passage cache ──────────────────────────────────────────────────────
+
+    _savePassageCache(book, chapter, translation, title, html) {
+        try {
+            localStorage.setItem(PASSAGE_CACHE_KEY, JSON.stringify({
+                book,
+                chapter: parseInt(chapter, 10),
+                translation: translation || 'KJV',
+                title,
+                html,
+            }));
+        } catch (_) {}
+    }
+
+    _restorePassageCache() {
+        try {
+            const raw = localStorage.getItem(PASSAGE_CACHE_KEY);
+            if (!raw) return false;
+            const { book, chapter, translation, title, html } = JSON.parse(raw);
+
+            const stateBook    = this.state.currentBook;
+            const stateChapter = this.state.currentChapter;
+            const stateTrans   = this.state.translation || 'KJV';
+
+            if (
+                book                    !== stateBook    ||
+                parseInt(chapter, 10)  !== stateChapter ||
+                translation            !== stateTrans
+            ) {
+                this._dbgEvent(
+                    `cache MISS: cache=(${book} ${chapter} ${translation}) state=(${stateBook} ${stateChapter} ${stateTrans})`
+                );
+                return false;
             }
+
+            if (this.passageTitle) this.passageTitle.textContent = title || '';
+            if (this.passageText) {
+                this.passageText.innerHTML = html;
+                this.originalPassageHtml   = html;
+                this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
+            }
+            this.updateNavigationState();
+            return true;
+        } catch (_) {
+            return false;
         }
-        return 0;
     }
 
-    getTestament(book) {
-        if (this.bibleBooks['Old Testament'][book]) return 'Old Testament';
-        if (this.bibleBooks['New Testament'][book]) return 'New Testament';
-        return null;
-    }
+    // ── Background prefetch ────────────────────────────────────────────────
 
-    getDisplayName(book) {
-        return this.bookDisplayNames[book] || book;
-    }
+    _prefetchCurrentBook() {
+        const book   = this.state.currentBook;
 
-    // ================================
-    // Initialization
-    // ================================
-
-    async init() {
-        await this._loadTranslationRegistry();
-        await registerServiceWorker(this);
-
-        cacheElements(this);
-        loadTheme(this);
-
-        const themeSelector = document.getElementById('themeSelector');
-        const lightModeToggle = document.getElementById('lightModeToggle');
-
-        if (themeSelector) {
-            const savedTheme = localStorage.getItem('colorTheme') || 'dracula';
-            themeSelector.value = savedTheme;
-        }
-
-        if (lightModeToggle) {
-            lightModeToggle.checked = document.body.classList.contains('light-mode');
-        }
-
-        this.attachEventListeners();
-        this.initializeAccordion();
-
-        if (!this.auth || !this.database) {
-            console.error('Firebase auth/database not ready when app initialized.');
-            this.loadLocalSettings();
-            this.applySettings();
-            this.loadPassage(this.state.currentBook, this.state.currentChapter);
-            setTimeout(() => {
-                this.showToast('Sign in is temporarily unavailable. Please refresh the page.');
-            }, 500);
+        // Deuterocanonical books are only in a subset of translations.
+        // Prefetching them across all LOCAL_TRANSLATIONS causes a flood of
+        // 404s for translations that don't include them. Skip entirely.
+        if (!PROTESTANT_BOOKS.has(book)) {
+            this._dbgEvent(`prefetch: skipped "${book}" (not in Protestant canon)`);
             return;
         }
 
-        this.auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                this.currentUser = user;
-                await this.loadUserData();
-                this.applySettings();
-                await this.loadSavedReadingPosition();
-            } else {
-                this.currentUser = null;
-                this.loadLocalSettings();
-                this.applySettings();
-                this.loadPassage(this.state.currentBook, this.state.currentChapter);
-                this.checkApiKey();
+        const active = this.state.translation;
+        const others = [...LOCAL_TRANSLATIONS].filter(t => t !== active);
+        let i = 0;
+        const next = () => {
+            if (i >= others.length) return;
+            const t = others[i++];
+            this.bibleApi._loadBook(t, book)
+                .catch(() => {})
+                .finally(() => setTimeout(next, 300));
+        };
+        setTimeout(next, 1000);
+    }
+
+    // Prefetches the previous and next books relative to the current one so
+    // chapter navigation across book boundaries feels instant.
+    _prefetchAdjacentBooks() {
+        const { currentBook, translation } = this.state;
+        const books = this.getAllBooks();
+        const idx = books.indexOf(currentBook);
+        const toFetch = [
+            idx > 0              ? books[idx - 1] : null,
+            idx < books.length-1 ? books[idx + 1] : null,
+        ].filter(Boolean);
+        setTimeout(() => {
+            for (const book of toFetch) {
+                this.bibleApi._loadBook(translation, book).catch(() => {});
             }
-        });
+        }, 3000);
+    }
+
+    async init() {
+        document.body.classList.add('initializing');
+        try {
+            this._dbg.t_dom_ready = ms();
+
+            registerServiceWorker(this)
+                .then(() => { this._dbg.t_sw_registered = ms(); })
+                .catch((err) => {
+                    this._dbg.t_sw_registered = ms();
+                    this._dbgEvent(`SW registration failed: ${err?.message}`);
+                });
+
+            cacheElements(this);
+            loadTheme(this);
+
+            const themeSelector = document.getElementById('themeSelector');
+            const lightModeToggle = document.getElementById('lightModeToggle');
+            if (themeSelector) {
+                let saved = 'dracula';
+                try { saved = localStorage.getItem('colorTheme') || 'dracula'; } catch (_) {}
+                themeSelector.value = saved;
+            }
+            if (lightModeToggle) lightModeToggle.checked = document.body.classList.contains('light-mode');
+
+            attachEventListeners(this);
+            this.initializeAccordion();
+            document.body.setAttribute('data-app-ready', 'true');
+
+            this.loadLocalSettings();
+            this.applySettings();
+            this._dbg.t_settings_loaded = ms();
+
+            this._dbg.stateAtLoad = {
+                book:        this.state.currentBook,
+                chapter:     this.state.currentChapter,
+                translation: this.state.translation,
+                colorTheme:  this.state.colorTheme,
+                lightMode:   this.state.lightMode,
+                fontSize:    this.state.fontSize,
+                scrollY:     window.scrollY,
+            };
+
+            if (!this.auth || !this.database) {
+                console.warn('Firebase not available — sign-in disabled.');
+                this._dbgEvent('Firebase unavailable');
+                this._dbg.firebaseConnected = false;
+            }
+
+            // ── Firebase connectivity listener ─────────────────────────────
+            if (this.database) {
+                try {
+                    const { ref: fbRef, onValue } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js');
+                    onValue(fbRef(this.database, '.info/connected'), (snap) => {
+                        const connected = !!snap.val();
+                        this._dbg.firebaseConnected = connected;
+                        this._dbgEvent(`firebase: ${connected ? 'connected' : 'disconnected'}`);
+                    });
+                } catch (_) {
+                    // Firebase SDK not available via dynamic import — connectivity stays 'unknown'.
+                }
+            }
+
+            const cacheHit = this._restorePassageCache();
+            this._dbg.t_cache_restore = ms();
+            this._dbg.cacheRestoreResult = cacheHit ? 'HIT' : 'MISS';
+            if (cacheHit) this._dbgEvent('cache restore: HIT');
+
+            initDebugTrigger(this);
+            // Expose debug report builder for Playwright test attachment — REMOVE BEFORE MERGING TO MAIN.
+            window._buildDebugReport = () => buildDebugReport(window._bibleApp).text;
+
+            const savedPos = _readSavedPosition();
+            const posMatchesCache = !savedPos ||
+                (savedPos.book === this.state.currentBook && savedPos.chapter === this.state.currentChapter);
+
+            if (cacheHit && posMatchesCache) {
+                this._dbg.t_reveal_first = ms();
+                this._dbg.t_passage_fetch_start = null;
+                this._dbg.t_passage_fetch_end   = null;
+                this._dbg.passageFetchMs         = null;
+                revealApp();
+                this._dbgEvent('init: cache hit + position match — skipping fetch');
+                this._loadTranslationRegistry();
+                this._prefetchCurrentBook();
+                this._prefetchAdjacentBooks();
+                this.swipe?.syncAdjacentPanels();
+            } else if (cacheHit && !posMatchesCache) {
+                this._dbg.t_reveal_first = ms();
+                revealApp();
+                this._dbgEvent(`init: cache hit but position mismatch — loading ${savedPos.book} ${savedPos.chapter}`);
+                this._dbg.t_passage_fetch_start = ms();
+                await Promise.all([
+                    this._loadTranslationRegistry(),
+                    this.loadPassage(savedPos.book, savedPos.chapter),
+                ]);
+                this._dbg.t_passage_fetch_end = ms();
+                this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
+                this._prefetchCurrentBook();
+                this._prefetchAdjacentBooks();
+            } else {
+                this._dbg.t_passage_fetch_start = ms();
+                this._dbg.t_reveal_second = ms();
+                revealApp();
+                this._dbgEvent('init: cache miss — revealing with loading spinner');
+                await Promise.all([
+                    this._loadTranslationRegistry(),
+                    this.loadPassage(this.state.currentBook, this.state.currentChapter),
+                ]);
+                this._dbg.t_passage_fetch_end = ms();
+                this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
+                this._prefetchCurrentBook();
+                this._prefetchAdjacentBooks();
+            }
+
+            if (this.auth && this.database) {
+                this.auth.onAuthStateChanged(async (user) => {
+                    this._dbg.t_auth_state = ms();
+                    if (user) {
+                        this._dbg.authStateUser = user.email;
+                        this._dbgEvent(`auth: signed in as ${user.email}`);
+                        this.currentUser = user;
+                        await withTimeout(this.loadUserData(), 5000);
+                        this._dbg.t_user_data_loaded = ms();
+                        this.applySettings();
+                        const bookBefore = this.state.currentBook;
+                        const chBefore   = this.state.currentChapter;
+                        await this._loadSavedPositionIfChanged();
+                        this._dbg.t_firebase_position_end = ms();
+                        this._dbg.firebasePositionChanged =
+                            this.state.currentBook !== bookBefore || this.state.currentChapter !== chBefore;
+                        if (this._dbg.firebasePositionChanged) {
+                            this._dbgEvent(`Firebase position changed: ${bookBefore} → ${this.state.currentBook} ${this.state.currentChapter}`);
+                        }
+                    } else {
+                        this._dbg.authStateUser = 'signed out';
+                        this._dbgEvent('auth: signed out');
+                        this.currentUser = null;
+                        this.checkApiKey();
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('BibleApp init error:', err);
+            this._dbgEvent(`init error: ${err.message}`);
+            revealApp();
+        }
     }
 
     async _loadTranslationRegistry() {
-        const translations = await loadTranslationIndex();
+        try {
+            const res = await fetch('./translations/index.json');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            const translations = data.translations || [];
 
-        const select = document.getElementById('translationSelector');
-        if (select && translations.length > 0) {
-            select.innerHTML = '';
-            for (const t of translations) {
-                const opt = document.createElement('option');
-                opt.value = t.id;
-                opt.textContent = t.label;
-                select.appendChild(opt);
+            this._translationRegistry = translations.map(t => ({ id: t.id, name: t.label }));
+
+            const select = document.getElementById('translationSelector');
+            if (select && translations.length > 0) {
+                select.innerHTML = '';
+                for (const t of translations) {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = t.label;
+                    select.appendChild(opt);
+                }
             }
-        }
 
-        this._copyrightMap = {};
-        for (const t of translations) {
-            this._copyrightMap[t.id] = t.copyright || '';
+            this._copyrightMap = {};
+            for (const t of translations) this._copyrightMap[t.id] = t.copyright || '';
+            this.updateCopyright?.();
+
+            // Fetch the starting translation's meta.json so the fallback search
+            // path knows its canon from the first search. Fire-and-forget — a
+            // failure here is harmless; the fallback just uses BOOK_LOAD_ORDER.
+            const startingTranslation = this.state.translation;
+            fetch(`./translations/${startingTranslation}/meta.json`)
+                .then(r => (r.ok ? r.json() : null))
+                .then(meta => {
+                    if (meta?.books?.length) {
+                        this.bibleApi.setBookList(startingTranslation, meta.books.map(b => b.name));
+                        this._dbgEvent(`setBookList: ${startingTranslation} (${meta.books.length} books)`);
+                    }
+                })
+                .catch(() => {});
+        } catch (err) {
+            console.error('BibleApp: failed to load translation index', err);
         }
     }
 
     initializeAccordion() {
-        const accordionHeaders = document.querySelectorAll('.accordion-header');
-
-        accordionHeaders.forEach((header) => {
+        document.querySelectorAll('.accordion-header').forEach((header) => {
             header.addEventListener('click', () => {
                 const section = header.closest('.accordion-section');
-                section.classList.toggle('active');
+                const isActive = section.classList.contains('active');
+                document.querySelectorAll('.accordion-section').forEach(s => s.classList.remove('active'));
+                if (!isActive) section.classList.add('active');
             });
         });
-
         const openAccountBtn = document.getElementById('openAccountBtn');
         if (openAccountBtn) {
             openAccountBtn.addEventListener('click', () => {
                 this.closeModal(this.settingsModal);
-                if (this.currentUser) {
-                    this.openModal(this.userMenuModal);
-                } else {
-                    this.openModal(this.loginModal);
-                }
+                this.openModal(this.currentUser ? this.userMenuModal : this.loginModal);
             });
         }
     }
 
-    attachEventListeners() {
-        this.searchToggleBtn?.addEventListener('click', () => this.toggleSearch());
-        this.helpBtn?.addEventListener('click', () => this.openModal(this.helpModal));
-        this.settingsBtn?.addEventListener('click', () => this.openModal(this.settingsModal));
-
-        this.closeSearchBtn?.addEventListener('click', () => this.closeSearch());
-        this.searchInput?.addEventListener('input', (e) => this.handleSearch(e.target.value));
-        this.searchInput?.addEventListener('keydown', (e) => this.handleSearchKeydown(e));
-
-        this.prevChapterBtn?.addEventListener('click', () => this.navigateChapter(-1));
-        this.nextChapterBtn?.addEventListener('click', () => this.navigateChapter(1));
-        this.bookSelector?.addEventListener('click', () => this.openBookModal());
-        this.chapterSelector?.addEventListener('click', () => this.openChapterModal());
-        this.verseSelector?.addEventListener('click', () => this.openVerseModal());
-        this.closeVerseModal?.addEventListener('click', () => this.closeModal(this.verseModal));
-
-        this.referencesModal = document.getElementById('referencesModal');
-        this.closeReferencesModal = document.getElementById('closeReferencesModal');
-        this.footnotesSection = document.getElementById('footnotesSection');
-        this.footnotesContent = document.getElementById('footnotesContent');
-        this.crossReferencesSection = document.getElementById('crossReferencesSection');
-        this.crossReferencesContent = document.getElementById('crossReferencesContent');
-
-        [
-            this.bookModal,
-            this.chapterModal,
-            this.verseModal,
-            this.settingsModal,
-            this.helpModal,
-            this.loginModal,
-            this.signupModal,
-            this.userMenuModal,
-            this.referencesModal,
-        ].forEach((modal) => {
-            if (!modal) return;
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) this.closeModal(modal);
-            });
-        });
-
-        this.closeBookModal?.addEventListener('click', () => this.closeModal(this.bookModal));
-        this.closeChapterModal?.addEventListener('click', () => this.closeModal(this.chapterModal));
-        this.closeHelpModal?.addEventListener('click', () => this.closeModal(this.helpModal));
-        this.closeSettingsModal?.addEventListener('click', () => this.closeModal(this.settingsModal));
-        if (this.closeReferencesModal) {
-            this.closeReferencesModal?.addEventListener('click', () => this.closeModal(this.referencesModal));
-        }
-
-        // References modal drag-to-resize
-        if (this.referencesModal) {
-            const referencesContent = this.referencesModal.querySelector('.modal-content');
-            const referencesHeader = this.referencesModal.querySelector('.modal-header');
-            const referencesBody = this.referencesModal.querySelector('.modal-body');
-
-            let isRefDragging = false;
-            let refStartY = 0;
-            let refStartHeight = 0;
-            let refStartScrollTop = 0;
-
-            referencesHeader?.addEventListener('touchstart', (e) => {
-                isRefDragging = true;
-                refStartY = e.touches[0].clientY;
-                refStartHeight = referencesContent.offsetHeight;
-                refStartScrollTop = referencesBody?.scrollTop ?? 0;
-                referencesContent.classList.add('dragging');
-            }, { passive: false });
-
-            document.addEventListener('touchmove', (e) => {
-                if (!isRefDragging) return;
-                const deltaY = refStartY - e.touches[0].clientY;
-                let newH = Math.max(200, Math.min(window.innerHeight * 0.9, refStartHeight + deltaY));
-                referencesContent.style.height = `${newH}px`;
-                e.preventDefault();
-            }, { passive: false });
-
-            document.addEventListener('touchend', (e) => {
-                if (!isRefDragging) return;
-                isRefDragging = false;
-                referencesContent.classList.remove('dragging');
-                const totalDrag = e.changedTouches[0].clientY - refStartY;
-                if (totalDrag > 150 && refStartScrollTop === 0) {
-                    this.closeModal(this.referencesModal);
-                    setTimeout(() => { referencesContent.style.height = '50vh'; }, 300);
-                }
-            }, { passive: true });
-
-            let isRefMouseDragging = false;
-            let refMouseStartY = 0;
-            let refMouseStartHeight = 0;
-
-            referencesHeader?.addEventListener('mousedown', (e) => {
-                if (e.target.closest('.close-btn')) return;
-                isRefMouseDragging = true;
-                refMouseStartY = e.clientY;
-                refMouseStartHeight = referencesContent.offsetHeight;
-                referencesContent.classList.add('dragging');
-                e.preventDefault();
-            });
-
-            document.addEventListener('mousemove', (e) => {
-                if (!isRefMouseDragging) return;
-                const newH = Math.max(200, Math.min(window.innerHeight * 0.9, refMouseStartHeight + (refMouseStartY - e.clientY)));
-                referencesContent.style.height = `${newH}px`;
-            });
-
-            document.addEventListener('mouseup', (e) => {
-                if (!isRefMouseDragging) return;
-                isRefMouseDragging = false;
-                referencesContent.classList.remove('dragging');
-                if (e.clientY - refMouseStartY > 150) {
-                    this.closeModal(this.referencesModal);
-                    setTimeout(() => { referencesContent.style.height = '50vh'; }, 300);
-                }
-            });
-        }
-
-        // Settings modal drag-to-resize
-        const settingsContent = this.settingsModal.querySelector('.modal-content');
-        const settingsHeader = this.settingsModal.querySelector('.modal-header');
-        const settingsBody = this.settingsModal.querySelector('.modal-body');
-
-        let isDragging = false;
-        let startY = 0;
-        let startHeight = 0;
-        let startScrollTop = 0;
-
-        settingsHeader.addEventListener('touchstart', (e) => {
-            if (!settingsHeader.contains(e.target)) return;
-            isDragging = true;
-            startY = e.touches[0].clientY;
-            startHeight = settingsContent.offsetHeight;
-            startScrollTop = settingsBody.scrollTop;
-            settingsContent.classList.add('dragging');
-        }, { passive: false });
-
-        document.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            const deltaY = startY - e.touches[0].clientY;
-            const newH = Math.max(200, Math.min(window.innerHeight * 0.9, startHeight + deltaY));
-            settingsContent.style.height = `${newH}px`;
-            e.preventDefault();
-        }, { passive: false });
-
-        document.addEventListener('touchend', (e) => {
-            if (!isDragging) return;
-            isDragging = false;
-            settingsContent.classList.remove('dragging');
-            const totalDrag = e.changedTouches[0].clientY - startY;
-            if (totalDrag > 150 && startScrollTop === 0) {
-                this.closeModal(this.settingsModal);
-                setTimeout(() => { settingsContent.style.height = '50vh'; }, 300);
-            }
-        }, { passive: true });
-
-        let isMouseDragging = false;
-        let mouseStartY = 0;
-        let mouseStartHeight = 0;
-
-        settingsHeader.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.close-btn')) return;
-            isMouseDragging = true;
-            mouseStartY = e.clientY;
-            mouseStartHeight = settingsContent.offsetHeight;
-            settingsContent.classList.add('dragging');
-            e.preventDefault();
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (!isMouseDragging) return;
-            const newH = Math.max(200, Math.min(window.innerHeight * 0.9, mouseStartHeight + (mouseStartY - e.clientY)));
-            settingsContent.style.height = `${newH}px`;
-        });
-
-        document.addEventListener('mouseup', (e) => {
-            if (!isMouseDragging) return;
-            isMouseDragging = false;
-            settingsContent.classList.remove('dragging');
-            if (e.clientY - mouseStartY > 150) {
-                this.closeModal(this.settingsModal);
-                setTimeout(() => { settingsContent.style.height = '50vh'; }, 300);
-            }
-        });
-
-        this.verseNumbersToggle?.addEventListener('change', () => this.toggleSetting('showVerseNumbers'));
-        this.headingsToggle?.addEventListener('change', () => this.toggleSetting('showHeadings'));
-        this.footnotesToggle?.addEventListener('change', () => this.toggleSetting('showFootnotes'));
-
-        this.crossReferencesToggle = document.getElementById('crossReferencesToggle');
-        if (this.crossReferencesToggle) {
-            this.crossReferencesToggle?.addEventListener('change', () => this.toggleSetting('showCrossReferences'));
-        }
-
-        this.verseByVerseToggle?.addEventListener('change', () => this.toggleVerseByVerse());
-        this.fontSizeSlider?.addEventListener('input', (e) => this.updateFontSize(e.target.value));
-
-        if (this.translationSelector) {
-            this.translationSelector?.addEventListener('change', async (e) => {
-                await this.changeTranslation(e.target.value);
-            });
-        }
-
-        this.themeToggleBtn?.addEventListener('click', () => toggleTheme(this));
-
-        const themeSelector = document.getElementById('themeSelector');
-        const lightModeToggle = document.getElementById('lightModeToggle');
-
-        if (themeSelector) {
-            themeSelector.addEventListener('change', (e) => changeColorTheme(this, e.target.value));
-        }
-
-        if (lightModeToggle) {
-            lightModeToggle.addEventListener('change', () => toggleTheme(this));
-        }
-
-        this.userBtn?.addEventListener('click', () => this.handleUserButtonClick());
-
-        document.getElementById('showSignupLink')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.closeModal(this.loginModal);
-            this.openModal(this.signupModal);
-        });
-
-        document.getElementById('showLoginLink')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.closeModal(this.signupModal);
-            this.openModal(this.loginModal);
-        });
-
-        document.getElementById('loginForm')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleLogin();
-        });
-
-        document.getElementById('signupForm')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleSignup();
-        });
-
-        document.getElementById('logoutBtn')?.addEventListener('click', () => this.handleLogout());
-
-        this.closeLoginModal?.addEventListener('click', () => this.closeModal(this.loginModal));
-        this.closeSignupModal?.addEventListener('click', () => this.closeModal(this.signupModal));
-        this.closeUserMenuModal?.addEventListener('click', () => this.closeModal(this.userMenuModal));
-
-        window.addEventListener('scroll', () => {
-            this.handleChromeScroll();
-            clearTimeout(this.scrollTimeout);
-            this.scrollTimeout = setTimeout(() => this.saveReadingPosition(), 500);
-        }, { passive: true });
-
-        document.addEventListener('keydown', (e) => this.handleKeyboardShortcuts(e));
-    }
-
-    // ==========================================
-    // Passage Loading
-    // ==========================================
-
-    async loadSavedReadingPosition() {
-        if (!this.currentUser || !this.database) {
-            await this.loadPassage(this.state.currentBook, this.state.currentChapter);
-            return;
-        }
-
-        try {
-            const snapshot = await this.database
-                .ref(`users/${this.currentUser.uid}/readingPosition`)
-                .once('value');
-            const pos = snapshot.val();
-
-            if (pos && pos.book && pos.chapter) {
-                this.state.currentBook = pos.book;
-                this.state.currentChapter = pos.chapter;
-                this.lastScrollPosition = pos.scrollY || 0;
-            }
-        } catch (err) {
-            console.error('loadSavedReadingPosition: failed to read Firebase', err);
-        }
-
-        await this.loadPassage(this.state.currentBook, this.state.currentChapter, true);
-    }
-
-    saveReadingPosition() {
-        if (!this.currentUser || !this.database) return;
-
-        const pos = {
-            book: this.state.currentBook,
-            chapter: this.state.currentChapter,
-            scrollY: window.scrollY || 0,
-        };
-
-        this.database
-            .ref(`users/${this.currentUser.uid}/readingPosition`)
-            .set(pos)
-            .catch((err) => console.error('saveReadingPosition: Firebase write failed', err));
-    }
+    async _loadSavedPositionIfChanged() { await loadSavedPositionIfChanged(this, withTimeout); }
+    async loadSavedReadingPosition()    { await loadSavedReadingPosition(this, withTimeout); }
+    saveReadingPosition()               { saveReadingPosition(this); }
 
     async loadPassage(book, chapter, restoreScroll = false) {
-        if (!restoreScroll) {
-            this.saveReadingPosition?.();
+        // Guard: if the requested book is not present in the current canon
+        // (e.g. after switching to a translation with a different canon),
+        // fall back to Genesis 1 rather than fetching a passage that does not exist.
+        const allBooks = this.getAllBooks();
+        if (!allBooks.includes(book)) {
+            this._dbgEvent(`loadPassage: "${book}" not in canon — redirecting to Genesis 1`);
+            book    = 'Genesis';
+            chapter = 1;
         }
 
-        this.state.currentBook = book;
+        if (!restoreScroll) this.saveReadingPosition?.();
+
+        this.state.currentBook    = book;
         this.state.currentChapter = chapter;
-        this.updateNavigationState();
 
-        const reference = `${book} ${chapter}`;
-        this.passageText.innerHTML = '<p class="loading">Loading passage...</p>';
+        const alreadyCached =
+            this.passageText &&
+            this.passageText.querySelector('.loading') === null &&
+            this.passageText.innerHTML.trim() !== '';
+        if (!alreadyCached) {
+            this.passageText.innerHTML = '<p class="loading">Loading passage...</p>';
+        }
 
-        // Load BSB structure scaffold for all translations.
-        // The scaffold is keyed by chapter/verse and applies regardless of translation
-        // since all supported translations share the same versification.
         let scaffoldEvents = [];
         try {
             const allEvents = await loadStructure(book);
@@ -601,24 +948,27 @@ class BibleApp {
         }
 
         const data = await this.bibleApi.fetchPassage(
-            reference,
+            `${book} ${chapter}`,
             scaffoldEvents,
             this.state.showHeadings !== false
         );
 
         if (!data) {
+            this._dbgEvent(`loadPassage: no data for ${book} ${chapter}`);
+            if (this.passageTitle) this.passageTitle.textContent = `${book} ${chapter}`;
+            if (this.passageText)  this.passageText.innerHTML = '<p class="error">Passage not available.</p>';
             this.chromeSuspend = false;
             document.body.classList.remove('chrome-no-transition');
             return;
         }
 
-        const displayTitle = book === 'Psalm'
+        this.updateNavigationState();
+        const title = book === 'Psalm'
             ? `Psalm ${chapter}`
             : `${this.getDisplayName(book)} ${chapter}`;
-        this.passageTitle.textContent = displayTitle;
+        this.passageTitle.textContent = title;
         this.passageText.innerHTML = data.passages[0];
-        this.originalPassageHtml = this.passageText.innerHTML;
-
+        this.originalPassageHtml   = this.passageText.innerHTML;
         this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
 
         this.updateCopyright();
@@ -626,744 +976,152 @@ class BibleApp {
         this.chromeSuspend = true;
         document.body.classList.add('chrome-no-transition');
         this.showChrome();
-
-        if (restoreScroll) {
-            window.scrollTo(0, this.lastScrollPosition || 0);
-        } else {
-            window.scrollTo(0, 0);
-        }
+        window.scrollTo(0, restoreScroll ? (this.lastScrollPosition || 0) : 0);
 
         requestAnimationFrame(() => {
-            this.chromeScrollLastY = window.scrollY || window.pageYOffset || 0;
+            this.chromeScrollAnchorY = window.scrollY || window.pageYOffset || 0;
+            this.chromeLastY         = window.scrollY || window.pageYOffset || 0;
+            this.chromeLastDirection = null;
             this.chromeSuspend = false;
             document.body.classList.remove('chrome-no-transition');
         });
 
+        this._dbgEvent(`loadPassage: rendered ${book} ${chapter} (${this.state.translation})`);
         this.saveReadingPosition?.();
+        this._savePassageCache(book, chapter, this.state.translation || 'KJV', title, this.passageText.innerHTML);
+        this.swipe?.syncAdjacentPanels();
     }
-
-    // ================================
-    // Navigation
-    // ================================
 
     navigateChapter(direction) {
+        _logUserAction(`navigateChapter: ${direction > 0 ? 'next' : 'prev'} (${this.state.currentBook} ${this.state.currentChapter})`);
         navChapter(this, direction);
     }
-
-    updateNavigationState() {
-        const book = this.state.currentBook;
-        const abbr = this.bookAbbreviations[book] || book;
-        this.currentBookSpan.textContent = abbr;
-        this.currentChapterSpan.textContent = this.state.currentChapter;
-
-        const books = this.getAllBooks();
-        const currentBookIndex = books.indexOf(book);
-        const isFirstChapter = this.state.currentChapter === 1;
-        const isLastChapter = this.state.currentChapter === this.getChapterCount(book);
-
-        if (this.prevChapterBtn) this.prevChapterBtn.disabled = currentBookIndex === 0 && isFirstChapter;
-        if (this.nextChapterBtn) this.nextChapterBtn.disabled = currentBookIndex === books.length - 1 && isLastChapter;
-    }
-
-    // ================================
-    // Search
-    // ================================
+    updateNavigationState()    { updateNavigationState(this); }
+    navigateToNextVerse()      { navigateToNextVerse(this); }
+    navigateToPreviousVerse()  { navigateToPreviousVerse(this); }
 
     toggleSearch() {
-        this.searchContainer.classList.toggle('active');
-        if (this.searchContainer.classList.contains('active')) {
-            this.searchInput.focus();
-        } else {
-            this.searchInput.value = '';
-            this.searchResults.innerHTML = '';
-            this.searchSelectedIndex = -1;
-            this.searchResultItems = [];
-        }
+        _logUserAction('toggleSearch');
+        toggleSearch(this);
     }
-
-    closeSearch() {
-        this.searchContainer.classList.remove('active');
-        this.searchInput.value = '';
-        this.searchResults.innerHTML = '';
-        this.searchSelectedIndex = -1;
-        this.searchResultItems = [];
+    closeSearch()                           { closeSearch(this); }
+    handleSearch(query, source = 'type') {
+        _logUserAction(`search (${source}): "${query}"`);
+        handleSearch(this, query);
     }
-
-    handleSearch(query) {
-        clearTimeout(this.searchTimeout);
-        this.searchLastQuery = query;
-        this.searchPage = 1;
-        this.currentSearchResults = [];
-
-        if (!query.trim()) {
-            this.searchResults.innerHTML = '';
-            this.searchSelectedIndex = -1;
-            this.searchResultItems = null;
-            return;
-        }
-
-        this.searchTimeout = setTimeout(async () => {
-            if (this.isPassageReference(query)) {
-                await this.handlePassageReference(query);
-            } else {
-                this.searchPage = 1;
-                await this.performKeywordSearch(query, false);
-            }
-        }, 300);
-    }
-
-    handleSearchKeydown(e) {
-        if (e.key === 'Escape') {
-            e.preventDefault();
-            this.closeSearch();
-            return;
-        }
-
-        if (!this.searchResultItems || this.searchResultItems.length === 0) return;
-
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            this.setSearchSelectedIndex(Math.min(this.searchSelectedIndex + 1, this.searchResultItems.length - 1), true);
-            return;
-        }
-
-        if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            this.setSearchSelectedIndex(Math.max(this.searchSelectedIndex - 1, 0), true);
-            return;
-        }
-
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            this.activateSelectedSearchResult();
-        }
-    }
-
-    refreshSearchResultItems(autoSelectFirst = false) {
-        this.searchResultItems = Array.from(
-            this.searchResults.querySelectorAll('.search-result-item')
-        );
-
-        if (!this.searchResultItems.length) {
-            this.searchSelectedIndex = -1;
-            return;
-        }
-
-        if (autoSelectFirst) {
-            this.setSearchSelectedIndex(0, false);
-        } else {
-            if (this.searchSelectedIndex < 0 || this.searchSelectedIndex >= this.searchResultItems.length) {
-                this.searchSelectedIndex = -1;
-            } else {
-                this.setSearchSelectedIndex(this.searchSelectedIndex, false);
-            }
-        }
-    }
-
-    setSearchSelectedIndex(index, scrollIntoView = false) {
-        if (!this.searchResultItems || this.searchResultItems.length === 0) {
-            this.searchSelectedIndex = -1;
-            return;
-        }
-
-        const clamped = Math.max(0, Math.min(index, this.searchResultItems.length - 1));
-        this.searchSelectedIndex = clamped;
-
-        this.searchResultItems.forEach((el, i) => {
-            el.classList.toggle('selected', i === clamped);
-        });
-
-        if (scrollIntoView) {
-            this.searchResultItems[clamped]?.scrollIntoView({ block: 'nearest' });
-        }
-    }
-
-    activateSelectedSearchResult() {
-        if (!this.searchResultItems || this.searchSelectedIndex < 0 || this.searchSelectedIndex >= this.searchResultItems.length) return;
-        this.searchResultItems[this.searchSelectedIndex]?.click();
-    }
-
-    isPassageReference(query) {
-        const patterns = [
-            /^[1-3]?\s*[a-z]+\s+\d+/i,
-            /^[1-3]?\s*[a-z]+\s+\d+:\d+/i,
-        ];
-        return patterns.some((p) => p.test(query.trim()));
-    }
-
-    async handlePassageReference(reference) {
-        const data = await this.bibleApi.fetchPassage(reference);
-
-        if (data && data.passages && data.passages.length > 0) {
-            const safeCanonical = String(data.canonical || '').replace(/"/g, '&quot;');
-            const preview = this.stripHTML(data.passages[0]).substring(0, 200);
-
-            this.searchResults.innerHTML =
-                '<div class="search-result-item" data-reference="' + safeCanonical + '">' +
-                '<div class="search-result-reference">' + safeCanonical + '</div>' +
-                '<div class="search-result-content">' + preview + '...</div>' +
-                '</div>';
-
-            const item = this.searchResults.querySelector('.search-result-item');
-            if (item) {
-                item.addEventListener('click', async () => {
-                    await this.loadPassageFromReference(item.dataset.reference);
-                    this.closeSearch();
-                });
-            }
-
-            this.refreshSearchResultItems(true);
-        } else {
-            this.searchResults.innerHTML = '<div class="search-no-results">No passage found</div>';
-            this.refreshSearchResultItems(false);
-        }
-    }
-
-    async fetchAllSearchResults(query) {
-        this.currentSearchResults = [];
-        this.searchPage = 1;
-
-        while (true) {
-            const data = await this.bibleApi.searchPassages(query, this.searchPage);
-            if (!data || !data.results || !data.results.length) break;
-
-            this.currentSearchResults = this.currentSearchResults.concat(data.results);
-
-            const total = data.total_results ?? data.total;
-            const pageSize = data.page_size ?? 100;
-            const totalPages = total && pageSize ? Math.ceil(total / pageSize) : 1;
-
-            if (this.searchPage >= totalPages || this.searchPage >= 10) break;
-
-            this.searchPage += 1;
-        }
-
-        return this.currentSearchResults;
-    }
-
-    groupSearchResultsByCanon(results) {
-        if (!Array.isArray(results)) return [];
-
-        const otBooks = Object.keys(this.bibleBooks['Old Testament']);
-        const ntBooks = Object.keys(this.bibleBooks['New Testament']);
-        const otGroups = new Map();
-        const ntGroups = new Map();
-
-        for (const result of results) {
-            const parsed = this.parseReference?.(result.reference);
-            if (!parsed) continue;
-            const { book } = parsed;
-            const testament = this.getTestament?.(book);
-
-            if (testament === 'Old Testament') {
-                if (!otGroups.has(book)) otGroups.set(book, []);
-                otGroups.get(book).push(result);
-            } else if (testament === 'New Testament') {
-                if (!ntGroups.has(book)) ntGroups.set(book, []);
-                ntGroups.get(book).push(result);
-            }
-        }
-
-        const grouped = [];
-
-        if (otGroups.size) {
-            grouped.push({
-                heading: 'Old Testament',
-                books: otBooks.filter((b) => otGroups.has(b)).map((book) => ({ book, results: otGroups.get(book) })),
-            });
-        }
-
-        if (ntGroups.size) {
-            grouped.push({
-                heading: 'New Testament',
-                books: ntBooks.filter((b) => ntGroups.has(b)).map((book) => ({ book, results: ntGroups.get(book) })),
-            });
-        }
-
-        return grouped;
-    }
-
-    async performKeywordSearch(query) {
-        this.searchResults.innerHTML = '<div class="loading" style="min-height: 100px">Searching...</div>';
-        this.searchSelectedIndex = -1;
-        this.searchResultItems = [];
-
-        this.searchExpandedTestaments?.clear();
-        this.searchExpandedBooks?.clear();
-
-        const allResults = await this.fetchAllSearchResults(query);
-
-        if (allResults && allResults.length > 0) {
-            this.displaySearchResults(allResults, query);
-        } else {
-            this.searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
-            this.refreshSearchResultItems(false);
-        }
-    }
-
-    displaySearchResults(results, query) {
-        const groups = this.groupSearchResultsByCanon(results);
-
-        if (!groups.length) {
-            this.searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
-            this.refreshSearchResultItems(false);
-            return;
-        }
-
-        if (this.searchExpandedTestaments.size === 0 && this.searchExpandedBooks.size === 0) {
-            const firstGroup = groups[0];
-            if (firstGroup) {
-                this.searchExpandedTestaments.add(firstGroup.heading);
-                const firstBook = firstGroup.books && firstGroup.books[0];
-                if (firstBook) this.searchExpandedBooks.add(firstBook.book);
-            }
-        }
-
-        const esc = (str) =>
-            String(str || '')
-                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-
-        const parts = [];
-
-        for (const group of groups) {
-            const testName = group.heading;
-            const testamentExpanded = this.searchExpandedTestaments.has(testName);
-
-            parts.push(`
-      <div class="search-group-heading" data-testament="${esc(testName)}">
-        <span class="search-group-title">${esc(testName)}</span>
-        <span class="search-group-chevron ${testamentExpanded ? 'expanded' : ''}">&#9662;</span>
-      </div>
-    `);
-
-            if (!testamentExpanded) continue;
-
-            for (const bookBlock of group.books) {
-                const bookName = bookBlock.book;
-                const bookExpanded = this.searchExpandedBooks.has(bookName);
-
-                parts.push(`
-        <div class="search-book-heading" data-book="${esc(bookName)}">
-          <span class="search-book-title">${esc(this.getDisplayName(bookName))}</span>
-          <span class="search-book-chevron ${bookExpanded ? 'expanded' : ''}">&#9662;</span>
-        </div>
-      `);
-
-                if (!bookExpanded) continue;
-
-                for (const result of bookBlock.results) {
-                    let highlighted = result.content;
-                    try {
-                        highlighted = this.highlightSearchTerm(result.content, query);
-                    } catch (err) {
-                        console.warn('highlight failed', err);
-                    }
-
-                    parts.push(`
-          <div class="search-result-item" data-reference="${esc(result.reference)}">
-            <div class="search-result-reference">${esc(result.reference)}</div>
-            <div class="search-result-content">${highlighted}</div>
-          </div>
-        `);
-                }
-            }
-        }
-
-        this.searchResults.innerHTML = parts.join('');
-
-        this.searchResults.querySelectorAll('.search-group-heading').forEach((el) => {
-            el.addEventListener('click', () => {
-                const testament = el.getAttribute('data-testament');
-                if (!testament) return;
-                if (this.searchExpandedTestaments.has(testament)) {
-                    this.searchExpandedTestaments.delete(testament);
-                } else {
-                    this.searchExpandedTestaments.add(testament);
-                }
-                this.displaySearchResults(results, query);
-            });
-        });
-
-        this.searchResults.querySelectorAll('.search-book-heading').forEach((el) => {
-            el.addEventListener('click', () => {
-                const book = el.getAttribute('data-book');
-                if (!book) return;
-                if (this.searchExpandedBooks.has(book)) {
-                    this.searchExpandedBooks.delete(book);
-                } else {
-                    this.searchExpandedBooks.add(book);
-                }
-                this.displaySearchResults(results, query);
-            });
-        });
-
-        this.searchResults.querySelectorAll('.search-result-item').forEach((item) => {
-            item.addEventListener('click', async () => {
-                await this.loadPassageFromReference(item.dataset.reference);
-                this.closeSearch();
-            });
-        });
-
-        this.refreshSearchResultItems(true);
-    }
-
-    parseReference(reference) {
-        const cleaned = String(reference || '').trim();
-        const match = cleaned.match(/^(.+?)\s+(\d+)(?::(\d+))?$/);
-        if (!match) return null;
-
-        const book = match[1].trim();
-        const chapter = parseInt(match[2], 10);
-        const verse = match[3] ? parseInt(match[3], 10) : null;
-
-        if (!book || !Number.isFinite(chapter)) return null;
-        if (verse !== null && !Number.isFinite(verse)) return null;
-
-        return { book, chapter, verse };
-    }
-
-    async loadPassageFromReference(reference) {
-        const parsed = this.parseReference(reference);
-        if (!parsed) return;
-
-        const { book, chapter, verse } = parsed;
-        this.state.selectedVerse = verse || null;
-        await this.loadPassage(book, chapter);
-
-        if (verse) this.scrollToVerse(verse);
-    }
-
-    escapeRegExp(str) {
-        return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
-
-    highlightSearchTerm(text, term) {
-        if (text == null) return '';
-        const safeText = String(text);
-        const rawTerm = term == null ? '' : String(term).trim();
-        if (!rawTerm) return safeText;
-
-        try {
-            const regex = new RegExp(this.escapeRegExp(rawTerm), 'gi');
-            return safeText.replace(regex, (match) => `<strong>${match}</strong>`);
-        } catch (err) {
-            console.warn('highlightSearchTerm failed', err);
-            return safeText;
-        }
-    }
-
-    stripHTML(html) {
-        const tmp = document.createElement('div');
-        tmp.innerHTML = html;
-        return tmp.textContent || tmp.innerText || '';
-    }
-
-    // ================================
-    // Modals
-    // ================================
+    handleSearchKeydown(e)                  { handleSearchKeydown(this, e); }
+    refreshSearchResultItems(autoSelect)    { refreshSearchResultItems(this, autoSelect); }
+    setSearchSelectedIndex(i, scroll)       { setSearchSelectedIndex(this, i, scroll); }
+    activateSelectedSearchResult()          { activateSelectedSearchResult(this); }
+    isPassageReference(q)                   { return isPassageReference(q); }
+    async handlePassageReference(ref)       { await handlePassageReference(this, ref); }
+    async fetchAllSearchResults(q, onBatch) { return fetchAllSearchResults(this, q, onBatch); }
+    groupSearchResultsByCanon(results)      { return groupSearchResultsByCanon(this, results); }
+    async performKeywordSearch(q)           { await performKeywordSearch(this, q); }
+    displaySearchResults(results, q)        { displaySearchResults(this, results, q); }
+    parseReference(ref)                     { return parseReference(ref); }
+    async loadPassageFromReference(ref)     { await loadPassageFromReference(this, ref); }
+    escapeRegExp(str)                       { return escapeRegExp(str); }
+    highlightSearchTerm(text, term)         { return highlightSearchTerm(text, term); }
+    stripHTML(html)                         { return stripHTML(html); }
 
     openModal(modal) {
-        if (!modal) return;
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
+        _logUserAction(`openModal: ${modal?.id ?? 'unknown'}`);
+        openModal(this, modal);
     }
+    closeModal(modal)          { closeModal(this, modal); }
+    openBookModal()            { openBookModal(this); }
+    populateBookModal()        { populateBookModal(this); }
+    openChapterModal()         { openChapterModal(this); }
+    populateChapterModal()     { populateChapterModal(this); }
+    openVerseModal()           { openVerseModal(this); }
+    populateVerseModal()       { populateVerseModal(this); }
+    openTranslationModal()     { openTranslationModal(this); }
+    populateTranslationModal() { populateTranslationModal(this); }
+    translationKbMove(delta)   { translationKbMove(this, delta); }
+    translationKbSelect()      { translationKbSelect(this); }
+    getCurrentVerseCount()     { return getCurrentVerseCount(this); }
+    scrollToVerse(n)           { scrollVerse(this, n); }
+    applyVerseGlow()           { glowVerse(this); }
 
-    closeModal(modal) {
-        if (!modal) return;
-        if (modal === this.settingsModal || modal === this.referencesModal) {
-            const content = modal.querySelector('.modal-content');
-            content.style.animation = 'slideDownToBottom 250ms ease';
-            setTimeout(() => {
-                modal.classList.remove('active');
-                document.body.style.overflow = '';
-                content.style.animation = '';
-            }, 250);
-        } else {
-            modal.classList.remove('active');
-            document.body.style.overflow = '';
-        }
+    loadLocalSettings()        { loadLocalSettings(this); }
+    applySettings()            { applySettings(this); }
+    async toggleSetting(s) {
+        _logUserAction(`toggleSetting: ${s}`);
+        await toggleSetting(this, s);
     }
-
-    openBookModal() {
-        this.populateBookModal();
-        this.openModal(this.bookModal);
-    }
-
-    populateBookModal() {
-        const createBookButton = (book) => {
-            const btn = document.createElement('button');
-            btn.className = 'book-item';
-            btn.textContent = this.bookAbbreviations[book] || book;
-            btn.addEventListener('click', () => {
-                this.state.selectedVerse = null;
-                this.loadPassage(book, 1);
-                this.closeModal(this.bookModal);
-            });
-            return btn;
-        };
-
-        this.oldTestamentBooks.innerHTML = '';
-        Object.keys(this.bibleBooks['Old Testament']).forEach((book) => {
-            this.oldTestamentBooks.appendChild(createBookButton(book));
-        });
-
-        this.newTestamentBooks.innerHTML = '';
-        Object.keys(this.bibleBooks['New Testament']).forEach((book) => {
-            this.newTestamentBooks.appendChild(createBookButton(book));
-        });
-    }
-
-    openChapterModal() {
-        this.populateChapterModal();
-        this.openModal(this.chapterModal);
-    }
-
-    populateChapterModal() {
-        this.chapterModalBook.textContent = this.getDisplayName(this.state.currentBook);
-        this.chapterGrid.innerHTML = '';
-
-        const chapterCount = this.getChapterCount(this.state.currentBook);
-
-        for (let i = 1; i <= chapterCount; i++) {
-            const btn = document.createElement('button');
-            btn.className = 'chapter-item';
-            btn.textContent = i;
-            btn.addEventListener('click', () => {
-                this.state.selectedVerse = null;
-                this.loadPassage(this.state.currentBook, i);
-                this.closeModal(this.chapterModal);
-            });
-            this.chapterGrid.appendChild(btn);
-        }
-    }
-
-    openVerseModal() {
-        this.populateVerseModal();
-        this.openModal(this.verseModal);
-    }
-
-    populateVerseModal() {
-        const book = this.state.currentBook;
-        const displayBook = book === 'Psalm'
-            ? `Psalm ${this.state.currentChapter}`
-            : `${this.getDisplayName(book)} ${this.state.currentChapter}`;
-        this.verseModalBook.textContent = displayBook;
-        this.verseGrid.innerHTML = '';
-
-        const verseCount = this.getCurrentVerseCount();
-
-        if (verseCount === 0) {
-            this.verseGrid.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-secondary);">No verses found in current passage</p>';
-            return;
-        }
-
-        for (let i = 1; i <= verseCount; i++) {
-            const btn = document.createElement('button');
-            btn.className = 'chapter-item';
-            btn.textContent = i;
-            btn.addEventListener('click', () => {
-                this.scrollToVerse(i);
-                this.closeModal(this.verseModal);
-            });
-            this.verseGrid.appendChild(btn);
-        }
-    }
-
-    getCurrentVerseCount() {
-        return this.passageText.querySelectorAll('.verse-num').length;
-    }
-
-    scrollToVerse(verseNumber) {
-        scrollVerse(this, verseNumber);
-    }
-
-    navigateToNextVerse() {
-        const currentVerse = this.state.selectedVerse || 1;
-        const maxVerse = this.getCurrentVerseCount();
-
-        if (currentVerse < maxVerse) {
-            this.scrollToVerse(currentVerse + 1);
-        } else {
-            this.navigateChapter(1);
-        }
-    }
-
-    navigateToPreviousVerse() {
-        const currentVerse = this.state.selectedVerse || 1;
-
-        if (currentVerse > 1) {
-            this.scrollToVerse(currentVerse - 1);
-        } else {
-            const books = this.getAllBooks();
-            const currentBookIndex = books.indexOf(this.state.currentBook);
-            const isFirstChapter = this.state.currentChapter === 1;
-
-            if (currentBookIndex === 0 && isFirstChapter) return;
-
-            let newChapter = this.state.currentChapter - 1;
-            let newBook = this.state.currentBook;
-
-            if (newChapter < 1) {
-                newBook = books[currentBookIndex - 1];
-                newChapter = this.getChapterCount(newBook);
-            }
-
-            this.state.selectedVerse = null;
-            this.loadPassage(newBook, newChapter);
-        }
-    }
-
-    applyVerseGlow() {
-        glowVerse(this);
-    }
-
-    // ================================
-    // Settings
-    // ================================
-
-    checkApiKey() {
-        setTimeout(() => {
-            this.showToast('Sign in to sync your reading position across devices.');
-        }, 500);
-    }
-
-    loadLocalSettings() {
-        this.state.fontSize             = parseInt(localStorage.getItem('fontSize') || '18', 10);
-        this.state.showVerseNumbers     = readBool('showVerseNumbers',   true);
-        this.state.showHeadings         = readBool('showHeadings',       true);
-        this.state.showFootnotes        = readBool('showFootnotes',      false);
-        this.state.showCrossReferences  = readBool('showCrossReferences', false);
-        this.state.verseByVerse         = readBool('verseByVerse',       false);
-        this.state.lightMode            = readBool('lightMode',          false);
-        this.state.colorTheme  = localStorage.getItem('colorTheme')  || 'dracula';
-        this.state.translation = normalizeTranslation(localStorage.getItem('translation') || 'ESV');
-    }
-
-    applySettings() {
-        const themeSelector = document.getElementById('themeSelector');
-        if (themeSelector && this.state.colorTheme) {
-            themeSelector.value = this.state.colorTheme;
-        }
-        changeColorTheme(this, this.state.colorTheme || 'dracula');
-
-        if (this.translationSelector && this.state.translation) {
-            this.translationSelector.value = this.state.translation;
-        }
-        this.bibleApi.setTranslation(this.state.translation || 'ESV');
-
-        document.body.classList.toggle('light-mode', !!this.state.lightMode);
-        const lightModeToggle = document.getElementById('lightModeToggle');
-        if (lightModeToggle) lightModeToggle.checked = !!this.state.lightMode;
-        updateThemeIcon(this.state.lightMode);
-
-        document.body.classList.toggle('hide-verse-numbers', !this.state.showVerseNumbers);
-        if (this.verseNumbersToggle) this.verseNumbersToggle.checked = !!this.state.showVerseNumbers;
-
-        if (this.headingsToggle) this.headingsToggle.checked = !!this.state.showHeadings;
-        if (this.footnotesToggle) this.footnotesToggle.checked = !!this.state.showFootnotes;
-        if (this.crossReferencesToggle) this.crossReferencesToggle.checked = !!this.state.showCrossReferences;
-
-        if (this.passageText) {
-            this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
-        }
-        if (this.verseByVerseToggle) this.verseByVerseToggle.checked = !!this.state.verseByVerse;
-
-        const fontSize = this.state.fontSize || 18;
-        if (this.fontSizeSlider) this.fontSizeSlider.value = fontSize;
-        if (this.fontSizeValue) this.fontSizeValue.textContent = `${fontSize}px`;
-        if (this.passageText) this.passageText.style.fontSize = `${fontSize}px`;
-
-        this.updateCopyright();
-    }
-
-    async toggleSetting(setting) {
-        const toggleMap = {
-            showVerseNumbers:    'verseNumbersToggle',
-            showHeadings:        'headingsToggle',
-            showFootnotes:       'footnotesToggle',
-            showCrossReferences: 'crossReferencesToggle',
-        };
-        const toggleElement = this[toggleMap[setting]];
-        if (!toggleElement) return;
-        this.state[setting] = toggleElement.checked;
-
-        if (this.currentUser) {
-            await this.database.ref(`users/${this.currentUser.uid}/settings/${setting}`).set(toggleElement.checked);
-        } else {
-            localStorage.setItem(setting, String(toggleElement.checked));
-        }
-
-        // Re-render the current passage so heading visibility updates immediately.
-        if (setting === 'showHeadings') {
-            await this.loadPassage(this.state.currentBook, this.state.currentChapter);
-            return;
-        }
-
-        this.applySettings();
-    }
-
     async toggleVerseByVerse() {
-        this.state.verseByVerse = this.verseByVerseToggle.checked;
-        if (this.currentUser) {
-            await this.database.ref(`users/${this.currentUser.uid}/settings/verseByVerse`).set(this.state.verseByVerse);
-        } else {
-            localStorage.setItem('verseByVerse', String(this.state.verseByVerse));
-        }
-        this.passageText.classList.toggle('verse-by-verse', this.state.verseByVerse);
+        _logUserAction('toggleVerseByVerse');
+        await toggleVerseByVerse(this);
     }
-
     async updateFontSize(size) {
-        this.state.fontSize = parseInt(size, 10);
-        this.fontSizeValue.textContent = `${size}px`;
-        this.passageText.style.fontSize = `${size}px`;
-        if (this.currentUser) {
-            await this.database.ref(`users/${this.currentUser.uid}/settings/fontSize`).set(parseInt(size, 10));
-        } else {
-            localStorage.setItem('fontSize', size);
-        }
+        _logUserAction(`updateFontSize: ${size}`);
+        await updateFontSize(this, size);
     }
-
-    async changeTranslation(translation) {
-        this.state.translation = translation;
-        this.bibleApi.setTranslation(translation);
-
-        if (this.currentUser) {
-            await this.database.ref(`users/${this.currentUser.uid}/settings/translation`).set(translation);
-        } else {
-            localStorage.setItem('translation', translation);
-        }
-
-        this.updateCopyright();
-        await this.loadPassage(this.state.currentBook, this.state.currentChapter);
+    async changeTranslation(t) {
+        _logUserAction(`changeTranslation: ${t}`);
+        await changeTranslation(this, t);
     }
+    updateCopyright()            { updateCopyright(this); }
 
-    updateCopyright() {
-        if (this.copyright) {
-            this.copyright.textContent = this._copyrightMap[this.state.translation] || '';
-        }
-    }
+    handleKeyboardShortcuts(e)   { handleKeyboardShortcuts(this, e); }
 
-    // ================================
-    // Utilities
-    // ================================
+    checkApiKey() { checkApiKey(this); }
 
     copyPassage() {
-        const textContent = this.stripHTML(this.passageText.innerHTML);
-        const reference = this.passageTitle.textContent;
-        const fullText = `${reference}\n\n${textContent}\n\n${this.copyright?.textContent ?? ''}`;
+        _logUserAction('copyPassage');
+        const text    = this.stripHTML(this.passageText.innerHTML);
+        const ref     = this.passageTitle.textContent;
+        const content = `${ref}\n\n${text}\n\n${this.copyright?.textContent ?? ''}`;
 
-        navigator.clipboard.writeText(fullText)
-            .then(() => this.showToast('Passage copied to clipboard!'))
-            .catch((err) => {
-                console.error('Failed to copy:', err);
-                this.showToast('Failed to copy passage');
-            });
+        const btn = document.getElementById('copyPassage');
+        const _swapToCheck = () => {
+            if (!btn) return;
+            btn.innerHTML = _CHECK_SVG;
+            setTimeout(() => { btn.innerHTML = _COPY_SVG; }, 1500);
+        };
+
+        if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(content)
+                .then(() => {
+                    _swapToCheck();
+                    this.showToast('Passage copied!');
+                    this._dbgEvent('copyPassage: clipboard success');
+                })
+                .catch((err) => {
+                    console.error('Failed to copy:', err);
+                    this._dbgEvent(`copyPassage: clipboard error — ${err.message}`);
+                    this._copyFallback(content);
+                });
+        } else {
+            this._copyFallback(content);
+        }
     }
 
-    showError(message) {
-        this.passageText.innerHTML = `<div class="error">${message}</div>`;
+    _copyFallback(content) {
+        try {
+            const ta = document.createElement('textarea');
+            ta.value = content;
+            ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            const btn = document.getElementById('copyPassage');
+            if (btn) {
+                btn.innerHTML = _CHECK_SVG;
+                setTimeout(() => { btn.innerHTML = _COPY_SVG; }, 1500);
+            }
+            this.showToast('Passage copied!');
+            this._dbgEvent('copyPassage: fallback execCommand success');
+        } catch (err) {
+            console.error('Copy fallback failed:', err);
+            this.showToast('Failed to copy passage');
+            this._dbgEvent(`copyPassage: fallback failed — ${err.message}`);
+        }
     }
+
+    showError(message) { this.passageText.innerHTML = `<div class="error">${message}</div>`; }
 
     showToast(message) {
         if (!this.toast) return;
@@ -1372,247 +1130,150 @@ class BibleApp {
         setTimeout(() => this.toast.classList.remove('show'), 3000);
     }
 
-    handleKeyboardShortcuts(e) {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-            e.preventDefault();
-            this.toggleSearch();
-        }
-
-        if (e.key === 'Escape') {
-            if (this.bookModal?.classList.contains('active'))       this.closeModal(this.bookModal);
-            if (this.chapterModal?.classList.contains('active'))    this.closeModal(this.chapterModal);
-            if (this.helpModal?.classList.contains('active'))       this.closeModal(this.helpModal);
-            if (this.settingsModal?.classList.contains('active'))   this.closeModal(this.settingsModal);
-            if (this.loginModal?.classList.contains('active'))      this.closeModal(this.loginModal);
-            if (this.signupModal?.classList.contains('active'))     this.closeModal(this.signupModal);
-            if (this.userMenuModal?.classList.contains('active'))   this.closeModal(this.userMenuModal);
-            if (this.searchContainer?.classList.contains('active')) this.closeSearch();
-            if (this.verseModal?.classList.contains('active'))      this.closeModal(this.verseModal);
-            if (this.referencesModal?.classList.contains('active')) this.closeModal(this.referencesModal);
-        }
-
-        if (!document.querySelector('.modal.active') && !this.searchContainer?.classList.contains('active')) {
-            if (e.key === 'ArrowLeft' || e.key === 'h') {
-                e.preventDefault();
-                this.navigateChapter(-1);
-            } else if (e.key === 'ArrowRight' || e.key === 'l') {
-                e.preventDefault();
-                this.navigateChapter(1);
-            } else if (e.key === 'ArrowUp' || e.key === 'k') {
-                e.preventDefault();
-                this.navigateToPreviousVerse();
-            } else if (e.key === 'ArrowDown' || e.key === 'j') {
-                e.preventDefault();
-                this.navigateToNextVerse();
-            } else if (e.key === 'v') {
-                e.preventDefault();
-                this.verseByVerseToggle.checked = !this.verseByVerseToggle.checked;
-                this.toggleVerseByVerse();
-            }
-        }
-    }
-
-    // ================================
-    // Firebase Authentication
-    // ================================
-
-    handleUserButtonClick() {
-        if (this.currentUser) {
-            document.getElementById('userEmail').textContent = this.currentUser.email;
-            const isLight = document.body.classList.contains('light-mode');
-            const colorTheme = this.state?.colorTheme || localStorage.getItem('colorTheme') || 'dracula';
-            const themeNameMap = {
-                dracula: isLight ? 'Alucard (Light)' : 'Dracula (Dark)',
-                steel:   `Steel (${isLight ? 'Light' : 'Dark'})`,
-                onyx:    `Onyx (${isLight ? 'Light' : 'Dark'})`,
-                reader:  `Reader (${isLight ? 'Parchment' : 'Night'})`,
-            };
-            document.getElementById('userTheme').textContent =
-                themeNameMap[colorTheme] || (isLight ? 'Alucard (Light)' : 'Dracula (Dark)');
-            this.openModal(this.userMenuModal);
-        } else {
-            this.openModal(this.loginModal);
-        }
-    }
-
-    async handleLogin() {
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-
-        if (!email || !password) {
-            this.showToast('Please enter valid credentials');
-            return;
-        }
-
-        try {
-            await this.auth.signInWithEmailAndPassword(email, password);
-            this.showToast('Signed in successfully!');
-            this.closeModal(this.loginModal);
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-        } catch (error) {
-            console.error('Login error:', error);
-            if (error.code === 'auth/user-not-found') {
-                if (confirm('No account found with this email. Sign up instead?')) {
-                    this.closeModal(this.loginModal);
-                    this.openModal(this.signupModal);
-                    document.getElementById('signupEmail').value = email;
-                }
-            } else if (error.code === 'auth/wrong-password') {
-                this.showToast('Incorrect password');
-            } else {
-                this.showToast(`Login failed: ${error.message}`);
-            }
-        }
-    }
-
-    async handleSignup() {
-        const email = document.getElementById('signupEmail').value;
-        const password = document.getElementById('signupPassword').value;
-
-        if (!email || !password) {
-            this.showToast('Please fill in all fields');
-            return;
-        }
-
-        if (password.length < 6) {
-            this.showToast('Password must be at least 6 characters');
-            return;
-        }
-
-        try {
-            const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
-            const user = userCredential.user;
-
-            await this.database.ref(`users/${user.uid}/settings`).set({
-                fontSize: this.state.fontSize,
-                showVerseNumbers: this.state.showVerseNumbers,
-                showHeadings: this.state.showHeadings,
-                showFootnotes: this.state.showFootnotes,
-                showCrossReferences: this.state.showCrossReferences,
-                verseByVerse: this.state.verseByVerse,
-                colorTheme: this.state.colorTheme,
-                lightMode: this.state.lightMode,
-                translation: this.state.translation || 'ESV',
-            });
-
-            this.showToast('Account created successfully!');
-            this.closeModal(this.signupModal);
-        } catch (error) {
-            console.error('Signup error:', error);
-            if (error.code === 'auth/email-already-in-use') {
-                this.showToast('An account with this email already exists');
-            } else {
-                this.showToast(`Signup failed: ${error.message}`);
-            }
-        }
-    }
-
-    async handleLogout() {
-        try {
-            await this.auth.signOut();
-            this.showToast('Signed out successfully');
-            this.closeModal(this.userMenuModal);
-        } catch (error) {
-            console.error('Logout error:', error);
-            this.showToast('Failed to sign out');
-        }
-    }
-
-    async loadUserData() {
-        if (!this.currentUser) return;
-        const data = await loadUserDataFromFirebase(this.currentUser.uid);
-        if (!data) return;
-        const s = data.settings;
-        this.state.fontSize             = s.fontSize;
-        this.state.showVerseNumbers     = s.showVerseNumbers;
-        this.state.showHeadings         = s.showHeadings;
-        this.state.showFootnotes        = s.showFootnotes;
-        this.state.showCrossReferences  = s.showCrossReferences;
-        this.state.verseByVerse         = s.verseByVerse;
-        this.state.colorTheme           = s.colorTheme;
-        this.state.lightMode            = s.lightMode;
-        this.state.translation          = normalizeTranslation(s.translation || 'ESV');
-    }
+    handleUserButtonClick() { handleUserButtonClick(this); }
+    async handleLogin()     { await handleLogin(this); }
+    async handleSignup()    { await handleSignup(this); }
+    async handleLogout()    { await handleLogout(this); }
+    async loadUserData()    { await loadUserData(this, normalizeTranslation); }
 }
 
 
+/* ─── PWA Install Prompt ─── */
+
+let _deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    _deferredInstallPrompt = e;
+    if (!window.matchMedia('(display-mode: standalone)').matches) {
+        _setInstallBannerVisible(true);
+    }
+});
+
+window.addEventListener('appinstalled', () => {
+    _deferredInstallPrompt = null;
+    _setInstallBannerVisible(false);
+    console.info('[PWA] installed');
+});
+
+function _setInstallBannerVisible(visible) {
+    const banner = document.getElementById('installBanner');
+    if (!banner) return;
+    banner.classList.toggle('hidden', !visible);
+}
+
+async function _promptInstall() {
+    if (!_deferredInstallPrompt) return;
+    try {
+        _deferredInstallPrompt.prompt();
+        const { outcome } = await _deferredInstallPrompt.userChoice;
+        console.info('[PWA] user choice:', outcome);
+        _deferredInstallPrompt = null;
+        if (outcome === 'dismissed') _setInstallBannerVisible(false);
+    } catch (err) {
+        console.error('[PWA] install prompt error', err);
+    }
+}
+
+// Modules are deferred — DOM is already parsed by execution time.
+// Use readyState guard (same pattern as the app boot IIFE) to be safe.
+(function _wireInstallBanner() {
+    function _attach() {
+        const btn = document.getElementById('installBtn');
+        if (btn) btn.addEventListener('click', _promptInstall);
+        const dismiss = document.getElementById('installBannerDismiss');
+        if (dismiss) dismiss.addEventListener('click', () => _setInstallBannerVisible(false));
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            _setInstallBannerVisible(false);
+        }
+    }
+    if (document.readyState !== 'loading') {
+        _attach();
+    } else {
+        document.addEventListener('DOMContentLoaded', _attach, { once: true });
+    }
+}());
+
 /* ─── Service Worker & Update Toast ─── */
+
 async function registerServiceWorker(appInstance) {
-  if (!('serviceWorker' in navigator)) return;
-  try {
-    const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+    if (!('serviceWorker' in navigator)) return;
+    try {
+        const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+        const pageBuildId = document.querySelector('meta[name="build-id"]')?.content || '';
+        console.info('[BUILD_ID]', pageBuildId || '__BUILD_ID__');
 
-    const buildMeta = document.querySelector('meta[name="build-id"]')?.content || '__BUILD_ID__';
-    console.info('[BUILD_ID]', buildMeta);
+        let _updateToastShown = false;
+        function _maybeShowUpdateToast() {
+            if (_updateToastShown) return;
+            _updateToastShown = true;
+            showUpdateToast(appInstance);
+        }
 
-    navigator.serviceWorker.addEventListener('message', (e) => {
-      if (e.data?.type === 'NEW_VERSION') showUpdateToast(appInstance);
-    });
+        navigator.serviceWorker.addEventListener('message', (e) => {
+            if (e.data?.type === 'NEW_VERSION') _maybeShowUpdateToast();
+            if (e.data?.type === 'NEW_BUILD') {
+                const swBuildId = e.data.buildId || '';
+                if (pageBuildId && swBuildId && pageBuildId !== swBuildId) _maybeShowUpdateToast();
+            }
+        });
 
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        reg.update().catch((err) => console.warn('SW update check failed', err));
-      }
-    });
-  } catch (err) {
-    console.warn('SW registration failed', err);
-  }
+        function _checkVersion() {
+            if (!pageBuildId) return;
+            fetch('./version.txt', { cache: 'no-store' })
+                .then(r => r.text())
+                .then(remote => {
+                    if (remote.trim() && remote.trim() !== pageBuildId) _maybeShowUpdateToast();
+                })
+                .catch(() => {});
+        }
+        setInterval(_checkVersion, 5 * 60 * 1000);
+
+        // On iOS PWA, switching apps and returning fires visibilitychange but
+        // the page context may be frozen — version.txt fetch and reg.update()
+        // are both no-ops if the network is unavailable, so failures are
+        // silently swallowed. The reload only triggers when the remote SHA
+        // genuinely differs, so stale-cache reloads don't happen spuriously.
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState !== 'visible') return;
+            fetch('./version.txt', { cache: 'no-store' })
+                .then(r => r.text())
+                .then(remote => {
+                    const remoteSha = remote.trim();
+                    if (remoteSha && pageBuildId && remoteSha !== pageBuildId) {
+                        window.location.reload();
+                    }
+                })
+                .catch(() => {});
+            reg.update().catch(() => {});
+        });
+    } catch (err) {
+        console.warn('SW registration failed', err);
+    }
 }
 
 function showUpdateToast(appInstance) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-  toast.innerHTML = '';
-
-  const text = document.createElement('span');
-  text.textContent = 'A new version is available.';
-  text.style.flex = '1';
-
-  const action = document.createElement('button');
-  action.textContent = 'Refresh';
-  action.className = 'toast-action';
-  action.addEventListener('click', () => location.reload());
-
-  const dismiss = document.createElement('button');
-  dismiss.textContent = '\u00d7';
-  dismiss.className = 'toast-dismiss';
-  dismiss.addEventListener('click', () => toast.classList.remove('show'));
-
-  toast.appendChild(text);
-  toast.appendChild(action);
-  toast.appendChild(dismiss);
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 30000);
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.innerHTML = '';
+    const text    = Object.assign(document.createElement('span'),  { textContent: 'A new version is available.' });
+    const action  = Object.assign(document.createElement('button'),{ textContent: 'Refresh', className: 'toast-action' });
+    const dismiss = Object.assign(document.createElement('button'),{ textContent: '\u00d7', className: 'toast-dismiss' });
+    text.style.flex = '1';
+    action.addEventListener('click',  () => location.reload());
+    dismiss.addEventListener('click', () => toast.classList.remove('show'));
+    toast.append(text, action, dismiss);
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 30000);
 }
 
-function initializeBibleApp() {
-    if (window.firebaseAuth && window.firebaseDatabase) {
-        new BibleApp();
-        return;
-    }
-
-    let attempts = 0;
-    const maxAttempts = 50;
-    const retryDelayMs = 100;
-
-    const waitForFirebase = () => {
-        if (window.firebaseAuth && window.firebaseDatabase) {
-            new BibleApp();
-            return;
-        }
-
-        attempts += 1;
-        if (attempts >= maxAttempts) {
-            console.error('Firebase failed to initialize before app startup timeout.');
-            new BibleApp();
-            return;
-        }
-
-        window.setTimeout(waitForFirebase, retryDelayMs);
-    };
-
-    waitForFirebase();
-}
-
-document.addEventListener('DOMContentLoaded', initializeBibleApp);
+(async () => {
+    await new Promise(resolve => {
+        if (document.readyState !== 'loading') return resolve();
+        document.addEventListener('DOMContentLoaded', resolve, { once: true });
+    });
+    await import('./config/firebase-config.bundle.js').catch(
+        (err) => console.warn('Firebase bundle failed to load — sign-in unavailable:', err)
+    );
+    new BibleApp();
+})();

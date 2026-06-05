@@ -149,8 +149,8 @@ export function buildVerseId(chapter, verse) {
 /**
  * Build the relative path to a translation's JSON bible file.
  *
- * @param {string} translation  - e.g. 'ESV'
- * @returns {string}  e.g. `./translations/ESV/ESV_bible.json`
+ * @param {string} translation  - e.g. 'KJV'
+ * @returns {string}  e.g. `./translations/KJV/KJV_bible.json`
  */
 export function buildBiblePath(translation) {
     return `./translations/${translation}/${translation}_bible.json`;
@@ -179,7 +179,7 @@ export function initializeState() {
         verseByVerse: false,
         colorTheme: 'dracula',
         lightMode: false,
-        translation: 'ESV',
+        translation: 'KJV',
     };
 }
 

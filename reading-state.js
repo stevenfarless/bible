@@ -14,20 +14,28 @@ export function initializeState() {
         verseByVerse: false,
         colorTheme: 'dracula',
         lightMode: false,
-        translation: 'ESV'
+        translation: 'KJV'
     };
 }
 
 
 export function navigateChapter(app, direction) {
+    const books = app.getAllBooks();
+    const currentIndex = books.indexOf(app.state.currentBook);
+
+    // Guard: if currentBook is not in the canonical list, bail out rather than
+    // silently jumping to Genesis 1 (books[-1 + 1] = books[0]).
+    if (currentIndex === -1) {
+        console.warn(`navigateChapter: "${app.state.currentBook}" not found in book list.`);
+        return;
+    }
+
     let newChapter = app.state.currentChapter + direction;
     let newBook = app.state.currentBook;
 
     const chapterCount = app.getChapterCount(app.state.currentBook);
 
     if (newChapter < 1) {
-        const books = app.getAllBooks();
-        const currentIndex = books.indexOf(app.state.currentBook);
         if (currentIndex > 0) {
             newBook = books[currentIndex - 1];
             newChapter = app.getChapterCount(newBook);
@@ -35,8 +43,6 @@ export function navigateChapter(app, direction) {
             return;
         }
     } else if (newChapter > chapterCount) {
-        const books = app.getAllBooks();
-        const currentIndex = books.indexOf(app.state.currentBook);
         if (currentIndex < books.length - 1) {
             newBook = books[currentIndex + 1];
             newChapter = 1;

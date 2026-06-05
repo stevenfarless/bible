@@ -3,7 +3,7 @@
 
 const REQUIRED_IDS = [
 	'topChrome',
-	'searchToggle', 'helpBtn', 'settingsBtn', 'userBtn',
+	'searchToggle', 'helpBtn', 'settingsBtn',
 	'prevChapter', 'nextChapter', 'bookSelector', 'chapterSelector', 'verseSelector',
 	'currentBook', 'currentChapter', 'currentVerse',
 	'searchContainer', 'closeSearch', 'searchInput', 'searchResults',
@@ -17,11 +17,15 @@ const REQUIRED_IDS = [
 	'chapterModalBook', 'chapterGrid', 'verseModalBook', 'verseGrid',
 	'verseNumbersToggle', 'headingsToggle', 'footnotesToggle',
 	'crossReferencesToggle', 'verseByVerseToggle',
-	'fontSizeSlider', 'fontSizeValue', 'translationSelector',
+	'fontSizeSlider', 'fontSizeValue',
 	'referencesModal', 'closeReferencesModal',
+	'deuterocanonInfoModal', 'closeDeuterocanonInfoModal',
 	'footnotesSection', 'footnotesContent',
 	'crossReferencesSection', 'crossReferencesContent',
 	'toast',
+	// Nav translation badge
+	'translationSelectorBtn', 'currentTranslation',
+	'translationModal', 'closeTranslationModal', 'translationList',
 ];
 
 export function cacheElements(app) {
@@ -39,7 +43,6 @@ export function cacheElements(app) {
 	app.helpBtn = document.getElementById('helpBtn');
 	app.settingsBtn = document.getElementById('settingsBtn');
 	app.themeToggleBtn = document.getElementById('themeToggle');
-	app.userBtn = document.getElementById('userBtn');
 
 	// Navigation
 	app.prevChapterBtn = document.getElementById('prevChapter');
@@ -50,6 +53,15 @@ export function cacheElements(app) {
 	app.currentBookSpan = document.getElementById('currentBook');
 	app.currentChapterSpan = document.getElementById('currentChapter');
 	app.currentVerseSpan = document.getElementById('currentVerse');
+
+	// Nav translation badge
+	app.translationSelectorBtn = document.getElementById('translationSelectorBtn');
+	app.currentTranslationSpan = document.getElementById('currentTranslation');
+
+	// Translation picker modal
+	app.translationModal = document.getElementById('translationModal');
+	app.closeTranslationModal = document.getElementById('closeTranslationModal');
+	app.translationList = document.getElementById('translationList');
 
 	// Search
 	app.searchContainer = document.getElementById('searchContainer');
@@ -99,11 +111,17 @@ export function cacheElements(app) {
 	app.verseByVerseToggle = document.getElementById('verseByVerseToggle');
 	app.fontSizeSlider = document.getElementById('fontSizeSlider');
 	app.fontSizeValue = document.getElementById('fontSizeValue');
-	app.translationSelector = document.getElementById('translationSelector');
+	// translationSelector (<select>) was removed from the settings modal;
+	// translation switching is handled exclusively by the translationModal.
+	app.translationSelector = document.getElementById('translationSelector') ?? null;
 
 	// References modal (footnotes and cross-references)
 	app.referencesModal = document.getElementById('referencesModal');
 	app.closeReferencesModal = document.getElementById('closeReferencesModal');
+
+	// Deuterocanon info modal
+	app.deuterocanonInfoModal = document.getElementById('deuterocanonInfoModal');
+	app.closeDeuterocanonInfoModal = document.getElementById('closeDeuterocanonInfoModal');
 	app.footnotesSection = document.getElementById('footnotesSection');
 	app.footnotesContent = document.getElementById('footnotesContent');
 	app.crossReferencesSection = document.getElementById('crossReferencesSection');
@@ -115,7 +133,8 @@ export function cacheElements(app) {
 
 // Load theme on app start (uses localStorage as initial fallback)
 export function loadTheme(app) {
-	const savedLightMode = localStorage.getItem('lightMode') === 'true';
+	let savedLightMode = false;
+	try { savedLightMode = localStorage.getItem('lightMode') === 'true'; } catch (_) {}
 	if (savedLightMode) {
 		document.documentElement.classList.add('light-mode');
 		document.body.classList.add('light-mode');
@@ -130,10 +149,11 @@ export async function toggleTheme(app) {
 
 	const isLightMode = document.body.classList.contains('light-mode');
 
+	// Always write locally so cold loads get the correct value immediately.
+	try { localStorage.setItem('lightMode', isLightMode); } catch (_) {}
+
 	if (app.currentUser) {
 		await app.database.ref(`users/${app.currentUser.uid}/settings/lightMode`).set(isLightMode);
-	} else {
-		localStorage.setItem('lightMode', isLightMode);
 	}
 
 	updateThemeIcon(isLightMode);
@@ -176,17 +196,21 @@ export function updateThemeIcon(isLightMode) {
 }
 
 export async function changeColorTheme(app, theme) {
-	document.body.classList.remove("steel-theme", "onyx-theme", "reader-theme");
+	document.body.classList.remove('onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme');
 
-	if (theme === "steel") document.body.classList.add("steel-theme");
-	else if (theme === "onyx") document.body.classList.add("onyx-theme");
-	else if (theme === "reader") document.body.classList.add("reader-theme");
+	if (theme === 'onyx')            document.body.classList.add('onyx-theme');
+	else if (theme === 'sage')       document.body.classList.add('sage-theme');
+	else if (theme === 'ember')      document.body.classList.add('ember-theme');
+	else if (theme === 'perplexity') document.body.classList.add('perplexity-theme');
+	else if (theme === 'basic')      document.body.classList.add('basic-theme');
+	else if (theme === 'geek')       document.body.classList.add('geek-theme');
+
+	// Always write locally so cold loads get the correct value immediately.
+	try { localStorage.setItem('colorTheme', theme); } catch (_) {}
 
 	if (app.currentUser) {
 		await app.database
 			.ref(`users/${app.currentUser.uid}/settings/colorTheme`)
 			.set(theme);
-	} else {
-		localStorage.setItem("colorTheme", theme);
 	}
 }

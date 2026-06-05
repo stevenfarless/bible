@@ -1,0 +1,506 @@
+/* ================================
+   3. THEME OVERRIDES
+   ================================ */
+
+/* Light mode (semantic, neutral) — fallback for any theme without its own light block */
+:root.light-mode,
+html.light-mode,
+body.light-mode {
+    --bg-base: hsl(0, 0%, 100%);
+    --bg-card: hsl(210, 30%, 98%);
+    --bg-raised: hsl(210, 20%, 92%);
+
+    --text-heading: hsl(220, 18%, 18%);
+    --text-body: hsl(220, 12%, 34%);
+    --text-muted-2: hsl(220, 10%, 52%);
+
+    --border-neutral: hsl(220, 12%, 84%);
+    --highlight-border: hsl(220, 20%, 94%);
+
+    --primary-color: hsl(265, 60%, 45%);
+    --primary-dark: hsl(265, 62%, 38%);
+    --primary-light: hsl(315, 85%, 55%);
+    /* Darkened from 45% → 36% for WCAG AA contrast on white (#fff) */
+    --secondary-color: hsl(28, 80%, 36%);
+    --accent-color: hsl(190, 70%, 30%);
+
+    --success-color: hsl(140, 50%, 35%);
+    --warning-color: hsl(45, 85%, 40%);
+    --error-color: hsl(6, 70%, 45%);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Alucard — official Dracula light mode (https://spec.draculatheme.com)
+   Targets Dracula (default theme, no theme class) in light mode only.
+   Higher specificity than the generic .light-mode block above. */
+:root.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.basic-theme):not(.geek-theme),
+html.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.basic-theme):not(.geek-theme),
+body.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.basic-theme):not(.geek-theme) {
+    --bg-base:    var(--alucard-bg);
+    --bg-card:    var(--alucard-bg-lighter);
+    --bg-raised:  var(--alucard-bg-light);
+
+    --text-heading: var(--alucard-fg);
+    --text-body:    var(--alucard-comment);
+    --text-muted-2: #9A9580;
+
+    --border-neutral:   var(--alucard-bg-dark);
+    --highlight-border: var(--alucard-selection);
+
+    --primary-color:   var(--alucard-purple);
+    --primary-dark:    #4D38A8;
+    --primary-light:   var(--alucard-pink);
+    --secondary-color: var(--alucard-orange);
+    --accent-color:    var(--alucard-cyan);
+
+    --success-color: var(--alucard-green);
+    --warning-color: var(--alucard-yellow);
+    --error-color:   var(--alucard-red);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--alucard-purple) 14%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(108, 102, 75, 0.12);
+    --shadow-md: 0 4px 6px rgba(108, 102, 75, 0.14);
+    --shadow-lg: 0 10px 15px rgba(108, 102, 75, 0.18);
+}
+
+/* Onyx theme (semantic; OLED-friendly) */
+:root.onyx-theme,
+html.onyx-theme,
+body.onyx-theme {
+    --bg-base: hsl(0, 0%, 0%);
+    --bg-card: hsl(0, 0%, 4%);
+    --bg-raised: hsl(0, 0%, 10%);
+
+    --text-heading: hsl(0, 0%, 96%);
+    --text-body: hsl(0, 0%, 72%);
+    --text-muted-2: hsl(0, 0%, 55%);
+
+    --border-neutral: hsl(0, 0%, 18%);
+    --highlight-border: hsl(0, 0%, 26%);
+
+    --primary-color: hsl(45, 85%, 55%);
+    --primary-dark: hsl(45, 85%, 45%);
+    --primary-light: hsl(45, 95%, 68%);
+    --secondary-color: hsl(30, 70%, 52%);
+    --accent-color: hsl(0, 0%, 78%);
+
+    --success-color: hsl(110, 45%, 50%);
+    --warning-color: hsl(45, 85%, 55%);
+    --error-color: hsl(8, 65%, 56%);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 26%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(255, 255, 255, 0.10);
+    --shadow-md: 0 4px 6px rgba(255, 255, 255, 0.10);
+    --shadow-lg: 0 10px 15px rgba(255, 255, 255, 0.15);
+}
+
+/* Onyx: force passage-container to pure OLED black in dark mode only */
+:root.onyx-theme:not(.light-mode) .passage-container,
+html.onyx-theme:not(.light-mode) .passage-container,
+body.onyx-theme:not(.light-mode) .passage-container {
+    background-color: #000;
+}
+
+:root.onyx-theme.light-mode,
+html.onyx-theme.light-mode,
+body.onyx-theme.light-mode {
+    /* Warm off-white base so gold accents don't sit on jarring stark white */
+    --bg-base: hsl(40, 15%, 97%);
+    --bg-card: hsl(40, 12%, 95%);
+    --bg-raised: hsl(40, 10%, 91%);
+
+    --text-heading: hsl(0, 0%, 20%);
+    --text-body: hsl(0, 0%, 40%);
+    --text-muted-2: hsl(0, 0%, 58%);
+
+    --border-neutral: hsl(0, 0%, 86%);
+    --highlight-border: hsl(0, 0%, 94%);
+
+    --primary-color: hsl(45, 75%, 34%);
+    --primary-dark: hsl(45, 75%, 28%);
+    --primary-light: hsl(45, 70%, 44%);
+    --secondary-color: hsl(30, 60%, 36%);
+    --accent-color: hsl(35, 50%, 42%);
+
+    --success-color: hsl(110, 45%, 34%);
+    --warning-color: hsl(45, 75%, 34%);
+    --error-color: hsl(8, 60%, 44%);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.12);
+}
+
+/* ================================
+   Sage theme — forest green; organic, calm reading
+   Primary hue: 145° green. No overlap with any other theme (nearest is
+   Perplexity at 187° teal — 42° apart). Surfaces: deep forest dark /
+   warm sage-tinted light.
+   ================================ */
+:root.sage-theme,
+html.sage-theme,
+body.sage-theme {
+    --bg-base:   hsl(150, 18%, 8%);
+    --bg-card:   hsl(150, 16%, 11%);
+    --bg-raised: hsl(150, 14%, 16%);
+
+    --text-heading: hsl(100, 18%, 90%);
+    --text-body:    hsl(130, 10%, 64%);
+    --text-muted-2: hsl(130,  8%, 46%);
+
+    --border-neutral:   hsl(148, 14%, 22%);
+    --highlight-border: hsl(148, 16%, 30%);
+
+    --primary-color:   hsl(145, 48%, 52%);
+    --primary-dark:    hsl(145, 50%, 40%);
+    --primary-light:   hsl(145, 55%, 66%);
+    --secondary-color: hsl(40,  65%, 58%);
+    --accent-color:    hsl(170, 45%, 60%);
+
+    --success-color: hsl(145, 48%, 52%);
+    --warning-color: hsl(40,  70%, 58%);
+    --error-color:   hsl(4,   62%, 56%);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+:root.sage-theme.light-mode,
+html.sage-theme.light-mode,
+body.sage-theme.light-mode {
+    --bg-base:   hsl(90, 14%, 97%);
+    --bg-card:   hsl(90, 12%, 94%);
+    --bg-raised: hsl(90, 10%, 89%);
+
+    --text-heading: hsl(150, 25%, 12%);
+    --text-body:    hsl(150, 14%, 32%);
+    --text-muted-2: hsl(150, 10%, 50%);
+
+    --border-neutral:   hsl(130, 14%, 84%);
+    --highlight-border: hsl(130, 18%, 92%);
+
+    --primary-color:   hsl(145, 50%, 30%);
+    --primary-dark:    hsl(145, 52%, 24%);
+    --primary-light:   hsl(145, 48%, 42%);
+    --secondary-color: hsl(32,  70%, 40%);
+    --accent-color:    hsl(170, 45%, 28%);
+
+    --success-color: hsl(145, 45%, 32%);
+    --warning-color: hsl(38,  72%, 40%);
+    --error-color:   hsl(4,   58%, 44%);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 14%, transparent);
+
+    --shadow-sm: 0 1px 2px rgba(20, 50, 30, 0.10);
+    --shadow-md: 0 4px 6px rgba(20, 50, 30, 0.12);
+    --shadow-lg: 0 10px 15px rgba(20, 50, 30, 0.16);
+}
+
+/* ================================
+   Ember theme — candlelit warmth; analogous warm palette
+   Primary hue: 35° amber. Secondary: 8° rust-red. Accent: 50° gold.
+   All three hues within 45° of each other — fully analogous, zero
+   cool colors. Surfaces: dark chocolate / warm cream.
+   ================================ */
+:root.ember-theme,
+html.ember-theme,
+body.ember-theme {
+    --bg-base:   hsl(20, 18%,  8%);
+    --bg-card:   hsl(20, 16%, 11%);
+    --bg-raised: hsl(20, 14%, 16%);
+
+    --text-heading: hsl(36, 22%, 88%);
+    --text-body:    hsl(30, 14%, 64%);
+    --text-muted-2: hsl(28, 10%, 46%);
+
+    --border-neutral:   hsl(24, 16%, 22%);
+    --highlight-border: hsl(26, 18%, 30%);
+
+    --primary-color:   hsl(35, 72%, 55%);
+    --primary-dark:    hsl(33, 74%, 44%);
+    --primary-light:   hsl(40, 78%, 68%);
+    --secondary-color: hsl(8,  60%, 55%);
+    --accent-color:    hsl(50, 70%, 60%);
+
+    --success-color: hsl(130, 36%, 48%);
+    --warning-color: hsl(40,  72%, 56%);
+    --error-color:   hsl(4,   65%, 56%);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 22%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.55);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.55);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.60);
+}
+
+:root.ember-theme.light-mode,
+html.ember-theme.light-mode,
+body.ember-theme.light-mode {
+    --bg-base:   hsl(38, 30%, 97%);
+    --bg-card:   hsl(38, 26%, 93%);
+    --bg-raised: hsl(36, 22%, 88%);
+
+    --text-heading: hsl(20, 28%, 14%);
+    --text-body:    hsl(22, 18%, 32%);
+    --text-muted-2: hsl(24, 12%, 50%);
+
+    --border-neutral:   hsl(32, 18%, 84%);
+    --highlight-border: hsl(36, 24%, 92%);
+
+    --primary-color:   hsl(25, 68%, 34%);
+    --primary-dark:    hsl(22, 70%, 27%);
+    --primary-light:   hsl(30, 65%, 46%);
+    /* Darkened from 40% → 32% for WCAG AA contrast on warm cream bg */
+    --secondary-color: hsl(6,  55%, 32%);
+    --accent-color:    hsl(45, 60%, 32%);
+
+    --success-color: hsl(130, 38%, 34%);
+    --warning-color: hsl(38,  70%, 38%);
+    --error-color:   hsl(2,   58%, 42%);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 14%, transparent);
+
+    --shadow-sm: 0 1px 2px hsla(24, 30%, 20%, 0.12);
+    --shadow-md: 0 6px 16px hsla(24, 30%, 20%, 0.16);
+    --shadow-lg: 0 16px 40px hsla(24, 30%, 20%, 0.20);
+}
+
+/* Perplexity theme — sampled directly from the Perplexity app UI */
+:root.perplexity-theme,
+html.perplexity-theme,
+body.perplexity-theme {
+    /* Palette constants — sampled from Perplexity app screenshot */
+    --pplx-teal:         #3FA8B8;
+    --pplx-teal-dark:    #2D8A99;
+    --pplx-teal-light:   #52BBC9;
+    --pplx-offblack:     #0A1616;
+    --pplx-offblack-mid: #101E1E;
+    --pplx-offblack-lt:  #172828;
+    --pplx-offblack-ll:  #1E3030;
+    --pplx-paper:        #f5f5f5;
+    --pplx-muted:        #8a8a90;
+    --pplx-amber:        #e8a045;
+
+    /* Surfaces */
+    --bg-base:   var(--pplx-offblack);
+    --bg-card:   var(--pplx-offblack-mid);
+    --bg-raised: var(--pplx-offblack-lt);
+
+    /* Text */
+    --text-heading: var(--pplx-paper);
+    --text-body:    #c8c8cc;
+    --text-muted-2: var(--pplx-muted);
+
+    /* Borders */
+    --border-neutral:   var(--pplx-offblack-ll);
+    --highlight-border: #263232;
+
+    /* Brand */
+    --primary-color:   var(--pplx-teal);
+    --primary-dark:    var(--pplx-teal-dark);
+    --primary-light:   var(--pplx-teal-light);
+    --secondary-color: var(--pplx-teal-light);
+    --accent-color:    var(--pplx-teal-light);
+
+    /* Functional */
+    --success-color: hsl(155, 45%, 48%);
+    --warning-color: var(--pplx-amber);
+    --error-color:   hsl(6, 65%, 56%);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--pplx-teal) 18%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.6);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.65);
+}
+
+/* Perplexity: passage-container background in dark mode */
+:root.perplexity-theme:not(.light-mode) .passage-container,
+html.perplexity-theme:not(.light-mode) .passage-container,
+body.perplexity-theme:not(.light-mode) .passage-container {
+    background-color: #191A1A;
+}
+
+:root.perplexity-theme.light-mode,
+html.perplexity-theme.light-mode,
+body.perplexity-theme.light-mode {
+    --bg-base:   var(--pplx-paper);
+    --bg-card:   hsl(0, 0%, 94%);
+    --bg-raised: hsl(0, 0%, 90%);
+
+    --text-heading: var(--pplx-offblack);
+    --text-body:    hsl(220, 8%, 30%);
+    --text-muted-2: hsl(220, 6%, 52%);
+
+    --border-neutral:   hsl(220, 10%, 84%);
+    --highlight-border: hsl(220, 14%, 92%);
+
+    --primary-color:   var(--pplx-teal);
+    --primary-dark:    var(--pplx-teal-dark);
+    --primary-light:   var(--pplx-teal-light);
+    --secondary-color: hsl(30, 65%, 38%);
+    --accent-color:    hsl(187, 63%, 30%);
+
+    --success-color: hsl(155, 42%, 34%);
+    --warning-color: hsl(30, 65%, 38%);
+    --error-color:   hsl(6, 60%, 44%);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--pplx-teal) 14%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.09);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.14);
+}
+
+/* ================================
+   Basic theme — pure achromatic; zero hue, maximum contrast
+   Dark mode: pure white text on pure black.
+   Light mode: pure black text on pure white.
+   No accent color — links and interactive elements use black/white
+   with an underline or border instead of color.
+   ================================ */
+:root.basic-theme,
+html.basic-theme,
+body.basic-theme {
+    /* Dark mode (default) */
+    --bg-base:   hsl(0, 0%, 0%);
+    --bg-card:   hsl(0, 0%, 4%);
+    --bg-raised: hsl(0, 0%, 9%);
+
+    --text-heading: hsl(0, 0%, 100%);
+    --text-body:    hsl(0, 0%, 100%);
+    --text-muted-2: hsl(0, 0%, 65%);
+
+    --border-neutral:   hsl(0, 0%, 20%);
+    --highlight-border: hsl(0, 0%, 30%);
+
+    --primary-color:   hsl(0, 0%, 90%);
+    --primary-dark:    hsl(0, 0%, 75%);
+    --primary-light:   hsl(0, 0%, 100%);
+    --secondary-color: hsl(0, 0%, 80%);
+    --accent-color:    hsl(0, 0%, 85%);
+
+    --success-color: hsl(0, 0%, 80%);
+    --warning-color: hsl(0, 0%, 80%);
+    --error-color:   hsl(0, 0%, 80%);
+
+    --footnote-hover-bg: rgba(255, 255, 255, 0.10);
+
+    --shadow-sm: 0 1px 3px rgba(255, 255, 255, 0.08);
+    --shadow-md: 0 4px 6px rgba(255, 255, 255, 0.08);
+    --shadow-lg: 0 10px 15px rgba(255, 255, 255, 0.12);
+}
+
+/* Basic: passage container stays pure black in dark mode */
+:root.basic-theme:not(.light-mode) .passage-container,
+html.basic-theme:not(.light-mode) .passage-container,
+body.basic-theme:not(.light-mode) .passage-container {
+    background-color: #000;
+}
+
+:root.basic-theme.light-mode,
+html.basic-theme.light-mode,
+body.basic-theme.light-mode {
+    --bg-base:   hsl(0, 0%, 100%);
+    --bg-card:   hsl(0, 0%, 98%);
+    --bg-raised: hsl(0, 0%, 95%);
+
+    --text-heading: hsl(0, 0%, 0%);
+    --text-body:    hsl(0, 0%, 0%);
+    --text-muted-2: hsl(0, 0%, 40%);
+
+    --border-neutral:   hsl(0, 0%, 80%);
+    --highlight-border: hsl(0, 0%, 92%);
+
+    --primary-color:   hsl(0, 0%, 10%);
+    --primary-dark:    hsl(0, 0%, 0%);
+    --primary-light:   hsl(0, 0%, 30%);
+    --secondary-color: hsl(0, 0%, 20%);
+    --accent-color:    hsl(0, 0%, 15%);
+
+    --success-color: hsl(0, 0%, 20%);
+    --warning-color: hsl(0, 0%, 20%);
+    --error-color:   hsl(0, 0%, 20%);
+
+    --footnote-hover-bg: rgba(0, 0, 0, 0.07);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Basic: passage container stays pure white in light mode */
+:root.basic-theme.light-mode .passage-container,
+html.basic-theme.light-mode .passage-container,
+body.basic-theme.light-mode .passage-container {
+    background-color: #fff;
+}
+
+/* ================================
+   The Geek Shall Inherit The Earth
+   Classic terminal: #00AA00 green on pure black.
+   Geek theme changes color only; reading font remains whatever is already active.
+   Light mode toggle is intentionally ignored; this theme is always dark.
+   ================================ */
+:root.geek-theme,
+html.geek-theme,
+body.geek-theme {
+    --bg-base:   #000000;
+    --bg-card:   #000000;
+    --bg-raised: #000000;
+
+    --text-heading: #00AA00;
+    --text-body:    #00AA00;
+    --text-muted-2: #007700;
+
+    --border-neutral:   #004400;
+    --highlight-border: #006600;
+
+    --primary-color:   #00AA00;
+    --primary-dark:    #007700;
+    --primary-light:   #00CC00;
+    --secondary-color: #00AA00;
+    --accent-color:    #00AA00;
+
+    --success-color: #00AA00;
+    --warning-color: #00AA00;
+    --error-color:   #00AA00;
+
+    --footnote-hover-bg: rgba(0, 170, 0, 0.15);
+
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
+}
+
+/* Passage container: pure black, no rounding or shadow */
+:root.geek-theme .passage-container,
+html.geek-theme .passage-container,
+body.geek-theme .passage-container {
+    background-color: #000;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* Beat components.css specificity for passage text color.
+   Geek theme should change color only and leave the active reading font alone. */
+body.geek-theme .passage-text,
+body.geek-theme .passage,
+body.geek-theme .passage-text h2,
+body.geek-theme .passage-text h3,
+body.geek-theme .passage-text h4,
+body.geek-theme .passage-title {
+    color: #00AA00 !important;
+}
+
+body.geek-theme .verse-num {
+    color: #007700 !important;
+}
