@@ -5,7 +5,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Bible Reader</title>
-        <meta name="build-id" content="3ddc1e677b1daa11df06582a646f155d07ea87ba" />
+        <meta name="build-id" content="d787103ff1542752569a72ebd71815dfa758e141" />
         <link rel="manifest" href="./site.webmanifest" />
         <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -15,11 +15,12 @@
         <link rel="preconnect" href="https://esv-bible-6dffb-default-rtdb.firebaseio.com" />
         <link rel="preconnect" href="https://www.gstatic.com" />
         <link rel="preconnect" href="https://www.google.com" />
+        <link rel="preconnect" href="https://apis.google.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
         <!-- Preload all ES modules so the browser fetches them in parallel
-             before the parser reaches <script type="module" src="app.js?v=3ddc1e677b1daa11df06582a646f155d07ea87ba">.
+             before the parser reaches <script type="module" src="app.js?v=d787103ff1542752569a72ebd71815dfa758e141">.
              This eliminates the sequential module-discovery waterfall. -->
         <link rel="modulepreload" href="app.js" />
         <link rel="modulepreload" href="bible-api.js" />
@@ -61,7 +62,7 @@
                 <header class="header">
                         <div class="header-content">
                                 <h1 class="logo">Lege Lux</h1>
-                                <span id="build-info">dev #1863 · 3ddc1e6</span>
+                                <span id="build-info">dev #1869 · d787103</span>
                                 <div class="header-controls">
                                         <button class="icon-btn" id="searchToggle" title="Search (Ctrl+K)">
                                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,13 +91,6 @@
                                                         </path>
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                                 d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                </svg>
-                                        </button>
-
-                                        <button class="icon-btn" id="userBtn" title="Account">
-                                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                                 </svg>
                                         </button>
                                 </div>
@@ -260,7 +254,7 @@
                                 <button class="close-btn" id="closeSettingsModal">×</button>
                         </div>
                         <div class="modal-body">
-                                <div class="accordion-section" data-section="appearance">
+                                <div class="accordion-section active" data-section="appearance">
                                         <button class="accordion-header" data-target="appearance">
                                                 <span class="accordion-title">Appearance</span>
                                                 <svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -582,7 +576,7 @@
         <div id="toast" class="toast"></div>
 
 
-        <script type="module" src="app.js?v=3ddc1e677b1daa11df06582a646f155d07ea87ba"></script>
+        <script type="module" src="app.js?v=d787103ff1542752569a72ebd71815dfa758e141"></script>
 </body>
 
 </html>
