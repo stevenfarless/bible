@@ -236,3 +236,71 @@ export async function loadUserData(app, normalizeTranslation) {
     if (s.lightMode           != null) lsSet('lightMode',            s.lightMode);
     if (s.translation         != null) lsSet('translation',          normalizeTranslation(s.translation || 'ESV'));
 }
+
+export async function handleChangeEmail(app) {
+    const currentPassword = document.getElementById('changeEmailCurrent').value;
+    const newEmail = document.getElementById('changeEmailNew').value;
+
+    if (!currentPassword || !newEmail) {
+        app.showToast('Please fill in all fields');
+        return;
+    }
+
+    try {
+        const credential = app.firebase.auth.EmailAuthProvider.credential(
+            app.currentUser.email,
+            currentPassword
+        );
+        await app.currentUser.reauthenticateWithCredential(credential);
+        await app.currentUser.updateEmail(newEmail);
+        app.showToast('Email updated successfully');
+        app.closeModal(document.getElementById('changeEmailModal'));
+        document.getElementById('changeEmailCurrent').value = '';
+        document.getElementById('changeEmailNew').value = '';
+        document.getElementById('userEmail').textContent = newEmail;
+    } catch (err) {
+        if (err.code === 'auth/wrong-password') {
+            app.showToast('Current password is incorrect');
+        } else if (err.code === 'auth/email-already-in-use') {
+            app.showToast('That email is already in use');
+        } else if (err.code === 'auth/invalid-email') {
+            app.showToast('Invalid email address');
+        } else {
+            app.showToast(`Failed: ${err.message}`);
+        }
+    }
+}
+
+export async function handleChangePassword(app) {
+    const currentPassword = document.getElementById('changePasswordCurrent').value;
+    const newPassword = document.getElementById('changePasswordNew').value;
+
+    if (!currentPassword || !newPassword) {
+        app.showToast('Please fill in all fields');
+        return;
+    }
+
+    if (newPassword.length < 6) {
+        app.showToast('New password must be at least 6 characters');
+        return;
+    }
+
+    try {
+        const credential = app.firebase.auth.EmailAuthProvider.credential(
+            app.currentUser.email,
+            currentPassword
+        );
+        await app.currentUser.reauthenticateWithCredential(credential);
+        await app.currentUser.updatePassword(newPassword);
+        app.showToast('Password updated successfully');
+        app.closeModal(document.getElementById('changePasswordModal'));
+        document.getElementById('changePasswordCurrent').value = '';
+        document.getElementById('changePasswordNew').value = '';
+    } catch (err) {
+        if (err.code === 'auth/wrong-password') {
+            app.showToast('Current password is incorrect');
+        } else {
+            app.showToast(`Failed: ${err.message}`);
+        }
+    }
+}
