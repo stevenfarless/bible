@@ -113,6 +113,24 @@
     gap: var(--spacing-xs);
 }
 
+/* Section headings (Installed / Available) */
+.translation-modal-section-heading {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    user-select: none;
+    pointer-events: none;
+}
+
+.translation-modal-section-heading:not(:first-child) {
+    margin-top: var(--spacing-sm);
+    border-top: 1px solid var(--border-color);
+    padding-top: var(--spacing-md);
+}
+
 .translation-modal-item {
     display: flex;
     flex-wrap: wrap;
