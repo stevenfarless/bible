@@ -2,7 +2,7 @@
 // Modal open/close, population, and drag-to-resize for BibleApp.
 
 import { LOCAL_TRANSLATIONS } from './bible-api.js';
-import { idbIsDownloaded } from './translation-store.js';
+import { idbIsDownloaded, idbDeleteTranslation } from './translation-store.js';
 
 // ── Open / close ──────────────────────────────────────────────────────────────
 
@@ -180,6 +180,8 @@ const _SVG_DOWNLOADED = `<svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/
 
 const _SVG_SPINNER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="translation-dl-spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`;
 
+const _SVG_TRASH = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 12L14 16M14 12L10 16M18 6L17.1991 18.0129C17.129 19.065 17.0939 19.5911 16.8667 19.99C16.6666 20.3412 16.3648 20.6235 16.0011 20.7998C15.588 21 15.0607 21 14.0062 21H9.99377C8.93927 21 8.41202 21 7.99889 20.7998C7.63517 20.6235 7.33339 20.3412 7.13332 19.99C6.90607 19.5911 6.871 19.065 6.80086 18.0129L6 6M4 6H20M16 6L15.7294 5.18807C15.4671 4.40125 15.3359 4.00784 15.0927 3.71698C14.8779 3.46013 14.6021 3.26132 14.2905 3.13878C13.9376 3 13.523 3 12.6936 3H11.3064C10.477 3 10.0624 3 9.70951 3.13878C9.39792 3.26132 9.12208 3.46013 8.90729 3.71698C8.66405 4.00784 8.53292 4.40125 8.27064 5.18807L8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
 // Tracks which translations are actively downloading so re-taps are ignored.
 const _downloading = new Set();
 
@@ -207,8 +209,6 @@ export async function populateTranslationModal(app) {
         return;
     }
 
-    // Resolve download status for all non-precached translations up front
-    // so we can place them in the correct section immediately.
     const idbChecks = await Promise.all(
         registry.map((t) =>
             LOCAL_TRANSLATIONS.has(t.id) ? Promise.resolve(true) : idbIsDownloaded(t.id)
@@ -219,11 +219,8 @@ export async function populateTranslationModal(app) {
     const available = [];
 
     registry.forEach((t, i) => {
-        if (idbChecks[i]) {
-            installed.push(t);
-        } else {
-            available.push(t);
-        }
+        if (idbChecks[i]) installed.push(t);
+        else available.push(t);
     });
 
     installed.sort((a, b) => a.id.localeCompare(b.id));
@@ -237,7 +234,11 @@ export async function populateTranslationModal(app) {
     };
 
     const appendItem = (t, isPrecached, isDownloaded) => {
-        const li = document.createElement('li');
+        // Outer wrapper clips the swipe-reveal so the red zone doesn't overflow.
+        const wrapper = document.createElement('li');
+        wrapper.className = 'translation-modal-item-wrapper';
+
+        const li = document.createElement('div');
         li.className = 'translation-modal-item';
         if (t.id === app.state.translation) li.classList.add('translation-modal-item--active');
 
@@ -296,6 +297,20 @@ export async function populateTranslationModal(app) {
                 }
                 _handleTranslationSelect(app, t, li, iconEl, progressWrap, progressBar, progressLabel);
             });
+
+            // Swipe-to-delete (touch) and hover-to-reveal (pointer) for installed non-precached.
+            if (isDownloaded) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'translation-modal-delete-btn';
+                deleteBtn.setAttribute('aria-label', `Uninstall ${t.id}`);
+                deleteBtn.innerHTML = _SVG_TRASH;
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    _handleUninstall(app, t, wrapper);
+                });
+                wrapper.appendChild(deleteBtn);
+                _attachSwipe(wrapper, li);
+            }
         } else {
             li.addEventListener('click', () => {
                 app.changeTranslation(t.id);
@@ -303,22 +318,107 @@ export async function populateTranslationModal(app) {
             });
         }
 
-        app.translationList.appendChild(li);
+        wrapper.appendChild(li);
+        app.translationList.appendChild(wrapper);
     };
 
     if (installed.length > 0) {
         appendSectionHeading('Installed');
-        for (const t of installed) {
-            appendItem(t, LOCAL_TRANSLATIONS.has(t.id), true);
-        }
+        for (const t of installed) appendItem(t, LOCAL_TRANSLATIONS.has(t.id), true);
     }
 
     if (available.length > 0) {
         appendSectionHeading('Available');
-        for (const t of available) {
-            appendItem(t, false, false);
-        }
+        for (const t of available) appendItem(t, false, false);
     }
+}
+
+// ── Swipe-to-reveal delete ────────────────────────────────────────────────────
+
+const _SWIPE_THRESHOLD = 60;  // px of leftward swipe to lock open
+const _DELETE_BTN_W   = 72;  // must match CSS .translation-modal-delete-btn width
+
+function _attachSwipe(wrapper, li) {
+    let startX = 0;
+    let startY = 0;
+    let isDragging = false;
+    let isOpen = false;
+    let currentX = 0;
+    let axisLocked = false; // true = horizontal, false = vertical (or undecided)
+
+    const clampX = (x) => Math.max(-_DELETE_BTN_W, Math.min(0, x));
+
+    const setX = (x, animate) => {
+        currentX = clampX(x);
+        li.style.transition = animate ? 'transform 200ms ease' : 'none';
+        li.style.transform = `translateX(${currentX}px)`;
+    };
+
+    const open  = () => { isOpen = true;  setX(-_DELETE_BTN_W, true); wrapper.classList.add('translation-modal-item-wrapper--open'); };
+    const close = () => { isOpen = false; setX(0, true); wrapper.classList.remove('translation-modal-item-wrapper--open'); };
+
+    li.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        isDragging = true;
+        axisLocked = false;
+        li.style.transition = 'none';
+    }, { passive: true });
+
+    li.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        const dx = e.touches[0].clientX - startX;
+        const dy = e.touches[0].clientY - startY;
+
+        if (!axisLocked) {
+            if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+            axisLocked = true;
+            // If primarily vertical, abort swipe handling
+            if (Math.abs(dy) > Math.abs(dx)) { isDragging = false; return; }
+        }
+
+        e.preventDefault();
+        const base = isOpen ? -_DELETE_BTN_W : 0;
+        setX(base + dx, false);
+    }, { passive: false });
+
+    li.addEventListener('touchend', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        if (currentX < -_SWIPE_THRESHOLD) open();
+        else close();
+    }, { passive: true });
+
+    // Close on outside tap
+    document.addEventListener('touchstart', (e) => {
+        if (isOpen && !wrapper.contains(e.target)) close();
+    }, { passive: true });
+}
+
+// ── Uninstall handler ─────────────────────────────────────────────────────────
+
+async function _handleUninstall(app, t, wrapper) {
+    await idbDeleteTranslation(t.id);
+
+    if (app.bibleApi?.evictTranslation) {
+        app.bibleApi.evictTranslation(t.id);
+    }
+
+    // If this was the active translation, fall back to the first precached one.
+    if (app.state.translation === t.id) {
+        const fallback = [...LOCAL_TRANSLATIONS][0];
+        if (fallback) app.changeTranslation(fallback);
+    }
+
+    // Animate out then remove
+    wrapper.style.transition = 'opacity 200ms ease, max-height 250ms ease 200ms';
+    wrapper.style.overflow = 'hidden';
+    wrapper.style.maxHeight = wrapper.offsetHeight + 'px';
+    requestAnimationFrame(() => {
+        wrapper.style.opacity = '0';
+        wrapper.style.maxHeight = '0';
+    });
+    setTimeout(() => wrapper.remove(), 460);
 }
 
 async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progressBar, progressLabel) {
@@ -334,7 +434,6 @@ async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progre
     progressBar.style.width = '0%';
     progressLabel.textContent = 'Downloading\u2026';
 
-    // Fetch meta.json for the correct book list (incl. deuterocanon)
     let bookList = null;
     try {
         const metaRes = await fetch(`./translations/${t.id}/meta.json`);
@@ -357,7 +456,6 @@ async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progre
         iconEl.innerHTML = _SVG_DOWNLOADED;
         progressWrap.hidden = true;
 
-        // Auto-switch to the newly downloaded translation and close
         setTimeout(() => {
             app.changeTranslation(t.id);
             app.closeModal(app.translationModal);
