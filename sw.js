@@ -55,6 +55,7 @@ const APP_SHELL = [
   './settings.js',
   './keyboard.js',
   './events.js',
+  './credential-modals.js',
   './swipe.js',
   './firebase-config.js',
   './translations/index.json',
