@@ -251,9 +251,7 @@ export async function handleChangeEmail(app) {
         await app.auth.reauthenticateWithCredential(app.currentUser, credential);
         await app.auth.verifyBeforeUpdateEmail(app.currentUser, newEmail);
         app.showToast('Verification sent — check your inbox to confirm the new email');
-        app.closeModal(document.getElementById('changeEmailModal'));
-        document.getElementById('changeEmailCurrent').value = '';
-        document.getElementById('changeEmailNew').value = '';
+        // modal teardown and field clearing handled by credential-modals.js
         document.getElementById('userEmail').textContent = newEmail;
     } catch (err) {
         if (err.code === 'auth/wrong-password') {
@@ -287,9 +285,7 @@ export async function handleChangePassword(app) {
         await app.auth.reauthenticateWithCredential(app.currentUser, credential);
         await app.auth.updatePassword(app.currentUser, newPassword);
         app.showToast('Password updated successfully');
-        app.closeModal(document.getElementById('changePasswordModal'));
-        document.getElementById('changePasswordCurrent').value = '';
-        document.getElementById('changePasswordNew').value = '';
+        // modal teardown and field clearing handled by credential-modals.js
     } catch (err) {
         if (err.code === 'auth/wrong-password') {
             app.showToast('Current password is incorrect');
