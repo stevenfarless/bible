@@ -186,7 +186,7 @@ export async function handleSignup(app) {
             showCrossReferences: app.state.showCrossReferences,
             verseByVerse: app.state.verseByVerse,
             colorTheme: app.state.colorTheme,
-            lightMode: app.state.lightMode,
+            lightMode: app.state.lightMode ?? 'system',
             translation: app.state.translation || 'ESV',
         });
 
@@ -226,7 +226,13 @@ export async function loadUserData(app, normalizeTranslation) {
     app.state.showCrossReferences  = s.showCrossReferences;
     app.state.verseByVerse         = s.verseByVerse;
     app.state.colorTheme           = s.colorTheme;
-    app.state.lightMode            = s.lightMode;
+    // Migrate old boolean values from Firebase to string enum
+    app.state.lightMode =
+        s.lightMode === 'light' || s.lightMode === 'dark' || s.lightMode === 'system'
+            ? s.lightMode
+            : s.lightMode === true ? 'light'
+            : s.lightMode === false ? 'dark'
+            : 'system';
     app.state.translation          = normalizeTranslation(s.translation || 'ESV');
 
     if (s.fontSize            != null) lsSet('fontSize',             s.fontSize);
@@ -236,7 +242,7 @@ export async function loadUserData(app, normalizeTranslation) {
     if (s.showCrossReferences != null) lsSet('showCrossReferences',  s.showCrossReferences);
     if (s.verseByVerse        != null) lsSet('verseByVerse',         s.verseByVerse);
     if (s.colorTheme          != null) lsSet('colorTheme',           s.colorTheme);
-    if (s.lightMode           != null) lsSet('lightMode',            s.lightMode);
+    if (s.lightMode           != null) lsSet('lightMode',            app.state.lightMode);
     if (s.translation         != null) lsSet('translation',          normalizeTranslation(s.translation || 'ESV'));
 }
 
