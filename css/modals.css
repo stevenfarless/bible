@@ -131,54 +131,99 @@
     padding-top: var(--spacing-md);
 }
 
-/* ── Swipe wrapper ────────────────────────────────────────────────────────── */
+/* ── Swipe wrapper (touch) ────────────────────────────────────────────────── */
 
 .translation-modal-item-wrapper {
     position: relative;
-    overflow: hidden;
-    border-radius: var(--border-radius);
     list-style: none;
+    /* overflow:hidden only needed on touch to clip the peeking delete zone.
+       On hover devices the delete btn is inline so no clipping is needed. */
 }
 
-/* Red delete zone — sits behind the item, right-aligned */
-.translation-modal-delete-btn {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 72px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #d93025;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background-color 150ms ease;
+@media (hover: none) {
+    .translation-modal-item-wrapper {
+        overflow: hidden;
+        border-radius: var(--border-radius);
+    }
 }
 
-.translation-modal-delete-btn:hover,
-.translation-modal-delete-btn:focus-visible {
-    background-color: #b3261e;
-}
-
-.translation-modal-delete-btn svg {
-    width: 22px;
-    height: 22px;
-    pointer-events: none;
-}
-
-/* On pointer devices: hide delete btn until wrapper is hovered */
-@media (hover: hover) {
+/*
+  Touch: red delete zone sits behind the item row, right-aligned.
+  Position: absolute, full height, 72px wide.
+  The item row slides left via transform to expose it.
+*/
+@media (hover: none) {
     .translation-modal-delete-btn {
-        opacity: 0;
-        transition: opacity 150ms ease, background-color 150ms ease;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #d93025;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        border-radius: 0;
     }
 
-    .translation-modal-item-wrapper:hover .translation-modal-delete-btn,
-    .translation-modal-item-wrapper--open .translation-modal-delete-btn {
+    .translation-modal-delete-btn svg {
+        width: 22px;
+        height: 22px;
+        pointer-events: none;
+    }
+}
+
+/*
+  Desktop: delete button is an inline flex child inside the status-icon
+  wrapper. Hidden by default, revealed when the icon zone is hovered.
+  Uses position:absolute to overlay the checkmark without shifting layout.
+*/
+@media (hover: hover) {
+    /* The status-icon span becomes a positioning context */
+    .translation-modal-item__icon-wrap {
+        position: relative;
+    }
+
+    .translation-modal-delete-btn--inline {
+        position: absolute;
+        inset: -6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #d93025;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 150ms ease;
+    }
+
+    .translation-modal-delete-btn--inline svg {
+        width: 16px;
+        height: 16px;
+        pointer-events: none;
+    }
+
+    /* Reveal when hovering the icon zone */
+    .translation-modal-item__icon-wrap:hover .translation-modal-delete-btn--inline {
         opacity: 1;
+        pointer-events: auto;
+    }
+
+    .translation-modal-delete-btn--inline:hover {
+        background-color: #b3261e;
+    }
+
+    .translation-modal-delete-btn--inline:focus-visible {
+        opacity: 1;
+        pointer-events: auto;
+        outline: 2px solid #b3261e;
+        outline-offset: 2px;
     }
 }
 
@@ -194,6 +239,7 @@
     cursor: pointer;
     transition: background-color var(--transition-fast), color var(--transition-fast), transform 200ms ease;
     border: 1px solid transparent;
+    /* Explicit opaque background so the red zone never bleeds through on touch */
     background-color: var(--bg-secondary);
     position: relative;
     z-index: 1;
@@ -206,7 +252,7 @@
 }
 
 .translation-modal-item--active {
-    background-color: color-mix(in srgb, var(--primary-color) 14%, transparent);
+    background-color: color-mix(in srgb, var(--primary-color) 14%, var(--bg-secondary));
     border-color: var(--primary-color);
 }
 
@@ -218,7 +264,7 @@
 }
 
 .translation-modal-item--active.translation-modal-item--focused {
-    background-color: color-mix(in srgb, var(--primary-color) 22%, transparent);
+    background-color: color-mix(in srgb, var(--primary-color) 22%, var(--bg-secondary));
 }
 
 @media (forced-colors: active) {

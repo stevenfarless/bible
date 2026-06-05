@@ -185,6 +185,9 @@ const _SVG_TRASH = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.or
 // Tracks which translations are actively downloading so re-taps are ignored.
 const _downloading = new Set();
 
+// True when the device supports hover (pointer device).
+const _hasHover = window.matchMedia('(hover: hover)').matches;
+
 export function openTranslationModal(app) {
     populateTranslationModal(app);
     openModal(app, app.translationModal);
@@ -234,7 +237,8 @@ export async function populateTranslationModal(app) {
     };
 
     const appendItem = (t, isPrecached, isDownloaded) => {
-        // Outer wrapper clips the swipe-reveal so the red zone doesn't overflow.
+        // Wrapper is the swipe-clip container on touch; on pointer it's just a
+        // pass-through list item with no overflow clipping needed.
         const wrapper = document.createElement('li');
         wrapper.className = 'translation-modal-item-wrapper';
 
@@ -298,8 +302,7 @@ export async function populateTranslationModal(app) {
                 _handleTranslationSelect(app, t, li, iconEl, progressWrap, progressBar, progressLabel);
             });
 
-            // Swipe-to-delete (touch) and hover-to-reveal (pointer) for installed non-precached.
-            if (isDownloaded) {
+            if (isDownloaded && !isPrecached) {
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'translation-modal-delete-btn';
                 deleteBtn.setAttribute('aria-label', `Uninstall ${t.id}`);
@@ -308,8 +311,18 @@ export async function populateTranslationModal(app) {
                     e.stopPropagation();
                     _handleUninstall(app, t, wrapper);
                 });
-                wrapper.appendChild(deleteBtn);
-                _attachSwipe(wrapper, li);
+
+                if (_hasHover) {
+                    // Desktop: button lives inside the item row as the last flex
+                    // child, triggered by hovering the status-icon zone.
+                    deleteBtn.classList.add('translation-modal-delete-btn--inline');
+                    iconEl.classList.add('translation-modal-item__icon-wrap');
+                    iconEl.appendChild(deleteBtn);
+                } else {
+                    // Touch: button sits behind the item in the wrapper; swipe reveals it.
+                    wrapper.appendChild(deleteBtn);
+                    _attachSwipe(wrapper, li);
+                }
             }
         } else {
             li.addEventListener('click', () => {
@@ -333,10 +346,10 @@ export async function populateTranslationModal(app) {
     }
 }
 
-// ── Swipe-to-reveal delete ────────────────────────────────────────────────────
+// ── Swipe-to-reveal delete (touch only) ───────────────────────────────────────
 
-const _SWIPE_THRESHOLD = 60;  // px of leftward swipe to lock open
-const _DELETE_BTN_W   = 72;  // must match CSS .translation-modal-delete-btn width
+const _SWIPE_THRESHOLD = 60;
+const _DELETE_BTN_W   = 72;
 
 function _attachSwipe(wrapper, li) {
     let startX = 0;
@@ -344,7 +357,7 @@ function _attachSwipe(wrapper, li) {
     let isDragging = false;
     let isOpen = false;
     let currentX = 0;
-    let axisLocked = false; // true = horizontal, false = vertical (or undecided)
+    let axisLocked = false;
 
     const clampX = (x) => Math.max(-_DELETE_BTN_W, Math.min(0, x));
 
@@ -373,7 +386,6 @@ function _attachSwipe(wrapper, li) {
         if (!axisLocked) {
             if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
             axisLocked = true;
-            // If primarily vertical, abort swipe handling
             if (Math.abs(dy) > Math.abs(dx)) { isDragging = false; return; }
         }
 
@@ -389,7 +401,6 @@ function _attachSwipe(wrapper, li) {
         else close();
     }, { passive: true });
 
-    // Close on outside tap
     document.addEventListener('touchstart', (e) => {
         if (isOpen && !wrapper.contains(e.target)) close();
     }, { passive: true });
@@ -404,13 +415,11 @@ async function _handleUninstall(app, t, wrapper) {
         app.bibleApi.evictTranslation(t.id);
     }
 
-    // If this was the active translation, fall back to the first precached one.
     if (app.state.translation === t.id) {
         const fallback = [...LOCAL_TRANSLATIONS][0];
         if (fallback) app.changeTranslation(fallback);
     }
 
-    // Animate out then remove
     wrapper.style.transition = 'opacity 200ms ease, max-height 250ms ease 200ms';
     wrapper.style.overflow = 'hidden';
     wrapper.style.maxHeight = wrapper.offsetHeight + 'px';
@@ -481,7 +490,7 @@ function _showInlineError(li, progressWrap, progressLabel, message) {
     }, 3000);
 }
 
-// ── Translation modal keyboard helpers ───────────────────────────────────────
+// ── Translation modal keyboard helpers ────────────────────────────────────────
 
 function _translationItems(app) {
     return app.translationList
