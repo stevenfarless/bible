@@ -598,7 +598,9 @@ class BibleApp {
 
     /**
      * Rebuild app.bibleBooks from a translation's meta.json.
-     * Called by changeTranslation() after it fetches the incoming translation's meta.
+     * Called by changeTranslation() after it fetches the incoming translation's meta,
+     * and by _loadTranslationRegistry() on initial load so a deuterocanonical
+     * translation restored from localStorage shows all its books immediately.
      * If meta is null or has no books array, falls back to the static 66-book structure.
      * If the book modal is currently open, re-renders it so the user sees the new list.
      *
@@ -875,15 +877,18 @@ class BibleApp {
             for (const t of translations) this._copyrightMap[t.id] = t.copyright || '';
             this.updateCopyright?.();
 
-            // Fetch the starting translation's meta.json so the fallback search
-            // path knows its canon from the first search. Fire-and-forget — a
-            // failure here is harmless; the fallback just uses BOOK_LOAD_ORDER.
+            // Fetch the starting translation's meta.json to populate the book
+            // list for search and — critically — to rebuild app.bibleBooks so
+            // the book picker shows the correct canon (including Deuterocanon)
+            // when a deuterocanonical translation is restored from localStorage
+            // on page refresh without a changeTranslation call.
             const startingTranslation = this.state.translation;
             fetch(`./translations/${startingTranslation}/meta.json`)
                 .then(r => (r.ok ? r.json() : null))
                 .then(meta => {
                     if (meta?.books?.length) {
                         this.bibleApi.setBookList(startingTranslation, meta.books.map(b => b.name));
+                        this._rebuildBibleBooks(meta);
                         this._dbgEvent(`setBookList: ${startingTranslation} (${meta.books.length} books)`);
                     }
                 })
