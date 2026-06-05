@@ -131,13 +131,11 @@
     padding-top: var(--spacing-md);
 }
 
-/* ── Swipe wrapper (touch) ────────────────────────────────────────────────── */
+/* ── Swipe wrapper (touch) ──────────────────────────────────────────────── */
 
 .translation-modal-item-wrapper {
     position: relative;
     list-style: none;
-    /* overflow:hidden only needed on touch to clip the peeking delete zone.
-       On hover devices the delete btn is inline so no clipping is needed. */
 }
 
 @media (hover: none) {
@@ -149,8 +147,8 @@
 
 /*
   Touch: red delete zone sits behind the item row, right-aligned.
-  Position: absolute, full height, 72px wide.
-  The item row slides left via transform to expose it.
+  Hidden (opacity:0, z-index:0) by default so it is invisible until
+  the swipe reveals it. The --open modifier on the wrapper fades it in.
 */
 @media (hover: none) {
     .translation-modal-delete-btn {
@@ -167,6 +165,13 @@
         border: none;
         cursor: pointer;
         border-radius: 0;
+        z-index: 0;
+        opacity: 0;
+        transition: opacity 150ms ease;
+    }
+
+    .translation-modal-item-wrapper--open .translation-modal-delete-btn {
+        opacity: 1;
     }
 
     .translation-modal-delete-btn svg {
@@ -239,7 +244,6 @@
     cursor: pointer;
     transition: background-color var(--transition-fast), color var(--transition-fast), transform 200ms ease;
     border: 1px solid transparent;
-    /* Explicit opaque background so the red zone never bleeds through on touch */
     background-color: var(--bg-secondary);
     position: relative;
     z-index: 1;
