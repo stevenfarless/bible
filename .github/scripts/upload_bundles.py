@@ -5,7 +5,7 @@ from firebase_admin import credentials, storage
 
 cred = credentials.Certificate("/tmp/service_account.json")
 firebase_admin.initialize_app(cred, {
-    "storageBucket": "esv-bible-6dffb.firebasestorage.app"
+    "storageBucket": "esv-bible-6dffb.appspot.com"
 })
 
 bucket = storage.bucket()
