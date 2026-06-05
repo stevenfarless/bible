@@ -233,7 +233,10 @@ export class BibleApi {
 
                 if (isRepo && !LOCAL_TRANSLATIONS.has(translation)) {
                     const cached = await idbGetSearchIndex(translation);
-                    if (cached !== null) {
+                    // Treat an empty object as a cache miss — it means the index
+                    // was stored before any data was written (e.g. interrupted
+                    // download), and we should fetch from network instead.
+                    if (cached !== null && typeof cached === 'object' && Object.keys(cached).length > 0) {
                         this._searchIndexCache.set(translation, cached);
                         return cached;
                     }
@@ -245,8 +248,11 @@ export class BibleApi {
                 const res = await fetch(url);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
-                const index = (data && typeof data === 'object') ? data : null;
+                const index = (data && typeof data === 'object' && Object.keys(data).length > 0) ? data : null;
                 this._searchIndexCache.set(translation, index);
+                if (isRepo && !LOCAL_TRANSLATIONS.has(translation) && index !== null) {
+                    idbPutSearchIndex(translation, index).catch(() => {});
+                }
                 return index;
             } catch (err) {
                 console.warn(`BibleApi: search index unavailable for ${translation}, falling back to book fetches`, err);
