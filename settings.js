@@ -151,7 +151,15 @@ export async function toggleSetting(app, setting) {
         return;
     }
 
-    applySettings(app);
+    if (setting === 'showVerseNumbers') {
+        document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
+        return;
+    }
+
+    if (setting === 'showFootnotes' || setting === 'showCrossReferences') {
+        await app.loadPassage(app.state.currentBook, app.state.currentChapter);
+        return;
+    }
 }
 
 export async function toggleVerseByVerse(app) {
