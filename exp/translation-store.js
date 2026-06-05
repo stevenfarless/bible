@@ -54,6 +54,22 @@ function _idbPut(store, key, value) {
     });
 }
 
+function _idbDelete(store, key) {
+    return new Promise((resolve, reject) => {
+        const req = store.delete(key);
+        req.onsuccess = () => resolve();
+        req.onerror   = (e) => reject(e.target.error);
+    });
+}
+
+function _idbGetAllKeys(store) {
+    return new Promise((resolve, reject) => {
+        const req = store.getAllKeys();
+        req.onsuccess = () => resolve(req.result ?? []);
+        req.onerror   = (e) => reject(e.target.error);
+    });
+}
+
 export async function idbGetBook(translation, book) {
     try {
         await _open();
@@ -100,4 +116,23 @@ export async function idbMarkDownloaded(translation) {
         await _open();
         await _idbPut(_tx('downloaded', 'readwrite'), translation, true);
     } catch (_) {}
+}
+
+/**
+ * Remove all IndexedDB data for a translation (books, search index, downloaded flag).
+ */
+export async function idbDeleteTranslation(translation) {
+    try {
+        await _open();
+        const prefix = `${translation}/`;
+        const bookKeys = await _idbGetAllKeys(_tx('books', 'readonly'));
+        const toDelete = bookKeys.filter((k) => k.startsWith(prefix));
+        await Promise.all(
+            toDelete.map((k) => _idbDelete(_tx('books', 'readwrite'), k))
+        );
+        await _idbDelete(_tx('searchIndex', 'readwrite'), translation);
+        await _idbDelete(_tx('downloaded', 'readwrite'), translation);
+    } catch (err) {
+        console.error('idbDeleteTranslation failed', err);
+    }
 }

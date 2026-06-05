@@ -1,45 +1,20 @@
 // bible-api.js
-// Serves Bible text from Firebase Realtime Database (Firebase translations)
-// or from local repo files (local translations).
-//
-// PRECACHED translations (KJV, BSB) load per-book from ./translations/{T}/{Book}.json
-// and are prefetched by the service worker. No IndexedDB needed.
-//
-// ON-DEMAND translations are all other entries in translations/index.json.
-// Their JSON files live at the same ./translations/{T}/{Book}.json paths but
-// are NOT precached by the SW. Reading them:
-//   1. Check in-memory _bookCache.
-//   2. Check IndexedDB (populated by the download button).
-//   3. Fall through to a live fetch (works online; offline only if SW cached it
-//      opportunistically after first access).
-// The download button in the translation picker pre-populates IndexedDB with
-// all books + the search index so the translation works fully offline.
-//
-// FIREBASE translations (future): disabled until FIREBASE_TRANSLATIONS_ENABLED = true.
-
 import { FIREBASE_DB_URL } from './config/firebase-config.js';
 import { normaliseBookAlias } from './book-aliases.js';
 import {
     idbGetBook, idbPutBook,
     idbGetSearchIndex, idbPutSearchIndex,
     idbIsDownloaded, idbMarkDownloaded,
+    idbDeleteTranslation,
 } from './translation-store.js';
 
-// ── Feature flag ──────────────────────────────────────────────────────────────
 const FIREBASE_TRANSLATIONS_ENABLED = false;
-// ─────────────────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 100;
 const SEARCH_CONCURRENCY = 5;
 
-// Only KJV and BSB are precached by the service worker.
-// All other translations are fetched on demand and stored in IndexedDB
-// when the user presses the download button.
 export const LOCAL_TRANSLATIONS = new Set(["BSB", "KJV"]);
 
-// All translations whose files ship in the repo (precached or not).
-// Used by _loadBook to decide whether to use the local fetch path
-// before falling back to Firebase.
 const REPO_TRANSLATIONS = new Set([
     "ASV", "BLB", "BSB", "CSB", "ESV", "ISV", "KJV", "LEB",
     "MEV", "MSB", "NET", "NIV", "NKJV", "NLT", "NRSVUE", "WEB",
@@ -69,9 +44,6 @@ const BOOK_LOAD_ORDER = [
 
 const BOOK_LOAD_ORDER_BY_LENGTH = [...BOOK_LOAD_ORDER].sort((a, b) => b.length - a.length);
 
-// Maps canonical book names (used internally) to the actual filename on disk
-// when they differ. All values must match the real file names exactly
-// (case-sensitive, since GitHub Pages on Linux is case-sensitive).
 const BOOK_KEY_ALIASES = {
     'Song of Solomon': 'Song of Solomon',
 };
@@ -137,8 +109,6 @@ export class BibleApi {
         this._translationBookLists.set(translation, bookNames);
     }
 
-    // ── Firebase loading ──────────────────────────────────────────────────
-
     async _getShallowIndex(translation) {
         if (!FIREBASE_TRANSLATIONS_ENABLED) return new Map();
         if (this._shallowIndexCache.has(translation)) {
@@ -169,7 +139,6 @@ export class BibleApi {
             return this._bookCache.get(cacheKey);
         }
 
-        // ── Repo path: precached (KJV/BSB) or on-demand (all others) ─────
         if (REPO_TRANSLATIONS.has(translation)) {
             if (this._localBookFetchPromise.has(cacheKey)) {
                 return this._localBookFetchPromise.get(cacheKey);
@@ -184,8 +153,6 @@ export class BibleApi {
 
             const promise = (async () => {
                 try {
-                    // For non-precached translations, try IndexedDB first so
-                    // previously downloaded data is available offline.
                     if (!LOCAL_TRANSLATIONS.has(translation)) {
                         const cached = await idbGetBook(translation, book);
                         if (cached !== null) {
@@ -194,16 +161,8 @@ export class BibleApi {
                         }
                     }
 
-                    // Use the alias map to resolve the on-disk filename if it
-                    // differs from the canonical book name.
                     const filename = BOOK_KEY_ALIASES[book] ?? book;
-                    let data;
-                    try {
-                        data = await fetchBookFromNetwork(filename);
-                    } catch (err) {
-                        // If the alias itself fails, re-throw — no further fallback.
-                        throw err;
-                    }
+                    const data = await fetchBookFromNetwork(filename);
                     this._bookCache.set(cacheKey, data);
                     if (filename !== book) {
                         this._bookCache.set(`${translation}/${filename}`, data);
@@ -222,7 +181,6 @@ export class BibleApi {
             return promise;
         }
 
-        // ── Firebase path ────────────────────────────────────────────────
         if (!FIREBASE_TRANSLATIONS_ENABLED) {
             console.warn(`BibleApi: Firebase translations disabled — cannot load ${translation}/${this._sanitizeForLog(book)}`);
             return null;
@@ -273,7 +231,6 @@ export class BibleApi {
                     return null;
                 }
 
-                // For non-precached repo translations, try IndexedDB first.
                 if (isRepo && !LOCAL_TRANSLATIONS.has(translation)) {
                     const cached = await idbGetSearchIndex(translation);
                     if (cached !== null) {
@@ -306,10 +263,8 @@ export class BibleApi {
 
     /**
      * Download all books and the search index for a non-precached translation
-     * and persist them in IndexedDB. Called by the download button in the
-     * translation picker. The bookList should come from the translation's
-     * meta.json so deuterocanonical books are included for extended-canon
-     * translations.
+     * and persist them in IndexedDB. The bookList should come from meta.json
+     * so deuterocanonical books are included for extended-canon translations.
      *
      * @param {string}   translation
      * @param {string[]} bookList     Ordered list of book names from meta.json
@@ -355,6 +310,20 @@ export class BibleApi {
         } catch (_) {}
 
         await idbMarkDownloaded(translation);
+    }
+
+    /**
+     * Evict all in-memory cache entries for a translation.
+     * Call after idbDeleteTranslation so the next read goes to network/IDB.
+     */
+    evictTranslation(translation) {
+        const prefix = `${translation}/`;
+        for (const key of [...this._bookCache.keys()]) {
+            if (key.startsWith(prefix)) this._bookCache.delete(key);
+        }
+        this._searchIndexCache.delete(translation);
+        this._shallowIndexCache.delete(translation);
+        this._translationBookLists.delete(translation);
     }
 
     _parseReference(reference) {

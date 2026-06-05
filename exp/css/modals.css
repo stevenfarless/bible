@@ -115,8 +115,9 @@
 
 .translation-modal-item {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: var(--spacing-md);
+    gap: 0 var(--spacing-md);
     padding: var(--spacing-md) var(--spacing-lg);
     border-radius: var(--border-radius);
     cursor: pointer;
@@ -174,51 +175,58 @@
     min-width: 0;
 }
 
-/* Download button inside translation list items */
-.translation-dl-btn {
+/* Not-yet-downloaded items: muted appearance to signal they need a download */
+.translation-modal-item:not(.translation-modal-item--downloaded):not(.translation-modal-item--downloading) {
+    .translation-modal-item__desc {
+        opacity: 0.65;
+    }
+}
+
+/* Inline download progress — spans the full item width on the second row */
+.translation-dl-progress {
+    width: 100%;
     display: flex;
     align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    margin-left: auto;
-    width: 28px;
-    height: 28px;
-    border-radius: var(--border-radius);
+    gap: var(--spacing-sm);
+    padding-top: var(--spacing-xs);
+}
+
+.translation-dl-progress__bar-track {
+    flex: 1;
+    height: 3px;
+    border-radius: 999px;
+    background-color: var(--border-color);
+    overflow: hidden;
+}
+
+.translation-dl-progress__bar {
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+    background-color: var(--primary-color);
+    transition: width 150ms ease;
+}
+
+.translation-dl-progress__label {
+    font-size: 0.75rem;
     color: var(--text-muted);
-    opacity: 0.6;
-    transition: opacity var(--transition-fast), color var(--transition-fast),
-                background-color var(--transition-fast);
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 4rem;
+    text-align: right;
 }
 
-.translation-modal-item:hover .translation-dl-btn {
-    opacity: 1;
+.translation-dl-progress--error .translation-dl-progress__bar {
+    background-color: var(--error-color, #e05c5c);
+    width: 100%;
+    opacity: 0.4;
 }
 
-.translation-dl-btn:hover {
-    background-color: var(--bg-tertiary);
-    color: var(--primary-color);
-    opacity: 1;
-}
-
-.translation-dl-btn--done {
-    color: var(--success-color, #4caf50);
-    opacity: 0.85;
-    pointer-events: none;
-}
-
-.translation-dl-btn--downloading {
-    opacity: 1;
-    color: var(--primary-color);
-    pointer-events: none;
-}
-
-@keyframes translation-dl-spin {
-    to { transform: rotate(360deg); }
-}
-
-.translation-dl-spinner {
-    animation: translation-dl-spin 0.9s linear infinite;
-    transform-origin: center;
+.translation-dl-progress--error .translation-dl-progress__label {
+    color: var(--error-color, #e05c5c);
+    min-width: unset;
+    flex: 1;
+    text-align: left;
 }
 
 /* References Modal (Bottom Sheet) */

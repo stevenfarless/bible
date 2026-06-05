@@ -4,7 +4,7 @@
 import { LOCAL_TRANSLATIONS } from './bible-api.js';
 import { idbIsDownloaded } from './translation-store.js';
 
-// ── Open / close ─────────────────────────────────────────────────────────────────────────────────────
+// ── Open / close ──────────────────────────────────────────────────────────────
 
 export function openModal(app, modal) {
     if (!modal) return;
@@ -39,7 +39,7 @@ function _maybeRemoveModalOpen() {
     }
 }
 
-// ── Book modal ──────────────────────────────────────────────────────────────────────────────────
+// ── Book modal ────────────────────────────────────────────────────────────────
 
 export function openBookModal(app) {
     populateBookModal(app);
@@ -97,8 +97,7 @@ export function populateBookModal(app) {
     }
 }
 
-
-// ── Deuterocanon info modal ─────────────────────────────────────────────────────────────────────────────────
+// ── Deuterocanon info modal ───────────────────────────────────────────────────
 
 export function openDeuterocanonInfoModal(app) {
     const modal = document.getElementById('deuterocanonInfoModal');
@@ -109,8 +108,7 @@ export function openDeuterocanonInfoModal(app) {
     }
 }
 
-
-// ── Chapter modal ─────────────────────────────────────────────────────────────────────────────────
+// ── Chapter modal ─────────────────────────────────────────────────────────────
 
 export function openChapterModal(app) {
     populateChapterModal(app);
@@ -136,7 +134,7 @@ export function populateChapterModal(app) {
     }
 }
 
-// ── Verse modal ──────────────────────────────────────────────────────────────────────────────────
+// ── Verse modal ───────────────────────────────────────────────────────────────
 
 export function openVerseModal(app) {
     populateVerseModal(app);
@@ -174,11 +172,10 @@ export function getCurrentVerseCount(app) {
     return app.passageText.querySelectorAll('.verse-num').length;
 }
 
-// ── Translation modal ────────────────────────────────────────────────────────────────────────────────
+// ── Translation modal ─────────────────────────────────────────────────────────
 
-const _SVG_DOWNLOAD = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
-const _SVG_CHECK    = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`;
-const _SVG_SPINNER  = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="translation-dl-spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`;
+// Tracks which translations are actively downloading so re-taps are ignored.
+const _downloading = new Set();
 
 export function openTranslationModal(app) {
     populateTranslationModal(app);
@@ -222,75 +219,114 @@ export function populateTranslationModal(app) {
         li.appendChild(descSpan);
 
         if (!isPrecached) {
-            const dlBtn = document.createElement('button');
-            dlBtn.className = 'translation-dl-btn';
-            dlBtn.setAttribute('aria-label', `Download ${t.id} for offline use`);
-            dlBtn.innerHTML = _SVG_DOWNLOAD;
-            dlBtn.dataset.translationId = t.id;
+            // Inline download progress bar (hidden until download starts)
+            const progressWrap = document.createElement('div');
+            progressWrap.className = 'translation-dl-progress';
+            progressWrap.hidden = true;
 
-            // Check IndexedDB asynchronously and swap icon if already downloaded.
+            const progressBar = document.createElement('div');
+            progressBar.className = 'translation-dl-progress__bar';
+
+            const progressLabel = document.createElement('span');
+            progressLabel.className = 'translation-dl-progress__label';
+
+            progressWrap.appendChild(progressBar);
+            progressWrap.appendChild(progressLabel);
+            li.appendChild(progressWrap);
+
+            // If already in-progress (modal was reopened mid-download), restore state
+            if (_downloading.has(t.id)) {
+                progressWrap.hidden = false;
+                progressLabel.textContent = 'Downloading\u2026';
+                li.classList.add('translation-modal-item--downloading');
+            }
+
+            // Async: mark as downloaded if IDB already has it
             idbIsDownloaded(t.id).then((already) => {
-                if (already) {
-                    dlBtn.innerHTML = _SVG_CHECK;
-                    dlBtn.classList.add('translation-dl-btn--done');
-                    dlBtn.setAttribute('aria-label', `${t.id} downloaded`);
+                if (already) li.classList.add('translation-modal-item--downloaded');
+            });
+
+            li.addEventListener('click', () => {
+                if (_downloading.has(t.id)) return;
+                if (li.classList.contains('translation-modal-item--downloaded')) {
+                    app.changeTranslation(t.id);
+                    app.closeModal(app.translationModal);
+                    return;
                 }
+                _handleTranslationSelect(app, t, li, progressWrap, progressBar, progressLabel);
             });
-
-            dlBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                _handleDownloadClick(app, t, dlBtn);
+        } else {
+            li.addEventListener('click', () => {
+                app.changeTranslation(t.id);
+                app.closeModal(app.translationModal);
             });
-
-            li.appendChild(dlBtn);
         }
-
-        li.addEventListener('click', () => {
-            app.changeTranslation(t.id);
-            app.closeModal(app.translationModal);
-        });
 
         app.translationList.appendChild(li);
     }
 }
 
-async function _handleDownloadClick(app, t, btn) {
-    if (btn.classList.contains('translation-dl-btn--downloading') ||
-        btn.classList.contains('translation-dl-btn--done')) return;
+async function _handleTranslationSelect(app, t, li, progressWrap, progressBar, progressLabel) {
+    if (!navigator.onLine) {
+        _showInlineError(li, progressWrap, progressLabel, 'Connect to internet to download');
+        return;
+    }
 
-    btn.classList.add('translation-dl-btn--downloading');
-    btn.innerHTML = _SVG_SPINNER;
-    btn.setAttribute('aria-label', `Downloading ${t.id}…`);
+    _downloading.add(t.id);
+    li.classList.add('translation-modal-item--downloading');
+    progressWrap.hidden = false;
+    progressBar.style.width = '0%';
+    progressLabel.textContent = 'Downloading\u2026';
+
+    // Fetch meta.json for the correct book list (incl. deuterocanon)
+    let bookList = null;
+    try {
+        const metaRes = await fetch(`./translations/${t.id}/meta.json`);
+        if (metaRes.ok) {
+            const meta = await metaRes.json();
+            if (meta?.books?.length) bookList = meta.books.map((b) => b.name);
+        }
+    } catch (_) {}
+
+    const total = bookList?.length || 66;
 
     try {
-        // Fetch the translation's meta.json to get the correct book list
-        // (including deuterocanon for extended-canon translations).
-        let bookList = null;
-        try {
-            const metaRes = await fetch(`./translations/${t.id}/meta.json`);
-            if (metaRes.ok) {
-                const meta = await metaRes.json();
-                if (meta?.books?.length) bookList = meta.books.map(b => b.name);
-            }
-        } catch (_) {}
+        await app.bibleApi.downloadTranslation(t.id, bookList, (done, tot) => {
+            const pct = Math.round((done / tot) * 100);
+            progressBar.style.width = `${pct}%`;
+            progressLabel.textContent = `${done}\u202f/\u202f${tot}`;
+        });
 
-        await app.bibleApi.downloadTranslation(t.id, bookList, null);
+        _downloading.delete(t.id);
+        li.classList.remove('translation-modal-item--downloading');
+        li.classList.add('translation-modal-item--downloaded');
+        progressWrap.hidden = true;
 
-        btn.innerHTML = _SVG_CHECK;
-        btn.classList.remove('translation-dl-btn--downloading');
-        btn.classList.add('translation-dl-btn--done');
-        btn.setAttribute('aria-label', `${t.id} downloaded`);
-        app.showToast?.(`${t.id} downloaded for offline use`);
+        // Auto-switch to the newly downloaded translation and close
+        app.changeTranslation(t.id);
+        app.closeModal(app.translationModal);
     } catch (err) {
-        btn.classList.remove('translation-dl-btn--downloading');
-        btn.innerHTML = _SVG_DOWNLOAD;
-        btn.setAttribute('aria-label', `Download ${t.id} for offline use`);
-        app.showToast?.(`Failed to download ${t.id}`);
+        _downloading.delete(t.id);
+        li.classList.remove('translation-modal-item--downloading');
+        progressBar.style.width = '0%';
+        _showInlineError(li, progressWrap, progressLabel, 'Download failed — try again');
         console.error('Translation download failed', err);
     }
 }
 
-// ── Translation modal keyboard helpers ───────────────────────────────────────────────
+function _showInlineError(li, progressWrap, progressLabel, message) {
+    progressWrap.hidden = false;
+    progressWrap.classList.add('translation-dl-progress--error');
+    progressLabel.textContent = message;
+    // Auto-clear after 3 s
+    setTimeout(() => {
+        progressWrap.hidden = true;
+        progressWrap.classList.remove('translation-dl-progress--error');
+        progressLabel.textContent = '';
+    }, 3000);
+}
+
+// ── Translation modal keyboard helpers ───────────────────────────────────────
 
 function _translationItems(app) {
     return app.translationList
@@ -329,11 +365,11 @@ export function translationKbSelect(app) {
     const registry = app._translationRegistry || [];
     const t = registry[idx];
     if (!t) return;
-    app.changeTranslation(t.id);
-    app.closeModal(app.translationModal);
+    // Simulate a click on the item so download logic runs if needed
+    items[idx].click();
 }
 
-// ── Drag-to-resize ───────────────────────────────────────────────────────────────────────────────────────
+// ── Drag-to-resize ────────────────────────────────────────────────────────────
 
 function attachDragHandlers(app, modal, dismissOnDrag = true) {
     const content = modal.querySelector('.modal-content');
