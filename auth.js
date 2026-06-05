@@ -304,3 +304,27 @@ export async function handleChangePassword(app) {
         }
     }
 }
+
+export async function handleForgotPassword(app) {
+    const email = document.getElementById('forgotPasswordEmail').value.trim();
+
+    if (!email) {
+        app.showToast('Please enter your email address');
+        return;
+    }
+
+    try {
+        await app.auth.sendPasswordResetEmail(email);
+        app.showToast('Reset link sent — check your inbox');
+        app.closeModal(document.getElementById('forgotPasswordModal'));
+        document.getElementById('forgotPasswordEmail').value = '';
+    } catch (err) {
+        if (err.code === 'auth/user-not-found') {
+            app.showToast('No account found with that email');
+        } else if (err.code === 'auth/invalid-email') {
+            app.showToast('Invalid email address');
+        } else {
+            app.showToast(`Failed: ${err.message}`);
+        }
+    }
+}
