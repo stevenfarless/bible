@@ -352,7 +352,7 @@ function _attachSwipe(wrapper, li) {
     let isDragging = false;
     let isOpen = false;
     let currentX = 0;
-    // null = undecided, true = horizontal, false = vertical (abort)
+    // null = undecided, true = horizontal, false = vertical
     let axis = null;
 
     const clampX = (x) => Math.max(-_DELETE_BTN_W, Math.min(0, x));
@@ -366,51 +366,54 @@ function _attachSwipe(wrapper, li) {
     const open  = () => { isOpen = true;  setX(-_DELETE_BTN_W, true); wrapper.classList.add('translation-modal-item-wrapper--open'); };
     const close = () => { isOpen = false; setX(0, true); wrapper.classList.remove('translation-modal-item-wrapper--open'); };
 
-    // passive:false is required so touchmove can call preventDefault and
-    // stop the parent scroll once we've confirmed a horizontal gesture.
+    // Bound handlers — stored so they can be removed after each gesture.
+    let _onMove = null;
+    let _onEnd  = null;
+
     li.addEventListener('touchstart', (e) => {
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         isDragging = true;
         axis = null;
         li.style.transition = 'none';
-    }, { passive: false });
 
-    li.addEventListener('touchmove', (e) => {
-        if (!isDragging) return;
+        _onMove = (ev) => {
+            if (!isDragging) return;
 
-        const dx = e.touches[0].clientX - startX;
-        const dy = e.touches[0].clientY - startY;
+            const dx = ev.touches[0].clientX - startX;
+            const dy = ev.touches[0].clientY - startY;
 
-        if (axis === null) {
-            // Wait for a clear directional signal before committing.
-            if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
-            axis = Math.abs(dx) >= Math.abs(dy);
-        }
+            if (axis === null) {
+                if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+                axis = Math.abs(dx) >= Math.abs(dy);
+                // Vertical scroll — abort immediately without cancelling.
+                if (!axis) { isDragging = false; cleanup(); return; }
+            }
 
-        if (!axis) {
-            // Vertical — let the browser scroll normally.
-            isDragging = false;
-            return;
-        }
+            // Horizontal confirmed: prevent the page/modal from scrolling.
+            ev.preventDefault();
+            const base = isOpen ? -_DELETE_BTN_W : 0;
+            setX(base + dx, false);
+        };
 
-        // Horizontal confirmed: own this touch and block scroll.
-        e.preventDefault();
-        const base = isOpen ? -_DELETE_BTN_W : 0;
-        setX(base + dx, false);
-    }, { passive: false });
+        _onEnd = () => {
+            if (isDragging) {
+                isDragging = false;
+                if (currentX < -_SWIPE_THRESHOLD) open();
+                else close();
+            }
+            cleanup();
+        };
 
-    li.addEventListener('touchend', () => {
-        if (!isDragging) return;
-        isDragging = false;
-        if (currentX < -_SWIPE_THRESHOLD) open();
-        else close();
+        document.addEventListener('touchmove',   _onMove, { passive: false });
+        document.addEventListener('touchend',    _onEnd,  { passive: true });
+        document.addEventListener('touchcancel', _onEnd,  { passive: true });
     }, { passive: true });
 
-    li.addEventListener('touchcancel', () => {
-        isDragging = false;
-        close();
-    }, { passive: true });
+    function cleanup() {
+        if (_onMove) { document.removeEventListener('touchmove',   _onMove); _onMove = null; }
+        if (_onEnd)  { document.removeEventListener('touchend',    _onEnd);  document.removeEventListener('touchcancel', _onEnd); _onEnd = null; }
+    }
 
     // Close when the user taps anywhere outside this wrapper.
     document.addEventListener('touchstart', (e) => {
@@ -476,6 +479,11 @@ async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progre
         li.classList.add('translation-modal-item--downloaded');
         iconEl.innerHTML = _SVG_DOWNLOADED;
         progressWrap.hidden = true;
+
+        setTimeout(() => {
+            app.changeTranslation(t.id);
+            app.closeModal(app.translationModal);
+        }, 1000);
     } catch (err) {
         _downloading.delete(t.id);
         li.classList.remove('translation-modal-item--downloading');
