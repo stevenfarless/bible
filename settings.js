@@ -1,7 +1,7 @@
 // settings.js
 // Reading preferences: load from storage, apply to DOM, persist to Firebase and localStorage.
 
-import { changeColorTheme, updateThemeIcon } from './ui.js';
+import { changeColorTheme, applyLightMode } from './ui.js';
 
 const DEFAULTS = {
     fontSize:            18,
@@ -10,7 +10,7 @@ const DEFAULTS = {
     showFootnotes:       false,
     showCrossReferences: false,
     verseByVerse:        false,
-    lightMode:           false,
+    lightMode:           'system',
     colorTheme:          'basic',
     translation:         'KJV',
     readingFont:         'gentium',
@@ -60,7 +60,11 @@ export function loadLocalSettings(app) {
     app.state.showFootnotes       = readBool('showFootnotes',       DEFAULTS.showFootnotes);
     app.state.showCrossReferences = readBool('showCrossReferences', DEFAULTS.showCrossReferences);
     app.state.verseByVerse        = readBool('verseByVerse',        DEFAULTS.verseByVerse);
-    app.state.lightMode           = readBool('lightMode',           DEFAULTS.lightMode);
+    const _rawLightMode = (() => { try { return localStorage.getItem('lightMode'); } catch (_) { return null; } })();
+    app.state.lightMode =
+        _rawLightMode === 'light' || _rawLightMode === 'dark' || _rawLightMode === 'system'
+            ? _rawLightMode
+            : DEFAULTS.lightMode;
 
     try { app.state.colorTheme = localStorage.getItem('colorTheme') || DEFAULTS.colorTheme; }
     catch (_) { app.state.colorTheme = DEFAULTS.colorTheme; }
@@ -99,10 +103,9 @@ export function applySettings(app) {
     }
     app.bibleApi.setTranslation(app.state.translation || DEFAULTS.translation);
 
-    document.body.classList.toggle('light-mode', !!app.state.lightMode);
-    const lightModeToggle = document.getElementById('lightModeToggle');
-    if (lightModeToggle) lightModeToggle.checked = !!app.state.lightMode;
-    updateThemeIcon(app.state.lightMode);
+    applyLightMode(app.state.lightMode);
+    const lightModeSelect = document.getElementById('lightModeSelect');
+    if (lightModeSelect) lightModeSelect.value = app.state.lightMode;
 
     document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
     if (app.verseNumbersToggle)    app.verseNumbersToggle.checked    = !!app.state.showVerseNumbers;
