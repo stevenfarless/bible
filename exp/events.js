@@ -7,6 +7,7 @@ import { attachDragToResize } from './modals.js';
 import { runMegasearch, performKeywordSearch } from './search.js';
 import { applyReadingFont } from './settings.js';
 import { initSwipe } from './swipe.js';
+import { handleChangeEmail, handleChangePassword, handleForgotPassword } from './auth.js';
 
 /**
  * @param {object} app - BibleApp instance
@@ -125,8 +126,29 @@ export function attachEventListeners(app) {
 
     // ── Auth ─────────────────────────────────────────────────────
     document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
+    document.getElementById('changeEmailBtn')?.addEventListener('click', () => {
+        document.getElementById('changeEmailUsername').value = app.currentUser?.email ?? '';
+        app.closeModal(app.userMenuModal);
+        app.openModal(document.getElementById('changeEmailModal'));
+    });
+    document.getElementById('changePasswordBtn')?.addEventListener('click', () => {
+        document.getElementById('changePasswordUsername').value = app.currentUser?.email ?? '';
+        app.closeModal(app.userMenuModal);
+        app.openModal(document.getElementById('changePasswordModal'));
+    });
+    document.getElementById('closeChangeEmailModal')?.addEventListener('click', () => app.closeModal(document.getElementById('changeEmailModal')));
+    document.getElementById('closeChangePasswordModal')?.addEventListener('click', () => app.closeModal(document.getElementById('changePasswordModal')));
+    document.getElementById('changeEmailForm')?.addEventListener('submit', (e) => { e.preventDefault(); handleChangeEmail(app); });
+    document.getElementById('changePasswordForm')?.addEventListener('submit', (e) => { e.preventDefault(); handleChangePassword(app); });
 
     document.getElementById('showSignupLink')?.addEventListener('click', (e) => {
+    document.getElementById('forgotPasswordLink')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        app.closeModal(app.loginModal);
+        app.openModal(document.getElementById('forgotPasswordModal'));
+    });
+    document.getElementById('closeForgotPasswordModal')?.addEventListener('click', () => app.closeModal(document.getElementById('forgotPasswordModal')));
+    document.getElementById('forgotPasswordForm')?.addEventListener('submit', (e) => { e.preventDefault(); handleForgotPassword(app); });
         e.preventDefault();
         app.closeModal(app.loginModal);
         app.openModal(app.signupModal);

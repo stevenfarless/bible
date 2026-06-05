@@ -5,7 +5,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Bible Reader</title>
-        <meta name="build-id" content="349bb8a21ebb9bee5c498f3e308148edeafdcf03" />
+        <meta name="build-id" content="6a6f22226aad65fd357bff4e47bb13baefa0c5ea" />
         <link rel="manifest" href="./site.webmanifest" />
         <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -20,7 +20,7 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
         <!-- Preload all ES modules so the browser fetches them in parallel
-             before the parser reaches <script type="module" src="app.js?v=349bb8a21ebb9bee5c498f3e308148edeafdcf03">.
+             before the parser reaches <script type="module" src="app.js?v=6a6f22226aad65fd357bff4e47bb13baefa0c5ea">.
              This eliminates the sequential module-discovery waterfall. -->
         <link rel="modulepreload" href="app.js" />
         <link rel="modulepreload" href="bible-api.js" />
@@ -62,7 +62,7 @@
                 <header class="header">
                         <div class="header-content">
                                 <h1 class="logo">Lege Lux</h1>
-                                <span id="build-info">exp #1875 · 349bb8a</span>
+                                <span id="build-info">exp #1879 · 6a6f222</span>
                                 <div class="header-controls">
                                         <button class="icon-btn" id="searchToggle" title="Search (Ctrl+K)">
                                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -462,6 +462,9 @@
                                         <button type="submit" class="primary-btn" style="width: 100%">Sign In</button>
                                 </form>
                                 <p class="auth-switch">
+                                        <a href="#" id="forgotPasswordLink">Forgot password?</a>
+                                </p>
+                                <p class="auth-switch">
                                         Don't have an account?
                                         <a href="#" id="showSignupLink">Sign up</a>
                                 </p>
@@ -514,9 +517,9 @@
                                                 <span id="userTheme">Dracula Dark</span>
                                         </p>
                                 </div>
-                                <div style="display: flex; flex-direction: column; gap: var(--spacing-sm); margin-bottom: var(--spacing-md);">
-                                        <button id="changeEmailBtn" class="secondary-btn" style="width: 100%">Change Email</button>
-                                        <button id="changePasswordBtn" class="secondary-btn" style="width: 100%">Change Password</button>
+                                <div class="btn-row">
+                                        <button id="changeEmailBtn" class="secondary-btn">Change Email</button>
+                                        <button id="changePasswordBtn" class="secondary-btn">Change Password</button>
                                 </div>
                                 <button id="logoutBtn" class="primary-btn" style="width: 100%">Sign Out</button>
                         </div>
@@ -531,7 +534,6 @@
                         </div>
                         <div class="modal-body">
                                 <form id="changeEmailForm">
-                                        <input type="hidden" id="changeEmailUsername" autocomplete="username">
                                         <div class="form-group">
                                                 <label for="changeEmailCurrent">Current Password</label>
                                                 <input type="password" id="changeEmailCurrent" placeholder="Enter current password" autocomplete="current-password">
@@ -554,7 +556,6 @@
                         </div>
                         <div class="modal-body">
                                 <form id="changePasswordForm">
-                                        <input type="hidden" id="changePasswordUsername" autocomplete="username">
                                         <div class="form-group">
                                                 <label for="changePasswordCurrent">Current Password</label>
                                                 <input type="password" id="changePasswordCurrent" placeholder="Enter current password" autocomplete="current-password">
@@ -564,6 +565,24 @@
                                                 <input type="password" id="changePasswordNew" placeholder="At least 6 characters" autocomplete="new-password">
                                         </div>
                                         <button type="submit" class="primary-btn" style="width: 100%; margin-top: var(--spacing-md)">Update Password</button>
+                                </form>
+                        </div>
+                </div>
+        </div>
+
+        <div id="forgotPasswordModal" class="modal">
+                <div class="modal-content">
+                        <div class="modal-header">
+                                <h3>Reset Password</h3>
+                                <button class="close-btn" id="closeForgotPasswordModal">×</button>
+                        </div>
+                        <div class="modal-body">
+                                <form id="forgotPasswordForm">
+                                        <div class="setting-item">
+                                                <label for="forgotPasswordEmail">Email</label>
+                                                <input type="email" id="forgotPasswordEmail" class="input-field" placeholder="your@email.com" autocomplete="email">
+                                        </div>
+                                        <button type="submit" class="primary-btn" style="width: 100%; margin-top: var(--spacing-md)">Send Reset Link</button>
                                 </form>
                         </div>
                 </div>
@@ -628,7 +647,7 @@
         <div id="toast" class="toast"></div>
 
 
-        <script type="module" src="app.js?v=349bb8a21ebb9bee5c498f3e308148edeafdcf03"></script>
+        <script type="module" src="app.js?v=6a6f22226aad65fd357bff4e47bb13baefa0c5ea"></script>
 </body>
 
 </html>
