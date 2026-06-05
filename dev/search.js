@@ -430,13 +430,14 @@ export async function runMegasearch(app, query) {
 export function groupSearchResultsByCanon(app, results) {
     if (!Array.isArray(results)) return [];
 
-    const otBooks = Object.keys(app.bibleBooks['Old Testament']);
-    const ntBooks = Object.keys(app.bibleBooks['New Testament']);
+    const allBooks = app.getAllBooks();
+    const otBooks = Object.keys(app.bibleBooks['Old Testament'] || {});
+    const ntBooks = Object.keys(app.bibleBooks['New Testament'] || {});
     const otGroups = new Map();
     const ntGroups = new Map();
 
     for (const result of results) {
-        const parsed = parseReference(result.reference);
+        const parsed = parseReference(result.reference, allBooks);
         if (!parsed) continue;
         const { book } = parsed;
         const testament = app.getTestament?.(book);
