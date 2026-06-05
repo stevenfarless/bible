@@ -174,6 +174,12 @@ export function getCurrentVerseCount(app) {
 
 // ── Translation modal ─────────────────────────────────────────────────────────
 
+const _SVG_DOWNLOAD = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><path d="M11.29,16.71h0a1.15,1.15,0,0,0,.33.21.94.94,0,0,0,.76,0,1.15,1.15,0,0,0,.33-.21h0l4-4a1,1,0,0,0-1.42-1.42L13,13.59V3a1,1,0,0,0-2,0V13.59l-2.29-2.3a1,1,0,1,0-1.42,1.42Z"/><path d="M19,20H5a1,1,0,0,0,0,2H19a1,1,0,0,0,0-2Z"/></svg>`;
+
+const _SVG_DOWNLOADED = `<svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><path d="M34.459 1.375a2.999 2.999 0 0 0-4.149.884L13.5 28.17l-8.198-7.58a2.999 2.999 0 1 0-4.073 4.405l10.764 9.952s.309.266.452.359a2.999 2.999 0 0 0 4.15-.884L35.343 5.524a2.999 2.999 0 0 0-.884-4.149z"/></svg>`;
+
+const _SVG_SPINNER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="translation-dl-spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`;
+
 // Tracks which translations are actively downloading so re-taps are ignored.
 const _downloading = new Set();
 
@@ -219,10 +225,19 @@ export function populateTranslationModal(app) {
         li.appendChild(descSpan);
 
         if (!isPrecached) {
+            // Status icon (download arrow or checkmark)
+            const iconEl = document.createElement('span');
+            iconEl.className = 'translation-modal-item__status-icon';
+            iconEl.innerHTML = _SVG_DOWNLOAD;
+            li.appendChild(iconEl);
+
             // Inline download progress bar (hidden until download starts)
             const progressWrap = document.createElement('div');
             progressWrap.className = 'translation-dl-progress';
             progressWrap.hidden = true;
+
+            const progressTrack = document.createElement('div');
+            progressTrack.className = 'translation-dl-progress__bar-track';
 
             const progressBar = document.createElement('div');
             progressBar.className = 'translation-dl-progress__bar';
@@ -230,20 +245,25 @@ export function populateTranslationModal(app) {
             const progressLabel = document.createElement('span');
             progressLabel.className = 'translation-dl-progress__label';
 
-            progressWrap.appendChild(progressBar);
+            progressTrack.appendChild(progressBar);
+            progressWrap.appendChild(progressTrack);
             progressWrap.appendChild(progressLabel);
             li.appendChild(progressWrap);
 
             // If already in-progress (modal was reopened mid-download), restore state
             if (_downloading.has(t.id)) {
                 progressWrap.hidden = false;
+                iconEl.innerHTML = _SVG_SPINNER;
                 progressLabel.textContent = 'Downloading\u2026';
                 li.classList.add('translation-modal-item--downloading');
             }
 
             // Async: mark as downloaded if IDB already has it
             idbIsDownloaded(t.id).then((already) => {
-                if (already) li.classList.add('translation-modal-item--downloaded');
+                if (already) {
+                    li.classList.add('translation-modal-item--downloaded');
+                    iconEl.innerHTML = _SVG_DOWNLOADED;
+                }
             });
 
             li.addEventListener('click', () => {
@@ -253,7 +273,7 @@ export function populateTranslationModal(app) {
                     app.closeModal(app.translationModal);
                     return;
                 }
-                _handleTranslationSelect(app, t, li, progressWrap, progressBar, progressLabel);
+                _handleTranslationSelect(app, t, li, iconEl, progressWrap, progressBar, progressLabel);
             });
         } else {
             li.addEventListener('click', () => {
@@ -266,7 +286,7 @@ export function populateTranslationModal(app) {
     }
 }
 
-async function _handleTranslationSelect(app, t, li, progressWrap, progressBar, progressLabel) {
+async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progressBar, progressLabel) {
     if (!navigator.onLine) {
         _showInlineError(li, progressWrap, progressLabel, 'Connect to internet to download');
         return;
@@ -274,6 +294,7 @@ async function _handleTranslationSelect(app, t, li, progressWrap, progressBar, p
 
     _downloading.add(t.id);
     li.classList.add('translation-modal-item--downloading');
+    iconEl.innerHTML = _SVG_SPINNER;
     progressWrap.hidden = false;
     progressBar.style.width = '0%';
     progressLabel.textContent = 'Downloading\u2026';
@@ -288,8 +309,6 @@ async function _handleTranslationSelect(app, t, li, progressWrap, progressBar, p
         }
     } catch (_) {}
 
-    const total = bookList?.length || 66;
-
     try {
         await app.bibleApi.downloadTranslation(t.id, bookList, (done, tot) => {
             const pct = Math.round((done / tot) * 100);
@@ -300,6 +319,7 @@ async function _handleTranslationSelect(app, t, li, progressWrap, progressBar, p
         _downloading.delete(t.id);
         li.classList.remove('translation-modal-item--downloading');
         li.classList.add('translation-modal-item--downloaded');
+        iconEl.innerHTML = _SVG_DOWNLOADED;
         progressWrap.hidden = true;
 
         // Auto-switch to the newly downloaded translation and close
@@ -308,8 +328,9 @@ async function _handleTranslationSelect(app, t, li, progressWrap, progressBar, p
     } catch (err) {
         _downloading.delete(t.id);
         li.classList.remove('translation-modal-item--downloading');
+        iconEl.innerHTML = _SVG_DOWNLOAD;
         progressBar.style.width = '0%';
-        _showInlineError(li, progressWrap, progressLabel, 'Download failed — try again');
+        _showInlineError(li, progressWrap, progressLabel, 'Download failed \u2014 try again');
         console.error('Translation download failed', err);
     }
 }
@@ -318,7 +339,6 @@ function _showInlineError(li, progressWrap, progressLabel, message) {
     progressWrap.hidden = false;
     progressWrap.classList.add('translation-dl-progress--error');
     progressLabel.textContent = message;
-    // Auto-clear after 3 s
     setTimeout(() => {
         progressWrap.hidden = true;
         progressWrap.classList.remove('translation-dl-progress--error');
@@ -362,10 +382,6 @@ export function translationKbSelect(app) {
     const items = _translationItems(app);
     const idx   = app._translationKbIndex ?? -1;
     if (idx < 0 || idx >= items.length) return;
-    const registry = app._translationRegistry || [];
-    const t = registry[idx];
-    if (!t) return;
-    // Simulate a click on the item so download logic runs if needed
     items[idx].click();
 }
 

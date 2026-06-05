@@ -175,7 +175,40 @@
     min-width: 0;
 }
 
-/* Not-yet-downloaded items: muted appearance to signal they need a download */
+/* Status icon (download arrow / checkmark / spinner) */
+.translation-modal-item__status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    color: var(--text-muted);
+    opacity: 0.5;
+    transition: opacity var(--transition-fast), color var(--transition-fast);
+}
+
+.translation-modal-item__status-icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.translation-modal-item:hover .translation-modal-item__status-icon {
+    opacity: 0.85;
+}
+
+.translation-modal-item--downloaded .translation-modal-item__status-icon {
+    color: var(--success-color, #4caf50);
+    opacity: 0.9;
+}
+
+.translation-modal-item--downloading .translation-modal-item__status-icon {
+    color: var(--primary-color);
+    opacity: 1;
+}
+
+/* Not-yet-downloaded items: muted description to hint they need a download */
 .translation-modal-item:not(.translation-modal-item--downloaded):not(.translation-modal-item--downloading) {
     .translation-modal-item__desc {
         opacity: 0.65;
@@ -216,10 +249,14 @@
     text-align: right;
 }
 
+.translation-dl-progress--error .translation-dl-progress__bar-track {
+    background-color: transparent;
+}
+
 .translation-dl-progress--error .translation-dl-progress__bar {
     background-color: var(--error-color, #e05c5c);
     width: 100%;
-    opacity: 0.4;
+    opacity: 0.35;
 }
 
 .translation-dl-progress--error .translation-dl-progress__label {
@@ -227,6 +264,15 @@
     min-width: unset;
     flex: 1;
     text-align: left;
+}
+
+@keyframes translation-dl-spin {
+    to { transform: rotate(360deg); }
+}
+
+.translation-dl-spinner {
+    animation: translation-dl-spin 0.9s linear infinite;
+    transform-origin: center;
 }
 
 /* References Modal (Bottom Sheet) */
