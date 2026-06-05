@@ -232,5 +232,18 @@
     position: relative;
 }
 
+.account-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
 
+#userMenuModal .modal-content {
+    max-width: 360px;
+}
 
+.user-info-box p {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    word-break: break-all;
+}
