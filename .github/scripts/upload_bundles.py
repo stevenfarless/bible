@@ -1,14 +1,14 @@
 import os
+import json
 import glob
 import firebase_admin
-from firebase_admin import credentials, storage
+from firebase_admin import credentials, db
 
 cred = credentials.Certificate("/tmp/service_account.json")
 firebase_admin.initialize_app(cred, {
-    "storageBucket": "esv-bible-6dffb.appspot.com"
+    "databaseURL": "https://esv-bible-6dffb-default-rtdb.firebaseio.com"
 })
 
-bucket = storage.bucket()
 target = os.environ.get("TARGET_TRANSLATION", "").strip().upper()
 
 bundle_files = sorted(glob.glob("bundles/*_bundle.json"))
@@ -25,11 +25,12 @@ for bundle_path in bundle_files:
         print(f"Skipping {filename}")
         continue
 
-    dest = f"bundles/{filename}"
-    print(f"Uploading {bundle_path} → {dest}")
-    blob = bucket.blob(dest)
-    blob.upload_from_filename(bundle_path, content_type="application/json")
-    blob.make_public()
-    print(f"  Done. Public URL: {blob.public_url}")
+    print(f"Loading {filename}...")
+    with open(bundle_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    print(f"Uploading to bundles/{abbr}...")
+    db.reference(f"bundles/{abbr}").set(data)
+    print(f"  Done.")
 
 print("\nAll done.")
