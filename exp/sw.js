@@ -1,4 +1,4 @@
-const BUILD_ID = "040fa06a54f4f87bf7f6432a4bc535305d3412c1";
+const BUILD_ID = "84db8271b37535a19a9f581cdc8d17db9df2bba6";
 const CACHE_NAME = `bible-${BUILD_ID}`;
 
 // App shell assets (JS modules + CSS): network-first, bypass the browser
@@ -55,7 +55,6 @@ const APP_SHELL = [
   './settings.js',
   './keyboard.js',
   './events.js',
-  './credential-modals.js',
   './swipe.js',
   './firebase-config.js',
   './translations/index.json',
