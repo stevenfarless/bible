@@ -4,7 +4,7 @@ import glob
 import firebase_admin
 from firebase_admin import credentials, db
 
-MAX_BYTES = 3_500_000  # conservative limit under RTDB's ~4MB write cap
+MAX_BYTES = 3_500_000
 
 cred = credentials.Certificate("/tmp/service_account.json")
 firebase_admin.initialize_app(cred, {
@@ -20,27 +20,15 @@ if not bundle_files:
     raise SystemExit(1)
 
 
-def write_index(ref, index):
-    """Write index in chunks small enough for RTDB, keyed by word prefix."""
-    # Group by 2-char prefix
-    chunks = {}
-    for word, refs in index.items():
-        prefix = (word[:2] if len(word) >= 2 else word + "_").lower()
-        if prefix not in chunks:
-            chunks[prefix] = {}
-        chunks[prefix][word] = refs
-
-    for prefix, chunk in sorted(chunks.items()):
-        size = len(json.dumps(chunk))
-        if size > MAX_BYTES:
-            # Still too big — fall back to writing one word at a time
-            print(f"    chunk '{prefix}' is {size:,} bytes — writing word by word")
-            for word, refs in chunk.items():
-                ref.child(prefix).child(word).set(refs)
-        else:
-            ref.child(prefix).set(chunk)
-
-    print(f"    wrote index in {len(chunks)} chunks")
+def safe_set(ref, value, label):
+    """Write value to ref, chunking by top-level key if too large."""
+    size = len(json.dumps(value))
+    if size <= MAX_BYTES:
+        ref.set(value)
+        return
+    print(f"    {label} is {size:,} bytes — writing children individually")
+    for k, v in value.items():
+        ref.child(k).set(v)
 
 
 for bundle_path in bundle_files:
@@ -67,7 +55,19 @@ for bundle_path in bundle_files:
             print(f"    wrote {len(value)} books individually")
 
         elif key == "index":
-            write_index(ref.child("index"), value)
+            # index.v (book name list) is tiny
+            ref.child("index").child("v").set(value["v"])
+            # index.w (word->packed int arrays) — chunk by first 2 chars if needed
+            w = value["w"]
+            chunks = {}
+            for word, refs in w.items():
+                prefix = (word[:2] if len(word) >= 2 else word + "_").lower()
+                if prefix not in chunks:
+                    chunks[prefix] = {}
+                chunks[prefix][word] = refs
+            for prefix, chunk in sorted(chunks.items()):
+                safe_set(ref.child("index").child("w").child(prefix), chunk, f"index/w/{prefix}")
+            print(f"    wrote index.w in {len(chunks)} chunks")
 
         else:
             ref.child(key).set(value)
