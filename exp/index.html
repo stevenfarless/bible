@@ -5,7 +5,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Bible Reader</title>
-        <meta name="build-id" content="b0cfe92e8d02f01c55dd24f06d79e34aed4c795b" />
+        <meta name="build-id" content="a7169507c7d6c8d215874a3c38123c0869b8adbb" />
         <link rel="manifest" href="./site.webmanifest" />
         <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -20,7 +20,7 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
         <!-- Preload all ES modules so the browser fetches them in parallel
-             before the parser reaches <script type="module" src="app.js?v=b0cfe92e8d02f01c55dd24f06d79e34aed4c795b">.
+             before the parser reaches <script type="module" src="app.js?v=a7169507c7d6c8d215874a3c38123c0869b8adbb">.
              This eliminates the sequential module-discovery waterfall. -->
         <link rel="modulepreload" href="app.js" />
         <link rel="modulepreload" href="bible-api.js" />
@@ -62,7 +62,7 @@
                 <header class="header">
                         <div class="header-content">
                                 <h1 class="logo">Lege Lux</h1>
-                                <span id="build-info">exp #1887 · b0cfe92</span>
+                                <span id="build-info">exp #1891 · a716950</span>
                                 <div class="header-controls">
                                         <button class="icon-btn" id="searchToggle" title="Search (Ctrl+K)">
                                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -517,139 +517,9 @@
                                                 <span id="userTheme">Dracula Dark</span>
                                         </p>
                                 </div>
-                                <div class="btn-row">
-                                        <button id="changeEmailBtn" class="secondary-btn">Change Email</button>
-                                        <button id="changePasswordBtn" class="secondary-btn">Change Password</button>
-                                </div>
-                                <button id="logoutBtn" class="primary-btn" style="width: 100%">Sign Out</button>
+        <button id="logoutBtn" class="primary-btn" style="width: 100%">Sign Out</button>
                         </div>
                 </div>
         </div>
 
-        <div id="changeEmailModal" class="modal">
-                <div class="modal-content">
-                        <div class="modal-header">
-                                <h3>Change Email</h3>
-                                <button class="close-btn" id="closeChangeEmailModal">×</button>
-                        </div>
-                        <div class="modal-body">
-                                <form id="changeEmailForm">
-                                        <input type="hidden" id="changeEmailUsername" name="username" autocomplete="username">
-                                        <div class="setting-item">
-                                                <label for="changeEmailCurrent">Current Password</label>
-                                                <input type="password" id="changeEmailCurrent" class="input-field" placeholder="Enter current password" autocomplete="current-password">
-                                        </div>
-                                        <div class="setting-item">
-                                                <label for="changeEmailNew">New Email</label>
-                                                <input type="email" id="changeEmailNew" class="input-field" placeholder="Enter new email" autocomplete="email">
-                                        </div>
-                                        <button type="submit" class="primary-btn" style="width: 100%; margin-top: var(--spacing-md)">Update Email</button>
-                                </form>
-                        </div>
-                </div>
-        </div>
-
-        <div id="changePasswordModal" class="modal">
-                <div class="modal-content">
-                        <div class="modal-header">
-                                <h3>Change Password</h3>
-                                <button class="close-btn" id="closeChangePasswordModal">×</button>
-                        </div>
-                        <div class="modal-body">
-                                <form id="changePasswordForm">
-                                        <input type="hidden" id="changePasswordUsername" name="username" autocomplete="username">
-                                        <div class="setting-item">
-                                                <label for="changePasswordCurrent">Current Password</label>
-                                                <input type="password" id="changePasswordCurrent" class="input-field" placeholder="Enter current password" autocomplete="current-password">
-                                        </div>
-                                        <div class="setting-item">
-                                                <label for="changePasswordNew">New Password</label>
-                                                <input type="password" id="changePasswordNew" class="input-field" placeholder="At least 6 characters" autocomplete="new-password">
-                                        </div>
-                                        <button type="submit" class="primary-btn" style="width: 100%; margin-top: var(--spacing-md)">Update Password</button>
-                                </form>
-                        </div>
-                </div>
-        </div>
-
-        <div id="forgotPasswordModal" class="modal">
-                <div class="modal-content">
-                        <div class="modal-header">
-                                <h3>Reset Password</h3>
-                                <button class="close-btn" id="closeForgotPasswordModal">×</button>
-                        </div>
-                        <div class="modal-body">
-                                <form id="forgotPasswordForm">
-                                        <div class="setting-item">
-                                                <label for="forgotPasswordEmail">Email</label>
-                                                <input type="email" id="forgotPasswordEmail" class="input-field" placeholder="your@email.com" autocomplete="email">
-                                        </div>
-                                        <button type="submit" class="primary-btn" style="width: 100%; margin-top: var(--spacing-md)">Send Reset Link</button>
-                                </form>
-                        </div>
-                </div>
-        </div>
-
-        <div id="referencesModal" class="modal">
-                <div class="modal-content modal-bottom-sheet">
-                        <div class="modal-header">
-                                <h3></h3>
-                                <button class="close-btn" id="closeReferencesModal">×</button>
-                        </div>
-                        <div class="modal-body">
-                                <div id="footnotesSection" style="display: none;">
-                                        <h4 style="color: var(--secondary-color); margin-bottom: var(--spacing-md);">Footnotes</h4>
-                                        <div id="footnotesContent"></div>
-                                </div>
-
-                                <div id="crossReferencesSection" style="display: none;">
-                                        <h4 style="color: var(--secondary-color); margin-bottom: var(--spacing-md); margin-top: var(--spacing-lg);">
-                                                Cross-References
-                                        </h4>
-                                        <div id="crossReferencesContent"></div>
-                                </div>
-                        </div>
-                </div>
-        </div>
-
-
-        <div id="deuterocanonInfoModal" class="modal">
-                <div class="modal-content">
-                        <div class="modal-header">
-                                <h3>About the Deuterocanon</h3>
-                                <button class="close-btn" id="closeDeuterocanonInfoModal">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                                <div class="deuterocanon-info-content">
-                                        <h4>What is the Deuterocanon?</h4>
-                                        <p>The <strong>Deuterocanon</strong> (also called the <strong>Apocrypha</strong>) refers to books and passages included in the Greek Septuagint and Latin Vulgate but not in the Hebrew Bible.</p>
-
-                                        <h4>Why Protestants Don't Consider Them Inspired Scripture</h4>
-                                        <ul>
-                                                <li>Not included in the Hebrew canon</li>
-                                                <li>Never quoted as Scripture by Jesus or the Apostles</li>
-                                                <li>Contain teachings inconsistent with the rest of Scripture (e.g., prayers for the dead in 2 Macc 12:44–46)</li>
-                                        </ul>
-
-                                        <h4>What Reformers Said About Reading It</h4>
-                                        <blockquote>
-                                                <strong>Martin Luther (1534):</strong> "Apocrypha, that is, books not considered equal to Holy Scripture, but which are still useful and good to read."
-                                        </blockquote>
-                                        <blockquote>
-                                                <strong>Thirty-Nine Articles (1563):</strong> "The church may certainly read these books and learn from them as far as they agree with the canonical books."
-                                        </blockquote>
-                                        <blockquote>
-                                                <strong>Belgic Confession (1561):</strong> "The church may certainly read these books and learn from them as far as they agree with the canonical books."
-                                        </blockquote>
-                                </div>
-                        </div>
-                </div>
-        </div>
-
-        <div id="toast" class="toast"></div>
-
-
-        <script type="module" src="app.js?v=b0cfe92e8d02f01c55dd24f06d79e34aed4c795b"></script>
-</body>
-
-</html>
+        

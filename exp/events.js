@@ -7,7 +7,8 @@ import { attachDragToResize } from './modals.js';
 import { runMegasearch, performKeywordSearch } from './search.js';
 import { applyReadingFont } from './settings.js';
 import { initSwipe } from './swipe.js';
-import { handleChangeEmail, handleChangePassword, handleForgotPassword } from './auth.js';
+import { handleForgotPassword } from './auth.js';
+import { openChangeEmailModal, openChangePasswordModal } from './credential-modals.js';
 
 /**
  * @param {object} app - BibleApp instance
@@ -126,20 +127,8 @@ export function attachEventListeners(app) {
 
     // ── Auth ─────────────────────────────────────────────────────
     document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
-    document.getElementById('changeEmailBtn')?.addEventListener('click', () => {
-        const uEl = document.getElementById('changeEmailUsername'); if (uEl) uEl.value = app.currentUser?.email ?? '';
-        app.closeModal(app.userMenuModal);
-        app.openModal(document.getElementById('changeEmailModal'));
-    });
-    document.getElementById('changePasswordBtn')?.addEventListener('click', () => {
-        const uPwEl = document.getElementById('changePasswordUsername'); if (uPwEl) uPwEl.value = app.currentUser?.email ?? '';
-        app.closeModal(app.userMenuModal);
-        app.openModal(document.getElementById('changePasswordModal'));
-    });
-    document.getElementById('closeChangeEmailModal')?.addEventListener('click', () => app.closeModal(document.getElementById('changeEmailModal')));
-    document.getElementById('closeChangePasswordModal')?.addEventListener('click', () => app.closeModal(document.getElementById('changePasswordModal')));
-    document.getElementById('changeEmailForm')?.addEventListener('submit', (e) => { e.preventDefault(); handleChangeEmail(app); });
-    document.getElementById('changePasswordForm')?.addEventListener('submit', (e) => { e.preventDefault(); handleChangePassword(app); });
+    document.getElementById('changeEmailBtn')?.addEventListener('click', () => { app.closeModal(app.userMenuModal); openChangeEmailModal(app); });
+    document.getElementById('changePasswordBtn')?.addEventListener('click', () => { app.closeModal(app.userMenuModal); openChangePasswordModal(app); });
 
     document.getElementById('showSignupLink')?.addEventListener('click', (e) => {
     document.getElementById('forgotPasswordLink')?.addEventListener('click', (e) => {
