@@ -10,7 +10,7 @@ import {
     scrollToVerse as scrollVerse,
     applyVerseGlow as glowVerse,
 } from './reading-state.js';
-import { cacheElements, loadTheme, toggleTheme, changeColorTheme } from './ui.js';
+import { cacheElements, loadTheme, changeColorTheme, applyLightMode } from './ui.js';
 import {
     initializeBibleStructure,
     buildBibleBooks,
