@@ -132,32 +132,44 @@ export function cacheElements(app) {
 }
 
 // Load theme on app start (uses localStorage as initial fallback)
-export function loadTheme(app) {
-	let savedLightMode = false;
-	try { savedLightMode = localStorage.getItem('lightMode') === 'true'; } catch (_) {}
-	if (savedLightMode) {
-		document.documentElement.classList.add('light-mode');
-		document.body.classList.add('light-mode');
-	}
-	updateThemeIcon(savedLightMode);
+export function loadTheme() {
+	let mode = 'system';
+	try {
+		const raw = localStorage.getItem('lightMode');
+		// migrate old boolean strings
+		if (raw === 'true')  mode = 'light';
+		else if (raw === 'false') mode = 'dark';
+		else if (raw === 'light' || raw === 'dark' || raw === 'system') mode = raw;
+	} catch (_) {}
+	applyLightMode(mode);
 }
 
-// Toggle between light and dark mode
-export async function toggleTheme(app) {
-	document.documentElement.classList.toggle('light-mode');
-	document.body.classList.toggle('light-mode');
 
-	const isLightMode = document.body.classList.contains('light-mode');
+export function resolveLightMode(mode) {
+	if (mode === 'light') return true;
+	if (mode === 'dark')  return false;
+	return window.matchMedia('(prefers-color-scheme: light)').matches;
+}
 
-	// Always write locally so cold loads get the correct value immediately.
-	try { localStorage.setItem('lightMode', isLightMode); } catch (_) {}
+export function applyLightMode(mode) {
+	const isLight = resolveLightMode(mode);
+	document.documentElement.classList.toggle('light-mode', isLight);
+	document.body.classList.toggle('light-mode', isLight);
+	updateThemeIcon(isLight);
+}
 
+export async function setLightMode(app, mode) {
+	const normalized = mode === 'light' || mode === 'dark' || mode === 'system' ? mode : 'system';
+	app.state.lightMode = normalized;
+	try { localStorage.setItem('lightMode', normalized); } catch (_) {}
+	applyLightMode(normalized);
+	const sel = document.getElementById('lightModeSelect');
+	if (sel) sel.value = normalized;
 	if (app.currentUser) {
-		await app.database.ref(`users/${app.currentUser.uid}/settings/lightMode`).set(isLightMode);
+		await app.database.ref(`users/${app.currentUser.uid}/settings/lightMode`).set(normalized);
 	}
-
-	updateThemeIcon(isLightMode);
 }
+
 
 // Update theme icon based on current mode
 export function updateThemeIcon(isLightMode) {

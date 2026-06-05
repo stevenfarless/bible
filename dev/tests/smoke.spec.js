@@ -407,7 +407,7 @@ test('settings: color theme selector applies theme to body', async ({ page }) =>
 });
 
 // ---------------------------------------------------------------------------
-// 16. Theme switch — light mode toggle
+// 16. Theme switch — 3-way Appearance select (system / light / dark)
 // ---------------------------------------------------------------------------
 test('theme switch: toggling light mode changes body class', async ({ page }) => {
         await page.goto('/');
@@ -415,14 +415,21 @@ test('theme switch: toggling light mode changes body class', async ({ page }) =>
 
         await openSettingsSection(page, 'appearance');
 
-        const toggle = page.locator('#lightModeToggle');
-        const before = await toggle.isChecked();
-        await toggle.click();
-        await expect(toggle).toBeChecked({ checked: !before });
+        const select = page.locator('#lightModeSelect');
+        await expect(select).toBeVisible();
+
+        const current = await select.inputValue();
+        // Pick a value different from current to guarantee a state change.
+        const next = current === 'light' ? 'dark' : 'light';
+        await select.selectOption(next);
+
+        await expect(select).toHaveValue(next);
 
         const bodyClass = await page.evaluate(() => document.body.className);
-        if (!before) {
+        if (next === 'light') {
                 expect(bodyClass).toMatch(/light/);
+        } else {
+                expect(bodyClass).not.toMatch(/light/);
         }
 });
 
