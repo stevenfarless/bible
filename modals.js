@@ -476,11 +476,6 @@ async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progre
         li.classList.add('translation-modal-item--downloaded');
         iconEl.innerHTML = _SVG_DOWNLOADED;
         progressWrap.hidden = true;
-
-        setTimeout(() => {
-            app.changeTranslation(t.id);
-            app.closeModal(app.translationModal);
-        }, 1000);
     } catch (err) {
         _downloading.delete(t.id);
         li.classList.remove('translation-modal-item--downloading');
