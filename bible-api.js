@@ -69,8 +69,11 @@ const BOOK_LOAD_ORDER = [
 
 const BOOK_LOAD_ORDER_BY_LENGTH = [...BOOK_LOAD_ORDER].sort((a, b) => b.length - a.length);
 
+// Maps canonical book names (used internally) to the actual filename on disk
+// when they differ. All values must match the real file names exactly
+// (case-sensitive, since GitHub Pages on Linux is case-sensitive).
 const BOOK_KEY_ALIASES = {
-    'Song of Solomon': 'Song Of Solomon',
+    'Song of Solomon': 'Song of Solomon',
 };
 
 function _resolveBookKey(bible, canonicalName) {
@@ -191,22 +194,19 @@ export class BibleApi {
                         }
                     }
 
+                    // Use the alias map to resolve the on-disk filename if it
+                    // differs from the canonical book name.
+                    const filename = BOOK_KEY_ALIASES[book] ?? book;
                     let data;
-                    let resolvedAlias = null;
                     try {
-                        data = await fetchBookFromNetwork(book);
+                        data = await fetchBookFromNetwork(filename);
                     } catch (err) {
-                        const alias = BOOK_KEY_ALIASES[book];
-                        if (alias) {
-                            data = await fetchBookFromNetwork(alias);
-                            resolvedAlias = alias;
-                        } else {
-                            throw err;
-                        }
+                        // If the alias itself fails, re-throw — no further fallback.
+                        throw err;
                     }
                     this._bookCache.set(cacheKey, data);
-                    if (resolvedAlias) {
-                        this._bookCache.set(`${translation}/${resolvedAlias}`, data);
+                    if (filename !== book) {
+                        this._bookCache.set(`${translation}/${filename}`, data);
                     }
                     return data;
                 } catch (err) {
@@ -322,7 +322,6 @@ export class BibleApi {
 
         const fetchAndStore = async (book) => {
             const cacheKey = `${translation}/${book}`;
-            // Use cached data if already in memory.
             let data = this._bookCache.get(cacheKey) ?? null;
             if (data === null) {
                 try {
@@ -340,13 +339,11 @@ export class BibleApi {
             onProgress?.(done, total);
         };
 
-        // Fetch books in small concurrent batches.
         const BATCH = 4;
         for (let i = 0; i < books.length; i += BATCH) {
             await Promise.all(books.slice(i, i + BATCH).map(fetchAndStore));
         }
 
-        // Fetch and store the search index.
         try {
             const url = `./translations/${translation}/${translation}_search_index.json`;
             const res = await fetch(url);

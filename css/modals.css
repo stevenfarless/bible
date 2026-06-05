@@ -115,7 +115,7 @@
 
 .translation-modal-item {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: var(--spacing-md);
     padding: var(--spacing-md) var(--spacing-lg);
     border-radius: var(--border-radius);
@@ -157,6 +157,7 @@
     font-size: 0.95rem;
     color: var(--primary-color);
     min-width: 3.5rem;
+    flex-shrink: 0;
 }
 
 .translation-modal-item--active .translation-modal-item__name {
@@ -169,6 +170,55 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+}
+
+/* Download button inside translation list items */
+.translation-dl-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-left: auto;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--border-radius);
+    color: var(--text-muted);
+    opacity: 0.6;
+    transition: opacity var(--transition-fast), color var(--transition-fast),
+                background-color var(--transition-fast);
+}
+
+.translation-modal-item:hover .translation-dl-btn {
+    opacity: 1;
+}
+
+.translation-dl-btn:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--primary-color);
+    opacity: 1;
+}
+
+.translation-dl-btn--done {
+    color: var(--success-color, #4caf50);
+    opacity: 0.85;
+    pointer-events: none;
+}
+
+.translation-dl-btn--downloading {
+    opacity: 1;
+    color: var(--primary-color);
+    pointer-events: none;
+}
+
+@keyframes translation-dl-spin {
+    to { transform: rotate(360deg); }
+}
+
+.translation-dl-spinner {
+    animation: translation-dl-spin 0.9s linear infinite;
+    transform-origin: center;
 }
 
 /* References Modal (Bottom Sheet) */
