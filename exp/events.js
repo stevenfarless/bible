@@ -127,12 +127,12 @@ export function attachEventListeners(app) {
     // ── Auth ─────────────────────────────────────────────────────
     document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
     document.getElementById('changeEmailBtn')?.addEventListener('click', () => {
-        document.getElementById('changeEmailUsername').value = app.currentUser?.email ?? '';
+        const uEl = document.getElementById('changeEmailUsername'); if (uEl) uEl.value = app.currentUser?.email ?? '';
         app.closeModal(app.userMenuModal);
         app.openModal(document.getElementById('changeEmailModal'));
     });
     document.getElementById('changePasswordBtn')?.addEventListener('click', () => {
-        document.getElementById('changePasswordUsername').value = app.currentUser?.email ?? '';
+        const uPwEl = document.getElementById('changePasswordUsername'); if (uPwEl) uPwEl.value = app.currentUser?.email ?? '';
         app.closeModal(app.userMenuModal);
         app.openModal(document.getElementById('changePasswordModal'));
     });
