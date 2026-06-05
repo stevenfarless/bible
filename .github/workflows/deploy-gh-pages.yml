@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - '**'
-      - '!main'
 
 concurrency:
   group: gh-pages-${{ github.ref_name }}
@@ -28,21 +27,28 @@ jobs:
       - name: Derive destination directory
         id: dest
         run: |
-          # Replace every / with - so branch names like refactor/split-app-js
-          # become a valid directory slug: refactor-split-app-js
-          DEST="${GITHUB_REF_NAME//\//-}"
-          echo "dir=$DEST" >> "$GITHUB_OUTPUT"
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            echo "dir=." >> "$GITHUB_OUTPUT"
+          else
+            DEST="${GITHUB_REF_NAME//\//-}"
+            echo "dir=$DEST" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Inject build info
         run: |
           BRANCH="${GITHUB_REF_NAME}"
           BUILD="${GITHUB_RUN_NUMBER}"
           SHA="${GITHUB_SHA::7}"
-          INFO="${BRANCH} #${BUILD} · ${SHA}"
-          echo "Injecting: $INFO"
-          sed -i "s|__BUILD_INFO__|${INFO}|g" index.html
+          if [ "${BRANCH}" = "main" ]; then
+            # Production: clear the placeholder, don't expose branch/build details
+            sed -i "s|__BUILD_INFO__||g" index.html
+          else
+            INFO="${BRANCH} #${BUILD} · ${SHA}"
+            echo "Injecting: $INFO"
+            sed -i "s|__BUILD_INFO__|${INFO}|g" index.html
+          fi
           sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" sw.js index.html
-          sed -i "s|\(<script[^>]* src=\"\)\([^?\"]*\)\(\.js\)\(\"\)|\1\2\3?v=${GITHUB_SHA}\4|g" index.html
+          sed -i "s|\\(<script[^>]* src=\\\"\\)\\([^?\\\"]*\\)\\(\\.js\\)\\(\\\"\\)|\\1\\2\\3?v=${GITHUB_SHA}\\4|g" index.html
           echo "$GITHUB_SHA" > version.txt
 
       - name: Inject Firebase config
