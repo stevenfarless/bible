@@ -4,7 +4,7 @@
 import { LOCAL_TRANSLATIONS } from './bible-api.js';
 import { idbIsDownloaded, idbDeleteTranslation } from './translation-store.js';
 
-// ── Open / close ──────────────────────────────────────────────────────────────
+// ── Open / close ─────────────────────────────────────────────────────────────
 
 export function openModal(app, modal) {
     if (!modal) return;
@@ -237,8 +237,6 @@ export async function populateTranslationModal(app) {
     };
 
     const appendItem = (t, isPrecached, isDownloaded) => {
-        // Wrapper is the swipe-clip container on touch; on pointer it's just a
-        // pass-through list item with no overflow clipping needed.
         const wrapper = document.createElement('li');
         wrapper.className = 'translation-modal-item-wrapper';
 
@@ -313,13 +311,10 @@ export async function populateTranslationModal(app) {
                 });
 
                 if (_hasHover) {
-                    // Desktop: button lives inside the item row as the last flex
-                    // child, triggered by hovering the status-icon zone.
                     deleteBtn.classList.add('translation-modal-delete-btn--inline');
                     iconEl.classList.add('translation-modal-item__icon-wrap');
                     iconEl.appendChild(deleteBtn);
                 } else {
-                    // Touch: button sits behind the item in the wrapper; swipe reveals it.
                     wrapper.appendChild(deleteBtn);
                     _attachSwipe(wrapper, li);
                 }
@@ -346,7 +341,7 @@ export async function populateTranslationModal(app) {
     }
 }
 
-// ── Swipe-to-reveal delete (touch only) ───────────────────────────────────────
+// ── Swipe-to-reveal delete (touch only) ──────────────────────────────────────
 
 const _SWIPE_THRESHOLD = 60;
 const _DELETE_BTN_W   = 72;
@@ -357,7 +352,8 @@ function _attachSwipe(wrapper, li) {
     let isDragging = false;
     let isOpen = false;
     let currentX = 0;
-    let axisLocked = false;
+    // null = undecided, true = horizontal, false = vertical (abort)
+    let axis = null;
 
     const clampX = (x) => Math.max(-_DELETE_BTN_W, Math.min(0, x));
 
@@ -370,25 +366,35 @@ function _attachSwipe(wrapper, li) {
     const open  = () => { isOpen = true;  setX(-_DELETE_BTN_W, true); wrapper.classList.add('translation-modal-item-wrapper--open'); };
     const close = () => { isOpen = false; setX(0, true); wrapper.classList.remove('translation-modal-item-wrapper--open'); };
 
+    // passive:false is required so touchmove can call preventDefault and
+    // stop the parent scroll once we've confirmed a horizontal gesture.
     li.addEventListener('touchstart', (e) => {
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         isDragging = true;
-        axisLocked = false;
+        axis = null;
         li.style.transition = 'none';
-    }, { passive: true });
+    }, { passive: false });
 
     li.addEventListener('touchmove', (e) => {
         if (!isDragging) return;
+
         const dx = e.touches[0].clientX - startX;
         const dy = e.touches[0].clientY - startY;
 
-        if (!axisLocked) {
-            if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
-            axisLocked = true;
-            if (Math.abs(dy) > Math.abs(dx)) { isDragging = false; return; }
+        if (axis === null) {
+            // Wait for a clear directional signal before committing.
+            if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+            axis = Math.abs(dx) >= Math.abs(dy);
         }
 
+        if (!axis) {
+            // Vertical — let the browser scroll normally.
+            isDragging = false;
+            return;
+        }
+
+        // Horizontal confirmed: own this touch and block scroll.
         e.preventDefault();
         const base = isOpen ? -_DELETE_BTN_W : 0;
         setX(base + dx, false);
@@ -401,6 +407,12 @@ function _attachSwipe(wrapper, li) {
         else close();
     }, { passive: true });
 
+    li.addEventListener('touchcancel', () => {
+        isDragging = false;
+        close();
+    }, { passive: true });
+
+    // Close when the user taps anywhere outside this wrapper.
     document.addEventListener('touchstart', (e) => {
         if (isOpen && !wrapper.contains(e.target)) close();
     }, { passive: true });
@@ -490,7 +502,7 @@ function _showInlineError(li, progressWrap, progressLabel, message) {
     }, 3000);
 }
 
-// ── Translation modal keyboard helpers ────────────────────────────────────────
+// ── Translation modal keyboard helpers ───────────────────────────────────────
 
 function _translationItems(app) {
     return app.translationList
