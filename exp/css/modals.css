@@ -232,5 +232,7 @@
     position: relative;
 }
 
-
-
+.account-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}

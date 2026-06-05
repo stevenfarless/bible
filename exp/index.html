@@ -5,7 +5,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Bible Reader</title>
-        <meta name="build-id" content="c08c2cd3ab4775758c956ec1a8bd87bccf29b537" />
+        <meta name="build-id" content="01682cb7e4056f7cc5b47f7164d0cc749fda4a30" />
         <link rel="manifest" href="./site.webmanifest" />
         <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -20,7 +20,7 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
         <!-- Preload all ES modules so the browser fetches them in parallel
-             before the parser reaches <script type="module" src="app.js?v=c08c2cd3ab4775758c956ec1a8bd87bccf29b537">.
+             before the parser reaches <script type="module" src="app.js?v=01682cb7e4056f7cc5b47f7164d0cc749fda4a30">.
              This eliminates the sequential module-discovery waterfall. -->
         <link rel="modulepreload" href="app.js" />
         <link rel="modulepreload" href="bible-api.js" />
@@ -62,7 +62,7 @@
                 <header class="header">
                         <div class="header-content">
                                 <h1 class="logo">Lege Lux</h1>
-                                <span id="build-info">exp #1908 · c08c2cd</span>
+                                <span id="build-info">exp #1909 · 01682cb</span>
                                 <div class="header-controls">
                                         <button class="icon-btn" id="searchToggle" title="Search (Ctrl+K)">
                                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -521,8 +521,8 @@
                                         </p>
                                 </div>
                                 <div class="account-actions">
-                                        <button id="changeEmailBtn" class="secondary-btn" style="width: 100%">Change Email</button>
-                                        <button id="changePasswordBtn" class="secondary-btn" style="width: 100%">Change Password</button>
+                                        <button id="changeEmailBtn" class="secondary-btn">Change Email</button>
+                                        <button id="changePasswordBtn" class="secondary-btn">Change Password</button>
                                 </div>
                                 <button id="logoutBtn" class="primary-btn" style="width: 100%; margin-top: var(--spacing-md)">Sign Out</button>
                         </div>
@@ -568,7 +568,7 @@
 	<!-- Toast notification -->
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=c08c2cd3ab4775758c956ec1a8bd87bccf29b537"></script>
+	<script type="module" src="app.js?v=01682cb7e4056f7cc5b47f7164d0cc749fda4a30"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');
