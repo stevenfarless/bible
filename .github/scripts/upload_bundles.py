@@ -25,12 +25,17 @@ for bundle_path in bundle_files:
         print(f"Skipping {filename}")
         continue
 
-    print(f"Loading {filename}...")
+    print(f"\n=== {abbr} ===")
     with open(bundle_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+        bundle = json.load(f)
 
-    print(f"Uploading to bundles/{abbr}...")
-    db.reference(f"bundles/{abbr}").set(data)
+    ref = db.reference(f"bundles/{abbr}")
+
+    for key, value in bundle.items():
+        size = len(json.dumps(value))
+        print(f"  Writing {key} ({size:,} bytes)...")
+        ref.child(key).set(value)
+
     print(f"  Done.")
 
 print("\nAll done.")
