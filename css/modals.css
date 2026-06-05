@@ -136,8 +136,6 @@
 .translation-modal-item-wrapper {
     position: relative;
     list-style: none;
-    /* overflow:hidden only needed on touch to clip the peeking delete zone.
-       On hover devices the delete btn is inline so no clipping is needed. */
 }
 
 @media (hover: none) {
@@ -149,8 +147,8 @@
 
 /*
   Touch: red delete zone sits behind the item row, right-aligned.
-  Position: absolute, full height, 72px wide.
-  The item row slides left via transform to expose it.
+  Hidden by default (opacity:0, pointer-events:none).
+  Revealed only when JS adds --open to the wrapper after swipe threshold.
 */
 @media (hover: none) {
     .translation-modal-delete-btn {
@@ -167,11 +165,21 @@
         border: none;
         cursor: pointer;
         border-radius: 0;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 150ms ease;
+        z-index: 0;
+    }
+
+    .translation-modal-item-wrapper--open .translation-modal-delete-btn {
+        opacity: 1;
+        pointer-events: auto;
     }
 
     .translation-modal-delete-btn svg {
         width: 22px;
         height: 22px;
+        flex-shrink: 0;
         pointer-events: none;
     }
 }
@@ -179,10 +187,8 @@
 /*
   Desktop: delete button is an inline flex child inside the status-icon
   wrapper. Hidden by default, revealed when the icon zone is hovered.
-  Uses position:absolute to overlay the checkmark without shifting layout.
 */
 @media (hover: hover) {
-    /* The status-icon span becomes a positioning context */
     .translation-modal-item__icon-wrap {
         position: relative;
     }
@@ -209,7 +215,6 @@
         pointer-events: none;
     }
 
-    /* Reveal when hovering the icon zone */
     .translation-modal-item__icon-wrap:hover .translation-modal-delete-btn--inline {
         opacity: 1;
         pointer-events: auto;
@@ -239,7 +244,6 @@
     cursor: pointer;
     transition: background-color var(--transition-fast), color var(--transition-fast), transform 200ms ease;
     border: 1px solid transparent;
-    /* Explicit opaque background so the red zone never bleeds through on touch */
     background-color: var(--bg-secondary);
     position: relative;
     z-index: 1;
@@ -256,7 +260,6 @@
     border-color: var(--primary-color);
 }
 
-/* Keyboard-focused translation item (j/k/↑/↓ navigation) */
 .translation-modal-item--focused {
     background-color: var(--bg-tertiary);
     outline: 2px solid var(--primary-color);
@@ -296,7 +299,6 @@
     min-width: 0;
 }
 
-/* Status icon (download arrow / checkmark / spinner) */
 .translation-modal-item__status-icon {
     display: flex;
     align-items: center;
@@ -329,14 +331,13 @@
     opacity: 1;
 }
 
-/* Not-yet-downloaded items: muted description to hint they need a download */
 .translation-modal-item:not(.translation-modal-item--downloaded):not(.translation-modal-item--downloading) {
     .translation-modal-item__desc {
         opacity: 0.65;
     }
 }
 
-/* Inline download progress — spans the full item width on the second row */
+/* Inline download progress */
 .translation-dl-progress {
     width: 100%;
     display: flex;
@@ -345,7 +346,6 @@
     padding-top: var(--spacing-xs);
 }
 
-/* Explicit hidden override — display:flex above beats the [hidden] attribute without this */
 .translation-dl-progress[hidden] {
     display: none !important;
 }

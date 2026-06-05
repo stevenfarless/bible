@@ -182,10 +182,7 @@ const _SVG_SPINNER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
 
 const _SVG_TRASH = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 12L14 16M14 12L10 16M18 6L17.1991 18.0129C17.129 19.065 17.0939 19.5911 16.8667 19.99C16.6666 20.3412 16.3648 20.6235 16.0011 20.7998C15.588 21 15.0607 21 14.0062 21H9.99377C8.93927 21 8.41202 21 7.99889 20.7998C7.63517 20.6235 7.33339 20.3412 7.13332 19.99C6.90607 19.5911 6.871 19.065 6.80086 18.0129L6 6M4 6H20M16 6L15.7294 5.18807C15.4671 4.40125 15.3359 4.00784 15.0927 3.71698C14.8779 3.46013 14.6021 3.26132 14.2905 3.13878C13.9376 3 13.523 3 12.6936 3H11.3064C10.477 3 10.0624 3 9.70951 3.13878C9.39792 3.26132 9.12208 3.46013 8.90729 3.71698C8.66405 4.00784 8.53292 4.40125 8.27064 5.18807L8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-// Tracks which translations are actively downloading so re-taps are ignored.
 const _downloading = new Set();
-
-// True when the device supports hover (pointer device).
 const _hasHover = window.matchMedia('(hover: hover)').matches;
 
 export function openTranslationModal(app) {
@@ -346,14 +343,28 @@ export async function populateTranslationModal(app) {
 const _SWIPE_THRESHOLD = 60;
 const _DELETE_BTN_W   = 72;
 
+// Tracks the currently open swipe wrapper so we can close it when another opens
+// or when the user taps outside. Scoped to the module — one open item at a time.
+let _openWrapper = null;
+
+function _closeOpenWrapper() {
+    if (_openWrapper) {
+        const li = _openWrapper.querySelector('.translation-modal-item');
+        if (li) {
+            li.style.transition = 'transform 200ms ease';
+            li.style.transform = 'translateX(0)';
+        }
+        _openWrapper.classList.remove('translation-modal-item-wrapper--open');
+        _openWrapper = null;
+    }
+}
+
 function _attachSwipe(wrapper, li) {
     let startX = 0;
     let startY = 0;
     let isDragging = false;
-    let isOpen = false;
     let currentX = 0;
-    // null = undecided, true = horizontal, false = vertical
-    let axis = null;
+    let axis = null; // null=undecided, true=horizontal, false=vertical
 
     const clampX = (x) => Math.max(-_DELETE_BTN_W, Math.min(0, x));
 
@@ -363,18 +374,38 @@ function _attachSwipe(wrapper, li) {
         li.style.transform = `translateX(${currentX}px)`;
     };
 
-    const open  = () => { isOpen = true;  setX(-_DELETE_BTN_W, true); wrapper.classList.add('translation-modal-item-wrapper--open'); };
-    const close = () => { isOpen = false; setX(0, true); wrapper.classList.remove('translation-modal-item-wrapper--open'); };
+    const open = () => {
+        if (_openWrapper && _openWrapper !== wrapper) _closeOpenWrapper();
+        _openWrapper = wrapper;
+        setX(-_DELETE_BTN_W, true);
+        wrapper.classList.add('translation-modal-item-wrapper--open');
+    };
+
+    const close = () => {
+        if (_openWrapper === wrapper) _openWrapper = null;
+        setX(0, true);
+        wrapper.classList.remove('translation-modal-item-wrapper--open');
+    };
 
     let _onMove = null;
     let _onEnd  = null;
 
     function cleanup() {
-        if (_onMove) { document.removeEventListener('touchmove',   _onMove); _onMove = null; }
-        if (_onEnd)  { document.removeEventListener('touchend',    _onEnd);  document.removeEventListener('touchcancel', _onEnd); _onEnd = null; }
+        if (_onMove) { li.removeEventListener('touchmove', _onMove); _onMove = null; }
+        if (_onEnd)  {
+            li.removeEventListener('touchend',    _onEnd);
+            li.removeEventListener('touchcancel', _onEnd);
+            _onEnd = null;
+        }
     }
 
     li.addEventListener('touchstart', (e) => {
+        // If another wrapper is open, close it and absorb this touch
+        if (_openWrapper && _openWrapper !== wrapper) {
+            _closeOpenWrapper();
+            return;
+        }
+
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         isDragging = true;
@@ -388,14 +419,19 @@ function _attachSwipe(wrapper, li) {
             const dy = ev.touches[0].clientY - startY;
 
             if (axis === null) {
-                if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
-                axis = Math.abs(dx) >= Math.abs(dy);
-                if (!axis) { isDragging = false; cleanup(); return; }
+                if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+                axis = Math.abs(dx) > Math.abs(dy);
+                if (!axis) {
+                    // Vertical — bail out and let the list scroll
+                    isDragging = false;
+                    cleanup();
+                    return;
+                }
             }
 
-            // Horizontal confirmed: prevent modal body from scrolling.
             ev.preventDefault();
-            const base = isOpen ? -_DELETE_BTN_W : 0;
+            ev.stopPropagation();
+            const base = wrapper.classList.contains('translation-modal-item-wrapper--open') ? -_DELETE_BTN_W : 0;
             setX(base + dx, false);
         };
 
@@ -408,14 +444,10 @@ function _attachSwipe(wrapper, li) {
             cleanup();
         };
 
-        document.addEventListener('touchmove',   _onMove, { passive: false });
-        document.addEventListener('touchend',    _onEnd,  { passive: true });
-        document.addEventListener('touchcancel', _onEnd,  { passive: true });
-    }, { passive: true });
-
-    // Close when the user taps anywhere outside this wrapper.
-    document.addEventListener('touchstart', (e) => {
-        if (isOpen && !wrapper.contains(e.target)) close();
+        // Listen on the li element only — never on document
+        li.addEventListener('touchmove',   _onMove, { passive: false });
+        li.addEventListener('touchend',    _onEnd,  { passive: true });
+        li.addEventListener('touchcancel', _onEnd,  { passive: true });
     }, { passive: true });
 }
 
