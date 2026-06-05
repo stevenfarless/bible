@@ -5,7 +5,7 @@ on:
     branches: [exp, main]
     paths:
       - 'translations/**/*.json'
-      - 'scripts/build-search-indexes.js'
+      - 'scripts/build-search-indexes.cjs'
   workflow_dispatch:
     inputs:
       translations:
@@ -29,7 +29,7 @@ jobs:
           node-version: '20'
 
       - name: Build search indexes
-        run: node scripts/build-search-indexes.js ${{ github.event.inputs.translations }}
+        run: node scripts/build-search-indexes.cjs ${{ github.event.inputs.translations }}
 
       - name: Commit updated indexes
         run: |
