@@ -8,10 +8,18 @@ Bundle schema:
   "meta": { ...info fields... },
   "books": { "BookName": { "1": { "1": "...", ... }, ... }, ... },
   "index": {
-    "words": { "word": [verseIndex, ...], ... },
-    "verseMap": ["Book Chapter:Verse", ...]
+    "v": ["BookName", ...],         // ordered list of unique book names
+    "w": { "word": [int, ...], ... } // each int = packed verse ref:
+                                     //   bookIdx<<20 | (chapter-1)<<10 | (verse-1)
+                                     //   max 1024 books, 1024 chapters, 1024 verses
   }
 }
+
+Decoding a packed int in JS:
+  const bookIdx = ref >>> 20;
+  const chapter = ((ref >>> 10) & 0x3FF) + 1;
+  const verse   = (ref & 0x3FF) + 1;
+  const book    = bundle.index.v[bookIdx];
 
 All book JSON files in translations/{ABBR}/ are included.
 Files named meta.json, info.json, or matching *_search_index.json are skipped.
@@ -46,6 +54,11 @@ def tokenize(text: str) -> list[str]:
     return re.findall(r"[a-z']+", text.lower())
 
 
+def pack_ref(book_idx: int, chapter: int, verse: int) -> int:
+    # bookIdx(12 bits) | chapter-1(10 bits) | verse-1(10 bits)
+    return (book_idx << 20) | ((chapter - 1) << 10) | (verse - 1)
+
+
 def build_bundle(abbr: str) -> dict:
     trans_dir = TRANSLATIONS_DIR / abbr
 
@@ -74,7 +87,8 @@ def build_bundle(abbr: str) -> dict:
     ] + extra_books
 
     books: dict = {}
-    verse_map: list[str] = []
+    book_name_list: list[str] = []
+    book_idx_map: dict[str, int] = {}
     inverted: dict[str, list[int]] = {}
 
     for book_name in ordered_books:
@@ -84,21 +98,26 @@ def build_bundle(abbr: str) -> dict:
 
         books[book_name] = chapter_data
 
+        book_idx = len(book_name_list)
+        book_name_list.append(book_name)
+        book_idx_map[book_name] = book_idx
+
         for ch_str, verses in chapter_data.items():
+            ch = int(ch_str)
             for v_str, text in verses.items():
-                idx = len(verse_map)
-                verse_map.append(f"{book_name} {ch_str}:{v_str}")
+                v = int(v_str)
+                packed = pack_ref(book_idx, ch, v)
                 for word in tokenize(text):
                     if word not in inverted:
                         inverted[word] = []
-                    inverted[word].append(idx)
+                    inverted[word].append(packed)
 
     return {
         "meta": info,
         "books": books,
         "index": {
-            "words": inverted,
-            "verseMap": verse_map,
+            "v": book_name_list,
+            "w": inverted,
         },
     }
 
@@ -112,11 +131,10 @@ def bundle_translation(abbr: str) -> None:
         json.dump(bundle, f, ensure_ascii=False, separators=(",", ":"))
     size_kb = out_path.stat().st_size / 1024
     book_count = len(bundle["books"])
-    verse_count = len(bundle["index"]["verseMap"])
-    word_count = len(bundle["index"]["words"])
+    word_count = len(bundle["index"]["w"])
     print(
         f"  {out_path}  {size_kb:.0f} KB  "
-        f"{book_count} books  {verse_count} verses  {word_count} index words"
+        f"{book_count} books  {word_count} index words"
     )
 
 
