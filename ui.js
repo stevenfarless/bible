@@ -3,7 +3,7 @@
 
 const REQUIRED_IDS = [
 	'topChrome',
-	'searchToggle', 'helpBtn', 'settingsBtn', 'userBtn',
+	'searchToggle', 'helpBtn', 'settingsBtn',
 	'prevChapter', 'nextChapter', 'bookSelector', 'chapterSelector', 'verseSelector',
 	'currentBook', 'currentChapter', 'currentVerse',
 	'searchContainer', 'closeSearch', 'searchInput', 'searchResults',
@@ -43,7 +43,6 @@ export function cacheElements(app) {
 	app.helpBtn = document.getElementById('helpBtn');
 	app.settingsBtn = document.getElementById('settingsBtn');
 	app.themeToggleBtn = document.getElementById('themeToggle');
-	app.userBtn = document.getElementById('userBtn');
 
 	// Navigation
 	app.prevChapterBtn = document.getElementById('prevChapter');
