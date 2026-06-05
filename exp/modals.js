@@ -338,6 +338,67 @@ export async function populateTranslationModal(app) {
     }
 }
 
+// ── Fly-to-installed animation ────────────────────────────────────────────────
+
+async function _flyToInstalled(app, t, sourceWrapper) {
+    // Snapshot where the item is right now
+    const fromRect = sourceWrapper.getBoundingClientRect();
+
+    // Rebuild the list — the item now appears in the Installed section
+    await populateTranslationModal(app);
+
+    // Find the newly inserted wrapper in Installed
+    const targetWrapper = Array.from(app.translationList.querySelectorAll('.translation-modal-item-wrapper'))
+        .find((w) => {
+            const name = w.querySelector('.translation-modal-item__name');
+            return name && name.textContent === t.id;
+        });
+
+    if (!targetWrapper) return;
+
+    const toRect = targetWrapper.getBoundingClientRect();
+
+    // Hide the destination while the clone flies
+    targetWrapper.style.opacity = '0';
+
+    // Build a flying clone sized and positioned to match the source
+    const clone = sourceWrapper.cloneNode(true);
+    clone.style.cssText = `
+        position: fixed;
+        top: ${fromRect.top}px;
+        left: ${fromRect.left}px;
+        width: ${fromRect.width}px;
+        height: ${fromRect.height}px;
+        margin: 0;
+        pointer-events: none;
+        z-index: 9999;
+        border-radius: var(--radius-md, 8px);
+        background: var(--surface-primary, var(--color-surface));
+        box-shadow: var(--shadow-lg, 0 12px 32px rgba(0,0,0,.2));
+        transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
+                    opacity  380ms cubic-bezier(0.22, 1, 0.36, 1),
+                    box-shadow 380ms cubic-bezier(0.22, 1, 0.36, 1);
+        will-change: transform, opacity;
+    `;
+    document.body.appendChild(clone);
+
+    const dx = toRect.left - fromRect.left;
+    const dy = toRect.top  - fromRect.top;
+
+    // Force a paint before setting transform so transition fires
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            clone.style.transform = `translate(${dx}px, ${dy}px)`;
+            clone.style.boxShadow = 'var(--shadow-sm, 0 1px 2px rgba(0,0,0,.06))';
+        });
+    });
+
+    clone.addEventListener('transitionend', () => {
+        clone.remove();
+        targetWrapper.style.opacity = '';
+    }, { once: true });
+}
+
 // ── Swipe-to-reveal delete (touch only) ──────────────────────────────────────
 
 const _SWIPE_THRESHOLD = 60;
@@ -510,10 +571,13 @@ async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progre
         iconEl.innerHTML = _SVG_DOWNLOADED;
         progressWrap.hidden = true;
 
+        // Let the checkmark sit for 500ms, then fly the item to Installed
+        const sourceWrapper = li.closest('.translation-modal-item-wrapper');
         setTimeout(() => {
-            app.changeTranslation(t.id);
-            app.closeModal(app.translationModal);
-        }, 1000);
+            if (sourceWrapper) {
+                _flyToInstalled(app, t, sourceWrapper);
+            }
+        }, 500);
     } catch (err) {
         _downloading.delete(t.id);
         li.classList.remove('translation-modal-item--downloading');
