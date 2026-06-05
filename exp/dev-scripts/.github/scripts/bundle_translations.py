@@ -11,7 +11,7 @@ Bundle schema:
     "v": ["BookName", ...],         // ordered list of unique book names
     "w": { "word": [int, ...], ... } // each int = packed verse ref:
                                      //   bookIdx<<20 | (chapter-1)<<10 | (verse-1)
-                                     //   max 1024 books, 1024 chapters, 1024 verses
+                                     //   max 4096 books, 1024 chapters, 1024 verses
   }
 }
 
@@ -28,7 +28,6 @@ The book order in the bundle follows meta.json; any extra files
 """
 
 import json
-import os
 import re
 import sys
 from pathlib import Path
@@ -38,6 +37,7 @@ BUNDLES_DIR = Path("bundles")
 
 SKIP_NAMES = {"meta.json", "info.json"}
 SKIP_PATTERN = re.compile(r"_search_index\.json$", re.IGNORECASE)
+RANGE_PATTERN = re.compile(r"^\d+-\d+$")  # e.g. "15-16"
 
 
 def is_book_file(filename: str) -> bool:
@@ -55,7 +55,6 @@ def tokenize(text: str) -> list[str]:
 
 
 def pack_ref(book_idx: int, chapter: int, verse: int) -> int:
-    # bookIdx(12 bits) | chapter-1(10 bits) | verse-1(10 bits)
     return (book_idx << 20) | ((chapter - 1) << 10) | (verse - 1)
 
 
@@ -88,7 +87,6 @@ def build_bundle(abbr: str) -> dict:
 
     books: dict = {}
     book_name_list: list[str] = []
-    book_idx_map: dict[str, int] = {}
     inverted: dict[str, list[int]] = {}
 
     for book_name in ordered_books:
@@ -100,11 +98,12 @@ def build_bundle(abbr: str) -> dict:
 
         book_idx = len(book_name_list)
         book_name_list.append(book_name)
-        book_idx_map[book_name] = book_idx
 
         for ch_str, verses in chapter_data.items():
             ch = int(ch_str)
             for v_str, text in verses.items():
+                if RANGE_PATTERN.match(v_str):
+                    continue  # skip merged verse ranges like "15-16"
                 v = int(v_str)
                 packed = pack_ref(book_idx, ch, v)
                 for word in tokenize(text):
