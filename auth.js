@@ -247,12 +247,9 @@ export async function handleChangeEmail(app) {
     }
 
     try {
-        const credential = app.firebase.auth.EmailAuthProvider.credential(
-            app.currentUser.email,
-            currentPassword
-        );
-        await app.currentUser.reauthenticateWithCredential(credential);
-        await app.currentUser.updateEmail(newEmail);
+        const credential = app.auth.createCredential(app.currentUser.email, currentPassword);
+        await app.auth.reauthenticateWithCredential(app.currentUser, credential);
+        await app.auth.updateEmail(app.currentUser, newEmail);
         app.showToast('Email updated successfully');
         app.closeModal(document.getElementById('changeEmailModal'));
         document.getElementById('changeEmailCurrent').value = '';
@@ -286,12 +283,9 @@ export async function handleChangePassword(app) {
     }
 
     try {
-        const credential = app.firebase.auth.EmailAuthProvider.credential(
-            app.currentUser.email,
-            currentPassword
-        );
-        await app.currentUser.reauthenticateWithCredential(credential);
-        await app.currentUser.updatePassword(newPassword);
+        const credential = app.auth.createCredential(app.currentUser.email, currentPassword);
+        await app.auth.reauthenticateWithCredential(app.currentUser, credential);
+        await app.auth.updatePassword(app.currentUser, newPassword);
         app.showToast('Password updated successfully');
         app.closeModal(document.getElementById('changePasswordModal'));
         document.getElementById('changePasswordCurrent').value = '';
