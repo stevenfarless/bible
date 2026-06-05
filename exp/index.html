@@ -5,7 +5,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Bible Reader</title>
-        <meta name="build-id" content="07a10f2cd1c39c67e5eef636c1c31c42352aeffa" />
+        <meta name="build-id" content="a6dce880b83b259f12b25b7eb56e1bdd8673eed7" />
         <link rel="manifest" href="./site.webmanifest" />
         <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -20,7 +20,7 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
         <!-- Preload all ES modules so the browser fetches them in parallel
-             before the parser reaches <script type="module" src="app.js?v=07a10f2cd1c39c67e5eef636c1c31c42352aeffa">.
+             before the parser reaches <script type="module" src="app.js?v=a6dce880b83b259f12b25b7eb56e1bdd8673eed7">.
              This eliminates the sequential module-discovery waterfall. -->
         <link rel="modulepreload" href="app.js" />
         <link rel="modulepreload" href="bible-api.js" />
@@ -62,7 +62,7 @@
                 <header class="header">
                         <div class="header-content">
                                 <h1 class="logo">Lege Lux</h1>
-                                <span id="build-info">exp #1914 · 07a10f2</span>
+                                <span id="build-info">exp #1915 · a6dce88</span>
                                 <div class="header-controls">
                                         <button class="icon-btn" id="searchToggle" title="Search (Ctrl+K)">
                                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,7 +160,7 @@
                         <div class="search-input-row">
                                 <input type="text" id="searchInput" class="search-input"
                                         placeholder="Search passages or enter reference (e.g., John 3:16)" />
-                                <button id="closeSearch" class="close-btn" title="Close search">×</button>
+                                <button id="closeSearch" class="close-btn" title="Close search">&#xD7;</button>
                         </div>
                         <div class="search-options-row">
                                 <label class="search-toggle-label" for="megasearchToggle">
@@ -197,7 +197,7 @@
                 <div class="modal-content">
                         <div class="modal-header">
                                 <h3>Select a Book</h3>
-                                <button class="close-btn" id="closeBookModal">×</button>
+                                <button class="close-btn" id="closeBookModal">&#xD7;</button>
                         </div>
                         <div class="modal-body">
                                 <div class="book-category">
@@ -216,7 +216,7 @@
                 <div class="modal-content">
                         <div class="modal-header">
                                 <h3><span id="chapterModalBook">Genesis</span></h3>
-                                <button class="close-btn" id="closeChapterModal">×</button>
+                                <button class="close-btn" id="closeChapterModal">&#xD7;</button>
                         </div>
                         <div class="modal-body">
                                 <div id="chapterGrid" class="chapter-grid"></div>
@@ -228,7 +228,7 @@
                 <div class="modal-content">
                         <div class="modal-header">
                                 <h3><span id="verseModalBook">Genesis 1</span></h3>
-                                <button class="close-btn" id="closeVerseModal">×</button>
+                                <button class="close-btn" id="closeVerseModal">&#xD7;</button>
                         </div>
                         <div class="modal-body">
                                 <div id="verseGrid" class="chapter-grid"></div>
@@ -241,7 +241,7 @@
                 <div class="modal-content modal-content--sm">
                         <div class="modal-header">
                                 <h3>Translation</h3>
-                                <button class="close-btn" id="closeTranslationModal">×</button>
+                                <button class="close-btn" id="closeTranslationModal">&#xD7;</button>
                         </div>
                         <div class="modal-body">
                                 <ul id="translationList" class="translation-modal-list"></ul>
@@ -253,7 +253,7 @@
                 <div class="modal-content">
                         <div class="modal-header">
                                 <h3>Settings</h3>
-                                <button class="close-btn" id="closeSettingsModal">×</button>
+                                <button class="close-btn" id="closeSettingsModal">&#xD7;</button>
                         </div>
                         <div class="modal-body">
                                 <div class="accordion-section active" data-section="appearance">
@@ -364,26 +364,26 @@
                 <div class="modal-content">
                         <div class="modal-header">
                                 <h3>Help &amp; Keyboard Shortcuts</h3>
-                                <button class="close-btn" id="closeHelpModal">×</button>
+                                <button class="close-btn" id="closeHelpModal">&#xD7;</button>
                         </div>
                         <div class="modal-body">
                                 <div class="settings-group">
                                         <h4>Navigation Shortcuts</h4>
                                         <div class="shortcut-list">
                                                 <div class="shortcut-item">
-                                                        <kbd>H</kbd> or <kbd>←</kbd>
+                                                        <kbd>H</kbd> or <kbd>&#x2190;</kbd>
                                                         <span>Previous chapter</span>
                                                 </div>
                                                 <div class="shortcut-item">
-                                                        <kbd>L</kbd> or <kbd>→</kbd>
+                                                        <kbd>L</kbd> or <kbd>&#x2192;</kbd>
                                                         <span>Next chapter</span>
                                                 </div>
                                                 <div class="shortcut-item">
-                                                        <kbd>K</kbd> or <kbd>↑</kbd>
+                                                        <kbd>K</kbd> or <kbd>&#x2191;</kbd>
                                                         <span>Previous verse</span>
                                                 </div>
                                                 <div class="shortcut-item">
-                                                        <kbd>J</kbd> or <kbd>↓</kbd>
+                                                        <kbd>J</kbd> or <kbd>&#x2193;</kbd>
                                                         <span>Next verse</span>
                                                 </div>
                                         </div>
@@ -448,7 +448,7 @@
                 <div class="modal-content">
                         <div class="modal-header">
                                 <h3>Sign In</h3>
-                                <button class="close-btn" id="closeLoginModal">×</button>
+                                <button class="close-btn" id="closeLoginModal">&#xD7;</button>
                         </div>
                         <div class="modal-body">
                                 <form id="loginForm" class="auth-form">
@@ -479,7 +479,7 @@
                 <div class="modal-content">
                         <div class="modal-header">
                                 <h3>Create Account</h3>
-                                <button class="close-btn" id="closeSignupModal">×</button>
+                                <button class="close-btn" id="closeSignupModal">&#xD7;</button>
                         </div>
                         <div class="modal-body">
                                 <form id="signupForm" class="auth-form">
@@ -507,7 +507,7 @@
                 <div class="modal-content">
                         <div class="modal-header">
                                 <h3>Account</h3>
-                                <button class="close-btn" id="closeUserMenuModal">×</button>
+                                <button class="close-btn" id="closeUserMenuModal">&#xD7;</button>
                         </div>
                         <div class="modal-body">
                                 <div class="user-info-box">
@@ -546,7 +546,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3>References</h3>
-				<button class="close-btn" id="closeReferencesModal">×</button>
+				<button class="close-btn" id="closeReferencesModal">&#xD7;</button>
 			</div>
 			<div class="modal-body"></div>
 		</div>
@@ -557,10 +557,31 @@
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
 				<h3>About the Deuterocanon</h3>
-				<button class="close-btn" id="closeDeuterocanonInfoModal">×</button>
+				<button class="close-btn" id="closeDeuterocanonInfoModal">&#xD7;</button>
 			</div>
 			<div class="modal-body">
-				<p>The Deuterocanon (also called the Apocrypha) consists of books accepted as canonical by Catholic and Orthodox traditions but not included in the Hebrew Bible or most Protestant canons. These texts appear in translations such as the NRSVUE.</p>
+				<div class="deuterocanon-info-content">
+					<h4>What is the Deuterocanon?</h4>
+					<p>The <strong>Deuterocanon</strong> (also called the <strong>Apocrypha</strong>) refers to books and passages included in the Greek Septuagint and Latin Vulgate but not in the Hebrew Bible.</p>
+
+					<h4>Why Protestants Don't Consider Them Inspired Scripture</h4>
+					<ul>
+						<li>Not included in the Hebrew canon</li>
+						<li>Never quoted as Scripture by Jesus or the Apostles</li>
+						<li>Contain teachings inconsistent with the rest of Scripture (e.g., prayers for the dead in 2 Macc 12:44&#x2013;46)</li>
+					</ul>
+
+					<h4>What Reformers Said About Reading It</h4>
+					<blockquote>
+						<strong>Martin Luther (1534):</strong> &#x201C;Apocrypha, that is, books not considered equal to Holy Scripture, but which are still useful and good to read.&#x201D;
+					</blockquote>
+					<blockquote>
+						<strong>Thirty-Nine Articles (1563):</strong> &#x201C;The other books the Church doth read for example of life and instruction of manners; but yet doth it not apply them to establish any doctrine.&#x201D;
+					</blockquote>
+					<blockquote>
+						<strong>Belgic Confession (1561):</strong> &#x201C;The church may certainly read these books and learn from them as far as they agree with the canonical books.&#x201D;
+					</blockquote>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -568,7 +589,7 @@
 	<!-- Toast notification -->
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=07a10f2cd1c39c67e5eef636c1c31c42352aeffa"></script>
+	<script type="module" src="app.js?v=a6dce880b83b259f12b25b7eb56e1bdd8673eed7"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');
