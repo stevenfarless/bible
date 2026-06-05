@@ -131,6 +131,59 @@
     padding-top: var(--spacing-md);
 }
 
+/* ── Swipe wrapper ────────────────────────────────────────────────────────── */
+
+.translation-modal-item-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--border-radius);
+    list-style: none;
+}
+
+/* Red delete zone — sits behind the item, right-aligned */
+.translation-modal-delete-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #d93025;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 150ms ease;
+}
+
+.translation-modal-delete-btn:hover,
+.translation-modal-delete-btn:focus-visible {
+    background-color: #b3261e;
+}
+
+.translation-modal-delete-btn svg {
+    width: 22px;
+    height: 22px;
+    pointer-events: none;
+}
+
+/* On pointer devices: hide delete btn until wrapper is hovered */
+@media (hover: hover) {
+    .translation-modal-delete-btn {
+        opacity: 0;
+        transition: opacity 150ms ease, background-color 150ms ease;
+    }
+
+    .translation-modal-item-wrapper:hover .translation-modal-delete-btn,
+    .translation-modal-item-wrapper--open .translation-modal-delete-btn {
+        opacity: 1;
+    }
+}
+
+/* ── Item row ─────────────────────────────────────────────────────────────── */
+
 .translation-modal-item {
     display: flex;
     flex-wrap: wrap;
@@ -139,8 +192,12 @@
     padding: var(--spacing-md) var(--spacing-lg);
     border-radius: var(--border-radius);
     cursor: pointer;
-    transition: background-color var(--transition-fast), color var(--transition-fast);
+    transition: background-color var(--transition-fast), color var(--transition-fast), transform 200ms ease;
     border: 1px solid transparent;
+    background-color: var(--bg-secondary);
+    position: relative;
+    z-index: 1;
+    will-change: transform;
 }
 
 .translation-modal-item:hover {
