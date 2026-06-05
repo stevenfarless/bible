@@ -249,8 +249,8 @@ export async function handleChangeEmail(app) {
     try {
         const credential = app.auth.createCredential(app.currentUser.email, currentPassword);
         await app.auth.reauthenticateWithCredential(app.currentUser, credential);
-        await app.auth.updateEmail(app.currentUser, newEmail);
-        app.showToast('Email updated successfully');
+        await app.auth.verifyBeforeUpdateEmail(app.currentUser, newEmail);
+        app.showToast('Verification sent — check your inbox to confirm the new email');
         app.closeModal(document.getElementById('changeEmailModal'));
         document.getElementById('changeEmailCurrent').value = '';
         document.getElementById('changeEmailNew').value = '';

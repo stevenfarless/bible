@@ -12,7 +12,7 @@ import {
   browserSessionPersistence,
   EmailAuthProvider,
   reauthenticateWithCredential,
-  updateEmail,
+  verifyBeforeUpdateEmail,
   updatePassword,
   sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
@@ -69,7 +69,7 @@ var authShim = {
     return _auth.currentUser;
   },
   reauthenticateWithCredential: (user, credential) => reauthenticateWithCredential(user, credential),
-  updateEmail: (user, newEmail) => updateEmail(user, newEmail),
+  verifyBeforeUpdateEmail: (user, newEmail) => verifyBeforeUpdateEmail(user, newEmail),
   updatePassword: (user, newPassword) => updatePassword(user, newPassword),
   sendPasswordResetEmail: (email) => sendPasswordResetEmail(_auth, email),
   createCredential: (email, password) => EmailAuthProvider.credential(email, password)
