@@ -192,7 +192,7 @@ export function openTranslationModal(app) {
     _translationKbApply(app, items);
 }
 
-export function populateTranslationModal(app) {
+export async function populateTranslationModal(app) {
     if (!app.translationList) return;
     app.translationList.innerHTML = '';
 
@@ -207,8 +207,36 @@ export function populateTranslationModal(app) {
         return;
     }
 
-    for (const t of registry) {
-        const isPrecached = LOCAL_TRANSLATIONS.has(t.id);
+    // Resolve download status for all non-precached translations up front
+    // so we can place them in the correct section immediately.
+    const idbChecks = await Promise.all(
+        registry.map((t) =>
+            LOCAL_TRANSLATIONS.has(t.id) ? Promise.resolve(true) : idbIsDownloaded(t.id)
+        )
+    );
+
+    const installed = [];
+    const available = [];
+
+    registry.forEach((t, i) => {
+        if (idbChecks[i]) {
+            installed.push(t);
+        } else {
+            available.push(t);
+        }
+    });
+
+    installed.sort((a, b) => a.id.localeCompare(b.id));
+
+    const appendSectionHeading = (label) => {
+        const li = document.createElement('li');
+        li.className = 'translation-modal-section-heading';
+        li.textContent = label;
+        li.setAttribute('role', 'presentation');
+        app.translationList.appendChild(li);
+    };
+
+    const appendItem = (t, isPrecached, isDownloaded) => {
         const li = document.createElement('li');
         li.className = 'translation-modal-item';
         if (t.id === app.state.translation) li.classList.add('translation-modal-item--active');
@@ -225,13 +253,9 @@ export function populateTranslationModal(app) {
         li.appendChild(descSpan);
 
         if (!isPrecached) {
-            // Status icon (download arrow or checkmark)
             const iconEl = document.createElement('span');
             iconEl.className = 'translation-modal-item__status-icon';
-            iconEl.innerHTML = _SVG_DOWNLOAD;
-            li.appendChild(iconEl);
 
-            // Inline download progress bar (hidden until download starts)
             const progressWrap = document.createElement('div');
             progressWrap.className = 'translation-dl-progress';
             progressWrap.hidden = true;
@@ -248,23 +272,20 @@ export function populateTranslationModal(app) {
             progressTrack.appendChild(progressBar);
             progressWrap.appendChild(progressTrack);
             progressWrap.appendChild(progressLabel);
+            li.appendChild(iconEl);
             li.appendChild(progressWrap);
 
-            // If already in-progress (modal was reopened mid-download), restore state
             if (_downloading.has(t.id)) {
                 progressWrap.hidden = false;
                 iconEl.innerHTML = _SVG_SPINNER;
                 progressLabel.textContent = 'Downloading\u2026';
                 li.classList.add('translation-modal-item--downloading');
+            } else if (isDownloaded) {
+                li.classList.add('translation-modal-item--downloaded');
+                iconEl.innerHTML = _SVG_DOWNLOADED;
+            } else {
+                iconEl.innerHTML = _SVG_DOWNLOAD;
             }
-
-            // Async: mark as downloaded if IDB already has it
-            idbIsDownloaded(t.id).then((already) => {
-                if (already) {
-                    li.classList.add('translation-modal-item--downloaded');
-                    iconEl.innerHTML = _SVG_DOWNLOADED;
-                }
-            });
 
             li.addEventListener('click', () => {
                 if (_downloading.has(t.id)) return;
@@ -283,6 +304,20 @@ export function populateTranslationModal(app) {
         }
 
         app.translationList.appendChild(li);
+    };
+
+    if (installed.length > 0) {
+        appendSectionHeading('Installed');
+        for (const t of installed) {
+            appendItem(t, LOCAL_TRANSLATIONS.has(t.id), true);
+        }
+    }
+
+    if (available.length > 0) {
+        appendSectionHeading('Available');
+        for (const t of available) {
+            appendItem(t, false, false);
+        }
     }
 }
 
@@ -322,7 +357,7 @@ async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progre
         iconEl.innerHTML = _SVG_DOWNLOADED;
         progressWrap.hidden = true;
 
-  // Auto-switch to the newly downloaded translation and close
+        // Auto-switch to the newly downloaded translation and close
         setTimeout(() => {
             app.changeTranslation(t.id);
             app.closeModal(app.translationModal);
