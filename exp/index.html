@@ -5,7 +5,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Bible Reader</title>
-        <meta name="build-id" content="8810e6ad8ac31aa1c40a1a2dd2d349f1baec884a" />
+        <meta name="build-id" content="c2bf425cab445f05cc1b96d148318dc87ff574f3" />
         <link rel="manifest" href="./site.webmanifest" />
         <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -20,7 +20,7 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
         <!-- Preload all ES modules so the browser fetches them in parallel
-             before the parser reaches <script type="module" src="app.js?v=8810e6ad8ac31aa1c40a1a2dd2d349f1baec884a">.
+             before the parser reaches <script type="module" src="app.js?v=c2bf425cab445f05cc1b96d148318dc87ff574f3">.
              This eliminates the sequential module-discovery waterfall. -->
         <link rel="modulepreload" href="app.js" />
         <link rel="modulepreload" href="bible-api.js" />
@@ -62,7 +62,7 @@
                 <header class="header">
                         <div class="header-content">
                                 <h1 class="logo">Lege Lux</h1>
-                                <span id="build-info">exp #1901 · 8810e6a</span>
+                                <span id="build-info">exp #1907 · c2bf425</span>
                                 <div class="header-controls">
                                         <button class="icon-btn" id="searchToggle" title="Search (Ctrl+K)">
                                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -280,10 +280,13 @@
                                                                 <small class="help-text">Choose your preferred color scheme.</small>
                                                         </div>
                                                         <div class="setting-item">
-                                                                <label class="checkbox-label">
-                                                                        <input type="checkbox" id="lightModeToggle" />
-                                                                        <span>Light Mode</span>
-                                                                </label>
+                                                                <label for="lightModeSelect">Appearance</label>
+                                                                <select id="lightModeSelect" class="input-field">
+                                                                        <option value="system">System Default</option>
+                                                                        <option value="light">Light</option>
+                                                                        <option value="dark">Dark</option>
+                                                                </select>
+                                                                <small class="help-text">Follow your device setting or choose a fixed mode.</small>
                                                         </div>
                                                         <div class="setting-item">
                                                                 <label for="fontSizeSlider">Font Size</label>
@@ -565,7 +568,7 @@
 	<!-- Toast notification -->
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=8810e6ad8ac31aa1c40a1a2dd2d349f1baec884a"></script>
+	<script type="module" src="app.js?v=c2bf425cab445f05cc1b96d148318dc87ff574f3"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');

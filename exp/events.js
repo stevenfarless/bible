@@ -2,7 +2,7 @@
 // Wires all DOM event listeners to BibleApp instance methods.
 // New feature bindings go here — app.js does not need to change.
 
-import { toggleTheme, changeColorTheme } from './ui.js';
+import { setLightMode, changeColorTheme, applyLightMode } from './ui.js';
 import { attachDragToResize } from './modals.js';
 import { runMegasearch, performKeywordSearch } from './search.js';
 import { applyReadingFont } from './settings.js';
@@ -212,9 +212,8 @@ export function attachEventListeners(app) {
     app.translationSelector?.addEventListener('change', async (e) => app.changeTranslation(e.target.value));
 
     // ── Theme ────────────────────────────────────────────────────
-    app.themeToggleBtn?.addEventListener('click', () => toggleTheme(app));
-    document.getElementById('themeSelector')?.addEventListener('change',   (e) => changeColorTheme(app, e.target.value));
-    document.getElementById('lightModeToggle')?.addEventListener('change', () => toggleTheme(app));
+    document.getElementById('themeSelector')?.addEventListener('change', (e) => changeColorTheme(app, e.target.value));
+    document.getElementById('lightModeSelect')?.addEventListener('change', (e) => setLightMode(app, e.target.value));
 
     // ── Auth ─────────────────────────────────────────────────────
     document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
@@ -255,4 +254,10 @@ export function attachEventListeners(app) {
 
     // ── Keyboard ────────────────────────────────────────────────
     document.addEventListener('keydown', (e) => app.handleKeyboardShortcuts(e));
+    // Live-update appearance when OS dark/light mode changes
+    window.matchMedia('(prefers-color-scheme: light)')
+        .addEventListener('change', () => {
+            if (app.state.lightMode === 'system') applyLightMode('system');
+        });
+
 }
