@@ -220,6 +220,34 @@
 .primary-btn:hover {
     background-color: var(--primary-dark);
 }
+.secondary-btn {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background-color: transparent;
+    border: 1px solid var(--primary-color);
+    border-radius: 6px;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.secondary-btn:hover {
+    background-color: var(--primary-color);
+    color: var(--bg-primary);
+}
+
+.btn-row {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.btn-row .secondary-btn {
+    flex: 1;
+}
+
 
 /* Error & Loading States */
 .loading {

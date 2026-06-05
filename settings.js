@@ -11,7 +11,7 @@ const DEFAULTS = {
     showCrossReferences: false,
     verseByVerse:        false,
     lightMode:           false,
-    colorTheme:          'dracula',
+    colorTheme:          'basic',
     translation:         'KJV',
     readingFont:         'gentium',
 };

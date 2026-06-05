@@ -109,17 +109,20 @@ export function handleUserButtonClick(app) {
     if (app.currentUser) {
         document.getElementById('userEmail').textContent = app.currentUser.email;
         const isLight = document.body.classList.contains('light-mode');
-        let colorTheme = app.state?.colorTheme || 'dracula';
+        let colorTheme = app.state?.colorTheme || '';
 
-        try { colorTheme = app.state?.colorTheme || localStorage.getItem('colorTheme') || 'dracula'; } catch (_) {}
+        try { colorTheme = app.state?.colorTheme || localStorage.getItem('colorTheme') || ''; } catch (_) {}
         const themeNameMap = {
-            dracula: isLight ? 'Alucard (Light)' : 'Dracula (Dark)',
-            steel:   `Steel (${isLight ? 'Light' : 'Dark'})`,
-            onyx:    `Onyx (${isLight ? 'Light' : 'Dark'})`,
-            reader:  `Reader (${isLight ? 'Parchment' : 'Night'})`,
+            dracula:    'Dracula (Purple/Pink)',
+            onyx:       'Onyx (Gold/OLED)',
+            sage:       'Sage (Green/Forest)',
+            ember:      'Ember (Amber/Candlelit)',
+            perplexity: 'Perplexity (Teal/Minimal)',
+            basic:      'Basic (Black & White)',
+            geek:       'The Geek Shall Inherit The Earth',
         };
         document.getElementById('userTheme').textContent =
-            themeNameMap[colorTheme] || (isLight ? 'Alucard (Light)' : 'Dracula (Dark)');
+            themeNameMap[colorTheme] || colorTheme;
         app.openModal(app.userMenuModal);
     } else {
         app.openModal(app.loginModal);
@@ -235,4 +238,86 @@ export async function loadUserData(app, normalizeTranslation) {
     if (s.colorTheme          != null) lsSet('colorTheme',           s.colorTheme);
     if (s.lightMode           != null) lsSet('lightMode',            s.lightMode);
     if (s.translation         != null) lsSet('translation',          normalizeTranslation(s.translation || 'ESV'));
+}
+
+export async function handleChangeEmail(app) {
+    const currentPassword = document.getElementById('changeEmailCurrent').value;
+    const newEmail = document.getElementById('changeEmailNew').value;
+
+    if (!currentPassword || !newEmail) {
+        app.showToast('Please fill in all fields');
+        return;
+    }
+
+    try {
+        const credential = app.auth.createCredential(app.currentUser.email, currentPassword);
+        await app.auth.reauthenticateWithCredential(app.currentUser, credential);
+        await app.auth.verifyBeforeUpdateEmail(app.currentUser, newEmail);
+        app.showToast('Verification sent — check your inbox to confirm the new email');
+        // modal teardown and field clearing handled by credential-modals.js
+        document.getElementById('userEmail').textContent = newEmail;
+    } catch (err) {
+        if (err.code === 'auth/wrong-password') {
+            app.showToast('Current password is incorrect');
+        } else if (err.code === 'auth/email-already-in-use') {
+            app.showToast('That email is already in use');
+        } else if (err.code === 'auth/invalid-email') {
+            app.showToast('Invalid email address');
+        } else {
+            app.showToast(`Failed: ${err.message}`);
+        }
+    }
+}
+
+export async function handleChangePassword(app) {
+    const currentPassword = document.getElementById('changePasswordCurrent').value;
+    const newPassword = document.getElementById('changePasswordNew').value;
+
+    if (!currentPassword || !newPassword) {
+        app.showToast('Please fill in all fields');
+        return;
+    }
+
+    if (newPassword.length < 6) {
+        app.showToast('New password must be at least 6 characters');
+        return;
+    }
+
+    try {
+        const credential = app.auth.createCredential(app.currentUser.email, currentPassword);
+        await app.auth.reauthenticateWithCredential(app.currentUser, credential);
+        await app.auth.updatePassword(app.currentUser, newPassword);
+        app.showToast('Password updated successfully');
+        // modal teardown and field clearing handled by credential-modals.js
+    } catch (err) {
+        if (err.code === 'auth/wrong-password') {
+            app.showToast('Current password is incorrect');
+        } else {
+            app.showToast(`Failed: ${err.message}`);
+        }
+    }
+}
+
+export async function handleForgotPassword(app) {
+    const email = document.getElementById('forgotPasswordEmail').value.trim();
+
+    if (!email) {
+        app.showToast('Please enter your email address');
+        return;
+    }
+
+    try {
+        await app.auth.sendPasswordResetEmail(email);
+        app.showToast('Reset link sent — check your inbox');
+        app.closeModal(document.getElementById('forgotPasswordModal'));
+        document.getElementById('forgotPasswordEmail').value = '';
+    } catch (err) {
+        if (err.code === 'auth/user-not-found') {
+            app.showToast('No account found with that email');
+        } else if (err.code === 'auth/invalid-email') {
+            app.showToast('Invalid email address');
+        } else {
+            app.showToast(`Failed: ${err.message}`);
+        }
+    }
 }
