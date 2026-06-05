@@ -514,7 +514,55 @@
                                                 <span id="userTheme">Dracula Dark</span>
                                         </p>
                                 </div>
+                                <div style="display: flex; flex-direction: column; gap: var(--spacing-sm); margin-bottom: var(--spacing-md);">
+                                        <button id="changeEmailBtn" class="secondary-btn" style="width: 100%">Change Email</button>
+                                        <button id="changePasswordBtn" class="secondary-btn" style="width: 100%">Change Password</button>
+                                </div>
                                 <button id="logoutBtn" class="primary-btn" style="width: 100%">Sign Out</button>
+                        </div>
+                </div>
+        </div>
+
+        <div id="changeEmailModal" class="modal">
+                <div class="modal-content">
+                        <div class="modal-header">
+                                <h3>Change Email</h3>
+                                <button class="close-btn" id="closeChangeEmailModal">×</button>
+                        </div>
+                        <div class="modal-body">
+                                <form id="changeEmailForm">
+                                        <div class="form-group">
+                                                <label for="changeEmailCurrent">Current Password</label>
+                                                <input type="password" id="changeEmailCurrent" placeholder="Enter current password" autocomplete="current-password">
+                                        </div>
+                                        <div class="form-group">
+                                                <label for="changeEmailNew">New Email</label>
+                                                <input type="email" id="changeEmailNew" placeholder="Enter new email" autocomplete="email">
+                                        </div>
+                                        <button type="submit" class="primary-btn" style="width: 100%; margin-top: var(--spacing-md)">Update Email</button>
+                                </form>
+                        </div>
+                </div>
+        </div>
+
+        <div id="changePasswordModal" class="modal">
+                <div class="modal-content">
+                        <div class="modal-header">
+                                <h3>Change Password</h3>
+                                <button class="close-btn" id="closeChangePasswordModal">×</button>
+                        </div>
+                        <div class="modal-body">
+                                <form id="changePasswordForm">
+                                        <div class="form-group">
+                                                <label for="changePasswordCurrent">Current Password</label>
+                                                <input type="password" id="changePasswordCurrent" placeholder="Enter current password" autocomplete="current-password">
+                                        </div>
+                                        <div class="form-group">
+                                                <label for="changePasswordNew">New Password</label>
+                                                <input type="password" id="changePasswordNew" placeholder="At least 6 characters" autocomplete="new-password">
+                                        </div>
+                                        <button type="submit" class="primary-btn" style="width: 100%; margin-top: var(--spacing-md)">Update Password</button>
+                                </form>
                         </div>
                 </div>
         </div>
