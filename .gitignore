@@ -1,30 +1,18 @@
+# Local Firebase config with real credentials (never commit)
+config/firebase-config.local.js
+
+# Node
+node_modules/
+npm-debug.log*
+
 # OS
 .DS_Store
 Thumbs.db
 
-# Editors
-.vscode/
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-
-# Logs
-*.log
-npm-debug.log*
-
-# Build inputs
-bsb usfm files/
-
-# Dependencies
-node_modules/
+# Build artifacts
+dist/
+build/
 
 # Test output
-coverage/
-playwright-report/
 test-results/
-
-# Misc
-.env
-.env.local
+playwright-report/

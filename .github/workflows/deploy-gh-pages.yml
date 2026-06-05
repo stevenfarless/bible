@@ -3,10 +3,11 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main
+      - '**'
+      - '!main'
 
 concurrency:
-  group: gh-pages-main
+  group: gh-pages-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -20,33 +21,49 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+
+      - name: Derive destination directory
+        id: dest
+        run: |
+          # Replace every / with - so branch names like refactor/split-app-js
+          # become a valid directory slug: refactor-split-app-js
+          DEST="${GITHUB_REF_NAME//\//-}"
+          echo "dir=$DEST" >> "$GITHUB_OUTPUT"
 
       - name: Inject build info
         run: |
           BRANCH="${GITHUB_REF_NAME}"
           BUILD="${GITHUB_RUN_NUMBER}"
           SHA="${GITHUB_SHA::7}"
-          # On main the badge CSS hides itself (data-branch=main),
-          # but we still stamp it so the HTML is consistent
           INFO="${BRANCH} #${BUILD} · ${SHA}"
           echo "Injecting: $INFO"
           sed -i "s|__BUILD_INFO__|${INFO}|g" index.html
-          # Set data-branch attr so CSS can hide it on main
-          sed -i 's|id="build-info"|id="build-info" data-branch="main"|g' index.html
           sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" sw.js index.html
-          # Append ?v=<SHA> to every JS <script src> so cache layers cannot serve a stale bundle.
           sed -i "s|\(<script[^>]* src=\"\)\([^?\"]*\)\(\.js\)\(\"\)|\1\2\3?v=${GITHUB_SHA}\4|g" index.html
+          echo "$GITHUB_SHA" > version.txt
 
-      - name: Deploy to GitHub Pages (main)
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4
+      - name: Inject Firebase config
+        env:
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+        run: |
+          for f in config/firebase-config.js config/firebase-config.bundle.js; do
+            sed -i "s|__FIREBASE_API_KEY__|${FIREBASE_API_KEY}|g" "$f"
+            sed -i "s|__FIREBASE_APP_ID__|${FIREBASE_APP_ID}|g" "$f"
+            sed -i "s|__FIREBASE_MESSAGING_SENDER_ID__|${FIREBASE_MESSAGING_SENDER_ID}|g" "$f"
+          done
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./
-          destination_dir: .
+          destination_dir: ${{ steps.dest.outputs.dir }}
           keep_files: true
           force_orphan: false
           enable_jekyll: false

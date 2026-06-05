@@ -18,10 +18,12 @@ jobs:
 
       - name: Restore original translation files from last good commit
         run: |
+          # Last good commit before placeholders were written
           GOOD_COMMIT="0c530520d819e227e8be01fa268149398a25f741"
           for T in ASV BSB KJV LEB MSB NET WEB; do
+            # Original files were named {T}.json before rename
             git show ${GOOD_COMMIT}:translations/${T}/${T}.json > translations/${T}/${T}_bible.json
-            echo "Restored translations/${T}/${T}_bible.json"
+            echo "Restored translations/${T}/${T}_bible.json from ${GOOD_COMMIT}"
           done
 
       - name: Set up Python
@@ -32,7 +34,7 @@ jobs:
       - name: Normalize all restored files
         run: python .github/scripts/normalize_translations.py
 
-      - name: Commit and push
+      - name: Commit
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

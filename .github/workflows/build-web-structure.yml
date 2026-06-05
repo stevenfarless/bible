@@ -1,0 +1,36 @@
+name: Build WEB Structure Scaffold
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: exp
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate WEB structure JSONs
+        run: node scripts/build-web-structure.mjs
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git add translations/WEB/WEB_structure/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: generate WEB structure scaffold JSONs (Protestant + deuterocanon)"
+          git push origin exp

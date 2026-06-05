@@ -1,5 +1,5 @@
 {
-  "name": "esv-bible",
+  "name": "bible",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,6 +9,6 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "vitest": "^2.0.0"
+    "vitest": "^4.1.7"
   }
 }
