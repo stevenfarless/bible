@@ -224,6 +224,11 @@
     padding-top: var(--spacing-xs);
 }
 
+/* Explicit hidden override — display:flex above beats the [hidden] attribute without this */
+.translation-dl-progress[hidden] {
+    display: none !important;
+}
+
 .translation-dl-progress__bar-track {
     flex: 1;
     height: 3px;
