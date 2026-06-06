@@ -147,12 +147,12 @@
 #build-info {
     display: inline-block;
     font-family: 'Courier New', monospace;
-    font-size: 0.6rem;
-    font-weight: 600;
+    font-size: .75rem;
+    font-weight: bold;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--dracula-bg);
-    background: var(--dracula-comment);
+    color: #ffffff;
+    background: #790606;
     padding: 0.15rem 0.45rem;
     border-radius: 4px;
     vertical-align: middle;
