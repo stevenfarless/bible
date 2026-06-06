@@ -54,6 +54,9 @@ const BOOK_LOAD_ORDER = [
     'Judith','Tobit',
 ];
 
+// Canonical position map for cross-book sort.
+const BOOK_ORDER_INDEX = new Map(BOOK_LOAD_ORDER.map((b, i) => [b, i]));
+
 const BOOK_LOAD_ORDER_BY_LENGTH = [...BOOK_LOAD_ORDER].sort((a, b) => b.length - a.length);
 
 const BOOK_KEY_ALIASES = {
@@ -80,6 +83,27 @@ function escapeHtml(value) {
 function _buildWordRegex(q) {
     const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return new RegExp(`\\b${escaped}\\b`, 'i');
+}
+
+/**
+ * Builds a stem-expanded regex for `q` so that a search for "love" also
+ * matches "loves", "loved", "loveth", "loving", etc. — matching the
+ * _normalizeTerm behaviour used elsewhere.
+ *
+ * Strategy: stem the query term, then match any token that starts with that
+ * stem and is bounded by a word boundary on both sides.
+ */
+function _buildStemRegex(q) {
+    const terms = q.split(/[^\p{L}\p{N}']+/u).filter(Boolean);
+    // All terms must appear (AND semantics) — build one combined RegExp per term.
+    const regexes = terms.map((term) => {
+        const stem = _normalizeTerm(term.toLowerCase());
+        const escapedStem = stem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Match the stem followed by any word characters (covers inflections),
+        // bounded by word boundaries.
+        return new RegExp(`\\b${escapedStem}\\w*`, 'i');
+    });
+    return regexes;
 }
 
 export async function loadTranslationIndex() {
@@ -131,8 +155,6 @@ export class BibleApi {
         this._bookCache = new Map();
         this._shallowIndexCache = new Map();
         this._searchIndexCache = new Map();
-        this._miniSearchCache = new Map();
-        this._miniSearchBuildPromise = new Map();
         this._localBookFetchPromise = new Map();
         this._searchIndexFetchPromise = new Map();
         this._translationBookLists = new Map();
@@ -318,45 +340,6 @@ export class BibleApi {
         return promise;
     }
 
-    // Builds (or returns cached) a MiniSearch instance for a translation's search index.
-    // Each entry in the search index is indexed as { id: ref, text: normalizedText }.
-    async _getMiniSearchIndex(translation, searchIndex) {
-        if (this._miniSearchCache.has(translation)) {
-            return this._miniSearchCache.get(translation);
-        }
-        if (this._miniSearchBuildPromise.has(translation)) {
-            return this._miniSearchBuildPromise.get(translation);
-        }
-        const promise = (async () => {
-            try {
-                const MiniSearch = _MiniSearchClass;
-                const ms = new MiniSearch({
-                    fields: ['text'],
-                    storeFields: ['id'],
-                    idField: 'id',
-                    processTerm: (term) => _normalizeTerm(term),
-                    searchOptions: {
-                        prefix: true,
-                        fuzzy: 0,
-                        combineWith: 'AND',
-                    },
-                });
-                const docs = Object.entries(searchIndex).map(([ref, text]) => ({ id: ref, text }));
-                await ms.addAllAsync(docs, { chunkSize: 1000 });
-                this._miniSearchCache.set(translation, ms);
-                return ms;
-            } catch (err) {
-                console.warn('BibleApi: MiniSearch index build failed, will fall back to regex', err);
-                this._miniSearchCache.set(translation, null);
-                return null;
-            } finally {
-                this._miniSearchBuildPromise.delete(translation);
-            }
-        })();
-        this._miniSearchBuildPromise.set(translation, promise);
-        return promise;
-    }
-
     async downloadTranslation(translation, bookList, onProgress) {
         const books = bookList?.length ? bookList : BOOK_LOAD_ORDER;
         const total = books.length;
@@ -393,8 +376,6 @@ export class BibleApi {
                 const idx = await res.json();
                 await idbPutSearchIndex(translation, idx);
                 this._searchIndexCache.set(translation, idx);
-                // Invalidate any stale MiniSearch instance so it rebuilds with the new index.
-                this._miniSearchCache.delete(translation);
             }
         } catch (_) {}
 
@@ -415,7 +396,6 @@ export class BibleApi {
             if (key.startsWith(prefix)) this._bookCache.delete(key);
         }
         this._searchIndexCache.delete(translation);
-        this._miniSearchCache.delete(translation);
         this._shallowIndexCache.delete(translation);
         this._translationBookLists.delete(translation);
     }
@@ -555,12 +535,40 @@ export class BibleApi {
         return { passages: [html], canonical };
     }
 
+    // Scan a search index object with stemmed regex matching, returning refs in
+    // canonical book→chapter→verse order.
+    _scanSearchIndex(searchIndex, stemRegexes) {
+        const matched = [];
+        for (const ref of Object.keys(searchIndex)) {
+            const text = searchIndex[ref];
+            if (stemRegexes.every((re) => re.test(text))) {
+                const colonIdx = ref.lastIndexOf(':');
+                const spaceIdx = ref.lastIndexOf(' ', colonIdx);
+                matched.push({
+                    ref,
+                    book:    ref.slice(0, spaceIdx),
+                    chapter: Number(ref.slice(spaceIdx + 1, colonIdx)),
+                    verse:   Number(ref.slice(colonIdx + 1)),
+                });
+            }
+        }
+        matched.sort((a, b) => {
+            const bi = (BOOK_ORDER_INDEX.get(a.book) ?? 999) - (BOOK_ORDER_INDEX.get(b.book) ?? 999);
+            if (bi !== 0) return bi;
+            if (a.chapter !== b.chapter) return a.chapter - b.chapter;
+            return a.verse - b.verse;
+        });
+        return matched;
+    }
+
     async searchPassages(query, onBatchResults = null) {
         const q = String(query || '').toLowerCase().trim();
         if (!q) return { results: [], total_results: 0, page_size: PAGE_SIZE };
 
         const queryTerms = q.split(/[^\p{L}\p{N}']+/u).filter(Boolean);
         const normalizedQueryTerms = queryTerms.map((term) => _normalizeTerm(term));
+        const stemRegexes = _buildStemRegex(q);
+
         const debugSearch = (engine, matchedRefs) => {
             const topRefs = matchedRefs.slice(0, 5);
             const hasJohn316 = matchedRefs.includes('John 3:16');
@@ -579,31 +587,9 @@ export class BibleApi {
         const searchIndex = await this._loadSearchIndex(this._translation);
 
         if (searchIndex !== null) {
-            // Try MiniSearch first; fall back to regex scan on build failure.
-            const ms = await this._getMiniSearchIndex(this._translation, searchIndex);
-
-            let matchedRefs;
-            if (ms) {
-                const hits = ms.search(q);
-                matchedRefs = hits.map((h) => h.id);
-                debugSearch('MiniSearch', matchedRefs);
-            } else {
-                // Regex fallback — exact whole-word match.
-                const wordRegex = _buildWordRegex(q);
-                matchedRefs = Object.keys(searchIndex).filter((ref) => wordRegex.test(searchIndex[ref]));
-                debugSearch('indexRegex', matchedRefs);
-            }
-
-            const matches = matchedRefs.map((ref) => {
-                const colonIdx = ref.lastIndexOf(':');
-                const spaceIdx = ref.lastIndexOf(' ', colonIdx);
-                return {
-                    ref,
-                    book:    ref.slice(0, spaceIdx),
-                    chapter: Number(ref.slice(spaceIdx + 1, colonIdx)),
-                    verse:   Number(ref.slice(colonIdx + 1)),
-                };
-            });
+            // Stemmed scan over the flat search index — canonical order preserved.
+            const matches = this._scanSearchIndex(searchIndex, stemRegexes);
+            debugSearch('stemScan', matches.map((m) => m.ref));
 
             const uniqueBooks = [...new Set(matches.map((m) => m.book))];
             const bookDataMap = new Map();
@@ -643,7 +629,7 @@ export class BibleApi {
             return { results, total_results: results.length, page_size: PAGE_SIZE };
         }
 
-        // Slow path: no search index — scan book JSONs with regex.
+        // Slow path: no search index — scan book JSONs with stemmed regex.
         console.debug('BibleApi.searchPassages', {
             engine: 'bookScan',
             translation: this._translation,
@@ -652,7 +638,6 @@ export class BibleApi {
             normalizedQueryTerms,
             searchIndexAvailable: false,
         });
-        const wordRegex = _buildWordRegex(q);
         const bookList = this._translationBookLists.get(this._translation) ?? BOOK_LOAD_ORDER;
         const allResults = [];
 
@@ -677,7 +662,7 @@ export class BibleApi {
                         .sort((a, b) => Number(a[0]) - Number(b[0]));
                     for (const [verseStr, text] of verseEntries) {
                         const verseText = String(text || '');
-                        if (!wordRegex.test(verseText)) continue;
+                        if (!stemRegexes.every((re) => re.test(verseText))) continue;
                         batchResults.push({
                             reference: `${book} ${chapterStr}:${verseStr}`,
                             content:   verseText,
@@ -709,6 +694,8 @@ export class BibleApi {
 
         if (candidates.length === 0) return [];
 
+        const stemRegexes = _buildStemRegex(q);
+
         // seen is keyed on "TRANSLATION::ref" so the same verse from two
         // different translations are both included as separate badged results.
         // knownRefs contains bare refs (e.g. "Genesis 1:1") from the
@@ -723,41 +710,22 @@ export class BibleApi {
             const searchIndex = await this._loadSearchIndex(translation);
 
             if (searchIndex !== null) {
-                const ms = await this._getMiniSearchIndex(translation, searchIndex);
+                const matches = this._scanSearchIndex(searchIndex, stemRegexes);
 
-                let matchedRefs;
-                if (ms) {
-                    const hits = ms.search(q);
-                    matchedRefs = hits.map((h) => h.id);
-                } else {
-                    // Regex fallback — exact whole-word match.
-                    const wordRegex = _buildWordRegex(q);
-                    matchedRefs = Object.keys(searchIndex).filter((ref) => wordRegex.test(searchIndex[ref]));
+                const filteredMatches = [];
+                for (const m of matches) {
+                    const seenKey = `${translation}::${m.ref}`;
+                    if (!seen.has(seenKey)) filteredMatches.push({ ...m, seenKey });
                 }
 
-                const matches = [];
-                for (const ref of matchedRefs) {
-                    const seenKey = `${translation}::${ref}`;
-                    if (seen.has(seenKey)) continue;
-                    const colonIdx = ref.lastIndexOf(':');
-                    const spaceIdx = ref.lastIndexOf(' ', colonIdx);
-                    matches.push({
-                        ref,
-                        seenKey,
-                        book:    ref.slice(0, spaceIdx),
-                        chapter: Number(ref.slice(spaceIdx + 1, colonIdx)),
-                        verse:   Number(ref.slice(colonIdx + 1)),
-                    });
-                }
-
-                const uniqueBooks = [...new Set(matches.map((m) => m.book))];
+                const uniqueBooks = [...new Set(filteredMatches.map((m) => m.book))];
                 const bookDataMap = new Map(
                     await Promise.all(
                         uniqueBooks.map(async (book) => [book, await this._loadBook(translation, book)])
                     )
                 );
 
-                for (const { ref, seenKey, book, chapter, verse } of matches) {
+                for (const { ref, seenKey, book, chapter, verse } of filteredMatches) {
                     if (seen.has(seenKey)) continue;
                     seen.add(seenKey);
                     const bookData = bookDataMap.get(book);
@@ -779,7 +747,6 @@ export class BibleApi {
             }
 
             // Slow path: scan whatever books are already in the memory cache.
-            const wordRegex = _buildWordRegex(q);
             for (const book of BOOK_LOAD_ORDER) {
                 const bookData = this._bookCache.get(`${translation}/${book}`)
                     ?? this._bookCache.get(`${translation}/${BOOK_KEY_ALIASES[book]}`);
@@ -791,7 +758,7 @@ export class BibleApi {
                     for (const [verseStr, text] of Object.entries(chapterData)) {
                         if (Number(verseStr) <= 0) continue;
                         const verseText = String(text || '');
-                        if (!wordRegex.test(verseText)) continue;
+                        if (!stemRegexes.every((re) => re.test(verseText))) continue;
                         const ref = `${book} ${chapterStr}:${verseStr}`;
                         const seenKey = `${translation}::${ref}`;
                         if (seen.has(seenKey)) continue;
