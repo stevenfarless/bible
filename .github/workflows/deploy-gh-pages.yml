@@ -38,7 +38,8 @@ jobs:
           BRANCH="${GITHUB_REF_NAME}"
           BUILD="${GITHUB_RUN_NUMBER}"
           SHA="${GITHUB_SHA::7}"
-          INFO="${BRANCH} #${BUILD} · ${SHA}"
+          SHA4="${GITHUB_SHA: -4}"
+          INFO="${BRANCH^^} ${SHA4^^}"
           echo "Injecting: $INFO"
           sed -i "s|__BUILD_INFO__|${INFO}|g" index.html
           sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" sw.js index.html
