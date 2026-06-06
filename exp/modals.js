@@ -1,7 +1,7 @@
 // modals.js
 // Modal open/close, population, and drag-to-resize for BibleApp.
 
-import { LOCAL_TRANSLATIONS } from './bible-api.js';
+import { LOCAL_TRANSLATIONS, PRECACHED_TRANSLATIONS } from './bible-api.js';
 import { idbIsDownloaded, idbDeleteTranslation } from './translation-store.js';
 
 // ── Open / close ─────────────────────────────────────────────────────────────
@@ -185,7 +185,6 @@ const _SVG_TRASH = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.or
 const _downloading = new Set();
 const _hasHover = window.matchMedia('(hover: hover)').matches;
 
-// ease-in-out: starts slow, builds momentum, eases to stop
 const _FLY_EASING   = 'cubic-bezier(0.4, 0, 0.2, 1)';
 const _FLY_DURATION = '420ms';
 
@@ -215,7 +214,7 @@ export async function populateTranslationModal(app) {
 
     const idbChecks = await Promise.all(
         registry.map((t) =>
-            LOCAL_TRANSLATIONS.has(t.id) ? Promise.resolve(true) : idbIsDownloaded(t.id)
+            PRECACHED_TRANSLATIONS.has(t.id) ? Promise.resolve(true) : idbIsDownloaded(t.id)
         )
     );
 
@@ -282,7 +281,7 @@ export async function populateTranslationModal(app) {
             if (_downloading.has(t.id)) {
                 progressWrap.hidden = false;
                 iconEl.innerHTML = _SVG_SPINNER;
-                progressLabel.textContent = 'Downloading\u2026';
+                progressLabel.textContent = 'Downloading…';
                 li.classList.add('translation-modal-item--downloading');
             } else if (isDownloaded) {
                 li.classList.add('translation-modal-item--downloaded');
@@ -333,7 +332,7 @@ export async function populateTranslationModal(app) {
 
     if (installed.length > 0) {
         appendSectionHeading('Installed');
-        for (const t of installed) appendItem(t, LOCAL_TRANSLATIONS.has(t.id), true);
+        for (const t of installed) appendItem(t, PRECACHED_TRANSLATIONS.has(t.id), true);
     }
 
     if (available.length > 0) {
@@ -342,13 +341,6 @@ export async function populateTranslationModal(app) {
     }
 }
 
-// ── Shared fly animation ────────────────────────────────────────────────────────
-
-/**
- * Flies sourceWrapper to the position of the rebuilt list entry for t.id.
- * Called after populateTranslationModal has already been invoked so the
- * destination node exists at its new location.
- */
 async function _flyItem(app, t, sourceWrapper) {
     const fromRect = sourceWrapper.getBoundingClientRect();
 
@@ -406,8 +398,6 @@ async function _flyToInstalled(app, t, sourceWrapper) {
 async function _flyToAvailable(app, t, sourceWrapper) {
     await _flyItem(app, t, sourceWrapper);
 }
-
-// ── Swipe-to-reveal delete (touch only) ──────────────────────────────────────
 
 const _SWIPE_THRESHOLD = 60;
 const _DELETE_BTN_W   = 72;
@@ -515,8 +505,6 @@ function _attachSwipe(wrapper, li) {
     }, { passive: true });
 }
 
-// ── Uninstall handler ─────────────────────────────────────────────────────────
-
 async function _handleUninstall(app, t, wrapper) {
     await idbDeleteTranslation(t.id);
 
@@ -525,11 +513,10 @@ async function _handleUninstall(app, t, wrapper) {
     }
 
     if (app.state.translation === t.id) {
-        const fallback = [...LOCAL_TRANSLATIONS][0];
+        const fallback = [...PRECACHED_TRANSLATIONS][0];
         if (fallback) app.changeTranslation(fallback);
     }
 
-    // Fly to Available section, then let _flyItem handle the list rebuild
     _flyToAvailable(app, t, wrapper);
 }
 
@@ -544,7 +531,7 @@ async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progre
     iconEl.innerHTML = _SVG_SPINNER;
     progressWrap.hidden = false;
     progressBar.style.width = '0%';
-    progressLabel.textContent = 'Downloading\u2026';
+    progressLabel.textContent = 'Downloading…';
 
     let bookList = null;
     try {
@@ -559,7 +546,7 @@ async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progre
         await app.bibleApi.downloadTranslation(t.id, bookList, (done, tot) => {
             const pct = Math.round((done / tot) * 100);
             progressBar.style.width = `${pct}%`;
-            progressLabel.textContent = `${done}\u202f/\u202f${tot}`;
+            progressLabel.textContent = `${done} / ${tot}`;
         });
 
         _downloading.delete(t.id);
@@ -577,7 +564,7 @@ async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progre
         li.classList.remove('translation-modal-item--downloading');
         iconEl.innerHTML = _SVG_DOWNLOAD;
         progressBar.style.width = '0%';
-        _showInlineError(li, progressWrap, progressLabel, 'Download failed \u2014 try again');
+        _showInlineError(li, progressWrap, progressLabel, 'Download failed — try again');
         console.error('Translation download failed', err);
     }
 }
@@ -592,8 +579,6 @@ function _showInlineError(li, progressWrap, progressLabel, message) {
         progressLabel.textContent = '';
     }, 3000);
 }
-
-// ── Translation modal keyboard helpers ───────────────────────────────────────
 
 function _translationItems(app) {
     return app.translationList
@@ -631,8 +616,6 @@ export function translationKbSelect(app) {
     if (idx < 0 || idx >= items.length) return;
     items[idx].click();
 }
-
-// ── Drag-to-resize ────────────────────────────────────────────────────────────
 
 function attachDragHandlers(app, modal, dismissOnDrag = true) {
     const content = modal.querySelector('.modal-content');
