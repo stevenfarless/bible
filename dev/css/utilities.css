@@ -121,6 +121,8 @@
    11. UTILITY CLASSES
    ================================ */
 
+.hidden { display: none !important; }
+
 /* Hide verse numbers when setting is off */
 body.hide-verse-numbers .passage-text .verse-num {
     display: none !important;
@@ -189,5 +191,4 @@ body.font-opendyslexic3 .search-result-content {
         border: none;
     }
 }
-
 
