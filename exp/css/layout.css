@@ -72,8 +72,7 @@ body.chrome-no-transition .top-chrome {
 
 /* Header */
 .header {
-    background-color: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
     position: relative;
     z-index: 100;
     box-shadow: var(--shadow-sm);
@@ -112,7 +111,7 @@ body:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):
 
 /* Navigation */
 .navigation {
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-primary);
     border-bottom: 1px solid var(--border-color);
     position: relative;
     z-index: 99;
@@ -127,5 +126,4 @@ body:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):
     align-items: center;
     gap: var(--spacing-md);
 }
-
 
