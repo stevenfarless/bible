@@ -208,6 +208,9 @@ export function updateThemeIcon(isLightMode) {
 }
 
 export async function changeColorTheme(app, theme) {
+	// 'dracula' was a legacy theme name — map it forward to 'onyx'.
+	if (theme === 'dracula') theme = 'onyx';
+
 	document.body.classList.remove('onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme');
 
 	if (theme === 'onyx')            document.body.classList.add('onyx-theme');
@@ -216,6 +219,7 @@ export async function changeColorTheme(app, theme) {
 	else if (theme === 'perplexity') document.body.classList.add('perplexity-theme');
 	else if (theme === 'basic')      document.body.classList.add('basic-theme');
 	else if (theme === 'geek')       document.body.classList.add('geek-theme');
+	else { theme = 'basic'; document.body.classList.add('basic-theme'); }
 
 	// Always write locally so cold loads get the correct value immediately.
 	try { localStorage.setItem('colorTheme', theme); } catch (_) {}

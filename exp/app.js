@@ -723,8 +723,8 @@ class BibleApp {
             const themeSelector = document.getElementById('themeSelector');
             const lightModeToggle = document.getElementById('lightModeToggle');
             if (themeSelector) {
-                let saved = 'dracula';
-                try { saved = localStorage.getItem('colorTheme') || 'dracula'; } catch (_) {}
+                let saved = 'basic';
+                try { saved = localStorage.getItem('colorTheme') || 'basic'; } catch (_) {}
                 themeSelector.value = saved;
             }
             if (lightModeToggle) lightModeToggle.checked = document.body.classList.contains('light-mode');
