@@ -4,7 +4,7 @@
 let BUILD_ID = 'pending';
 let CACHE_NAME = 'bible-pending';
 
-const APP_SHELL_PATTERN = /^(?!\..*\/vendor\/).*\.(js|mjs|css)$/;
+const APP_SHELL_PATTERN = /\.(js|mjs|css)$/;
 
 const PRECACHED_TRANSLATIONS = new Set(['KJV', 'BSB']);
 
