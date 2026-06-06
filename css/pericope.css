@@ -152,7 +152,7 @@
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #ffffff;
-    background: #790606;
+    background: __BUILD_COLOR__;
     padding: 0.15rem 0.45rem;
     border-radius: 4px;
     vertical-align: middle;
