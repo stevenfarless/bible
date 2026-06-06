@@ -67,7 +67,7 @@ function escapeHtml(value) {
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replace(/\"/g, '&quot;')
+        .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 }
 
@@ -323,6 +323,14 @@ export class BibleApi {
         } catch (_) {}
 
         await idbMarkDownloaded(translation);
+
+        // Notify the SW so it starts caching this translation's files on access.
+        if (navigator.serviceWorker?.controller) {
+            navigator.serviceWorker.controller.postMessage({
+                type: 'TRANSLATION_INSTALLED',
+                translation,
+            });
+        }
     }
 
     evictTranslation(translation) {
@@ -508,173 +516,4 @@ export class BibleApi {
                         const bookData = bookDataMap.get(book);
                         const resolvedKey = bookData ? _resolveBookKey(bookData, book) : null;
                         const resolvedBookData = resolvedKey ? bookData[resolvedKey] ?? bookData : bookData;
-                        const originalText = resolvedBookData?.[String(chapter)]?.[String(verse)];
-                        const text = originalText != null ? String(originalText) : searchIndex[ref];
-                        partial.push({ reference: ref, content: text, book, chapter, verse, text });
-                    }
-                    if (partial.length > 0) onBatchResults(partial);
-                }
-            }
-
-            const results = [];
-            for (const { ref, book, chapter, verse } of matches) {
-                const bookData = bookDataMap.get(book);
-                const resolvedKey = bookData ? _resolveBookKey(bookData, book) : null;
-                const resolvedBookData = resolvedKey ? bookData[resolvedKey] ?? bookData : bookData;
-                const originalText = resolvedBookData?.[String(chapter)]?.[String(verse)];
-                const text = originalText != null ? String(originalText) : searchIndex[ref];
-                results.push({ reference: ref, content: text, book, chapter, verse, text });
-            }
-
-            return { results, total_results: results.length, page_size: PAGE_SIZE };
-        }
-
-        const bookList = this._translationBookLists.get(this._translation) ?? BOOK_LOAD_ORDER;
-        const allResults = [];
-
-        for (let i = 0; i < bookList.length; i += SEARCH_CONCURRENCY) {
-            const batch = bookList.slice(i, i + SEARCH_CONCURRENCY);
-            const bookDataList = await Promise.all(
-                batch.map((book) => this._loadBook(this._translation, book))
-            );
-            const batchResults = [];
-            for (let j = 0; j < batch.length; j++) {
-                const book = batch[j];
-                const bookData = bookDataList[j];
-                if (!bookData) continue;
-                const resolvedKey = _resolveBookKey(bookData, book);
-                const resolvedBookData = resolvedKey ? bookData[resolvedKey] ?? bookData : bookData;
-                const chapterEntries = Object.entries(resolvedBookData)
-                    .sort((a, b) => Number(a[0]) - Number(b[0]));
-                for (const [chapterStr, chapterData] of chapterEntries) {
-                    if (!chapterData || typeof chapterData !== 'object') continue;
-                    const verseEntries = Object.entries(chapterData)
-                        .filter(([verseStr]) => Number(verseStr) > 0)
-                        .sort((a, b) => Number(a[0]) - Number(b[0]));
-                    for (const [verseStr, text] of verseEntries) {
-                        const verseText = String(text || '');
-                        if (!wordRegex.test(verseText)) continue;
-                        batchResults.push({
-                            reference: `${book} ${chapterStr}:${verseStr}`,
-                            content:   verseText,
-                            book,
-                            chapter:   Number(chapterStr),
-                            verse:     Number(verseStr),
-                            text:      verseText,
-                        });
-                    }
-                }
-            }
-            if (batchResults.length > 0) {
-                allResults.push(...batchResults);
-                if (typeof onBatchResults === 'function') onBatchResults(batchResults);
-            }
-        }
-
-        return { results: allResults, total_results: allResults.length, page_size: PAGE_SIZE };
-    }
-
-    async searchPassagesAllTranslations(query, knownRefs) {
-        const q = String(query || '').toLowerCase().trim();
-        if (q.length < 3) return [];
-
-        const wordRegex = _buildWordRegex(q);
-        const activeTranslation = this._translation;
-
-        // Only search translations the user has explicitly installed, plus precached ones.
-        // Never touch a translation that isn't on the user's device.
-        const installedChecks = await Promise.all(
-            [...LOCAL_TRANSLATIONS]
-                .filter((t) => t !== activeTranslation)
-                .map(async (t) => ({
-                    t,
-                    ok: PRECACHED_TRANSLATIONS.has(t) || await idbIsDownloaded(t),
-                }))
-        );
-        const candidates = installedChecks.filter((c) => c.ok).map((c) => c.t);
-
-        if (candidates.length === 0) return [];
-
-        // knownRefs are bare refs from the active translation (e.g. "John 3:16").
-        // Skip any ref from another translation that is the same canonical address —
-        // megasearch only adds value when a verse appears in an installed translation
-        // that was not already surfaced by the active translation's search.
-        const supplemental = [];
-
-        await Promise.all(candidates.map(async (translation) => {
-            const searchIndex = await this._loadSearchIndex(translation);
-
-            if (searchIndex !== null) {
-                const matches = [];
-                for (const [ref, normalizedText] of Object.entries(searchIndex)) {
-                    if (knownRefs.has(ref)) continue;
-                    if (!wordRegex.test(normalizedText)) continue;
-                    const colonIdx = ref.lastIndexOf(':');
-                    const spaceIdx = ref.lastIndexOf(' ', colonIdx);
-                    matches.push({
-                        ref,
-                        book:    ref.slice(0, spaceIdx),
-                        chapter: Number(ref.slice(spaceIdx + 1, colonIdx)),
-                        verse:   Number(ref.slice(colonIdx + 1)),
-                    });
-                }
-
-                const uniqueBooks = [...new Set(matches.map((m) => m.book))];
-                const bookDataMap = new Map(
-                    await Promise.all(
-                        uniqueBooks.map(async (book) => [book, await this._loadBook(translation, book)])
-                    )
-                );
-
-                for (const { ref, book, chapter, verse } of matches) {
-                    const bookData = bookDataMap.get(book);
-                    const resolvedKey = bookData ? _resolveBookKey(bookData, book) : null;
-                    const resolvedBookData = resolvedKey ? bookData[resolvedKey] ?? bookData : bookData;
-                    const originalText = resolvedBookData?.[String(chapter)]?.[String(verse)];
-                    const text = originalText != null ? String(originalText) : searchIndex[ref];
-                    supplemental.push({
-                        reference:         ref,
-                        content:           text,
-                        book,
-                        chapter,
-                        verse,
-                        text,
-                        sourceTranslation: translation,
-                    });
-                }
-                return;
-            }
-
-            // No search index — fall back to only already-cached book data in memory.
-            // This path never triggers a network fetch.
-            for (const book of BOOK_LOAD_ORDER) {
-                const bookData = this._bookCache.get(`${translation}/${book}`)
-                    ?? this._bookCache.get(`${translation}/${BOOK_KEY_ALIASES[book]}`);
-                if (!bookData) continue;
-                const resolvedKey = _resolveBookKey(bookData, book);
-                const resolvedBookData = resolvedKey ? bookData[resolvedKey] ?? bookData : bookData;
-                for (const [chapterStr, chapterData] of Object.entries(resolvedBookData)) {
-                    if (!chapterData || typeof chapterData !== 'object') continue;
-                    for (const [verseStr, text] of Object.entries(chapterData)) {
-                        if (Number(verseStr) <= 0) continue;
-                        const verseText = String(text || '');
-                        if (!wordRegex.test(verseText)) continue;
-                        const ref = `${book} ${chapterStr}:${verseStr}`;
-                        if (knownRefs.has(ref)) continue;
-                        supplemental.push({
-                            reference:         ref,
-                            content:           verseText,
-                            book,
-                            chapter:           Number(chapterStr),
-                            verse:             Number(verseStr),
-                            text:              verseText,
-                            sourceTranslation: translation,
-                        });
-                    }
-                }
-            }
-        }));
-
-        return supplemental;
-    }
-}
+                   
