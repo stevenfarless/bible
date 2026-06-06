@@ -59,7 +59,7 @@ const BOOK_KEY_ALIASES = {
 let _MiniSearch = null;
 async function getMiniSearch() {
     if (_MiniSearch) return _MiniSearch;
-    const mod = await import('./vendor/minisearch/minisearch.umd.min.js');
+    const mod = await import('./vendor/minisearch/minisearch.esm.min.js');
     _MiniSearch = mod.default ?? mod.MiniSearch ?? globalThis.MiniSearch;
     return _MiniSearch;
 }
