@@ -208,12 +208,10 @@ export function updateThemeIcon(isLightMode) {
 }
 
 export async function changeColorTheme(app, theme) {
-	// 'dracula' was a legacy theme name — map it forward to 'onyx'.
-	if (theme === 'dracula') theme = 'onyx';
+	document.body.classList.remove('dracula-theme', 'onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme');
 
-	document.body.classList.remove('onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme');
-
-	if (theme === 'onyx')            document.body.classList.add('onyx-theme');
+	if (theme === 'dracula')         document.body.classList.add('dracula-theme');
+	else if (theme === 'onyx')       document.body.classList.add('onyx-theme');
 	else if (theme === 'sage')       document.body.classList.add('sage-theme');
 	else if (theme === 'ember')      document.body.classList.add('ember-theme');
 	else if (theme === 'perplexity') document.body.classList.add('perplexity-theme');
