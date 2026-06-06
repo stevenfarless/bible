@@ -1,4 +1,4 @@
-const BUILD_ID = "b0d5649b28b4ba8ad1cbf0f828e77c556f9d78c4";
+const BUILD_ID = "bbf2bea4e9a88e4f92b5174376dd8f7ce19c5740";
 const CACHE_NAME = `bible-${BUILD_ID}`;
 
 // App shell assets (JS modules + CSS): network-first, bypass the browser
@@ -160,6 +160,8 @@ self.addEventListener('activate', (event) => {
 // The app notifies the SW when a translation download completes so the SW
 // cache write gate opens for that translation's files.
 self.addEventListener('message', (event) => {
+  if (event.origin !== self.location.origin) return;
+
   if (event.data?.type === 'TRANSLATION_INSTALLED') {
     const t = event.data.translation;
     if (t && typeof t === 'string') installedTranslations.add(t);
