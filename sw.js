@@ -1,31 +1,13 @@
-// BUILD_ID is resolved at install time from this SW file's own Last-Modified
-// header so every deploy automatically busts the cache without a build step.
-// Date.now() is the fallback for environments that strip response headers.
-const BUILD_ID = await (async () => {
-  try {
-    const r = await fetch('./sw.js', { cache: 'no-store', method: 'HEAD' });
-    const lm = r.headers.get('Last-Modified');
-    if (lm) return String(new Date(lm).getTime());
-  } catch { /* fallthrough */ }
-  return String(Date.now());
-})();
-const CACHE_NAME = `bible-${BUILD_ID}`;
+// BUILD_ID is resolved inside the install handler from this SW file's own
+// Last-Modified response header so every deploy busts the cache without a
+// build step. Fallback is Date.now() for hosts that strip response headers.
+let BUILD_ID = 'pending';
+let CACHE_NAME = 'bible-pending';
 
-// App shell assets (JS modules + CSS): network-first, bypass the browser
-// HTTP cache entirely so style and code changes deploy immediately.
-// vendor/ files are third-party SDKs that never change for a given
-// version — they go through the cache-first path below.
 const APP_SHELL_PATTERN = /^(?!\\..*\/vendor\/).*\.(js|mjs|css)$/;
 
-// Translations whose data ships with the app and is cached at install time.
-// Nothing outside this set is written to the SW cache unless the user
-// explicitly downloads it via the translation picker.
 const PRECACHED_TRANSLATIONS = new Set(['KJV', 'BSB']);
 
-// Translations the user has downloaded during this SW lifetime.
-// Populated via postMessage({ type: 'TRANSLATION_INSTALLED', translation }).
-// Resets on SW restart — the API layer (bible-api.js) is the authoritative
-// install record via IDB; this set just gates SW cache writes.
 const installedTranslations = new Set(PRECACHED_TRANSLATIONS);
 
 const CANONICAL_BOOKS = [
@@ -44,13 +26,10 @@ const CANONICAL_BOOKS = [
   '1 John','2 John','3 John','Jude','Revelation',
 ];
 
-// All 66 books for KJV and BSB precached at activation so both translations
-// are fully available offline immediately after PWA install.
 const PER_BOOK_PRECACHE = [...PRECACHED_TRANSLATIONS].flatMap(t =>
   CANONICAL_BOOKS.map(b => `./translations/${t}/${encodeURIComponent(b)}.json`)
 );
 
-// BSB structure files (per-book JSON) used by bsb-structure.js.
 const BSB_STRUCTURE_FILES = [
   './translations/BSB/BSB_structure/Genesis.json',
   './translations/BSB/BSB_structure/Psalm.json',
@@ -64,9 +43,6 @@ const BSB_STRUCTURE_FILES = [
   './translations/BSB/BSB_structure/Revelation.json',
 ];
 
-// Full app shell — everything needed to render the UI without any network.
-// KJV and BSB search indexes are included here so offline search works
-// immediately after PWA install without requiring a prior online session.
 const APP_SHELL = [
   './',
   './index.html',
@@ -97,7 +73,6 @@ const APP_SHELL = [
   './favicon-16x16.png',
   './favicon-32x32.png',
   './favicon.ico',
-  // Self-hosted fonts — precached so they load offline with no latency.
   './fonts/Cinzel-Regular.woff2',
   './fonts/GentiumBookPlus-Regular.woff2',
   './fonts/GentiumBookPlus-Italic.woff2',
@@ -105,7 +80,6 @@ const APP_SHELL = [
   './fonts/GentiumBookPlus-BoldItalic.woff2',
 ];
 
-// Firebase RTDB paths that are safe to cache indefinitely.
 function isFirebaseCacheable(url) {
   if (!url.hostname.endsWith('.firebaseio.com')) return false;
   const p = url.pathname;
@@ -116,12 +90,18 @@ function isFirebaseCacheable(url) {
   return false;
 }
 
-// Extract the translation abbreviation from a local translation file URL.
-// e.g. /bible/exp/translations/NIV/John.json → "NIV"
-// Returns null if the URL is not a translation data file.
 function translationFromUrl(pathname) {
   const m = pathname.match(/\/translations\/([^/]+)\//);
   return m ? m[1] : null;
+}
+
+async function resolveBuildId() {
+  try {
+    const r = await fetch('./sw.js', { cache: 'no-store', method: 'HEAD' });
+    const lm = r.headers.get('Last-Modified');
+    if (lm) return String(new Date(lm).getTime());
+  } catch { /* fallthrough */ }
+  return String(Date.now());
 }
 
 async function precacheFiles() {
@@ -144,11 +124,12 @@ async function precacheFiles() {
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) =>
-      cache.addAll(APP_SHELL)
-    )
-  );
+  event.waitUntil((async () => {
+    BUILD_ID = await resolveBuildId();
+    CACHE_NAME = `bible-${BUILD_ID}`;
+    const cache = await caches.open(CACHE_NAME);
+    await cache.addAll(APP_SHELL);
+  })());
 });
 
 self.addEventListener('activate', (event) => {
@@ -162,13 +143,10 @@ self.addEventListener('activate', (event) => {
       client.postMessage({ type: 'NEW_BUILD', buildId: BUILD_ID });
     }
 
-    // Precache all KJV and BSB book files in the background after activation.
     precacheFiles();
   })());
 });
 
-// The app notifies the SW when a translation download completes so the SW
-// cache write gate opens for that translation's files.
 self.addEventListener('message', (event) => {
   if (event.origin !== self.location.origin) return;
 
@@ -181,7 +159,6 @@ self.addEventListener('message', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Pass through all cross-origin requests the SW has no business handling.
   if (url.origin !== self.location.origin &&
       !url.hostname.endsWith('.firebaseio.com') &&
       !url.hostname.endsWith('.firebase.google.com')) {
@@ -242,10 +219,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Everything else (vendor JS, JSON data files, fonts, images): cache-first.
-  // For translation data files, only write to the SW cache if the translation
-  // is precached (KJV/BSB) or has been explicitly installed by the user.
-  // Non-installed translations are served from the network but never stored.
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(event.request);
