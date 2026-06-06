@@ -1,4 +1,14 @@
-const BUILD_ID = "__BUILD_ID__";
+// BUILD_ID is resolved at install time from this SW file's own Last-Modified
+// header so every deploy automatically busts the cache without a build step.
+// Date.now() is the fallback for environments that strip response headers.
+const BUILD_ID = await (async () => {
+  try {
+    const r = await fetch('./sw.js', { cache: 'no-store', method: 'HEAD' });
+    const lm = r.headers.get('Last-Modified');
+    if (lm) return String(new Date(lm).getTime());
+  } catch { /* fallthrough */ }
+  return String(Date.now());
+})();
 const CACHE_NAME = `bible-${BUILD_ID}`;
 
 // App shell assets (JS modules + CSS): network-first, bypass the browser
