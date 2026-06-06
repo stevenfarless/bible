@@ -820,9 +820,11 @@ class BibleApp {
             }
 
             if (this.auth && this.database) {
+                let _authResolved = false;
                 this.auth.onAuthStateChanged(async (user) => {
                     this._dbg.t_auth_state = ms();
                     if (user) {
+                        _authResolved = true;
                         this._dbg.authStateUser = user.email;
                         this._dbgEvent(`auth: signed in as ${user.email}`);
                         this.currentUser = user;
@@ -842,7 +844,9 @@ class BibleApp {
                         this._dbg.authStateUser = 'signed out';
                         this._dbgEvent('auth: signed out');
                         this.currentUser = null;
-                        this.checkApiKey();
+                        // Only prompt sign-in on a real sign-out, not the startup
+                        // null event that fires before Firebase rehydrates IndexedDB.
+                        if (_authResolved) this.checkApiKey();
                     }
                 });
             }

@@ -104,7 +104,7 @@ export async function loadUserData(userId) {
                 showCrossReferences: s.showCrossReferences  === true,
                 verseByVerse:        s.verseByVerse         === true,
                 colorTheme:          s.colorTheme           || 'dracula',
-                lightMode:           typeof s.lightMode === 'boolean' ? s.lightMode : false,
+                lightMode:           s.lightMode            ?? 'system',
                 translation:         s.translation          || 'ESV',
             },
         };
