@@ -102,12 +102,16 @@ export async function loadTranslationIndex() {
 function _normalizeTerm(word) {
     const w = word.toLowerCase();
     if (w.length < 3) return w;
-    // loved -> love  (strip -d after silent -e after consonant)
-    if (w.endsWith('d') && w.length > 3 && w[w.length - 2] === 'e' && !'aeiou'.includes(w[w.length - 3])) {
-        return w.slice(0, -1);
+    // loved/moved/fixed -> lov/mov/fix  (strip -ed after consonant)
+    if (w.endsWith('ed') && w.length > 4 && !'aeiou'.includes(w[w.length - 3])) {
+        return w.slice(0, -2);
     }
-    // loves -> love  (strip -s when word ends consonant+e+s)
+    // loves/moves/fixes -> lov/mov/fix  (strip -es after consonant)
     if (w.endsWith('es') && w.length > 4 && !'aeiou'.includes(w[w.length - 3])) {
+        return w.slice(0, -2);
+    }
+    // love/grace/name -> lov/grac/nam  (strip silent trailing -e after consonant)
+    if (w.endsWith('e') && w.length >= 4 && !'aeiou'.includes(w[w.length - 2])) {
         return w.slice(0, -1);
     }
     // commandments -> commandment  (plain plural -s after consonant)
@@ -329,7 +333,7 @@ export class BibleApi {
                     processTerm: (term) => _normalizeTerm(term),
                     searchOptions: {
                         prefix: true,
-                        fuzzy: 0.15,
+                        fuzzy: 0,
                         combineWith: 'AND',
                     },
                 });
