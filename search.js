@@ -173,20 +173,20 @@ export function initSearchResultsDelegate(app) {
             return;
         }
 
-        // ── Translation pill ──────────────────────────────────────────
-        const pill = target.closest('.search-result-translation-pill');
-        if (pill) {
+        // ── Translation badge (multi-translation) ────────────────────────
+        const badge = target.closest('.search-result-translation-badge[data-translation-id]');
+        if (badge) {
             e.preventDefault();
             e.stopPropagation();
-            const card = pill.closest('.search-result-item');
+            const card = badge.closest('.search-result-item');
             if (!card) return;
-            const translationId = pill.dataset.translationId;
-            const translationContent = pill.dataset.translationContent;
+            const translationId = badge.dataset.translationId;
+            const translationContent = badge.dataset.translationContent;
             card.dataset.activeTranslation = translationId;
             card.querySelector('.search-result-content').innerHTML =
                 highlightSearchTerm(translationContent, query);
-            card.querySelectorAll('.search-result-translation-pill').forEach((p) => {
-                p.classList.toggle('active', p.dataset.translationId === translationId);
+            card.querySelectorAll('.search-result-translation-badge[data-translation-id]').forEach((b) => {
+                b.classList.toggle('active', b.dataset.translationId === translationId);
             });
             return;
         }
@@ -436,7 +436,7 @@ export async function runMegasearch(app, query) {
 
 // Merges results with the same reference into one object. The active
 // translation's text becomes the default displayed content; supplemental
-// translations are collected into a `translations` array for the pill row.
+// translations are collected into a translations array for the inline badges.
 function mergeResultsByReference(results, activeTranslation) {
     const seen = new Map(); // reference → merged result
 
@@ -456,13 +456,13 @@ function mergeResultsByReference(results, activeTranslation) {
         const merged = seen.get(ref);
         const tid = r.sourceTranslation || activeTranslation;
 
-        // If this is the active translation's result, promote it to primary content.
+        // Promote active translation to primary content.
         if (!r.sourceTranslation) {
             merged.content = r.content;
             merged.activeTranslation = activeTranslation;
         }
 
-        // Avoid duplicate pills for the same translation.
+        // Avoid duplicate badges for the same translation.
         if (!merged.translations.some((t) => t.id === tid)) {
             merged.translations.push({ id: tid, content: r.content });
         }
@@ -588,7 +588,6 @@ export function displaySearchResults(app, results, query) {
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-    // Count unique verses (after merge) and unique books.
     const totalVerses = groups.reduce((acc, g) => acc + g.books.reduce((a, b) => a + b.results.length, 0), 0);
     const totalBooks = groups.reduce((acc, g) => acc + g.books.length, 0);
     const countLabel = `${totalVerses} verse${totalVerses !== 1 ? 's' : ''} in ${totalBooks} book${totalBooks !== 1 ? 's' : ''}`;
@@ -633,22 +632,23 @@ export function displaySearchResults(app, results, query) {
                     console.warn('highlight failed', err);
                 }
 
-                // Build translation pill row only when multiple translations matched.
-                let pillsHtml = '';
-                if (result.translations.length > 1) {
-                    const pillItems = result.translations.map((t) => {
+                // Badges sit inline in the reference line, same as single-translation cards.
+                // When multiple translations matched, each gets a badge with data attrs for
+                // the tap handler; the active one gets class `active`.
+                let badgesHtml = '';
+                if (result.translations.length === 1) {
+                    badgesHtml = `<span class="search-result-translation-badge">${esc(result.translations[0].id)}</span>`;
+                } else if (result.translations.length > 1) {
+                    badgesHtml = result.translations.map((t) => {
                         const isActive = t.id === result.activeTranslation;
-                        const safeContent = esc(t.content);
-                        return `<button class="search-result-translation-pill${isActive ? ' active' : ''}" data-translation-id="${esc(t.id)}" data-translation-content="${safeContent}">${esc(t.id)}</button>`;
+                        return `<span class="search-result-translation-badge${isActive ? ' active' : ''}" data-translation-id="${esc(t.id)}" data-translation-content="${esc(t.content)}">${esc(t.id)}</span>`;
                     }).join('');
-                    pillsHtml = `<div class="search-result-translation-pills">${pillItems}</div>`;
                 }
 
                 parts.push(`
           <div class="search-result-item" data-reference="${esc(result.reference)}" data-active-translation="${esc(result.activeTranslation)}">
-            <div class="search-result-reference">${esc(result.reference)}</div>
+            <div class="search-result-reference">${esc(result.reference)} ${badgesHtml}</div>
             <div class="search-result-content">${highlighted}</div>
-            ${pillsHtml}
           </div>
         `);
             }
