@@ -426,6 +426,7 @@ export async function runMegasearch(app, query) {
     }
 
     const combined = [...app.currentSearchResults, ...supplemental];
+    combined.sort((a, b) => a.chapter - b.chapter || a.verse - b.verse);
     app.currentSearchResults = combined;
     app._dbgUserAction(`megasearch: added ${supplemental.length} supplemental results (total: ${combined.length})`);
     displaySearchResults(app, combined, query);
