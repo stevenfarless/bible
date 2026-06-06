@@ -160,6 +160,8 @@ self.addEventListener('activate', (event) => {
 // The app notifies the SW when a translation download completes so the SW
 // cache write gate opens for that translation's files.
 self.addEventListener('message', (event) => {
+  if (event.origin !== self.location.origin) return;
+
   if (event.data?.type === 'TRANSLATION_INSTALLED') {
     const t = event.data.translation;
     if (t && typeof t === 'string') installedTranslations.add(t);
