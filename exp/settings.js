@@ -66,8 +66,11 @@ export function loadLocalSettings(app) {
             ? _rawLightMode
             : DEFAULTS.lightMode;
 
-    try { app.state.colorTheme = localStorage.getItem('colorTheme') || DEFAULTS.colorTheme; }
-    catch (_) { app.state.colorTheme = DEFAULTS.colorTheme; }
+    try {
+        const storedTheme = localStorage.getItem('colorTheme') || DEFAULTS.colorTheme;
+        // 'dracula' was briefly remapped to 'onyx' in a bad deploy — restore it.
+        app.state.colorTheme = storedTheme;
+    } catch (_) { app.state.colorTheme = DEFAULTS.colorTheme; }
 
     try { app.state.readingFont = localStorage.getItem('readingFont') || DEFAULTS.readingFont; }
     catch (_) { app.state.readingFont = DEFAULTS.readingFont; }
