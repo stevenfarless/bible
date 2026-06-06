@@ -40,8 +40,14 @@ jobs:
           SHA="${GITHUB_SHA::7}"
           SHA4="${GITHUB_SHA: -4}"
           INFO="${BRANCH^^} ${SHA4^^}"
+          case "${BRANCH}" in
+            dev)  BUILD_COLOR="#09752b" ;;
+            exp)  BUILD_COLOR="#790606" ;;
+            *)    BUILD_COLOR="#444444" ;;
+          esac
           echo "Injecting: $INFO"
           sed -i "s|__BUILD_INFO__|${INFO}|g" index.html
+          sed -i "s|__BUILD_COLOR__|${BUILD_COLOR}|g" css/pericope.css
           sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" sw.js index.html
           sed -i "s|\(<script[^>]* src=\"\)\([^?\"]*\)\(\.js\)\(\"\)|\1\2\3?v=${GITHUB_SHA}\4|g" index.html
           echo "$GITHUB_SHA" > version.txt
