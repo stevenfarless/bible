@@ -66,7 +66,7 @@ const APP_SHELL = [
   './translations/index.json',
   './translations/KJV/KJV_search_index.json',
   './translations/BSB/BSB_search_index.json',
-  './vendor/minisearch/minisearch.umd.min.js',
+  './vendor/minisearch/minisearch.esm.min.js',
   './site.webmanifest',
   './android-chrome-192x192.png',
   './android-chrome-512x512.png',
