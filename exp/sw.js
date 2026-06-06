@@ -4,7 +4,7 @@
 let BUILD_ID = 'pending';
 let CACHE_NAME = 'bible-pending';
 
-const APP_SHELL_PATTERN = /^(?!\\..*\/vendor\/).*\.(js|mjs|css)$/;
+const APP_SHELL_PATTERN = /^(?!\..*\/vendor\/).*\.(js|mjs|css)$/;
 
 const PRECACHED_TRANSLATIONS = new Set(['KJV', 'BSB']);
 
@@ -66,6 +66,7 @@ const APP_SHELL = [
   './translations/index.json',
   './translations/KJV/KJV_search_index.json',
   './translations/BSB/BSB_search_index.json',
+  './vendor/minisearch/minisearch.umd.min.js',
   './site.webmanifest',
   './android-chrome-192x192.png',
   './android-chrome-512x512.png',

@@ -55,6 +55,15 @@ const BOOK_KEY_ALIASES = {
     'Song of Solomon': 'Song of Solomon',
 };
 
+// Lazily resolved MiniSearch constructor — loaded once from the vendored UMD build.
+let _MiniSearch = null;
+async function getMiniSearch() {
+    if (_MiniSearch) return _MiniSearch;
+    const mod = await import('./vendor/minisearch/minisearch.umd.min.js');
+    _MiniSearch = mod.default ?? mod.MiniSearch ?? globalThis.MiniSearch;
+    return _MiniSearch;
+}
+
 function _resolveBookKey(bible, canonicalName) {
     if (bible[canonicalName] !== undefined) return canonicalName;
     const alias = BOOK_KEY_ALIASES[canonicalName];
@@ -98,6 +107,8 @@ export class BibleApi {
         this._bookCache = new Map();
         this._shallowIndexCache = new Map();
         this._searchIndexCache = new Map();
+        this._miniSearchCache = new Map();
+        this._miniSearchBuildPromise = new Map();
         this._localBookFetchPromise = new Map();
         this._searchIndexFetchPromise = new Map();
         this._translationBookLists = new Map();
@@ -283,6 +294,44 @@ export class BibleApi {
         return promise;
     }
 
+    // Builds (or returns cached) a MiniSearch instance for a translation's search index.
+    // Each entry in the search index is indexed as { id: ref, text: normalizedText }.
+    async _getMiniSearchIndex(translation, searchIndex) {
+        if (this._miniSearchCache.has(translation)) {
+            return this._miniSearchCache.get(translation);
+        }
+        if (this._miniSearchBuildPromise.has(translation)) {
+            return this._miniSearchBuildPromise.get(translation);
+        }
+        const promise = (async () => {
+            try {
+                const MiniSearch = await getMiniSearch();
+                const ms = new MiniSearch({
+                    fields: ['text'],
+                    storeFields: ['id'],
+                    idField: 'id',
+                    searchOptions: {
+                        prefix: true,
+                        fuzzy: 0.15,
+                        combineWith: 'AND',
+                    },
+                });
+                const docs = Object.entries(searchIndex).map(([ref, text]) => ({ id: ref, text }));
+                await ms.addAllAsync(docs, { chunkSize: 1000 });
+                this._miniSearchCache.set(translation, ms);
+                return ms;
+            } catch (err) {
+                console.warn('BibleApi: MiniSearch index build failed, will fall back to regex', err);
+                this._miniSearchCache.set(translation, null);
+                return null;
+            } finally {
+                this._miniSearchBuildPromise.delete(translation);
+            }
+        })();
+        this._miniSearchBuildPromise.set(translation, promise);
+        return promise;
+    }
+
     async downloadTranslation(translation, bookList, onProgress) {
         const books = bookList?.length ? bookList : BOOK_LOAD_ORDER;
         const total = books.length;
@@ -319,6 +368,8 @@ export class BibleApi {
                 const idx = await res.json();
                 await idbPutSearchIndex(translation, idx);
                 this._searchIndexCache.set(translation, idx);
+                // Invalidate any stale MiniSearch instance so it rebuilds with the new index.
+                this._miniSearchCache.delete(translation);
             }
         } catch (_) {}
 
@@ -339,6 +390,7 @@ export class BibleApi {
             if (key.startsWith(prefix)) this._bookCache.delete(key);
         }
         this._searchIndexCache.delete(translation);
+        this._miniSearchCache.delete(translation);
         this._shallowIndexCache.delete(translation);
         this._translationBookLists.delete(translation);
     }
@@ -482,22 +534,32 @@ export class BibleApi {
         const q = String(query || '').toLowerCase().trim();
         if (!q) return { results: [], total_results: 0, page_size: PAGE_SIZE };
 
-        const wordRegex = _buildWordRegex(q);
         const searchIndex = await this._loadSearchIndex(this._translation);
 
         if (searchIndex !== null) {
-            const matches = [];
-            for (const [ref, normalizedText] of Object.entries(searchIndex)) {
-                if (!wordRegex.test(normalizedText)) continue;
+            // Try MiniSearch first; fall back to regex scan on build failure.
+            const ms = await this._getMiniSearchIndex(this._translation, searchIndex);
+
+            let matchedRefs;
+            if (ms) {
+                const hits = ms.search(q);
+                matchedRefs = hits.map((h) => h.id);
+            } else {
+                // Regex fallback — exact whole-word match.
+                const wordRegex = _buildWordRegex(q);
+                matchedRefs = Object.keys(searchIndex).filter((ref) => wordRegex.test(searchIndex[ref]));
+            }
+
+            const matches = matchedRefs.map((ref) => {
                 const colonIdx = ref.lastIndexOf(':');
                 const spaceIdx = ref.lastIndexOf(' ', colonIdx);
-                matches.push({
+                return {
                     ref,
                     book:    ref.slice(0, spaceIdx),
                     chapter: Number(ref.slice(spaceIdx + 1, colonIdx)),
                     verse:   Number(ref.slice(colonIdx + 1)),
-                });
-            }
+                };
+            });
 
             const uniqueBooks = [...new Set(matches.map((m) => m.book))];
             const bookDataMap = new Map();
@@ -537,6 +599,8 @@ export class BibleApi {
             return { results, total_results: results.length, page_size: PAGE_SIZE };
         }
 
+        // Slow path: no search index — scan book JSONs with regex.
+        const wordRegex = _buildWordRegex(q);
         const bookList = this._translationBookLists.get(this._translation) ?? BOOK_LOAD_ORDER;
         const allResults = [];
 
