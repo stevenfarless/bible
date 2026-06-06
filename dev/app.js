@@ -723,8 +723,8 @@ class BibleApp {
             const themeSelector = document.getElementById('themeSelector');
             const lightModeToggle = document.getElementById('lightModeToggle');
             if (themeSelector) {
-                let saved = 'dracula';
-                try { saved = localStorage.getItem('colorTheme') || 'dracula'; } catch (_) {}
+                let saved = 'basic';
+                try { saved = localStorage.getItem('colorTheme') || 'basic'; } catch (_) {}
                 themeSelector.value = saved;
             }
             if (lightModeToggle) lightModeToggle.checked = document.body.classList.contains('light-mode');
@@ -820,9 +820,11 @@ class BibleApp {
             }
 
             if (this.auth && this.database) {
+                let _authResolved = false;
                 this.auth.onAuthStateChanged(async (user) => {
                     this._dbg.t_auth_state = ms();
                     if (user) {
+                        _authResolved = true;
                         this._dbg.authStateUser = user.email;
                         this._dbgEvent(`auth: signed in as ${user.email}`);
                         this.currentUser = user;
@@ -842,7 +844,9 @@ class BibleApp {
                         this._dbg.authStateUser = 'signed out';
                         this._dbgEvent('auth: signed out');
                         this.currentUser = null;
-                        this.checkApiKey();
+                        // Only prompt sign-in on a real sign-out, not the startup
+                        // null event that fires before Firebase rehydrates IndexedDB.
+                        if (_authResolved) this.checkApiKey();
                     }
                 });
             }
