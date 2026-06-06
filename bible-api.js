@@ -102,6 +102,10 @@ export async function loadTranslationIndex() {
 function _normalizeTerm(word) {
     const w = word.toLowerCase();
     if (w.length < 3) return w;
+    // KJV archaisms: loveth/hath/doth -> love/ha/do -> then consonant-e rule trims further
+    if (w.endsWith('eth') && w.length > 4) {
+        return _normalizeTerm(w.slice(0, -3));
+    }
     // loved/moved/fixed -> lov/mov/fix  (strip -ed after consonant)
     if (w.endsWith('ed') && w.length > 4 && !'aeiou'.includes(w[w.length - 3])) {
         return w.slice(0, -2);
@@ -698,7 +702,6 @@ export class BibleApi {
         const q = String(query || '').toLowerCase().trim();
         if (q.length < 3) return [];
 
-        const wordRegex = _buildWordRegex(q);
         const activeTranslation = this._translation;
 
         // All LOCAL_TRANSLATIONS are always available — no idbIsDownloaded check needed.
@@ -720,11 +723,22 @@ export class BibleApi {
             const searchIndex = await this._loadSearchIndex(translation);
 
             if (searchIndex !== null) {
+                const ms = await this._getMiniSearchIndex(translation, searchIndex);
+
+                let matchedRefs;
+                if (ms) {
+                    const hits = ms.search(q);
+                    matchedRefs = hits.map((h) => h.id);
+                } else {
+                    // Regex fallback — exact whole-word match.
+                    const wordRegex = _buildWordRegex(q);
+                    matchedRefs = Object.keys(searchIndex).filter((ref) => wordRegex.test(searchIndex[ref]));
+                }
+
                 const matches = [];
-                for (const [ref, normalizedText] of Object.entries(searchIndex)) {
+                for (const ref of matchedRefs) {
                     const seenKey = `${translation}::${ref}`;
                     if (seen.has(seenKey)) continue;
-                    if (!wordRegex.test(normalizedText)) continue;
                     const colonIdx = ref.lastIndexOf(':');
                     const spaceIdx = ref.lastIndexOf(' ', colonIdx);
                     matches.push({
@@ -765,6 +779,7 @@ export class BibleApi {
             }
 
             // Slow path: scan whatever books are already in the memory cache.
+            const wordRegex = _buildWordRegex(q);
             for (const book of BOOK_LOAD_ORDER) {
                 const bookData = this._bookCache.get(`${translation}/${book}`)
                     ?? this._bookCache.get(`${translation}/${BOOK_KEY_ALIASES[book]}`);
