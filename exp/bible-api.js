@@ -69,7 +69,7 @@ function escapeHtml(value) {
 
 function _buildWordRegex(q) {
     const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return new RegExp(`\\b${escaped}`, 'i');
+    return new RegExp(`\\b${escaped}\\b`, 'i');
 }
 
 export async function loadTranslationIndex() {
@@ -492,11 +492,31 @@ export class BibleApi {
             }
 
             const uniqueBooks = [...new Set(matches.map((m) => m.book))];
-            const bookDataMap = new Map(
-                await Promise.all(
-                    uniqueBooks.map(async (book) => [book, await this._loadBook(this._translation, book)])
-                )
-            );
+            const bookDataMap = new Map();
+
+            // Fetch book data in SEARCH_CONCURRENCY-sized chunks so onBatchResults
+            // fires progressively, matching the incremental render of the brute-force path.
+            for (let i = 0; i < uniqueBooks.length; i += SEARCH_CONCURRENCY) {
+                const chunk = uniqueBooks.slice(i, i + SEARCH_CONCURRENCY);
+                const entries = await Promise.all(
+                    chunk.map(async (book) => [book, await this._loadBook(this._translation, book)])
+                );
+                for (const [book, data] of entries) bookDataMap.set(book, data);
+
+                if (typeof onBatchResults === 'function') {
+                    const partial = [];
+                    for (const { ref, book, chapter, verse } of matches) {
+                        if (!bookDataMap.has(book)) continue;
+                        const bookData = bookDataMap.get(book);
+                        const resolvedKey = bookData ? _resolveBookKey(bookData, book) : null;
+                        const resolvedBookData = resolvedKey ? bookData[resolvedKey] ?? bookData : bookData;
+                        const originalText = resolvedBookData?.[String(chapter)]?.[String(verse)];
+                        const text = originalText != null ? String(originalText) : searchIndex[ref];
+                        partial.push({ reference: ref, content: text, book, chapter, verse, text });
+                    }
+                    if (partial.length > 0) onBatchResults(partial);
+                }
+            }
 
             const results = [];
             for (const { ref, book, chapter, verse } of matches) {
@@ -508,9 +528,6 @@ export class BibleApi {
                 results.push({ reference: ref, content: text, book, chapter, verse, text });
             }
 
-            if (results.length > 0 && typeof onBatchResults === 'function') {
-                onBatchResults(results);
-            }
             return { results, total_results: results.length, page_size: PAGE_SIZE };
         }
 
@@ -573,8 +590,9 @@ export class BibleApi {
 
         // seen is keyed on "TRANSLATION::ref" so the same verse from two
         // different translations are both included as separate badged results.
-        // knownRefs contains bare refs from the active-translation search, so
-        // prefix them with the active translation before seeding seen.
+        // knownRefs contains bare refs (e.g. "Genesis 1:1") from the
+        // active-translation search. Prefix with activeTranslation to match the
+        // "TRANSLATION::ref" key format used throughout seen.
         const seen = new Set(
             [...knownRefs].map((ref) => `${activeTranslation}::${ref}`)
         );
