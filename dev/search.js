@@ -402,7 +402,13 @@ export async function runMegasearch(app, query) {
 
     app._dbgUserAction(`megasearch: activated for "${q}"`);
 
-    const knownRefs = new Set(app.currentSearchResults.map((r) => r.reference));
+    // Seed knownRefs with "activeTranslation::ref" so searchPassagesAllTranslations
+    // skips re-fetching the active translation's hits but includes the same verse
+    // from any other installed translation.
+    const activeTranslation = app.bibleApi.translation;
+    const knownRefs = new Set(
+        app.currentSearchResults.map((r) => r.reference)
+    );
 
     let supplemental;
     try {
@@ -420,6 +426,7 @@ export async function runMegasearch(app, query) {
     }
 
     const combined = [...app.currentSearchResults, ...supplemental];
+    combined.sort((a, b) => a.chapter - b.chapter || a.verse - b.verse);
     app.currentSearchResults = combined;
     app._dbgUserAction(`megasearch: added ${supplemental.length} supplemental results (total: ${combined.length})`);
     displaySearchResults(app, combined, query);
@@ -433,8 +440,10 @@ export function groupSearchResultsByCanon(app, results) {
     const allBooks = app.getAllBooks();
     const otBooks = Object.keys(app.bibleBooks['Old Testament'] || {});
     const ntBooks = Object.keys(app.bibleBooks['New Testament'] || {});
+    const dcBooks = Object.keys(app.bibleBooks['Deuterocanon'] || {});
     const otGroups = new Map();
     const ntGroups = new Map();
+    const dcGroups = new Map();
 
     for (const result of results) {
         const parsed = parseReference(result.reference, allBooks);
@@ -448,6 +457,9 @@ export function groupSearchResultsByCanon(app, results) {
         } else if (testament === 'New Testament') {
             if (!ntGroups.has(book)) ntGroups.set(book, []);
             ntGroups.get(book).push(result);
+        } else if (testament === 'Deuterocanon') {
+            if (!dcGroups.has(book)) dcGroups.set(book, []);
+            dcGroups.get(book).push(result);
         }
     }
 
@@ -457,6 +469,13 @@ export function groupSearchResultsByCanon(app, results) {
         grouped.push({
             heading: 'Old Testament',
             books: otBooks.filter((b) => otGroups.has(b)).map((book) => ({ book, results: otGroups.get(book) })),
+        });
+    }
+
+    if (dcGroups.size) {
+        grouped.push({
+            heading: 'Deuterocanon',
+            books: dcBooks.filter((b) => dcGroups.has(b)).map((book) => ({ book, results: dcGroups.get(book) })),
         });
     }
 
