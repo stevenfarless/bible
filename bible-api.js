@@ -13,7 +13,10 @@ const FIREBASE_TRANSLATIONS_ENABLED = false;
 const PAGE_SIZE = 100;
 const SEARCH_CONCURRENCY = 5;
 
-export const LOCAL_TRANSLATIONS = new Set(["BSB", "KJV"]);
+export const LOCAL_TRANSLATIONS = new Set([
+    "ASV", "BLB", "BSB", "CSB", "ESV", "ISV", "KJV", "LEB",
+    "MEV", "MSB", "NET", "NIV", "NKJV", "NLT", "NRSVUE", "WEB",
+]);
 
 const REPO_TRANSLATIONS = new Set([
     "ASV", "BLB", "BSB", "CSB", "ESV", "ISV", "KJV", "LEB",
@@ -563,21 +566,8 @@ export class BibleApi {
         const wordRegex = _buildWordRegex(q);
         const activeTranslation = this._translation;
 
-        // Build the list of installed non-active translations to search.
-        // LOCAL_TRANSLATIONS ship with the app and are always available.
-        // Non-local REPO_TRANSLATIONS require an idbIsDownloaded flag.
-        const candidates = [];
-        for (const t of LOCAL_TRANSLATIONS) {
-            if (t !== activeTranslation) candidates.push(t);
-        }
-        const nonLocalChecks = await Promise.all(
-            [...REPO_TRANSLATIONS]
-                .filter((t) => !LOCAL_TRANSLATIONS.has(t) && t !== activeTranslation)
-                .map(async (t) => ({ t, downloaded: await idbIsDownloaded(t) }))
-        );
-        for (const { t, downloaded } of nonLocalChecks) {
-            if (downloaded) candidates.push(t);
-        }
+        // All LOCAL_TRANSLATIONS are always available — no idbIsDownloaded check needed.
+        const candidates = [...LOCAL_TRANSLATIONS].filter((t) => t !== activeTranslation);
 
         if (candidates.length === 0) return [];
 
@@ -594,7 +584,6 @@ export class BibleApi {
             const searchIndex = await this._loadSearchIndex(translation);
 
             if (searchIndex !== null) {
-                // Fast path: use the pre-built search index.
                 const matches = [];
                 for (const [ref, normalizedText] of Object.entries(searchIndex)) {
                     const seenKey = `${translation}::${ref}`;
