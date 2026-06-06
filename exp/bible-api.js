@@ -309,7 +309,7 @@ export class BibleApi {
                     idField: 'id',
                     searchOptions: {
                         prefix: true,
-                        fuzzy: 1,  // PREVIOUS VALUE fuzzy: 0.15,
+                        fuzzy: 0.15,
                         combineWith: 'AND',
                     },
                 });
