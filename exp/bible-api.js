@@ -589,13 +589,8 @@ export class BibleApi {
         const wordRegex = _buildWordRegex(q);
         const activeTranslation = this._translation;
 
-        // Only search translations the user has actually installed (or precached).
-        const installedChecks = await Promise.all(
-            [...LOCAL_TRANSLATIONS]
-                .filter((t) => t !== activeTranslation)
-                .map(async (t) => [t, PRECACHED_TRANSLATIONS.has(t) || await idbIsDownloaded(t)])
-        );
-        const candidates = installedChecks.filter(([, ok]) => ok).map(([t]) => t);
+        // All LOCAL_TRANSLATIONS are always available — no idbIsDownloaded check needed.
+        const candidates = [...LOCAL_TRANSLATIONS].filter((t) => t !== activeTranslation);
 
         if (candidates.length === 0) return [];
 
