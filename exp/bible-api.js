@@ -555,6 +555,23 @@ export class BibleApi {
         const q = String(query || '').toLowerCase().trim();
         if (!q) return { results: [], total_results: 0, page_size: PAGE_SIZE };
 
+        const queryTerms = q.split(/[^\p{L}\p{N}']+/u).filter(Boolean);
+        const normalizedQueryTerms = queryTerms.map((term) => _normalizeTerm(term));
+        const debugSearch = (engine, matchedRefs) => {
+            const topRefs = matchedRefs.slice(0, 5);
+            const hasJohn316 = matchedRefs.includes('John 3:16');
+            console.debug('BibleApi.searchPassages', {
+                engine,
+                translation: this._translation,
+                query: q,
+                queryTerms,
+                normalizedQueryTerms,
+                totalHits: matchedRefs.length,
+                hasJohn316,
+                topRefs,
+            });
+        };
+
         const searchIndex = await this._loadSearchIndex(this._translation);
 
         if (searchIndex !== null) {
@@ -565,10 +582,12 @@ export class BibleApi {
             if (ms) {
                 const hits = ms.search(q);
                 matchedRefs = hits.map((h) => h.id);
+                debugSearch('MiniSearch', matchedRefs);
             } else {
                 // Regex fallback — exact whole-word match.
                 const wordRegex = _buildWordRegex(q);
                 matchedRefs = Object.keys(searchIndex).filter((ref) => wordRegex.test(searchIndex[ref]));
+                debugSearch('indexRegex', matchedRefs);
             }
 
             const matches = matchedRefs.map((ref) => {
@@ -621,6 +640,14 @@ export class BibleApi {
         }
 
         // Slow path: no search index — scan book JSONs with regex.
+        console.debug('BibleApi.searchPassages', {
+            engine: 'bookScan',
+            translation: this._translation,
+            query: q,
+            queryTerms,
+            normalizedQueryTerms,
+            searchIndexAvailable: false,
+        });
         const wordRegex = _buildWordRegex(q);
         const bookList = this._translationBookLists.get(this._translation) ?? BOOK_LOAD_ORDER;
         const allResults = [];
