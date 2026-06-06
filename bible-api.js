@@ -13,6 +13,10 @@ const FIREBASE_TRANSLATIONS_ENABLED = false;
 const PAGE_SIZE = 100;
 const SEARCH_CONCURRENCY = 5;
 
+export const PRECACHED_TRANSLATIONS = new Set([
+    "BSB", "KJV",
+]);
+
 export const LOCAL_TRANSLATIONS = new Set([
     "ASV", "BLB", "BSB", "CSB", "ESV", "ISV", "KJV", "LEB",
     "MEV", "MSB", "NET", "NIV", "NKJV", "NLT", "NRSVUE", "WEB",
@@ -63,7 +67,7 @@ function escapeHtml(value) {
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
+        .replace(/\"/g, '&quot;')
         .replace(/'/g, '&#39;');
 }
 
@@ -156,7 +160,7 @@ export class BibleApi {
 
             const promise = (async () => {
                 try {
-                    if (!LOCAL_TRANSLATIONS.has(translation)) {
+                    if (!PRECACHED_TRANSLATIONS.has(translation)) {
                         const cached = await idbGetBook(translation, book);
                         if (cached !== null) {
                             this._bookCache.set(cacheKey, cached);
@@ -234,11 +238,8 @@ export class BibleApi {
                     return null;
                 }
 
-                if (isRepo && !LOCAL_TRANSLATIONS.has(translation)) {
+                if (isRepo && !PRECACHED_TRANSLATIONS.has(translation)) {
                     const cached = await idbGetSearchIndex(translation);
-                    // Treat an empty object as a cache miss — it means the index
-                    // was stored before any data was written (e.g. interrupted
-                    // download), and we should fetch from network instead.
                     if (cached !== null && typeof cached === 'object' && Object.keys(cached).length > 0) {
                         this._searchIndexCache.set(translation, cached);
                         return cached;
@@ -253,7 +254,7 @@ export class BibleApi {
                 const data = await res.json();
                 const index = (data && typeof data === 'object' && Object.keys(data).length > 0) ? data : null;
                 this._searchIndexCache.set(translation, index);
-                if (isRepo && !LOCAL_TRANSLATIONS.has(translation) && index !== null) {
+                if (isRepo && !PRECACHED_TRANSLATIONS.has(translation) && index !== null) {
                     idbPutSearchIndex(translation, index).catch(() => {});
                 }
                 return index;
@@ -270,15 +271,6 @@ export class BibleApi {
         return promise;
     }
 
-    /**
-     * Download all books and the search index for a non-precached translation
-     * and persist them in IndexedDB. The bookList should come from meta.json
-     * so deuterocanonical books are included for extended-canon translations.
-     *
-     * @param {string}   translation
-     * @param {string[]} bookList     Ordered list of book names from meta.json
-     * @param {function} onProgress  Called with (downloaded, total) after each book
-     */
     async downloadTranslation(translation, bookList, onProgress) {
         const books = bookList?.length ? bookList : BOOK_LOAD_ORDER;
         const total = books.length;
@@ -321,10 +313,6 @@ export class BibleApi {
         await idbMarkDownloaded(translation);
     }
 
-    /**
-     * Evict all in-memory cache entries for a translation.
-     * Call after idbDeleteTranslation so the next read goes to network/IDB.
-     */
     evictTranslation(translation) {
         const prefix = `${translation}/`;
         for (const key of [...this._bookCache.keys()]) {
@@ -494,8 +482,6 @@ export class BibleApi {
             const uniqueBooks = [...new Set(matches.map((m) => m.book))];
             const bookDataMap = new Map();
 
-            // Fetch book data in SEARCH_CONCURRENCY-sized chunks so onBatchResults
-            // fires progressively, matching the incremental render of the brute-force path.
             for (let i = 0; i < uniqueBooks.length; i += SEARCH_CONCURRENCY) {
                 const chunk = uniqueBooks.slice(i, i + SEARCH_CONCURRENCY);
                 const entries = await Promise.all(
@@ -583,16 +569,10 @@ export class BibleApi {
         const wordRegex = _buildWordRegex(q);
         const activeTranslation = this._translation;
 
-        // All LOCAL_TRANSLATIONS are always available — no idbIsDownloaded check needed.
         const candidates = [...LOCAL_TRANSLATIONS].filter((t) => t !== activeTranslation);
 
         if (candidates.length === 0) return [];
 
-        // seen is keyed on "TRANSLATION::ref" so the same verse from two
-        // different translations are both included as separate badged results.
-        // knownRefs contains bare refs (e.g. "Genesis 1:1") from the
-        // active-translation search. Prefix with activeTranslation to match the
-        // "TRANSLATION::ref" key format used throughout seen.
         const seen = new Set(
             [...knownRefs].map((ref) => `${activeTranslation}::${ref}`)
         );
@@ -646,7 +626,6 @@ export class BibleApi {
                 return;
             }
 
-            // Slow path: scan whatever books are already in the memory cache.
             for (const book of BOOK_LOAD_ORDER) {
                 const bookData = this._bookCache.get(`${translation}/${book}`)
                     ?? this._bookCache.get(`${translation}/${BOOK_KEY_ALIASES[book]}`);
