@@ -581,7 +581,13 @@ export class BibleApi {
 
         if (candidates.length === 0) return [];
 
-        const seen = new Set(knownRefs);
+        // seen is keyed on "TRANSLATION::ref" so the same verse from two
+        // different translations are both included as separate badged results.
+        // knownRefs contains bare refs from the active-translation search, so
+        // prefix them with the active translation before seeding seen.
+        const seen = new Set(
+            [...knownRefs].map((ref) => `${activeTranslation}::${ref}`)
+        );
         const supplemental = [];
 
         await Promise.all(candidates.map(async (translation) => {
@@ -591,12 +597,14 @@ export class BibleApi {
                 // Fast path: use the pre-built search index.
                 const matches = [];
                 for (const [ref, normalizedText] of Object.entries(searchIndex)) {
-                    if (seen.has(ref)) continue;
+                    const seenKey = `${translation}::${ref}`;
+                    if (seen.has(seenKey)) continue;
                     if (!wordRegex.test(normalizedText)) continue;
                     const colonIdx = ref.lastIndexOf(':');
                     const spaceIdx = ref.lastIndexOf(' ', colonIdx);
                     matches.push({
                         ref,
+                        seenKey,
                         book:    ref.slice(0, spaceIdx),
                         chapter: Number(ref.slice(spaceIdx + 1, colonIdx)),
                         verse:   Number(ref.slice(colonIdx + 1)),
@@ -610,9 +618,9 @@ export class BibleApi {
                     )
                 );
 
-                for (const { ref, book, chapter, verse } of matches) {
-                    if (seen.has(ref)) continue;
-                    seen.add(ref);
+                for (const { ref, seenKey, book, chapter, verse } of matches) {
+                    if (seen.has(seenKey)) continue;
+                    seen.add(seenKey);
                     const bookData = bookDataMap.get(book);
                     const resolvedKey = bookData ? _resolveBookKey(bookData, book) : null;
                     const resolvedBookData = resolvedKey ? bookData[resolvedKey] ?? bookData : bookData;
@@ -645,8 +653,9 @@ export class BibleApi {
                         const verseText = String(text || '');
                         if (!wordRegex.test(verseText)) continue;
                         const ref = `${book} ${chapterStr}:${verseStr}`;
-                        if (seen.has(ref)) continue;
-                        seen.add(ref);
+                        const seenKey = `${translation}::${ref}`;
+                        if (seen.has(seenKey)) continue;
+                        seen.add(seenKey);
                         supplemental.push({
                             reference:         ref,
                             content:           verseText,

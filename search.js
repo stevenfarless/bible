@@ -402,7 +402,13 @@ export async function runMegasearch(app, query) {
 
     app._dbgUserAction(`megasearch: activated for "${q}"`);
 
-    const knownRefs = new Set(app.currentSearchResults.map((r) => r.reference));
+    // Seed knownRefs with "activeTranslation::ref" so searchPassagesAllTranslations
+    // skips re-fetching the active translation's hits but includes the same verse
+    // from any other installed translation.
+    const activeTranslation = app.bibleApi.translation;
+    const knownRefs = new Set(
+        app.currentSearchResults.map((r) => `${activeTranslation}::${r.reference}`)
+    );
 
     let supplemental;
     try {
