@@ -91,14 +91,6 @@ export async function loadPassageFromReference(app, reference) {
 }
 
 // ─── Delegated event handler ───────────────────────────────────────────────────────────
-//
-// Attached to app.searchContainer (not app.searchResults) so that the
-// summary bar's expand/collapse buttons — which are siblings of
-// searchResults, not children — are covered by the same handler.
-//
-// Scroll-detection guard is still applied, but only blocks the action
-// when the tap target is inside searchResults (result items, headings).
-// Taps on the summary bar buttons are never ambiguous with a scroll.
 
 export function initSearchResultsDelegate(app) {
     if (app._searchDelegateAttached) return;
@@ -106,15 +98,12 @@ export function initSearchResultsDelegate(app) {
 
     let scrollTopAtTouchStart = 0;
 
-    // Track scroll position on the results list for the scroll-vs-tap guard.
     app.searchResults.addEventListener('touchstart', () => {
         scrollTopAtTouchStart = app.searchResults.scrollTop;
     }, { passive: true });
 
     function handleTap(e) {
         const target = e.target;
-
-        // Apply scroll guard only when the tap is inside the scrollable results list.
         const insideResultsList = app.searchResults.contains(target);
 
         if (e.type === 'touchend') {
@@ -184,19 +173,34 @@ export function initSearchResultsDelegate(app) {
             return;
         }
 
+        // ── Translation badge (multi-translation) ────────────────────────
+        const badge = target.closest('.search-result-translation-badge[data-translation-id]');
+        if (badge) {
+            e.preventDefault();
+            e.stopPropagation();
+            const card = badge.closest('.search-result-item');
+            if (!card) return;
+            const translationId = badge.dataset.translationId;
+            const translationContent = badge.dataset.translationContent;
+            card.dataset.activeTranslation = translationId;
+            card.querySelector('.search-result-content').innerHTML =
+                highlightSearchTerm(translationContent, query);
+            card.querySelectorAll('.search-result-translation-badge[data-translation-id]').forEach((b) => {
+                b.classList.toggle('active', b.dataset.translationId === translationId);
+            });
+            return;
+        }
+
         // ── Result item ────────────────────────────────────────────────
         const resultItem = target.closest('.search-result-item');
         if (resultItem) {
             e.preventDefault();
-            const sourceTrans = resultItem.dataset.sourceTranslation;
+            const activeTrans = resultItem.dataset.activeTranslation || null;
             const ref = resultItem.dataset.reference;
-            // Close the panel immediately — before any awaits — so the iOS
-            // synthetic click (~350ms after touchend) lands on nothing and
-            // cannot re-trigger this handler.
             closeSearch(app);
             (async () => {
-                if (sourceTrans && sourceTrans !== app.bibleApi.translation) {
-                    await app.changeTranslation(sourceTrans);
+                if (activeTrans && activeTrans !== app.bibleApi.translation) {
+                    await app.changeTranslation(activeTrans);
                 }
                 await loadPassageFromReference(app, ref);
             })();
@@ -204,7 +208,6 @@ export function initSearchResultsDelegate(app) {
         }
     }
 
-    // Listen on the container so the summary bar buttons are included.
     app.searchContainer.addEventListener('touchend', handleTap, { passive: false });
     app.searchContainer.addEventListener('click', handleTap);
 }
@@ -402,9 +405,6 @@ export async function runMegasearch(app, query) {
 
     app._dbgUserAction(`megasearch: activated for "${q}"`);
 
-    // Seed knownRefs with "activeTranslation::ref" so searchPassagesAllTranslations
-    // skips re-fetching the active translation's hits but includes the same verse
-    // from any other installed translation.
     const activeTranslation = app.bibleApi.translation;
     const knownRefs = new Set(
         app.currentSearchResults.map((r) => r.reference)
@@ -434,8 +434,48 @@ export async function runMegasearch(app, query) {
 
 // ─── Grouping & display ───────────────────────────────────────────────────────────────────
 
+// Merges results with the same reference into one object. The active
+// translation's text becomes the default displayed content; supplemental
+// translations are collected into a translations array for the inline badges.
+function mergeResultsByReference(results, activeTranslation) {
+    const seen = new Map(); // reference → merged result
+
+    for (const r of results) {
+        const ref = r.reference;
+        if (!seen.has(ref)) {
+            seen.set(ref, {
+                reference: r.reference,
+                book: r.book,
+                chapter: r.chapter,
+                verse: r.verse,
+                content: r.content,
+                activeTranslation: r.sourceTranslation || activeTranslation,
+                translations: [],
+            });
+        }
+        const merged = seen.get(ref);
+        const tid = r.sourceTranslation || activeTranslation;
+
+        // Promote active translation to primary content.
+        if (!r.sourceTranslation) {
+            merged.content = r.content;
+            merged.activeTranslation = activeTranslation;
+        }
+
+        // Avoid duplicate badges for the same translation.
+        if (!merged.translations.some((t) => t.id === tid)) {
+            merged.translations.push({ id: tid, content: r.content });
+        }
+    }
+
+    return [...seen.values()];
+}
+
 export function groupSearchResultsByCanon(app, results) {
     if (!Array.isArray(results)) return [];
+
+    const activeTranslation = app.bibleApi.translation;
+    const merged = mergeResultsByReference(results, activeTranslation);
 
     const allBooks = app.getAllBooks();
     const otBooks = Object.keys(app.bibleBooks['Old Testament'] || {});
@@ -445,7 +485,7 @@ export function groupSearchResultsByCanon(app, results) {
     const ntGroups = new Map();
     const dcGroups = new Map();
 
-    for (const result of results) {
+    for (const result of merged) {
         const parsed = parseReference(result.reference, allBooks);
         if (!parsed) continue;
         const { book } = parsed;
@@ -494,16 +534,11 @@ export async function performKeywordSearch(app, query) {
     app.searchSelectedIndex = -1;
     app.searchResultItems = [];
 
-    // Clear expand state for the new query, then seed the initial open state
-    // (first testament + first book). This runs exactly once per search so
-    // subsequent displaySearchResults calls render the Sets as-is without
-    // any auto-open side effects.
     app.searchExpandedTestaments?.clear();
     app.searchExpandedBooks?.clear();
 
     await fetchAllSearchResults(app, query, (accumulatedResults) => {
         if (accumulatedResults.length > 0) {
-            // Seed initial open state before the first incremental render.
             if (app.searchExpandedTestaments.size === 0 && app.searchExpandedBooks.size === 0) {
                 const groups = groupSearchResultsByCanon(app, accumulatedResults);
                 const firstGroup = groups[0];
@@ -553,7 +588,7 @@ export function displaySearchResults(app, results, query) {
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-    const totalVerses = results.length;
+    const totalVerses = groups.reduce((acc, g) => acc + g.books.reduce((a, b) => a + b.results.length, 0), 0);
     const totalBooks = groups.reduce((acc, g) => acc + g.books.length, 0);
     const countLabel = `${totalVerses} verse${totalVerses !== 1 ? 's' : ''} in ${totalBooks} book${totalBooks !== 1 ? 's' : ''}`;
 
@@ -597,13 +632,22 @@ export function displaySearchResults(app, results, query) {
                     console.warn('highlight failed', err);
                 }
 
-                const badge = result.sourceTranslation
-                    ? ` <span class="search-result-translation-badge">${esc(result.sourceTranslation)}</span>`
-                    : '';
+                // Badges sit inline in the reference line, same as single-translation cards.
+                // When multiple translations matched, each gets a badge with data attrs for
+                // the tap handler; the active one gets class `active`.
+                let badgesHtml = '';
+                if (result.translations.length === 1) {
+                    badgesHtml = `<span class="search-result-translation-badge">${esc(result.translations[0].id)}</span>`;
+                } else if (result.translations.length > 1) {
+                    badgesHtml = result.translations.map((t) => {
+                        const isActive = t.id === result.activeTranslation;
+                        return `<span class="search-result-translation-badge${isActive ? ' active' : ''}" data-translation-id="${esc(t.id)}" data-translation-content="${esc(t.content)}">${esc(t.id)}</span>`;
+                    }).join('');
+                }
 
                 parts.push(`
-          <div class="search-result-item" data-reference="${esc(result.reference)}" ${result.sourceTranslation ? `data-source-translation="${esc(result.sourceTranslation)}"` : ''}>
-            <div class="search-result-reference">${esc(result.reference)}${badge}</div>
+          <div class="search-result-item" data-reference="${esc(result.reference)}" data-active-translation="${esc(result.activeTranslation)}">
+            <div class="search-result-reference">${esc(result.reference)} ${badgesHtml}</div>
             <div class="search-result-content">${highlighted}</div>
           </div>
         `);
