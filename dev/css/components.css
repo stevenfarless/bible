@@ -1084,11 +1084,25 @@ body.hide-verse-numbers .verse .verse-num {
     vertical-align: middle;
     white-space: nowrap;
     user-select: none;
+    transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .search-result-item:hover .search-result-translation-badge {
     color: var(--text-secondary);
     border-color: color-mix(in srgb, var(--primary-color) 40%, var(--border-color));
+}
+
+/* Active translation badge — highlights the currently displayed translation */
+.search-result-translation-badge.active {
+    color: var(--primary-color);
+    background-color: color-mix(in srgb, var(--primary-color) 12%, transparent);
+    border-color: color-mix(in srgb, var(--primary-color) 50%, transparent);
+}
+
+.search-result-item:hover .search-result-translation-badge.active {
+    color: var(--primary-color);
+    background-color: color-mix(in srgb, var(--primary-color) 20%, transparent);
+    border-color: var(--primary-color);
 }
 
 
@@ -1158,4 +1172,3 @@ body.hide-verse-numbers .verse .verse-num {
     color: var(--primary-color);
     font-weight: 600;
 }
-
