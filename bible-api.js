@@ -166,6 +166,9 @@ export class BibleApi {
                             this._bookCache.set(cacheKey, cached);
                             return cached;
                         }
+                        // Not installed — do not fetch from network.
+                        this._bookCache.set(cacheKey, null);
+                        return null;
                     }
 
                     const filename = BOOK_KEY_ALIASES[book] ?? book;
@@ -239,11 +242,20 @@ export class BibleApi {
                 }
 
                 if (isRepo && !PRECACHED_TRANSLATIONS.has(translation)) {
+                    // Only serve installed translations — never fetch network data for
+                    // a translation the user has not explicitly downloaded.
+                    const installed = await idbIsDownloaded(translation);
+                    if (!installed) {
+                        this._searchIndexCache.set(translation, null);
+                        return null;
+                    }
+
                     const cached = await idbGetSearchIndex(translation);
                     if (cached !== null && typeof cached === 'object' && Object.keys(cached).length > 0) {
                         this._searchIndexCache.set(translation, cached);
                         return cached;
                     }
+                    // Installed but search index missing from IDB — re-fetch and store.
                 }
 
                 const url = isRepo
@@ -569,13 +581,24 @@ export class BibleApi {
         const wordRegex = _buildWordRegex(q);
         const activeTranslation = this._translation;
 
-        const candidates = [...LOCAL_TRANSLATIONS].filter((t) => t !== activeTranslation);
+        // Only search translations the user has explicitly installed, plus precached ones.
+        // Never touch a translation that isn't on the user's device.
+        const installedChecks = await Promise.all(
+            [...LOCAL_TRANSLATIONS]
+                .filter((t) => t !== activeTranslation)
+                .map(async (t) => ({
+                    t,
+                    ok: PRECACHED_TRANSLATIONS.has(t) || await idbIsDownloaded(t),
+                }))
+        );
+        const candidates = installedChecks.filter((c) => c.ok).map((c) => c.t);
 
         if (candidates.length === 0) return [];
 
-        const seen = new Set(
-            [...knownRefs].map((ref) => `${activeTranslation}::${ref}`)
-        );
+        // knownRefs are bare refs from the active translation (e.g. "John 3:16").
+        // Skip any ref from another translation that is the same canonical address —
+        // megasearch only adds value when a verse appears in an installed translation
+        // that was not already surfaced by the active translation's search.
         const supplemental = [];
 
         await Promise.all(candidates.map(async (translation) => {
@@ -584,14 +607,12 @@ export class BibleApi {
             if (searchIndex !== null) {
                 const matches = [];
                 for (const [ref, normalizedText] of Object.entries(searchIndex)) {
-                    const seenKey = `${translation}::${ref}`;
-                    if (seen.has(seenKey)) continue;
+                    if (knownRefs.has(ref)) continue;
                     if (!wordRegex.test(normalizedText)) continue;
                     const colonIdx = ref.lastIndexOf(':');
                     const spaceIdx = ref.lastIndexOf(' ', colonIdx);
                     matches.push({
                         ref,
-                        seenKey,
                         book:    ref.slice(0, spaceIdx),
                         chapter: Number(ref.slice(spaceIdx + 1, colonIdx)),
                         verse:   Number(ref.slice(colonIdx + 1)),
@@ -605,9 +626,7 @@ export class BibleApi {
                     )
                 );
 
-                for (const { ref, seenKey, book, chapter, verse } of matches) {
-                    if (seen.has(seenKey)) continue;
-                    seen.add(seenKey);
+                for (const { ref, book, chapter, verse } of matches) {
                     const bookData = bookDataMap.get(book);
                     const resolvedKey = bookData ? _resolveBookKey(bookData, book) : null;
                     const resolvedBookData = resolvedKey ? bookData[resolvedKey] ?? bookData : bookData;
@@ -626,6 +645,8 @@ export class BibleApi {
                 return;
             }
 
+            // No search index — fall back to only already-cached book data in memory.
+            // This path never triggers a network fetch.
             for (const book of BOOK_LOAD_ORDER) {
                 const bookData = this._bookCache.get(`${translation}/${book}`)
                     ?? this._bookCache.get(`${translation}/${BOOK_KEY_ALIASES[book]}`);
@@ -639,9 +660,7 @@ export class BibleApi {
                         const verseText = String(text || '');
                         if (!wordRegex.test(verseText)) continue;
                         const ref = `${book} ${chapterStr}:${verseStr}`;
-                        const seenKey = `${translation}::${ref}`;
-                        if (seen.has(seenKey)) continue;
-                        seen.add(seenKey);
+                        if (knownRefs.has(ref)) continue;
                         supplemental.push({
                             reference:         ref,
                             content:           verseText,
