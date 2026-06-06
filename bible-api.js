@@ -98,6 +98,25 @@ export async function loadTranslationIndex() {
     }
 }
 
+
+function _normalizeTerm(word) {
+    const w = word.toLowerCase();
+    if (w.length < 3) return w;
+    // loved -> love  (strip -d after silent -e after consonant)
+    if (w.endsWith('d') && w.length > 3 && w[w.length - 2] === 'e' && !'aeiou'.includes(w[w.length - 3])) {
+        return w.slice(0, -1);
+    }
+    // loves -> love  (strip -s when word ends consonant+e+s)
+    if (w.endsWith('es') && w.length > 4 && !'aeiou'.includes(w[w.length - 3])) {
+        return w.slice(0, -1);
+    }
+    // commandments -> commandment  (plain plural -s after consonant)
+    if (w.endsWith('s') && w.length > 4 && !'aeiou'.includes(w[w.length - 2])) {
+        return w.slice(0, -1);
+    }
+    return w;
+}
+
 export class BibleApi {
     constructor(translation = 'ESV') {
         this._translation = translation;
@@ -307,6 +326,7 @@ export class BibleApi {
                     fields: ['text'],
                     storeFields: ['id'],
                     idField: 'id',
+                    processTerm: (term) => _normalizeTerm(term),
                     searchOptions: {
                         prefix: true,
                         fuzzy: 0.15,
