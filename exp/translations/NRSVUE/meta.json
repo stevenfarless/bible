@@ -15,7 +15,7 @@
       "Critical Text"
     ],
     "textualBasis": "OT from the Masoretic Text with significant use of the Dead Sea Scrolls and Septuagint. NT from the critical Greek text (NA28). Updated 2021 revision of the NRSV with gender-inclusive language and updated scholarship.",
-    "copyright": "New Revised Standard Version, Updated Edition. Copyright \u00a9 2021 National Council of Churches of Christ in the United States of America. Verify distribution rights before publishing."
+    "copyright": "New Revised Standard Version, Updated Edition. Copyright \u00a9 2021 National Council of Churches of Christ in the United States of America."
   },
   "books": [
     { "name": "Genesis", "testament": "Old Testament", "chapters": 50 },

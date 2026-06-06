@@ -43,7 +43,7 @@
       "year": 2017,
       "canon": "protestant",
       "philosophy": "dynamic",
-      "copyright": "Copyright \u00a9 2017 by Holman Bible Publishers. All rights reserved. Verify distribution rights before publishing."
+      "copyright": "Copyright \u00a9 2017 by Holman Bible Publishers. All rights reserved."
     },
     {
       "id": "ESV",
@@ -54,7 +54,7 @@
       "year": 2001,
       "canon": "protestant",
       "philosophy": "formal",
-      "copyright": "The Holy Bible, English Standard Version. ESV\u00ae Text Edition: 2016. Copyright \u00a9 2001 by Crossway Bibles, a publishing ministry of Good News Publishers. Verify distribution rights before publishing."
+      "copyright": "The Holy Bible, English Standard Version. ESV\u00ae Text Edition: 2016. Copyright \u00a9 2001 by Crossway Bibles, a publishing ministry of Good News Publishers."
     },
     {
       "id": "ISV",
@@ -65,7 +65,7 @@
       "year": 2011,
       "canon": "protestant",
       "philosophy": "dynamic",
-      "copyright": "Copyright \u00a9 1995-2014 by ISV Foundation. All rights reserved internationally. Verify distribution rights before publishing."
+      "copyright": "Copyright \u00a9 1995-2014 by ISV Foundation. All rights reserved internationally."
     },
     {
       "id": "KJV",
@@ -99,7 +99,7 @@
       "year": 2014,
       "canon": "protestant",
       "philosophy": "formal",
-      "copyright": "Scripture taken from the Modern English Version. Copyright \u00a9 2014 by Military Bible Association. Verify distribution rights before publishing."
+      "copyright": "Scripture taken from the Modern English Version. Copyright \u00a9 2014 by Military Bible Association."
     },
     {
       "id": "MSB",
@@ -132,7 +132,7 @@
       "year": 1978,
       "canon": "protestant",
       "philosophy": "dynamic",
-      "copyright": "The Holy Bible, New International Version\u00ae, NIV\u00ae. Copyright \u00a9 1973, 1978, 1984, 2011 by Biblica, Inc.\u2122 Verify distribution rights before publishing."
+      "copyright": "The Holy Bible, New International Version\u00ae, NIV\u00ae. Copyright \u00a9 1973, 1978, 1984, 2011 by Biblica, Inc.\u2122"
     },
     {
       "id": "NKJV",
@@ -143,7 +143,7 @@
       "year": 1982,
       "canon": "protestant",
       "philosophy": "formal",
-      "copyright": "New King James Version\u00ae. Copyright \u00a9 1982 by Thomas Nelson. Verify distribution rights before publishing."
+      "copyright": "New King James Version\u00ae. Copyright \u00a9 1982 by Thomas Nelson."
     },
     {
       "id": "NLT",
@@ -154,7 +154,7 @@
       "year": 1996,
       "canon": "protestant",
       "philosophy": "dynamic",
-      "copyright": "Holy Bible, New Living Translation, copyright \u00a9 1996, 2004, 2015 by Tyndale House Foundation. Verify distribution rights before publishing."
+      "copyright": "Holy Bible, New Living Translation, copyright \u00a9 1996, 2004, 2015 by Tyndale House Foundation."
     },
     {
       "id": "NRSVUE",
@@ -165,7 +165,7 @@
       "year": 2021,
       "canon": "protestant",
       "philosophy": "formal",
-      "copyright": "New Revised Standard Version, Updated Edition. Copyright \u00a9 2021 National Council of Churches of Christ in the United States of America. Verify distribution rights before publishing."
+      "copyright": "New Revised Standard Version, Updated Edition. Copyright \u00a9 2021 National Council of Churches of Christ in the United States of America."
     },
     {
       "id": "WEB",
