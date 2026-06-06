@@ -31,8 +31,7 @@
       "year": 2016,
       "canon": "protestant",
       "philosophy": "dynamic",
-      "copyright": "The Holy Bible, Berean Standard Bible, BSB is produced in cooperation with Bible Hub, Discovery Bible, OpenBible.com, and the Berean Bible Translation Committee. This text of God's Word has been dedicated to the public domain.",
-      "precache": true
+      "copyright": "The Holy Bible, Berean Standard Bible, BSB is produced in cooperation with Bible Hub, Discovery Bible, OpenBible.com, and the Berean Bible Translation Committee. This text of God's Word has been dedicated to the public domain."
     },
     {
       "id": "CSB",
@@ -76,8 +75,7 @@
       "year": 1611,
       "canon": "protestant",
       "philosophy": "formal",
-      "copyright": "King James Version (KJV). Public domain.",
-      "precache": true
+      "copyright": "King James Version (KJV). Public domain."
     },
     {
       "id": "LEB",
@@ -88,7 +86,7 @@
       "year": 2012,
       "canon": "protestant",
       "philosophy": "formal",
-      "copyright": "Scripture quotations marked LEB are from the Lexham English Bible. Copyright \u00a9 2012 Logos Bible Software. Lexham is a registered trademark of Logos Bible Software. https://lexhamenglishbible.com"
+      "copyright": "Scripture quotations marked LEB are from the Lexham English Bible. Copyright © 2012 Logos Bible Software. Lexham is a registered trademark of Logos Bible Software. https://lexhamenglishbible.com"
     },
     {
       "id": "MEV",
@@ -121,7 +119,7 @@
       "year": 1996,
       "canon": "protestant",
       "philosophy": "dynamic",
-      "copyright": "Scripture quoted by permission. Quotations designated (NET) are from the NET Bible\u00ae copyright \u00a91996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved."
+      "copyright": "Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved."
     },
     {
       "id": "NIV",
