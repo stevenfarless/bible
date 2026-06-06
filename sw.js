@@ -5,21 +5,39 @@ const CACHE_NAME = `bible-${BUILD_ID}`;
 // HTTP cache entirely so style and code changes deploy immediately.
 // vendor/ files are third-party SDKs that never change for a given
 // version — they go through the cache-first path below.
-const APP_SHELL_PATTERN = /^(?!\..*\/vendor\/).*\.(js|mjs|css)$/;
+const APP_SHELL_PATTERN = /^(?!\\..*\/vendor\/).*\.(js|mjs|css)$/;
 
-const TRANSLATIONS = [
-  'ASV', 'BLB', 'BSB', 'CSB', 'ESV', 'ISV', 'KJV', 'LEB',
-  'MEV', 'MSB', 'NET', 'NIV', 'NKJV', 'NLT', 'NRSVUE', 'WEB',
+// Translations whose data ships with the app and is cached at install time.
+// Nothing outside this set is written to the SW cache unless the user
+// explicitly downloads it via the translation picker.
+const PRECACHED_TRANSLATIONS = new Set(['KJV', 'BSB']);
+
+// Translations the user has downloaded during this SW lifetime.
+// Populated via postMessage({ type: 'TRANSLATION_INSTALLED', translation }).
+// Resets on SW restart — the API layer (bible-api.js) is the authoritative
+// install record via IDB; this set just gates SW cache writes.
+const installedTranslations = new Set(PRECACHED_TRANSLATIONS);
+
+const CANONICAL_BOOKS = [
+  'Genesis','Exodus','Leviticus','Numbers','Deuteronomy',
+  'Joshua','Judges','Ruth','1 Samuel','2 Samuel',
+  '1 Kings','2 Kings','1 Chronicles','2 Chronicles',
+  'Ezra','Nehemiah','Esther','Job','Psalm','Proverbs',
+  'Ecclesiastes','Song of Solomon','Isaiah','Jeremiah',
+  'Lamentations','Ezekiel','Daniel','Hosea','Joel','Amos',
+  'Obadiah','Jonah','Micah','Nahum','Habakkuk','Zephaniah',
+  'Haggai','Zechariah','Malachi','Matthew','Mark','Luke',
+  'John','Acts','Romans','1 Corinthians','2 Corinthians',
+  'Galatians','Ephesians','Philippians','Colossians',
+  '1 Thessalonians','2 Thessalonians','1 Timothy','2 Timothy',
+  'Titus','Philemon','Hebrews','James','1 Peter','2 Peter',
+  '1 John','2 John','3 John','Jude','Revelation',
 ];
 
-// High-value per-book files to precache on activation.
-// Genesis covers the default landing page; John covers the most commonly
-// read book. Everything else loads on demand and caches after first open.
-// 2 books × 16 translations × ~80KB avg = ~2.6MB total install payload.
-const HIGH_VALUE_BOOKS = ['John', 'Genesis'];
-
-const PER_BOOK_PRECACHE = TRANSLATIONS.flatMap(t =>
-  HIGH_VALUE_BOOKS.map(b => `./translations/${t}/${b}.json`)
+// All 66 books for KJV and BSB precached at activation so both translations
+// are fully available offline immediately after PWA install.
+const PER_BOOK_PRECACHE = [...PRECACHED_TRANSLATIONS].flatMap(t =>
+  CANONICAL_BOOKS.map(b => `./translations/${t}/${encodeURIComponent(b)}.json`)
 );
 
 // BSB structure files (per-book JSON) used by bsb-structure.js.
@@ -37,6 +55,8 @@ const BSB_STRUCTURE_FILES = [
 ];
 
 // Full app shell — everything needed to render the UI without any network.
+// KJV and BSB search indexes are included here so offline search works
+// immediately after PWA install without requiring a prior online session.
 const APP_SHELL = [
   './',
   './index.html',
@@ -58,6 +78,8 @@ const APP_SHELL = [
   './swipe.js',
   './firebase-config.js',
   './translations/index.json',
+  './translations/KJV/KJV_search_index.json',
+  './translations/BSB/BSB_search_index.json',
   './site.webmanifest',
   './android-chrome-192x192.png',
   './android-chrome-512x512.png',
@@ -82,6 +104,14 @@ function isFirebaseCacheable(url) {
   if (p.startsWith('/translationIndex')) return true;
   if (p.startsWith('/searchIndex/')) return true;
   return false;
+}
+
+// Extract the translation abbreviation from a local translation file URL.
+// e.g. /bible/exp/translations/NIV/John.json → "NIV"
+// Returns null if the URL is not a translation data file.
+function translationFromUrl(pathname) {
+  const m = pathname.match(/\/translations\/([^/]+)\//);
+  return m ? m[1] : null;
 }
 
 async function precacheFiles() {
@@ -122,9 +152,18 @@ self.addEventListener('activate', (event) => {
       client.postMessage({ type: 'NEW_BUILD', buildId: BUILD_ID });
     }
 
-    // Precache high-value per-book files in the background after activation.
+    // Precache all KJV and BSB book files in the background after activation.
     precacheFiles();
   })());
+});
+
+// The app notifies the SW when a translation download completes so the SW
+// cache write gate opens for that translation's files.
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'TRANSLATION_INSTALLED') {
+    const t = event.data.translation;
+    if (t && typeof t === 'string') installedTranslations.add(t);
+  }
 });
 
 self.addEventListener('fetch', (event) => {
@@ -192,6 +231,9 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Everything else (vendor JS, JSON data files, fonts, images): cache-first.
+  // For translation data files, only write to the SW cache if the translation
+  // is precached (KJV/BSB) or has been explicitly installed by the user.
+  // Non-installed translations are served from the network but never stored.
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(event.request);
@@ -199,7 +241,9 @@ self.addEventListener('fetch', (event) => {
     try {
       const resp = await fetch(event.request);
       if (event.request.method === 'GET' && resp && resp.status === 200) {
-        cache.put(event.request, resp.clone());
+        const translation = translationFromUrl(url.pathname);
+        const allowCache = translation === null || installedTranslations.has(translation);
+        if (allowCache) cache.put(event.request, resp.clone());
       }
       return resp;
     } catch {
