@@ -72,7 +72,8 @@ body.chrome-no-transition .top-chrome {
 
 /* Header */
 .header {
-    background-color: var(--bg-primary);
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
     position: relative;
     z-index: 100;
     box-shadow: var(--shadow-sm);
@@ -111,7 +112,7 @@ body:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):
 
 /* Navigation */
 .navigation {
-    background-color: var(--bg-primary);
+    background-color: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
     position: relative;
     z-index: 99;
