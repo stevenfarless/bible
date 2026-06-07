@@ -42,7 +42,7 @@ const COMMIT_DISTANCE = 0.25;          // fraction of viewport width
 const COMMIT_VELOCITY = 0.4;           // px/ms — fast flick threshold
 const ANIMATION_MS_MAX = 280;
 const ANIMATION_MS_MIN = 120;
-const PARALLAX = .5;                  // changed from 0.9 to 0.5 - incoming panel speed relative to current
+const PARALLAX = .8;                  // changed from 0.9 to 0.8 - incoming panel speed relative to current
 const RESISTANCE = 0.3;               // drag multiplier at Bible boundaries
 
 // ── Helpers ───────────────────────────────────────────────────────────────
