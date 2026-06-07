@@ -97,7 +97,7 @@ function translationFromUrl(pathname) {
 }
 
 function resolveBuildId() {
-  return '46db49fe2de057ea0499ee1364f6a327065a5a62';
+  return '06d996f1d6136211c1e580839a449fd0c33bebd9';
 }
 
 async function precacheFiles() {

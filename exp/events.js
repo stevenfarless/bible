@@ -185,12 +185,12 @@ export function attachEventListeners(app) {
     app.verseNumbersToggle?.addEventListener('change', () => app.toggleSetting('showVerseNumbers'));
     app.headingsToggle?.addEventListener('change',     () => app.toggleSetting('showHeadings'));
     app.footnotesToggle?.addEventListener('change',    () => app.toggleSetting('showFootnotes'));
+    app.chapterArrowsToggle?.addEventListener('change',() => app.toggleSetting('showChapterArrows'));
 
     app.crossReferencesToggle = document.getElementById('crossReferencesToggle');
     app.crossReferencesToggle?.addEventListener('change', () => app.toggleSetting('showCrossReferences'));
 
     app.verseByVerseToggle?.addEventListener('change',  () => app.toggleVerseByVerse());
-    app.chapterArrowsToggle?.addEventListener('change', (e) => app.toggleChapterArrows(app));
     app.fontSizeSlider?.addEventListener('input',  (e) => app.updateFontSize(e.target.value));
 
     const readingFontSelector = document.getElementById('readingFontSelector');
