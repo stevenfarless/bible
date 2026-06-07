@@ -96,8 +96,13 @@ function translationFromUrl(pathname) {
   return m ? m[1] : null;
 }
 
-function resolveBuildId() {
-  return '__BUILD_ID__';
+async function resolveBuildId() {
+  try {
+    const resp = await fetch('./sw.js', { cache: 'no-store', method: 'HEAD' });
+    const lm = resp.headers.get('Last-Modified');
+    if (lm) return String(new Date(lm).getTime());
+  } catch (_) {}
+  return String(Date.now());
 }
 
 async function precacheFiles() {
