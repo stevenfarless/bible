@@ -138,6 +138,7 @@ const TOGGLE_MAP = {
     showHeadings:        'headingsToggle',
     showFootnotes:       'footnotesToggle',
     showCrossReferences: 'crossReferencesToggle',
+    showChapterArrows:   'chapterArrowsToggle',
 };
 
 export async function toggleSetting(app, setting) {
@@ -163,6 +164,11 @@ export async function toggleSetting(app, setting) {
         return;
     }
 
+    if (setting === 'showChapterArrows') {
+        document.body.classList.toggle('hide-chapter-arrows', !app.state.showChapterArrows);
+        return;
+    }
+
     if (setting === 'showFootnotes' || setting === 'showCrossReferences') {
         await app.loadPassage(app.state.currentBook, app.state.currentChapter);
         return;
@@ -181,20 +187,6 @@ export async function toggleVerseByVerse(app) {
     }
 
     app.passageText.classList.toggle('verse-by-verse', app.state.verseByVerse);
-}
-
-export async function toggleChapterArrows(app) {
-    app.state.showChapterArrows = app.chapterArrowsToggle.checked;
-
-    lsSet('showChapterArrows', app.state.showChapterArrows);
-
-    if (app.currentUser) {
-        await app.database
-            .ref(`users/${app.currentUser.uid}/settings/showChapterArrows`)
-            .set(app.state.showChapterArrows);
-    }
-
-    document.body.classList.toggle('hide-chapter-arrows', !app.state.showChapterArrows);
 }
 
 export function applyReadingFont(app, font) {
