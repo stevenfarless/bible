@@ -594,6 +594,8 @@ body.light-mode .crossref-item {
 /* Hide chapter arrows when the user has disabled them in settings */
 body.hide-chapter-arrows #prevChapter,
 body.hide-chapter-arrows #nextChapter {
+	display: none;
+}
     display: none;
 }
 
