@@ -55,8 +55,6 @@ function _isSearchOpen(app) {
     return !!app.searchContainer?.classList.contains('active');
 }
 
-// Return { book, chapter } for the chapter immediately before/after the
-// current one, following the same book-boundary logic as navigateChapter.
 function _adjacentPosition(app, direction) {
     const books = app.getAllBooks();
     const idx   = books.indexOf(app.state.currentBook);
@@ -79,8 +77,6 @@ function _adjacentPosition(app, direction) {
     return { book, chapter };
 }
 
-// Fetch and render a passage into a panel element.
-// Returns true on success, false if the position is out of range or fetch fails.
 async function _renderIntoPanel(app, panel, pos) {
     if (!pos) {
         panel.innerHTML = '';
@@ -132,7 +128,7 @@ function _clearTranslateX(el) {
     el.style.transform = '';
 }
 
-// ── Transition helpers ──────────────────────────────────────────────────────
+// ── Transition helpers ─────────────────────────────────────────────────────
 
 function _addTransition(el, ms) {
     el.style.transition = `transform ${ms}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
@@ -142,15 +138,13 @@ function _removeTransition(el) {
     el.style.transition = '';
 }
 
-// Map velocity to animation duration: fast flick → short, slow drag → long.
 function _animDuration(velocityPxMs) {
     const v = Math.abs(velocityPxMs);
-    // At COMMIT_VELOCITY (0.4) → MIN; at 0 → MAX; clamp between.
     const t = Math.min(1, v / COMMIT_VELOCITY);
     return Math.round(ANIMATION_MS_MAX - t * (ANIMATION_MS_MAX - ANIMATION_MS_MIN));
 }
 
-// ── Haptic feedback ─────────────────────────────────────────────────────────
+// ── Haptic feedback ────────────────────────────────────────────────────────
 
 function _haptic(strong = false) {
     if (!navigator.vibrate) return;
@@ -165,61 +159,53 @@ export function initSwipe(app) {
 
     const vw = () => window.innerWidth;
 
-    // Build the viewport wrapper
     const viewport = document.createElement('div');
     viewport.id = 'swipeViewport';
     Object.assign(viewport.style, {
-        position:   'relative',
-        overflow:   'hidden',
-        width:      '100%',
+        position: 'relative',
+        overflow: 'hidden',
+        width:    '100%',
     });
 
-    // Insert viewport before currentPanel, then move currentPanel inside
     currentPanel.parentNode.insertBefore(viewport, currentPanel);
     viewport.appendChild(currentPanel);
 
-    // Prev panel
     const prevPanel = document.createElement('div');
     prevPanel.id        = 'swipePrev';
     prevPanel.className = currentPanel.className;
     Object.assign(prevPanel.style, {
-        position: 'absolute',
-        top:      '0',
-        left:     '0',
-        width:    '100%',
+        position:  'absolute',
+        top:       '0',
+        left:      '0',
+        width:     '100%',
         transform: `translateX(${-vw()}px)`,
     });
 
-    // Next panel
     const nextPanel = document.createElement('div');
     nextPanel.id        = 'swipeNext';
     nextPanel.className = currentPanel.className;
     Object.assign(nextPanel.style, {
-        position: 'absolute',
-        top:      '0',
-        left:     '0',
-        width:    '100%',
+        position:  'absolute',
+        top:       '0',
+        left:      '0',
+        width:     '100%',
         transform: `translateX(${vw()}px)`,
     });
 
     viewport.insertBefore(prevPanel, currentPanel);
     viewport.appendChild(nextPanel);
 
-    // Track state on the app instance
     app.swipe = {
         viewport,
         prevPanel,
         nextPanel,
-        // Sync class list and inline font size from current panel to siblings
         _syncClasses() {
             const src = app.passageText;
             for (const panel of [this.prevPanel, this.nextPanel]) {
-                panel.className = src.className;
+                panel.className      = src.className;
                 panel.style.fontSize = src.style.fontSize;
             }
         },
-        // Re-render both adjacent panels after the current passage changes.
-        // Fire-and-forget — failures leave the panel empty (handled gracefully on commit).
         async syncAdjacentPanels() {
             this._syncClasses();
             const prevPos = _adjacentPosition(app, -1);
@@ -232,29 +218,41 @@ export function initSwipe(app) {
     };
 
     // ── Touch handling ────────────────────────────────────────────────────
-    // All panel references go through app.swipe so they stay current after
-    // each commit swaps which DOM node is prev/next.
 
     let _startX = 0;
     let _startY = 0;
     let _lastX  = 0;
     let _lastT  = 0;
-    let _velocity = 0;   // px/ms, signed
-    let _tracking  = false;
-    let _vetoed    = false;
-    let _animating = false;
+    let _velocity        = 0;
+    let _tracking        = false;
+    let _vetoed          = false;
+    let _animating       = false;
     let _currentOffsetPx = 0;
 
-    // True when there is no adjacent content in the drag direction.
     function _atBoundary(dx) {
         if (dx > 0) return !app.swipe.prevPanel.dataset.book;
         if (dx < 0) return !app.swipe.nextPanel.dataset.book;
         return false;
     }
 
-    // Apply rubber-band resistance at boundaries.
     function _applyResistance(dx) {
         return _atBoundary(dx) ? dx * RESISTANCE : dx;
+    }
+
+    // Remove the inline position styles that touchmove sets on the current
+    // panel when a drag is confirmed horizontal. Must be called whenever a
+    // gesture ends without going through the normal cancel/commit animation
+    // path, otherwise app.passageText is left with position:absolute and
+    // no viewport height, which lets the panel float freely.
+    function _cleanupDrag() {
+        _removeTransition(app.passageText);
+        _removeTransition(app.swipe.prevPanel);
+        _removeTransition(app.swipe.nextPanel);
+        app.passageText.style.position = '';
+        app.passageText.style.top      = '';
+        app.passageText.style.left     = '';
+        app.passageText.style.width    = '';
+        viewport.style.height          = '';
     }
 
     viewport.addEventListener('touchstart', (e) => {
@@ -262,13 +260,13 @@ export function initSwipe(app) {
             _vetoed = true;
             return;
         }
-        _startX  = e.changedTouches[0].screenX;
-        _startY  = e.changedTouches[0].screenY;
-        _lastX   = _startX;
-        _lastT   = e.timeStamp;
-        _velocity = 0;
-        _tracking = false;
-        _vetoed   = false;
+        _startX          = e.changedTouches[0].screenX;
+        _startY          = e.changedTouches[0].screenY;
+        _lastX           = _startX;
+        _lastT           = e.timeStamp;
+        _velocity        = 0;
+        _tracking        = false;
+        _vetoed          = false;
         _currentOffsetPx = 0;
     }, { passive: true });
 
@@ -280,7 +278,6 @@ export function initSwipe(app) {
         const dx = touch.screenX - _startX;
         const dy = touch.screenY - _startY;
 
-        // Update velocity from incremental movement.
         const dt = e.timeStamp - _lastT;
         if (dt > 0) _velocity = (touch.screenX - _lastX) / dt;
         _lastX = touch.screenX;
@@ -304,15 +301,12 @@ export function initSwipe(app) {
 
         e.preventDefault();
 
-        const W = vw();
+        const W         = vw();
         const effective = _applyResistance(dx);
-        _currentOffsetPx = dx; // store raw dx for commit threshold
+        _currentOffsetPx = dx;
 
-        // Current panel follows finger exactly (or with resistance at boundary).
         _setTranslateX(app.passageText, effective);
 
-        // Adjacent panels: incoming moves at PARALLAX rate, outgoing mirrors.
-        // direction of drag: dx < 0 → swiping left → next is incoming.
         if (dx < 0) {
             _setTranslateX(app.swipe.nextPanel, W + effective * PARALLAX);
             _setTranslateX(app.swipe.prevPanel, effective - W);
@@ -324,22 +318,23 @@ export function initSwipe(app) {
 
     viewport.addEventListener('touchend', (e) => {
         if (_vetoed || !_tracking) {
+            // If tracking had started before the veto, the inline position
+            // styles are already on the panel — clear them immediately.
+            if (_tracking) _cleanupDrag();
             _tracking = false;
             _vetoed   = false;
             return;
         }
         _tracking = false;
 
-        const dx  = _currentOffsetPx;
-        const W   = vw();
+        const dx    = _currentOffsetPx;
+        const W     = vw();
         const absDx = Math.abs(dx);
         const absV  = Math.abs(_velocity);
 
-        // Commit if distance threshold OR velocity threshold is met.
-        const commit = (absDx >= W * COMMIT_DISTANCE || absV >= COMMIT_VELOCITY) && absDx >= 50;
+        const commit    = (absDx >= W * COMMIT_DISTANCE || absV >= COMMIT_VELOCITY) && absDx >= 50;
         const direction = dx < 0 ? 1 : -1;
-
-        const animMs = _animDuration(_velocity);
+        const animMs    = _animDuration(_velocity);
 
         const cancelSwipe = () => {
             _addTransition(app.passageText, animMs);
@@ -351,19 +346,13 @@ export function initSwipe(app) {
             _setTranslateX(app.swipe.nextPanel, +W);
 
             setTimeout(() => {
-                _removeTransition(app.passageText);
-                _removeTransition(app.swipe.prevPanel);
-                _removeTransition(app.swipe.nextPanel);
-                app.passageText.style.position = '';
-                app.passageText.style.top      = '';
-                app.passageText.style.left     = '';
-                app.passageText.style.width    = '';
-                viewport.style.height          = '';
+                _cleanupDrag();
+                _setTranslateX(app.swipe.prevPanel, -W);
+                _setTranslateX(app.swipe.nextPanel, +W);
             }, animMs);
         };
 
         if (!commit) {
-            // Boundary rubber-band: stronger haptic so user knows they hit the edge.
             if (_atBoundary(dx) && absDx > 20) _haptic(true);
             cancelSwipe();
             return;
@@ -400,13 +389,8 @@ export function initSwipe(app) {
 
             const outgoingPanel = app.passageText;
 
-            // Copy inline font size before promoting so the incoming panel
-            // matches whatever size the app has applied to the current panel.
             incomingPanel.style.fontSize = outgoingPanel.style.fontSize;
-
-            // Reset incoming panel scroll position before it becomes current
-            // so there is no visible jump to top after the transition.
-            incomingPanel.scrollTop = 0;
+            incomingPanel.scrollTop      = 0;
 
             _clearTranslateX(incomingPanel);
             incomingPanel.style.position = '';
@@ -414,12 +398,11 @@ export function initSwipe(app) {
             incomingPanel.style.left     = '';
             incomingPanel.style.width    = '';
 
-            const oldId         = incomingPanel.id;
-            incomingPanel.id    = 'passageText';
-            outgoingPanel.id    = oldId;
-            app.passageText     = incomingPanel;
+            const oldId      = incomingPanel.id;
+            incomingPanel.id = 'passageText';
+            outgoingPanel.id = oldId;
+            app.passageText  = incomingPanel;
 
-            // Move the outgoing panel to the far side (opposite to where we came from).
             _clearTranslateX(outgoingPanel);
             outgoingPanel.style.position = 'absolute';
             outgoingPanel.style.top      = '0';
