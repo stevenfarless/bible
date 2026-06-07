@@ -596,8 +596,6 @@ body.hide-chapter-arrows #prevChapter,
 body.hide-chapter-arrows #nextChapter {
 	display: none;
 }
-    display: none;
-}
 
 /* Passage Content */
 .passage-container {
