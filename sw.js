@@ -97,7 +97,7 @@ function translationFromUrl(pathname) {
 }
 
 function resolveBuildId() {
-  return '1780746056517';
+  return '__BUILD_ID__';
 }
 
 async function precacheFiles() {
