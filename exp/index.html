@@ -12,7 +12,7 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="a4b0ac3abda94066ed72cdf5a3e91fd73d5acc86" />
+	<meta name="build-id" content="cbdfd24c1add4645f1ecb806a6daa5622246b109" />
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -26,7 +26,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=a4b0ac3abda94066ed72cdf5a3e91fd73d5acc86">.
+	     before the parser reaches <script type="module" src="app.js?v=cbdfd24c1add4645f1ecb806a6daa5622246b109">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -47,6 +47,7 @@
 	<link rel="preload" href="./fonts/Andika-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<link rel="preload" href="./fonts/OpenDyslexic3-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<link rel="preload" href="./fonts/Ubuntu-Regular.woff2" as="font" type="font/woff2" crossorigin />
+	<link rel="preload" href="./fonts/iAWriterQuattroS-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<!-- CSS loaded as parallel <link> tags — @import chains are render-blocking
 	     and sequential; <link> tags are fetched in parallel by the browser. -->
 	<link rel="stylesheet" href="css/fonts.css" />
@@ -68,7 +69,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">EXP CC86</span>
+				<span id="build-info">EXP B109</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -319,6 +320,7 @@
 									<option value="andika">Andika (Sans Serif)</option>
 									<option value="ubuntu">Ubuntu</option>
 									<option value="opendyslexic3">Open Dyslexic 3</option>
+									<option value="ia-quattro">iA Writer Quattro S</option>
 								</select>
 								<small class="help-text" id="readingFontHelpText">Choose the typeface used for passage text.</small>
 							</div>
@@ -595,7 +597,7 @@
 	<!-- Toast notification -->
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=a4b0ac3abda94066ed72cdf5a3e91fd73d5acc86"></script>
+	<script type="module" src="app.js?v=cbdfd24c1add4645f1ecb806a6daa5622246b109"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');
