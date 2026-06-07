@@ -4,8 +4,15 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Bible Reader</title>
-	<meta name="build-id" content="7571aca2ed0172058b3f682e8c8a81a4812dacf5" />
+	<title>Lege Lux</title>
+	<meta name="description" content="Lege Lux is a fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
+	<meta property="og:title" content="Lege Lux" />
+	<meta property="og:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
+	<meta property="og:type" content="website" />
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:title" content="Lege Lux" />
+	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
+	<meta name="build-id" content="c747314be40c250ab9d71b53d7a6f6eaf2f55b78" />
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -18,9 +25,8 @@
 	<link rel="preconnect" href="https://apis.google.com" />
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-	<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=7571aca2ed0172058b3f682e8c8a81a4812dacf5">.
+	     before the parser reaches <script type="module" src="app.js?v=c747314be40c250ab9d71b53d7a6f6eaf2f55b78">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -41,18 +47,19 @@
 	<link rel="preload" href="./fonts/Andika-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<link rel="preload" href="./fonts/OpenDyslexic3-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<link rel="preload" href="./fonts/Ubuntu-Regular.woff2" as="font" type="font/woff2" crossorigin />
+	<link rel="preload" href="./fonts/iAWriterQuattroS-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<!-- CSS loaded as parallel <link> tags — @import chains are render-blocking
 	     and sequential; <link> tags are fetched in parallel by the browser. -->
-	<link rel="stylesheet" href="css/fonts.css" />
-	<link rel="stylesheet" href="css/base.css" />
-	<link rel="stylesheet" href="css/tokens.css" />
-	<link rel="stylesheet" href="css/themes.css" />
-	<link rel="stylesheet" href="css/layout.css" />
-	<link rel="stylesheet" href="css/components.css" />
-	<link rel="stylesheet" href="css/modals.css" />
-	<link rel="stylesheet" href="css/interactions.css" />
-	<link rel="stylesheet" href="css/utilities.css" />
-	<link rel="stylesheet" href="css/pericope.css" />
+	<link rel="stylesheet" href="css/fonts.css?v=c747314be40c250ab9d71b53d7a6f6eaf2f55b78" />
+	<link rel="stylesheet" href="css/base.css?v=c747314be40c250ab9d71b53d7a6f6eaf2f55b78" />
+	<link rel="stylesheet" href="css/tokens.css?v=c747314be40c250ab9d71b53d7a6f6eaf2f55b78" />
+	<link rel="stylesheet" href="css/themes.css?v=c747314be40c250ab9d71b53d7a6f6eaf2f55b78" />
+	<link rel="stylesheet" href="css/layout.css?v=c747314be40c250ab9d71b53d7a6f6eaf2f55b78" />
+	<link rel="stylesheet" href="css/components.css?v=c747314be40c250ab9d71b53d7a6f6eaf2f55b78" />
+	<link rel="stylesheet" href="css/modals.css?v=c747314be40c250ab9d71b53d7a6f6eaf2f55b78" />
+	<link rel="stylesheet" href="css/interactions.css?v=c747314be40c250ab9d71b53d7a6f6eaf2f55b78" />
+	<link rel="stylesheet" href="css/utilities.css?v=c747314be40c250ab9d71b53d7a6f6eaf2f55b78" />
+	<link rel="stylesheet" href="css/pericope.css?v=c747314be40c250ab9d71b53d7a6f6eaf2f55b78" />
 	<!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
 	<script src="https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV" async defer></script>
 </head>
@@ -62,16 +69,16 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">DEV ACF5</span>
+				<span id="build-info">DEV 5B78</span>
 				<div class="header-controls">
-					<button class="icon-btn" id="searchToggle" title="Search (Ctrl+K)">
+					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 								d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
 						</svg>
 					</button>
 
-					<button class="icon-btn" id="helpBtn" title="Help / Shortcuts">
+					<button class="icon-btn" id="helpBtn" aria-label="Help / Shortcuts" title="Help / Shortcuts">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 								d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
@@ -79,7 +86,7 @@
 						</svg>
 					</button>
 
-					<button class="icon-btn" id="settingsBtn" title="Settings">
+					<button class="icon-btn" id="settingsBtn" aria-label="Settings" title="Settings">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 								d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
@@ -89,7 +96,7 @@
 						</svg>
 					</button>
 
-					<button class="icon-btn" id="userBtn" title="Account">
+					<button class="icon-btn" id="userBtn" aria-label="Account" title="Account">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 								d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
@@ -160,7 +167,7 @@
 			<div class="search-input-row">
 				<input type="text" id="searchInput" class="search-input"
 					placeholder="Search passages or enter reference (e.g., John 3:16)" />
-				<button id="closeSearch" class="close-btn" title="Close search">&#xD7;</button>
+				<button id="closeSearch" class="close-btn" aria-label="Close search" title="Close search">&#xD7;</button>
 			</div>
 			<div class="search-options-row">
 				<label class="search-toggle-label" for="megasearchToggle">
@@ -210,7 +217,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3>Select a Book</h3>
-				<button class="close-btn" id="closeBookModal">&#xD7;</button>
+				<button class="close-btn" id="closeBookModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<div class="book-category">
@@ -229,7 +236,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3><span id="chapterModalBook">Genesis</span></h3>
-				<button class="close-btn" id="closeChapterModal">&#xD7;</button>
+				<button class="close-btn" id="closeChapterModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<div id="chapterGrid" class="chapter-grid"></div>
@@ -241,7 +248,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3><span id="verseModalBook">Genesis 1</span></h3>
-				<button class="close-btn" id="closeVerseModal">&#xD7;</button>
+				<button class="close-btn" id="closeVerseModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<div id="verseGrid" class="chapter-grid"></div>
@@ -254,7 +261,7 @@
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
 				<h3>Translation</h3>
-				<button class="close-btn" id="closeTranslationModal">&#xD7;</button>
+				<button class="close-btn" id="closeTranslationModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<ul id="translationList" class="translation-modal-list"></ul>
@@ -266,7 +273,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3>Settings</h3>
-				<button class="close-btn" id="closeSettingsModal">&#xD7;</button>
+				<button class="close-btn" id="closeSettingsModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<div class="accordion-section active" data-section="appearance">
@@ -313,6 +320,7 @@
 									<option value="andika">Andika (Sans Serif)</option>
 									<option value="ubuntu">Ubuntu</option>
 									<option value="opendyslexic3">Open Dyslexic 3</option>
+									<option value="ia-quattro">iA Writer Quattro S</option>
 								</select>
 								<small class="help-text" id="readingFontHelpText">Choose the typeface used for passage text.</small>
 							</div>
@@ -328,22 +336,30 @@
 									<span>Show section headings</span>
 								</label>
 							</div>
-							<div class="setting-item">
+							<div class="setting-item setting-item--disabled">
 								<label class="checkbox-label">
-									<input type="checkbox" id="footnotesToggle" />
+									<input type="checkbox" id="footnotesToggle" disabled />
 									<span>Show footnotes</span>
 								</label>
+								<small class="help-text">Coming soon.</small>
 							</div>
-							<div class="setting-item">
+							<div class="setting-item setting-item--disabled">
 								<label class="checkbox-label">
-									<input type="checkbox" id="crossReferencesToggle" />
+									<input type="checkbox" id="crossReferencesToggle" disabled />
 									<span>Show cross-references</span>
 								</label>
+								<small class="help-text">Coming soon.</small>
 							</div>
 							<div class="setting-item">
 								<label class="checkbox-label">
 									<input type="checkbox" id="verseByVerseToggle" />
 									<span>Verse-by-verse display</span>
+								</label>
+							</div>
+							<div class="setting-item">
+								<label class="checkbox-label">
+									<input type="checkbox" id="chapterArrowsToggle" checked />
+									<span>Show chapter arrows</span>
 								</label>
 							</div>
 						</div>
@@ -377,7 +393,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3>Help &amp; Keyboard Shortcuts</h3>
-				<button class="close-btn" id="closeHelpModal">&#xD7;</button>
+				<button class="close-btn" id="closeHelpModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<div class="settings-group">
@@ -461,7 +477,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3>Sign In</h3>
-				<button class="close-btn" id="closeLoginModal">&#xD7;</button>
+				<button class="close-btn" id="closeLoginModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<form id="loginForm" class="auth-form">
@@ -492,7 +508,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3>Create Account</h3>
-				<button class="close-btn" id="closeSignupModal">&#xD7;</button>
+				<button class="close-btn" id="closeSignupModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<form id="signupForm" class="auth-form">
@@ -520,7 +536,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3>Account</h3>
-				<button class="close-btn" id="closeUserMenuModal">&#xD7;</button>
+				<button class="close-btn" id="closeUserMenuModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<div class="user-info-box">
@@ -547,7 +563,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3>References</h3>
-				<button class="close-btn" id="closeReferencesModal">&#xD7;</button>
+				<button class="close-btn" id="closeReferencesModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body"></div>
 		</div>
@@ -558,7 +574,7 @@
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
 				<h3>About the Apocrypha</h3>
-				<button class="close-btn" id="closeDeuterocanonInfoModal">&#xD7;</button>
+				<button class="close-btn" id="closeDeuterocanonInfoModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<div class="deuterocanon-info-content">
@@ -589,11 +605,16 @@
 	<!-- Toast notification -->
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=7571aca2ed0172058b3f682e8c8a81a4812dacf5"></script>
+	<script type="module" src="app.js?v=c747314be40c250ab9d71b53d7a6f6eaf2f55b78"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');
 		}
+		// Hide raw build placeholder when pipeline substitution hasn't run.
+		document.addEventListener('DOMContentLoaded', function() {
+			var b = document.getElementById('build-info');
+			if (b && b.textContent.trim().startsWith('__')) b.style.visibility = 'hidden';
+		});
 	</script>
 </body>
 </html>

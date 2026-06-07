@@ -539,6 +539,20 @@ body.light-mode .crossref-item {
     color: var(--bg-primary);
 }
 
+/* Monospace for numeric/code nav selector content */
+#currentChapter,
+#currentVerse {
+    font-family: 'iA Writer Mono S', 'Courier New', monospace;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+#currentTranslation {
+    font-family: 'iA Writer Mono S', 'Courier New', monospace;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
 .nav-btn {
     display: flex;
     align-items: center;
@@ -575,6 +589,12 @@ body.light-mode .crossref-item {
 .nav-btn:focus-visible {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
+}
+
+/* Hide chapter arrows when the user has disabled them in settings */
+body.hide-chapter-arrows #prevChapter,
+body.hide-chapter-arrows #nextChapter {
+	display: none;
 }
 
 /* Passage Content */
@@ -1071,11 +1091,11 @@ body.hide-verse-numbers .verse .verse-num {
     display: inline-block;
     margin-left: 0.4em;
     padding: 0.1em 0.45em;
-    font-family: var(--font-sans);
+    font-family: 'iA Writer Mono S', 'Courier New', monospace;
     font-size: 0.7em;
     font-weight: 600;
     line-height: 1.4;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
     color: var(--text-muted);
     background-color: color-mix(in srgb, var(--border-color) 40%, transparent);
