@@ -12,7 +12,7 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="a6905f365f21eccc0e66132098f9b1e5e1417ee2" />
+	<meta name="build-id" content="80bf959a8a9b11c83cac317d98d47243f4660150" />
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -26,7 +26,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=a6905f365f21eccc0e66132098f9b1e5e1417ee2">.
+	     before the parser reaches <script type="module" src="app.js?v=80bf959a8a9b11c83cac317d98d47243f4660150">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -68,7 +68,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">EXP 7EE2</span>
+				<span id="build-info">EXP 0150</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,7 +77,7 @@
 						</svg>
 					</button>
 
-					<button class="icon-btn" id="helpBtn" title="Help / Shortcuts">
+					<button class="icon-btn" id="helpBtn" aria-label="Help / Shortcuts" title="Help / Shortcuts">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 								d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
@@ -85,7 +85,7 @@
 						</svg>
 					</button>
 
-					<button class="icon-btn" id="settingsBtn" title="Settings">
+					<button class="icon-btn" id="settingsBtn" aria-label="Settings" title="Settings">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 								d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
@@ -95,7 +95,7 @@
 						</svg>
 					</button>
 
-					<button class="icon-btn" id="userBtn" title="Account">
+					<button class="icon-btn" id="userBtn" aria-label="Account" title="Account">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 								d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
@@ -166,7 +166,7 @@
 			<div class="search-input-row">
 				<input type="text" id="searchInput" class="search-input"
 					placeholder="Search passages or enter reference (e.g., John 3:16)" />
-				<button id="closeSearch" class="close-btn" title="Close search">&#xD7;</button>
+				<button id="closeSearch" class="close-btn" aria-label="Close search" title="Close search">&#xD7;</button>
 			</div>
 			<div class="search-options-row">
 				<label class="search-toggle-label" for="megasearchToggle">
@@ -235,7 +235,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3><span id="chapterModalBook">Genesis</span></h3>
-				<button class="close-btn" id="closeChapterModal">&#xD7;</button>
+				<button class="close-btn" id="closeChapterModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<div id="chapterGrid" class="chapter-grid"></div>
@@ -247,7 +247,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3><span id="verseModalBook">Genesis 1</span></h3>
-				<button class="close-btn" id="closeVerseModal">&#xD7;</button>
+				<button class="close-btn" id="closeVerseModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<div id="verseGrid" class="chapter-grid"></div>
@@ -260,7 +260,7 @@
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
 				<h3>Translation</h3>
-				<button class="close-btn" id="closeTranslationModal">&#xD7;</button>
+				<button class="close-btn" id="closeTranslationModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<ul id="translationList" class="translation-modal-list"></ul>
@@ -272,7 +272,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3>Settings</h3>
-				<button class="close-btn" id="closeSettingsModal">&#xD7;</button>
+				<button class="close-btn" id="closeSettingsModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<div class="accordion-section active" data-section="appearance">
@@ -383,7 +383,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3>Help &amp; Keyboard Shortcuts</h3>
-				<button class="close-btn" id="closeHelpModal">&#xD7;</button>
+				<button class="close-btn" id="closeHelpModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<div class="settings-group">
@@ -467,7 +467,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3>Sign In</h3>
-				<button class="close-btn" id="closeLoginModal">&#xD7;</button>
+				<button class="close-btn" id="closeLoginModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<form id="loginForm" class="auth-form">
@@ -498,7 +498,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3>Create Account</h3>
-				<button class="close-btn" id="closeSignupModal">&#xD7;</button>
+				<button class="close-btn" id="closeSignupModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<form id="signupForm" class="auth-form">
@@ -526,7 +526,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3>Account</h3>
-				<button class="close-btn" id="closeUserMenuModal">&#xD7;</button>
+				<button class="close-btn" id="closeUserMenuModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<div class="user-info-box">
@@ -553,7 +553,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3>References</h3>
-				<button class="close-btn" id="closeReferencesModal">&#xD7;</button>
+				<button class="close-btn" id="closeReferencesModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body"></div>
 		</div>
@@ -564,7 +564,7 @@
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
 				<h3>About the Apocrypha</h3>
-				<button class="close-btn" id="closeDeuterocanonInfoModal">&#xD7;</button>
+				<button class="close-btn" id="closeDeuterocanonInfoModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<div class="deuterocanon-info-content">
@@ -595,7 +595,7 @@
 	<!-- Toast notification -->
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=a6905f365f21eccc0e66132098f9b1e5e1417ee2"></script>
+	<script type="module" src="app.js?v=80bf959a8a9b11c83cac317d98d47243f4660150"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');
