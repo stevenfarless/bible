@@ -10,6 +10,7 @@ const DEFAULTS = {
     showFootnotes:       false,
     showCrossReferences: false,
     verseByVerse:        false,
+    showChapterArrows:   true,
     lightMode:           'system',
     colorTheme:          'basic',
     translation:         'KJV',
@@ -60,6 +61,7 @@ export function loadLocalSettings(app) {
     app.state.showFootnotes       = readBool('showFootnotes',       DEFAULTS.showFootnotes);
     app.state.showCrossReferences = readBool('showCrossReferences', DEFAULTS.showCrossReferences);
     app.state.verseByVerse        = readBool('verseByVerse',        DEFAULTS.verseByVerse);
+    app.state.showChapterArrows   = readBool('showChapterArrows',   DEFAULTS.showChapterArrows);
     const _rawLightMode = (() => { try { return localStorage.getItem('lightMode'); } catch (_) { return null; } })();
     app.state.lightMode =
         _rawLightMode === 'light' || _rawLightMode === 'dark' || _rawLightMode === 'system'
@@ -111,10 +113,12 @@ export function applySettings(app) {
     if (lightModeSelect) lightModeSelect.value = app.state.lightMode;
 
     document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
+    document.body.classList.toggle('hide-chapter-arrows', !app.state.showChapterArrows);
     if (app.verseNumbersToggle)    app.verseNumbersToggle.checked    = !!app.state.showVerseNumbers;
     if (app.headingsToggle)        app.headingsToggle.checked        = !!app.state.showHeadings;
     if (app.footnotesToggle)       app.footnotesToggle.checked       = !!app.state.showFootnotes;
     if (app.crossReferencesToggle) app.crossReferencesToggle.checked = !!app.state.showCrossReferences;
+    if (app.chapterArrowsToggle)   app.chapterArrowsToggle.checked   = !!app.state.showChapterArrows;
 
     if (app.passageText) app.passageText.classList.toggle('verse-by-verse', !!app.state.verseByVerse);
     if (app.verseByVerseToggle) app.verseByVerseToggle.checked = !!app.state.verseByVerse;
@@ -177,6 +181,20 @@ export async function toggleVerseByVerse(app) {
     }
 
     app.passageText.classList.toggle('verse-by-verse', app.state.verseByVerse);
+}
+
+export async function toggleChapterArrows(app) {
+    app.state.showChapterArrows = app.chapterArrowsToggle.checked;
+
+    lsSet('showChapterArrows', app.state.showChapterArrows);
+
+    if (app.currentUser) {
+        await app.database
+            .ref(`users/${app.currentUser.uid}/settings/showChapterArrows`)
+            .set(app.state.showChapterArrows);
+    }
+
+    document.body.classList.toggle('hide-chapter-arrows', !app.state.showChapterArrows);
 }
 
 export function applyReadingFont(app, font) {
