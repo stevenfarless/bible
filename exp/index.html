@@ -12,7 +12,7 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="cc367cb05f8ceb224fddede3db0560d83c538edf" />
+	<meta name="build-id" content="a6905f365f21eccc0e66132098f9b1e5e1417ee2" />
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -26,7 +26,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=cc367cb05f8ceb224fddede3db0560d83c538edf">.
+	     before the parser reaches <script type="module" src="app.js?v=a6905f365f21eccc0e66132098f9b1e5e1417ee2">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -68,9 +68,9 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">EXP 8EDF</span>
+				<span id="build-info">EXP 7EE2</span>
 				<div class="header-controls">
-					<button class="icon-btn" id="searchToggle" title="Search (Ctrl+K)">
+					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 								d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -216,7 +216,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3>Select a Book</h3>
-				<button class="close-btn" id="closeBookModal">&#xD7;</button>
+				<button class="close-btn" id="closeBookModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
 				<div class="book-category">
@@ -595,7 +595,7 @@
 	<!-- Toast notification -->
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=cc367cb05f8ceb224fddede3db0560d83c538edf"></script>
+	<script type="module" src="app.js?v=a6905f365f21eccc0e66132098f9b1e5e1417ee2"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');
