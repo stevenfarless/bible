@@ -116,8 +116,6 @@ export function applySettings(app) {
     document.body.classList.toggle('hide-chapter-arrows', !app.state.showChapterArrows);
     if (app.verseNumbersToggle)    app.verseNumbersToggle.checked    = !!app.state.showVerseNumbers;
     if (app.headingsToggle)        app.headingsToggle.checked        = !!app.state.showHeadings;
-    if (app.footnotesToggle)       app.footnotesToggle.checked       = !!app.state.showFootnotes;
-    if (app.crossReferencesToggle) app.crossReferencesToggle.checked = !!app.state.showCrossReferences;
     if (app.chapterArrowsToggle)   app.chapterArrowsToggle.checked   = !!app.state.showChapterArrows;
 
     if (app.passageText) app.passageText.classList.toggle('verse-by-verse', !!app.state.verseByVerse);
@@ -134,11 +132,9 @@ export function applySettings(app) {
 }
 
 const TOGGLE_MAP = {
-    showVerseNumbers:    'verseNumbersToggle',
-    showHeadings:        'headingsToggle',
-    showFootnotes:       'footnotesToggle',
-    showCrossReferences: 'crossReferencesToggle',
-    showChapterArrows:   'chapterArrowsToggle',
+    showVerseNumbers:  'verseNumbersToggle',
+    showHeadings:      'headingsToggle',
+    showChapterArrows: 'chapterArrowsToggle',
 };
 
 export async function toggleSetting(app, setting) {
@@ -166,11 +162,6 @@ export async function toggleSetting(app, setting) {
 
     if (setting === 'showChapterArrows') {
         document.body.classList.toggle('hide-chapter-arrows', !app.state.showChapterArrows);
-        return;
-    }
-
-    if (setting === 'showFootnotes' || setting === 'showCrossReferences') {
-        await app.loadPassage(app.state.currentBook, app.state.currentChapter);
         return;
     }
 }
