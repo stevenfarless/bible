@@ -82,6 +82,32 @@ async function switchTranslation(page, translationId) {
 }
 
 // ---------------------------------------------------------------------------
+// Auth helper — signs in via the login modal UI using pre-provisioned test
+// credentials from env vars TEST_USER_EMAIL and TEST_USER_PASSWORD.
+// Waits for app.currentUser to be set before resolving so subsequent steps
+// can rely on an authenticated session.
+// ---------------------------------------------------------------------------
+async function signIn(page) {
+        const email    = process.env.TEST_USER_EMAIL;
+        const password = process.env.TEST_USER_PASSWORD;
+        if (!email || !password) throw new Error('TEST_USER_EMAIL / TEST_USER_PASSWORD not set');
+
+        await page.locator('#userBtn').click();
+        await expect(page.locator('#loginModal')).toBeVisible();
+
+        await page.locator('#loginEmail').fill(email);
+        await page.locator('#loginPassword').fill(password);
+        await page.locator('#loginSubmit').click();
+
+        // Wait for Firebase auth state to settle — currentUser is set by the
+        // onAuthStateChanged callback in app.js after signInWithEmailAndPassword.
+        await page.waitForFunction(
+                () => !!window._bibleApp?.currentUser,
+                { timeout: 15000 }
+        );
+}
+
+// ---------------------------------------------------------------------------
 // 1. Page load — app loads without JS errors, key UI elements visible
 // ---------------------------------------------------------------------------
 test('page load: main UI elements are visible', async ({ page }) => {
@@ -575,4 +601,138 @@ test('dynamic book picker: meta.json network error falls back gracefully', async
         const ntBooks = page.locator('#newTestamentBooks button');
         expect(await otBooks.count()).toBeGreaterThan(0);
         expect(await ntBooks.count()).toBeGreaterThan(0);
+});
+
+// ---------------------------------------------------------------------------
+// 24. Auth — unauthenticated: clicking user button opens login modal
+// No credentials needed — this tests the routing logic in handleUserButtonClick.
+// ---------------------------------------------------------------------------
+test('auth: unauthenticated user button opens login modal', async ({ page }) => {
+        await page.goto('/');
+        await waitForApp(page);
+
+        // Ensure no user is signed in before clicking.
+        const isSignedIn = await page.evaluate(() => !!window._bibleApp?.currentUser);
+        if (isSignedIn) {
+                await page.evaluate(() => window._bibleApp.auth.signOut());
+                await page.waitForFunction(() => !window._bibleApp?.currentUser, { timeout: 10000 });
+        }
+
+        await page.locator('#userBtn').click();
+        await expect(page.locator('#loginModal')).toBeVisible();
+});
+
+// ---------------------------------------------------------------------------
+// 25. Auth — signup validation: short password shows toast without network call
+// Exercises the client-side guard in handleSignup before Firebase is touched.
+// ---------------------------------------------------------------------------
+test('auth: signup with short password shows validation toast', async ({ page }) => {
+        await page.goto('/');
+        await waitForApp(page);
+
+        // Navigate to signup modal — open login first, then switch.
+        await page.locator('#userBtn').click();
+        await expect(page.locator('#loginModal')).toBeVisible();
+        await page.locator('#showSignup').click();
+        await expect(page.locator('#signupModal')).toBeVisible();
+
+        await page.locator('#signupEmail').fill('test@example.com');
+        await page.locator('#signupPassword').fill('abc');
+        await page.locator('#signupSubmit').click();
+
+        // app.js surfaces validation failures via showToast — the toast element
+        // should appear with the expected message.
+        await expect(page.locator('#toast, .toast, [role="status"]')).toContainText(
+                'at least 6 characters',
+                { timeout: 5000 }
+        );
+});
+
+// ---------------------------------------------------------------------------
+// 26. Auth — login: valid credentials sign the user in
+// Requires TEST_USER_EMAIL and TEST_USER_PASSWORD env vars pointing to a
+// pre-provisioned Firebase account in the live project.
+// Skipped automatically when the env vars are absent.
+// ---------------------------------------------------------------------------
+test('auth: valid credentials sign the user in', async ({ page }) => {
+        test.skip(!process.env.TEST_USER_EMAIL, 'TEST_USER_EMAIL not set — skipping live auth test');
+
+        await page.goto('/');
+        await waitForPassage(page);
+
+        await signIn(page);
+
+        // Login modal should close and user email should appear in the user menu.
+        await expect(page.locator('#loginModal')).not.toBeVisible();
+        await page.locator('#userBtn').click();
+        await expect(page.locator('#userMenuModal')).toBeVisible();
+        await expect(page.locator('#userEmail')).toContainText(process.env.TEST_USER_EMAIL);
+});
+
+// ---------------------------------------------------------------------------
+// 27. Auth — logout: signed-in user can sign out
+// Depends on TEST_USER_EMAIL / TEST_USER_PASSWORD. Skipped when absent.
+// ---------------------------------------------------------------------------
+test('auth: signed-in user can sign out', async ({ page }) => {
+        test.skip(!process.env.TEST_USER_EMAIL, 'TEST_USER_EMAIL not set — skipping live auth test');
+
+        await page.goto('/');
+        await waitForPassage(page);
+
+        await signIn(page);
+
+        // Open user menu and sign out.
+        await page.locator('#userBtn').click();
+        await expect(page.locator('#userMenuModal')).toBeVisible();
+        await page.locator('#logoutBtn').click();
+
+        // currentUser should clear and clicking the user button should now
+        // route back to the login modal.
+        await page.waitForFunction(() => !window._bibleApp?.currentUser, { timeout: 10000 });
+        await page.locator('#userBtn').click();
+        await expect(page.locator('#loginModal')).toBeVisible();
+});
+
+// ---------------------------------------------------------------------------
+// 28. Auth — reading position sync: Firebase RTDB updated after chapter nav
+// After sign-in, navigating a chapter should write readingPosition to both
+// localStorage and the user's RTDB node. Reads the RTDB value back via the
+// app's live database reference to confirm the write landed.
+// Depends on TEST_USER_EMAIL / TEST_USER_PASSWORD. Skipped when absent.
+// ---------------------------------------------------------------------------
+test('auth: reading position synced to Firebase after chapter navigation', async ({ page }) => {
+        test.skip(!process.env.TEST_USER_EMAIL, 'TEST_USER_EMAIL not set — skipping live auth test');
+
+        await page.goto('/');
+        await waitForPassage(page);
+
+        await signIn(page);
+
+        // Close user menu if it opened automatically after sign-in.
+        const menuVisible = await page.locator('#userMenuModal').isVisible();
+        if (menuVisible) await page.keyboard.press('Escape');
+
+        await waitForPassage(page);
+
+        // Navigate to a deterministic location so we know what to expect.
+        await page.locator('#bookSelector').click();
+        await page.locator('#newTestamentBooks button', { hasText: 'Matt' }).first().click();
+        await expect(page.locator('#passageTitle')).toContainText('Matthew 1');
+
+        // saveReadingPosition fires on passage load — give the async RTDB write
+        // a moment to settle before reading back.
+        await page.waitForTimeout(2000);
+
+        const rtdbPos = await page.evaluate(async () => {
+                const uid = window._bibleApp?.currentUser?.uid;
+                if (!uid) return null;
+                const snap = await window._bibleApp.database
+                        .ref(`users/${uid}/readingPosition`)
+                        .once('value');
+                return snap.val();
+        });
+
+        expect(rtdbPos).not.toBeNull();
+        expect(rtdbPos.book).toBe('Matthew');
+        expect(rtdbPos.chapter).toBe(1);
 });
