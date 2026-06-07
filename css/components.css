@@ -545,6 +545,9 @@ body.light-mode .crossref-item {
     font-family: 'iA Writer Mono S', 'Courier New', monospace;
     font-weight: 700;
     letter-spacing: 0.02em;
+    min-width: 3ch;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
 }
 
 #currentTranslation {
