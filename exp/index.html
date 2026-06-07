@@ -12,7 +12,7 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="bfbc7f844a612aa449873ca5497d65309d79510a" />
+	<meta name="build-id" content="fc347d8c6be89436c25e923b01db12ef46cf99ed" />
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -26,7 +26,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=bfbc7f844a612aa449873ca5497d65309d79510a">.
+	     before the parser reaches <script type="module" src="app.js?v=fc347d8c6be89436c25e923b01db12ef46cf99ed">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -69,7 +69,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">EXP 510A</span>
+				<span id="build-info">EXP 99ED</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -354,6 +354,12 @@
 									<span>Verse-by-verse display</span>
 								</label>
 							</div>
+							<div class="setting-item">
+								<label class="checkbox-label">
+									<input type="checkbox" id="chapterArrowsToggle" checked />
+									<span>Chapter arrows</span>
+								</label>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -597,7 +603,7 @@
 	<!-- Toast notification -->
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=bfbc7f844a612aa449873ca5497d65309d79510a"></script>
+	<script type="module" src="app.js?v=fc347d8c6be89436c25e923b01db12ef46cf99ed"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');

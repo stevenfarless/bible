@@ -591,21 +591,10 @@ body.light-mode .crossref-item {
     outline-offset: 2px;
 }
 
-/*
-   Hide prev/next chapter buttons when the nav row is too narrow to show
-   them without crowding the passage selector. Users can still swipe.
-   The threshold (480px) is wide enough for all selector buttons + both
-   nav buttons at their minimum size; below it only the selectors remain.
-*/
-.nav-content {
-    container-type: inline-size;
-}
-
-@container (max-width: 480px) {
-    #prevChapter,
-    #nextChapter {
-        display: none;
-    }
+/* Hide chapter arrows when the user has disabled them in settings */
+body.hide-chapter-arrows #prevChapter,
+body.hide-chapter-arrows #nextChapter {
+    display: none;
 }
 
 /* Passage Content */
