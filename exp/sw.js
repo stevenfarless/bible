@@ -96,8 +96,13 @@ function translationFromUrl(pathname) {
   return m ? m[1] : null;
 }
 
-function resolveBuildId() {
-  return 'f73c61a4235c7ea7ce1eb44ba3e8ba258b98c87a';
+async function resolveBuildId() {
+  try {
+    const resp = await fetch('./sw.js', { cache: 'no-store', method: 'HEAD' });
+    const lm = resp.headers.get('Last-Modified');
+    if (lm) return String(new Date(lm).getTime());
+  } catch (_) {}
+  return String(Date.now());
 }
 
 async function precacheFiles() {
