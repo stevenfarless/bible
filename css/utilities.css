@@ -169,6 +169,13 @@ body.font-opendyslexic3 .search-result-content {
     font-family: 'OpenDyslexic3', sans-serif;
 }
 
+body.font-ia-quattro .passage-text,
+body.font-ia-quattro .passage,
+body.font-ia-quattro .search-result-content {
+    font-family: 'iA Writer Quattro S', monospace;
+}
+
+
 
 /* ================================
    12. PRINT STYLES
