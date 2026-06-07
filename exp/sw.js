@@ -1,6 +1,8 @@
-// BUILD_ID is resolved inside the install handler from this SW file's own
-// Last-Modified response header so every deploy busts the cache without a
-// build step. Fallback is Date.now() for hosts that strip response headers.
+// BUILD_ID is injected at deploy time by the CI workflow:
+//   sed -i "s/fdd342fa37ba4d0213b274cf4aa48883bc49d72a/$GITHUB_SHA/g" sw.js
+// The placeholder below is replaced with the full commit SHA before
+// the file is published to GitHub Pages. Never edit the placeholder
+// directly — changes here are overwritten on every deploy.
 let BUILD_ID = 'pending';
 let CACHE_NAME = 'bible-pending';
 
@@ -96,13 +98,8 @@ function translationFromUrl(pathname) {
   return m ? m[1] : null;
 }
 
-async function resolveBuildId() {
-  try {
-    const resp = await fetch('./sw.js', { cache: 'no-store', method: 'HEAD' });
-    const lm = resp.headers.get('Last-Modified');
-    if (lm) return String(new Date(lm).getTime());
-  } catch (_) {}
-  return String(Date.now());
+function resolveBuildId() {
+  return 'fdd342fa37ba4d0213b274cf4aa48883bc49d72a';
 }
 
 async function precacheFiles() {
@@ -126,7 +123,7 @@ async function precacheFiles() {
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil((async () => {
-    BUILD_ID = await resolveBuildId();
+    BUILD_ID = resolveBuildId();
     CACHE_NAME = `bible-${BUILD_ID}`;
     const cache = await caches.open(CACHE_NAME);
     await cache.addAll(APP_SHELL);
