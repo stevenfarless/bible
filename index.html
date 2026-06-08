@@ -13,6 +13,31 @@
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
 	<meta name="build-id" content="__BUILD_ID__" />
+	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
+	     Stamps the color-theme class and no-color-transition onto <body>
+	     before the browser paints, preventing a Dracula-flash on cold load.
+	     ES modules are deferred and cannot achieve this. -->
+	<script>
+		(function () {
+			var theme = 'basic';
+			try { theme = localStorage.getItem('colorTheme') || 'basic'; } catch (_) {}
+			var valid = { dracula: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1 };
+			if (!valid[theme]) theme = 'basic';
+			document.body.classList.add(theme + '-theme', 'no-color-transition');
+
+			var mode = 'system';
+			try {
+				var raw = localStorage.getItem('lightMode');
+				if (raw === 'true' || raw === 'light')       mode = 'light';
+				else if (raw === 'false' || raw === 'dark') mode = 'dark';
+			} catch (_) {}
+			var isLight = mode === 'light' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches);
+			if (isLight) {
+				document.documentElement.classList.add('light-mode');
+				document.body.classList.add('light-mode');
+			}
+		}());
+	</script>
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />

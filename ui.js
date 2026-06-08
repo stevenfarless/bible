@@ -28,11 +28,12 @@ const REQUIRED_IDS = [
 	'translationModal', 'closeTranslationModal', 'translationList',
 ];
 
-// Suppress color transitions on initial load so the first paint has no flash.
-// The class is added before DOM ready (synchronous) and removed after.
-document.body.classList.add('no-color-transition');
+// no-color-transition guard is applied synchronously by the inline <script>
+// in index.html <head> before first paint. It is removed here, after the
+// module evaluates and all initial theme/light-mode classes are in place.
+// One rAF ensures the browser has committed those classes before transitions
+// are re-enabled, so there is no flash on warm or cold load.
 document.addEventListener('DOMContentLoaded', () => {
-	// One rAF so the browser has committed the first paint before we re-enable.
 	requestAnimationFrame(() => {
 		document.body.classList.remove('no-color-transition');
 	});
