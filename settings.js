@@ -10,7 +10,7 @@ const DEFAULTS = {
     showFootnotes:       false,
     showCrossReferences: false,
     verseByVerse:        false,
-    showChapterArrows:   true,
+    showChapterArrows:   false,
     lightMode:           'system',
     colorTheme:          'basic',
     translation:         'KJV',
