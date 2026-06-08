@@ -41,6 +41,10 @@ body.modal-open {
    (guard applied before first paint, removed on DOMContentLoaded) so
    users never see a color flash on cold load.
 
+   transform is included so the wildcard does not clobber layout
+   animations (e.g. .top-chrome slide) that declare their own
+   transition: transform in layout.css.
+
    prefers-reduced-motion zeroes all durations per WCAG 2.3.
    ================================ */
 
@@ -52,7 +56,8 @@ body:not(.no-color-transition) *::after {
         color            300ms ease,
         border-color     300ms ease,
         fill             300ms ease,
-        stroke           300ms ease;
+        stroke           300ms ease,
+        transform        var(--transition-normal);
 }
 
 @media (prefers-reduced-motion: reduce) {
