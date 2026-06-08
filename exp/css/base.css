@@ -14,6 +14,8 @@
 html {
     overflow-y: auto;
     scrollbar-width: none;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
 html::-webkit-scrollbar {
@@ -71,8 +73,7 @@ body:not(.no-color-transition) *::after {
 /* During an active swipe drag the three panel elements must track the finger
    with zero latency. The wildcard transition above would otherwise ease every
    translateX write, causing jitter and preventing adjacent panels from sitting
-   at their correct off-screen positions when the drag begins.
-   .swiping is added to #swipeViewport the moment a horizontal drag is
+   at their correct off-screen positions when the drag begins.\n   .swiping is added to #swipeViewport the moment a horizontal drag is
    confirmed and removed when the gesture ends (cancel or commit). */
 #swipeViewport.swiping #passageText,
 #swipeViewport.swiping #swipePrev,
