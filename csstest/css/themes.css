@@ -47,8 +47,8 @@ body.dracula-theme {
     --text-body: var(--dracula-fg);
     --text-muted: var(--dracula-comment);
 
-    --border-neutral: var(--dracula-current-line);
-    --highlight-border: color-mix(in srgb, var(--border-neutral) 60%, white);
+    --border-neutral:   var(--dracula-selection);
+    --highlight-border: var(--dracula-current-line);
 
     --primary-color: var(--dracula-purple);
     --primary-dark: hsl(265, 89%, 64%);
@@ -57,9 +57,10 @@ body.dracula-theme {
     --section-heading-color: var(--brand-secondary);
     --accent-color: var(--dracula-cyan);
 
-    --success-color: var(--dracula-green);
-    --warning-color: var(--dracula-yellow);
-    --error-color: var(--dracula-red);
+    /* Functional colors per spec — distinct from syntax palette */
+    --success-color: var(--dracula-func-green);
+    --warning-color: var(--dracula-func-orange);
+    --error-color:   var(--dracula-func-red);
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
 
@@ -68,7 +69,7 @@ body.dracula-theme {
     --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
 }
 
-/* Alucard — official Dracula light mode (https://spec.draculatheme.com) */
+/* Alucard — official Dracula light mode (https://draculatheme.com/spec) */
 :root.dracula-theme.light-mode,
 html.dracula-theme.light-mode,
 body.dracula-theme.light-mode {
@@ -77,11 +78,11 @@ body.dracula-theme.light-mode {
     --bg-raised:  var(--alucard-bg-light);
 
     --text-heading: var(--alucard-fg);
-    --text-body:    var(--alucard-comment);
-    --text-muted: #9A9580;
+    --text-body:    var(--alucard-fg);
+    --text-muted:   var(--alucard-comment);
 
     --border-neutral:   var(--alucard-bg-dark);
-    --highlight-border: var(--alucard-selection);
+    --highlight-border: var(--alucard-current-line);
 
     --primary-color:   var(--alucard-purple);
     --primary-dark:    #4D38A8;
@@ -90,9 +91,10 @@ body.dracula-theme.light-mode {
     --section-heading-color: var(--brand-secondary);
     --accent-color:    var(--alucard-cyan);
 
-    --success-color: var(--alucard-green);
-    --warning-color: var(--alucard-yellow);
-    --error-color:   var(--alucard-red);
+    /* Functional colors per spec */
+    --success-color: var(--alucard-func-green);
+    --warning-color: var(--alucard-func-orange);
+    --error-color:   var(--alucard-func-red);
 
     --footnote-hover-bg: color-mix(in srgb, var(--alucard-purple) 14%, transparent);
 
@@ -135,10 +137,10 @@ body.dracula2test-theme {
     --section-heading-color: var(--brand-secondary);
     --accent-color: var(--dracula-cyan);
 
-    --success-color: var(--dracula-green);
-    /* Orange for warnings; Yellow freed for highlights/search matches */
-    --warning-color: var(--dracula-orange);
-    --error-color: var(--dracula-red);
+    /* Functional colors per spec — distinct from syntax palette */
+    --success-color: var(--dracula-func-green);
+    --warning-color: var(--dracula-func-orange);
+    --error-color:   var(--dracula-func-red);
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
 
@@ -169,9 +171,9 @@ body.dracula2test-theme.light-mode {
     --section-heading-color: var(--brand-secondary);
     --accent-color:    var(--alucard-cyan);
 
-    --success-color: var(--alucard-green);
-    --warning-color: var(--alucard-orange);
-    --error-color:   var(--alucard-red);
+    --success-color: var(--alucard-func-green);
+    --warning-color: var(--alucard-func-orange);
+    --error-color:   var(--alucard-func-red);
 
     --footnote-hover-bg: color-mix(in srgb, var(--alucard-purple) 14%, transparent);
 
