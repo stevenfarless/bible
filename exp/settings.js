@@ -265,3 +265,38 @@ export function updateCopyright(app) {
         `<span class="recaptcha-disclosure">${RECAPTCHA_DISCLOSURE_HTML}</span>`,
     ].filter(Boolean).join('<br />');
 }
+
+/**
+ * Wire sub-accordion toggle behaviour for the About section.
+ * Called once during settings init.
+ */
+export function initSubAccordions() {
+    document.querySelectorAll('.sub-accordion-header').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const section = btn.closest('.sub-accordion-section');
+            const isActive = section.classList.contains('active');
+            // Collapse all siblings first
+            section.closest('.about-group')
+                .querySelectorAll('.sub-accordion-section')
+                .forEach(s => s.classList.remove('active'));
+            if (!isActive) section.classList.add('active');
+            btn.setAttribute('aria-expanded', (!isActive).toString());
+        });
+    });
+}
+
+/**
+ * Populate #aboutVersion from the build-info span already in the DOM.
+ * build-info contains e.g. "v1.2.3 · 2026-01-01" — we take the first token.
+ */
+export function populateAboutVersion() {
+    const buildInfo = document.getElementById('build-info');
+    const versionEl = document.getElementById('aboutVersion');
+    if (!buildInfo || !versionEl) return;
+    const raw = buildInfo.textContent.trim();
+    // Grab everything up to the first space or middle-dot separator
+    const version = raw.split(/[\s·]/)[0];
+    if (version && version !== '__BUILD_INFO__') {
+        versionEl.textContent = version;
+    }
+}

@@ -12,7 +12,7 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="9a40c17" />
+	<meta name="build-id" content="5c3cf75" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement — always available in <head>) before the
@@ -51,7 +51,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=9a40c17">.
+	     before the parser reaches <script type="module" src="app.js?v=5c3cf75">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -75,16 +75,16 @@
 	<link rel="preload" href="./fonts/iAWriterQuattroS-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<!-- CSS loaded as parallel <link> tags — @import chains are render-blocking
 	     and sequential; <link> tags are fetched in parallel by the browser. -->
-	<link rel="stylesheet" href="css/fonts.css?v=9a40c17" />
-	<link rel="stylesheet" href="css/base.css?v=9a40c17" />
-	<link rel="stylesheet" href="css/tokens.css?v=9a40c17" />
-	<link rel="stylesheet" href="css/themes.css?v=9a40c17" />
-	<link rel="stylesheet" href="css/layout.css?v=9a40c17" />
-	<link rel="stylesheet" href="css/components.css?v=9a40c17" />
-	<link rel="stylesheet" href="css/modals.css?v=9a40c17" />
-	<link rel="stylesheet" href="css/interactions.css?v=9a40c17" />
-	<link rel="stylesheet" href="css/utilities.css?v=9a40c17" />
-	<link rel="stylesheet" href="css/pericope.css?v=9a40c17" />
+	<link rel="stylesheet" href="css/fonts.css?v=5c3cf75" />
+	<link rel="stylesheet" href="css/base.css?v=5c3cf75" />
+	<link rel="stylesheet" href="css/tokens.css?v=5c3cf75" />
+	<link rel="stylesheet" href="css/themes.css?v=5c3cf75" />
+	<link rel="stylesheet" href="css/layout.css?v=5c3cf75" />
+	<link rel="stylesheet" href="css/components.css?v=5c3cf75" />
+	<link rel="stylesheet" href="css/modals.css?v=5c3cf75" />
+	<link rel="stylesheet" href="css/interactions.css?v=5c3cf75" />
+	<link rel="stylesheet" href="css/utilities.css?v=5c3cf75" />
+	<link rel="stylesheet" href="css/pericope.css?v=5c3cf75" />
 	<!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
 	<script src="https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV" async defer></script>
 </head>
@@ -94,7 +94,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">9a40c17</span>
+				<span id="build-info">5c3cf75</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,13 +103,6 @@
 						</svg>
 					</button>
 
-					<button class="icon-btn" id="helpBtn" aria-label="Help / Shortcuts" title="Help / Shortcuts">
-						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
-							</path>
-						</svg>
-					</button>
 
 					<button class="icon-btn" id="settingsBtn" aria-label="Settings" title="Settings">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -412,90 +405,124 @@
 						</div>
 					</div>
 				</div>
-			</div>
-		</div>
-	</div>
+				<div class="accordion-section" data-section="about">
+					<button class="accordion-header" data-target="about">
+						<span class="accordion-title">About</span>
+						<svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
+							stroke="currentColor" stroke-width="2">
+							<polyline points="6 9 12 15 18 9"></polyline>
+						</svg>
+					</button>
+					<div class="accordion-panel" data-panel="about">
+						<div class="settings-group about-group">
+							<div class="about-app-info">
+								<span class="about-app-name">Lege Lux</span>
+								<span class="about-version" id="aboutVersion"></span>
+								<span class="about-tagline">A clean, fast Bible reader.</span>
+							</div>
 
-	<div id="helpModal" class="modal">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h2>Help &amp; Keyboard Shortcuts</h2>
-				<button class="close-btn" id="closeHelpModal" aria-label="Close">&#xD7;</button>
-			</div>
-			<div class="modal-body">
-				<div class="settings-group">
-					<h4>Navigation Shortcuts</h4>
-					<div class="shortcut-list">
-						<div class="shortcut-item">
-							<kbd>H</kbd> or <kbd>&#x2190;</kbd>
-							<span>Previous chapter</span>
-						</div>
-						<div class="shortcut-item">
-							<kbd>L</kbd> or <kbd>&#x2192;</kbd>
-							<span>Next chapter</span>
-						</div>
-						<div class="shortcut-item">
-							<kbd>K</kbd> or <kbd>&#x2191;</kbd>
-							<span>Previous verse</span>
-						</div>
-						<div class="shortcut-item">
-							<kbd>J</kbd> or <kbd>&#x2193;</kbd>
-							<span>Next verse</span>
+							<div class="sub-accordion-section" data-section="whats-new">
+								<button class="sub-accordion-header" data-target="whats-new" aria-expanded="false">
+									<span>What's new</span>
+									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+										stroke="currentColor" stroke-width="2">
+										<polyline points="6 9 12 15 18 9"></polyline>
+									</svg>
+								</button>
+								<div class="sub-accordion-panel" data-panel="whats-new">
+									<div id="whatsNewContent" class="whats-new-content">
+										<!-- populated by settings.js -->
+									</div>
+								</div>
+							</div>
+
+							<div class="sub-accordion-section" data-section="tips">
+								<button class="sub-accordion-header" data-target="tips" aria-expanded="false">
+									<span>Help &amp; Tips</span>
+									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+										stroke="currentColor" stroke-width="2">
+										<polyline points="6 9 12 15 18 9"></polyline>
+									</svg>
+								</button>
+								<div class="sub-accordion-panel" data-panel="tips">
+									<div class="settings-group">
+										<ul class="tips-list">
+											<li>Click the book, chapter, or verse selector to jump to any location.</li>
+											<li>Search by reference (examples: <code>John 3</code>, <code>John 3:16</code>, <code>jn 3 16</code>).</li>
+											<li>Search by keywords to find mentions across the Bible (example: <code>covenant</code>).</li>
+											<li>Wrap a phrase in double quotes to search exactly (example: <code>"in love"</code>).</li>
+											<li>Enable "Search all translations" in the search bar to find verses unique to other translations.</li>
+											<li>Settings sync across devices when signed in.</li>
+										</ul>
+									</div>
+								</div>
+							</div>
+
+							<div class="sub-accordion-section" data-section="shortcuts">
+								<button class="sub-accordion-header" data-target="shortcuts" aria-expanded="false">
+									<span>Keyboard Shortcuts</span>
+									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+										stroke="currentColor" stroke-width="2">
+										<polyline points="6 9 12 15 18 9"></polyline>
+									</svg>
+								</button>
+								<div class="sub-accordion-panel" data-panel="shortcuts">
+									<div class="settings-group">
+										<h4>Navigation</h4>
+										<div class="shortcut-list">
+											<div class="shortcut-item">
+												<kbd>H</kbd> or <kbd>&#x2190;</kbd>
+												<span>Previous chapter</span>
+											</div>
+											<div class="shortcut-item">
+												<kbd>L</kbd> or <kbd>&#x2192;</kbd>
+												<span>Next chapter</span>
+											</div>
+											<div class="shortcut-item">
+												<kbd>K</kbd> or <kbd>&#x2191;</kbd>
+												<span>Previous verse</span>
+											</div>
+											<div class="shortcut-item">
+												<kbd>J</kbd> or <kbd>&#x2193;</kbd>
+												<span>Next verse</span>
+											</div>
+										</div>
+									</div>
+									<div class="settings-group">
+										<h4>General</h4>
+										<div class="shortcut-list">
+											<div class="shortcut-item">
+												<kbd>Ctrl</kbd> + <kbd>K</kbd> or <kbd>/</kbd>
+												<span>Toggle search</span>
+											</div>
+											<div class="shortcut-item">
+												<kbd>T</kbd>
+												<span>Open translation picker</span>
+											</div>
+											<div class="shortcut-item">
+												<kbd>N</kbd>
+												<span>Toggle verse numbers</span>
+											</div>
+											<div class="shortcut-item">
+												<kbd>V</kbd>
+												<span>Toggle verse-by-verse mode</span>
+											</div>
+											<div class="shortcut-item">
+												<kbd>S</kbd>
+												<span>Toggle section headings</span>
+											</div>
+											<div class="shortcut-item">
+												<kbd>Esc</kbd>
+												<span>Close modal / search</span>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
 
-				<div class="settings-group">
-					<h4>General Shortcuts</h4>
-					<div class="shortcut-list">
-						<div class="shortcut-item">
-							<kbd>Ctrl</kbd> + <kbd>K</kbd> or <kbd>/</kbd>
-							<span>Toggle search</span>
-						</div>
-						<div class="shortcut-item">
-							<kbd>T</kbd>
-							<span>Open translation picker</span>
-						</div>
-						<div class="shortcut-item">
-							<kbd>N</kbd>
-							<span>Toggle verse numbers</span>
-						</div>
-						<div class="shortcut-item">
-							<kbd>V</kbd>
-							<span>Toggle verse-by-verse mode</span>
-						</div>
-						<div class="shortcut-item">
-							<kbd>S</kbd>
-							<span>Toggle section headings</span>
-						</div>
-						<div class="shortcut-item">
-							<kbd>Esc</kbd>
-							<span>Close modal / search</span>
-						</div>
-					</div>
-				</div>
-
-				<div class="settings-group">
-					<h4>Tips</h4>
-					<ul class="tips-list">
-						<li>Click on the book, chapter, or verse selector to jump to any location.</li>
-						<li>Search by reference to jump quickly (examples: <code>John 3</code>, <code>John 3:16</code>, <code>jn 3 16</code>).</li>
-						<li>Search by keywords to find mentions across the Bible (example: <code>covenant</code>).</li>
-						<li>Search for an exact phrase by wrapping it in double quotes (example: <code>"in love"</code>).</li>
-						<li>Enable "Search all translations" in the search bar to find verses unique to other translations.</li>
-						<li>Use Settings to change font size, display options, theme, and translation.</li>
-						<li>Your reading position and settings sync across devices when signed in.</li>
-					</ul>
-				</div>
-
-				<div class="settings-group">
-					<h4>Getting Started</h4>
-					<ul class="tips-list">
-						<li><strong>Sign Up:</strong> Create an account to sync your settings and reading position across devices.</li>
-						<li><strong>Customize:</strong> Adjust font size, toggle verse numbers, headings, and translation in Settings.</li>
-						<li><strong>Search:</strong> Use search to jump directly to references or find words and phrases across the selected translation.</li>
-					</ul>
-				</div>
 			</div>
 		</div>
 	</div>
@@ -632,7 +659,7 @@
 	<!-- Toast notification -->
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=9a40c17"></script>
+	<script type="module" src="app.js?v=5c3cf75"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');
