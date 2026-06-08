@@ -157,9 +157,9 @@ export function initSwipe(app) {
     const currentPanel = document.getElementById('passageText');
     if (!currentPanel) return;
 
-    // Lock native scroll for page mode. body.page-mode is also used by CSS
-    // to hide scrollbars and anchor the viewport to the screen height.
-    document.body.classList.add('page-mode');
+    // body.page-mode is added by app.enablePageMode() before calling initSwipe.
+    // initSwipe does not touch it — ownership stays with the app layer so the
+    // class is never applied on startup when page mode is off.
 
     const vw = () => window.innerWidth;
 
@@ -506,9 +506,6 @@ export function destroySwipe(app) {
     prevPanel.remove();
     nextPanel.remove();
     viewport.remove();
-
-    // Restore native scroll
-    document.body.classList.remove('page-mode');
 
     app.swipe = null;
 }
