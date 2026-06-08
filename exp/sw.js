@@ -1,5 +1,5 @@
 // BUILD_ID is injected at deploy time by the CI workflow:
-//   sed -i "s/407d46c/$GITHUB_SHA/g" sw.js
+//   sed -i "s/c2082ff/$GITHUB_SHA/g" sw.js
 // The placeholder below is replaced with the full commit SHA before
 // the file is published to GitHub Pages. Never edit the placeholder
 // directly — changes here are overwritten on every deploy.
@@ -49,12 +49,23 @@ const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
+  './css/base.css',
+  './css/tokens.css',
+  './css/fonts.css',
+  './css/themes.css',
+  './css/layout.css',
+  './css/components.css',
+  './css/modals.css',
+  './css/interactions.css',
+  './css/utilities.css',
+  './css/pericope.css',
   './app.js',
   './bible-api.js',
   './bible-structure.js',
   './bsb-structure.js',
   './book-aliases.js',
   './reading-state.js',
+  './translation-store.js',
   './ui.js',
   './navigation.js',
   './search.js',
@@ -99,7 +110,7 @@ function translationFromUrl(pathname) {
 }
 
 function resolveBuildId() {
-  return '407d46c';
+  return 'c2082ff';
 }
 
 async function precacheFiles() {
