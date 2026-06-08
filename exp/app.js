@@ -1151,7 +1151,14 @@ class BibleApp {
 
     enablePageMode() {
         if (this.swipe) return;
+        document.body.classList.add('page-mode');
         initSwipe(this);
+        this.swipe?.syncAdjacentPanels();
+    }
+
+    disablePageMode() {
+        destroySwipe(this);
+        document.body.classList.remove('page-mode');
     }
 
     togglePageMode() {
@@ -1163,11 +1170,6 @@ class BibleApp {
         }
         if (enabled) this.enablePageMode(); else this.disablePageMode();
     }
-
-    disablePageMode() {
-        destroySwipe(this);
-    }
-
 
 }
 
