@@ -12,7 +12,7 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="594dd7e" />
+	<meta name="build-id" content="cb4a70c" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement — always available in <head>) before the
@@ -51,7 +51,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=594dd7e">.
+	     before the parser reaches <script type="module" src="app.js?v=cb4a70c">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -75,16 +75,16 @@
 	<link rel="preload" href="./fonts/iAWriterQuattroS-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<!-- CSS loaded as parallel <link> tags — @import chains are render-blocking
 	     and sequential; <link> tags are fetched in parallel by the browser. -->
-	<link rel="stylesheet" href="css/fonts.css?v=594dd7e" />
-	<link rel="stylesheet" href="css/base.css?v=594dd7e" />
-	<link rel="stylesheet" href="css/tokens.css?v=594dd7e" />
-	<link rel="stylesheet" href="css/themes.css?v=594dd7e" />
-	<link rel="stylesheet" href="css/layout.css?v=594dd7e" />
-	<link rel="stylesheet" href="css/components.css?v=594dd7e" />
-	<link rel="stylesheet" href="css/modals.css?v=594dd7e" />
-	<link rel="stylesheet" href="css/interactions.css?v=594dd7e" />
-	<link rel="stylesheet" href="css/utilities.css?v=594dd7e" />
-	<link rel="stylesheet" href="css/pericope.css?v=594dd7e" />
+	<link rel="stylesheet" href="css/fonts.css?v=cb4a70c" />
+	<link rel="stylesheet" href="css/base.css?v=cb4a70c" />
+	<link rel="stylesheet" href="css/tokens.css?v=cb4a70c" />
+	<link rel="stylesheet" href="css/themes.css?v=cb4a70c" />
+	<link rel="stylesheet" href="css/layout.css?v=cb4a70c" />
+	<link rel="stylesheet" href="css/components.css?v=cb4a70c" />
+	<link rel="stylesheet" href="css/modals.css?v=cb4a70c" />
+	<link rel="stylesheet" href="css/interactions.css?v=cb4a70c" />
+	<link rel="stylesheet" href="css/utilities.css?v=cb4a70c" />
+	<link rel="stylesheet" href="css/pericope.css?v=cb4a70c" />
 	<!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
 	<script src="https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV" async defer></script>
 </head>
@@ -94,7 +94,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">594dd7e</span>
+				<span id="build-info">cb4a70c</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -314,14 +314,14 @@
 							<div class="setting-item">
 								<label for="themeSelector">Color Theme</label>
 								<select id="themeSelector" class="input-field">
-				<!--	<option value="dracula">Dracula</option> -->
-									<option value="dracula2test">Dracula 2 Test (Purple/Pink)</option>
-								 <option value="onyx">Onyx (Gold/OLED)</option>
+				    	<option value="dracula">Dracula</option>
+								<!--	<option value="dracula2test">Dracula 2 Test (Purple/Pink)</option> -->
+								 <option value="onyx">Gold (OLED)</option>
 									<option value="sage">Sage</option>
 									<option value="ember">Ember</option>
 									<option value="perplexity">Perplexitude</option>
-									<option value="basic">Basic (Black &amp; White)</option>
-									<option value="geek">The Geek Shall Inherit The Earth</option>
+									<option value="basic">Basic (Black OLED &amp; White)</option>
+									<option value="geek">The Geek Shall Inherit The Earth (OLED)</option>
 									<option value="gnome">Adwaitish</option>
 								</select>
 								<small class="help-text">Choose your preferred color scheme.</small>
@@ -632,7 +632,7 @@
 	<!-- Toast notification -->
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=594dd7e"></script>
+	<script type="module" src="app.js?v=cb4a70c"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');
