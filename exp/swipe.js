@@ -207,6 +207,9 @@ export function initSwipe(app) {
             }
         },
         async syncAdjacentPanels() {
+            // Guard: destroySwipe may have run while an earlier async call was
+            // awaiting a fetch. Bail out rather than writing into detached panels.
+            if (app.swipe !== this) return;
             this._syncClasses();
             const prevPos = _adjacentPosition(app, -1);
             const nextPos = _adjacentPosition(app, +1);
@@ -222,6 +225,7 @@ export function initSwipe(app) {
     // and bleed into the visible area.
 
     const ro = new ResizeObserver(() => {
+        if (!app.swipe) return;
         if (_tracking || _animating) return;
         const W = vw();
         _setTranslateX(app.swipe.prevPanel, -W);
@@ -242,6 +246,7 @@ export function initSwipe(app) {
     let _currentOffsetPx = 0;
 
     function _atBoundary(dx) {
+        if (!app.swipe) return false;
         if (dx > 0) return !app.swipe.prevPanel.dataset.book;
         if (dx < 0) return !app.swipe.nextPanel.dataset.book;
         return false;
@@ -252,6 +257,7 @@ export function initSwipe(app) {
     }
 
     function _cleanupDrag() {
+        if (!app.swipe) return;
         viewport.classList.remove('swiping');
         _removeTransition(app.passageText);
         _removeTransition(app.swipe.prevPanel);
@@ -310,6 +316,8 @@ export function initSwipe(app) {
 
         e.preventDefault();
 
+        if (!app.swipe) return;
+
         const W         = vw();
         const effective = _applyResistance(dx);
         _currentOffsetPx = dx;
@@ -334,6 +342,8 @@ export function initSwipe(app) {
         }
         _tracking = false;
 
+        if (!app.swipe) return;
+
         const dx    = _currentOffsetPx;
         const W     = vw();
         const absDx = Math.abs(dx);
@@ -354,6 +364,7 @@ export function initSwipe(app) {
             _setTranslateX(app.swipe.nextPanel, +W);
 
             setTimeout(() => {
+                if (!app.swipe) return;
                 _cleanupDrag();
                 _setTranslateX(app.swipe.prevPanel, -W);
                 _setTranslateX(app.swipe.nextPanel, +W);
@@ -392,6 +403,8 @@ export function initSwipe(app) {
         _setTranslateX(app.swipe.nextPanel, outOffset + W);
 
         setTimeout(async () => {
+            if (!app.swipe) { _animating = false; return; }
+
             _removeTransition(app.passageText);
             _removeTransition(app.swipe.prevPanel);
             _removeTransition(app.swipe.nextPanel);
@@ -461,7 +474,7 @@ export function initSwipe(app) {
 
             _animating = false;
 
-            await app.swipe.syncAdjacentPanels();
+            await app.swipe?.syncAdjacentPanels();
         }, animMs);
     }, { passive: true });
 }

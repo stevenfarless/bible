@@ -124,7 +124,12 @@ export function applySettings(app) {
     if (app.verseByVerseToggle) app.verseByVerseToggle.checked = !!app.state.verseByVerse;
     const pageModeToggle = document.getElementById('pageModeToggle');
     if (pageModeToggle) pageModeToggle.checked = !!app.state.pageMode;
-    if (app.state.pageMode) app.enablePageMode?.(); else app.disablePageMode?.();
+    // Only transition swipe state when it doesn't already match — prevents
+    // destroySwipe from firing every time settings close (which caused the
+    // null app.swipe crash at swipe.js:227).
+    const swipeActive = !!app.swipe;
+    if (app.state.pageMode && !swipeActive) app.enablePageMode?.();
+    else if (!app.state.pageMode && swipeActive) app.disablePageMode?.();
 
     const fontSize = app.state.fontSize || DEFAULTS.fontSize;
     if (app.fontSizeSlider) app.fontSizeSlider.value = fontSize;
