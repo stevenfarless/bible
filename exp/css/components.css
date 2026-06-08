@@ -1295,3 +1295,64 @@ body.hide-verse-numbers .verse .verse-num {
 .whats-new-content li {
     margin-bottom: var(--spacing-xs, 0.25rem);
 }
+
+/* Rendered markdown inside whats-new-content */
+.whats-new-content h1,
+.whats-new-content h2,
+.whats-new-content h3 {
+    font-size: var(--text-sm, 0.9rem);
+    font-weight: 700;
+    color: var(--text-heading);
+    margin: var(--spacing-md) 0 var(--spacing-sm);
+}
+
+.whats-new-content h1 { font-size: 1rem; }
+
+.whats-new-content p {
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-body);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    max-width: unset;
+}
+
+.whats-new-content ul,
+.whats-new-content ol {
+    padding-left: var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
+}
+
+.whats-new-content li {
+    font-size: 0.875rem;
+    color: var(--text-body);
+    line-height: 1.6;
+    margin-bottom: 0.2rem;
+}
+
+.whats-new-content a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.whats-new-content a:hover {
+    text-decoration: underline;
+}
+
+.whats-new-content code {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.8rem;
+    background-color: var(--bg-raised);
+    border: 1px solid var(--border-neutral);
+    border-radius: 3px;
+    padding: 0.1em 0.35em;
+    color: var(--primary-color);
+}
+
+.whats-new-content hr {
+    border: none;
+    border-top: 1px solid var(--border-neutral);
+    margin: var(--spacing-md) 0;
+}
+
+.whats-new-content strong { font-weight: 700; color: var(--text-heading); }
+.whats-new-content em    { font-style: italic; }

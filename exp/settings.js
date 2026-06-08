@@ -286,17 +286,52 @@ export function initSubAccordions() {
 }
 
 /**
- * Populate #aboutVersion from the build-info span already in the DOM.
- * build-info contains e.g. "v1.2.3 · 2026-01-01" — we take the first token.
+ * Fetch the latest GitHub release, populate #aboutVersion with the tag name,
+ * and render the release body markdown into #whatsNewContent.
+ *
+ * Falls back to the build-info SHA if the API request fails.
  */
-export function populateAboutVersion() {
-    const buildInfo = document.getElementById('build-info');
-    const versionEl = document.getElementById('aboutVersion');
-    if (!buildInfo || !versionEl) return;
-    const raw = buildInfo.textContent.trim();
-    // Grab everything up to the first space or middle-dot separator
-    const version = raw.split(/[\s·]/)[0];
-    if (version && version !== '__BUILD_INFO__') {
-        versionEl.textContent = version;
+export async function populateAboutVersion() {
+    const versionEl   = document.getElementById('aboutVersion');
+    const contentEl   = document.getElementById('whatsNewContent');
+    const whatsNewBtn = document.querySelector('[data-section="whats-new"] .sub-accordion-header');
+
+    async function _fallbackToBuildSha() {
+        if (!versionEl) return;
+        const buildInfo = document.getElementById('build-info');
+        if (!buildInfo) return;
+        const raw = buildInfo.textContent.trim();
+        const sha = raw.split(/[\s·]/)[0];
+        if (sha && sha !== '__BUILD_INFO__') versionEl.textContent = sha;
+    }
+
+    try {
+        const res = await fetch(
+            'https://api.github.com/repos/stevenfarless/bible/releases/latest',
+            { headers: { Accept: 'application/vnd.github+json' } }
+        );
+        if (!res.ok) { await _fallbackToBuildSha(); return; }
+
+        const release = await res.json();
+
+        if (versionEl && release.tag_name) {
+            versionEl.textContent = release.tag_name;
+        } else {
+            await _fallbackToBuildSha();
+        }
+
+        if (contentEl && release.body) {
+            // marked is loaded via CDN in index.html before this runs
+            if (typeof marked !== 'undefined') {
+                contentEl.innerHTML = marked.parse(release.body);
+            } else {
+                // plain-text fallback if marked failed to load
+                contentEl.textContent = release.body;
+            }
+            // Unhide the sub-accordion button now that there is content
+            if (whatsNewBtn) whatsNewBtn.closest('.sub-accordion-section').removeAttribute('hidden');
+        }
+    } catch (_) {
+        await _fallbackToBuildSha();
     }
 }
