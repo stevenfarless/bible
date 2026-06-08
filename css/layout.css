@@ -104,9 +104,9 @@ body.chrome-no-transition .top-chrome {
 
 /* Dracula dark: logo uses orange (--dracula-orange) instead of purple.
    Dracula dark = no theme class + no .light-mode. */
-:root:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.light-mode) .logo,
-html:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.light-mode) .logo,
-body:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.light-mode) .logo {
+:root:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.geek-theme):not(.light-mode) .logo,
+html:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.geek-theme):not(.light-mode) .logo,
+body:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.geek-theme):not(.light-mode) .logo {
     color: var(--dracula-orange);
 }
 
