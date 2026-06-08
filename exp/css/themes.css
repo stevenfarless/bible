@@ -98,6 +98,80 @@ body.dracula-theme.light-mode {
     --shadow-lg: 0 10px 15px rgba(108, 102, 75, 0.18);
 }
 
+/* ================================
+   Dracula 2 Test — semantic color mapping per issue #320.
+   Palette constants are identical to dracula-theme; only the
+   semantic token assignments differ:
+     - Scripture body text uses Foreground (#F8F8F2), not Comment.
+     - Headings/structure use Purple (#BD93F9), not Foreground.
+     - Warning uses Orange (#FFB86C), freeing Yellow for highlights.
+   ================================ */
+:root.dracula2test-theme,
+html.dracula2test-theme,
+body.dracula2test-theme {
+    --bg-base: var(--dracula-bg-darker);
+    --bg-card: var(--dracula-bg-dark);
+    --bg-raised: var(--dracula-bg);
+
+    /* Body text → Foreground (primary readable content per Dracula spec) */
+    --text-heading: var(--dracula-purple);
+    --text-body: var(--dracula-fg);
+    --text-muted-2: var(--dracula-comment);
+
+    --border-neutral: var(--dracula-current-line);
+    --highlight-border: color-mix(in srgb, var(--border-neutral) 60%, white);
+
+    --primary-color: var(--dracula-purple);
+    --primary-dark: hsl(265, 89%, 64%);
+    --primary-light: var(--dracula-pink);
+    --secondary-color: var(--dracula-orange);
+    /* Cyan for links, cross-references, interactive references */
+    --accent-color: var(--dracula-cyan);
+
+    --success-color: var(--dracula-green);
+    /* Orange for warnings; Yellow freed for highlights/search matches */
+    --warning-color: var(--dracula-orange);
+    --error-color: var(--dracula-red);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* Dracula 2 Test — Alucard (light mode) */
+:root.dracula2test-theme.light-mode,
+html.dracula2test-theme.light-mode,
+body.dracula2test-theme.light-mode {
+    --bg-base:    var(--alucard-bg);
+    --bg-card:    var(--alucard-bg-lighter);
+    --bg-raised:  var(--alucard-bg-light);
+
+    --text-heading: var(--alucard-purple);
+    --text-body:    var(--alucard-fg);
+    --text-muted-2: #9A9580;
+
+    --border-neutral:   var(--alucard-bg-dark);
+    --highlight-border: var(--alucard-selection);
+
+    --primary-color:   var(--alucard-purple);
+    --primary-dark:    #4D38A8;
+    --primary-light:   var(--alucard-pink);
+    --secondary-color: var(--alucard-orange);
+    --accent-color:    var(--alucard-cyan);
+
+    --success-color: var(--alucard-green);
+    --warning-color: var(--alucard-orange);
+    --error-color:   var(--alucard-red);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--alucard-purple) 14%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(108, 102, 75, 0.12);
+    --shadow-md: 0 4px 6px rgba(108, 102, 75, 0.14);
+    --shadow-lg: 0 10px 15px rgba(108, 102, 75, 0.18);
+}
+
 /* Onyx theme (semantic; OLED-friendly) */
 :root.onyx-theme,
 html.onyx-theme,
