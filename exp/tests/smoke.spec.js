@@ -633,7 +633,7 @@ test('auth: signup with short password shows validation toast', async ({ page })
         // Navigate to signup modal — open login first, then switch.
         await page.locator('#userBtn').click();
         await expect(page.locator('#loginModal')).toBeVisible();
-        await page.locator('#showSignup').click();
+        await page.locator('#showSignupLink').click();
         await expect(page.locator('#signupModal')).toBeVisible();
 
         await page.locator('#signupEmail').fill('test@example.com');
