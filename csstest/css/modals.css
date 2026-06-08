@@ -195,8 +195,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: #d93025;
-        color: #fff;
+        background-color: var(--error-color);
+        color: var(--bg-base);
         border: none;
         cursor: pointer;
         border-radius: 0;
@@ -234,8 +234,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: #d93025;
-        color: #fff;
+        background-color: var(--error-color);
+        color: var(--bg-base);
         border: none;
         border-radius: 6px;
         cursor: pointer;
@@ -256,13 +256,13 @@
     }
 
     .translation-modal-delete-btn--inline:hover {
-        background-color: #b3261e;
+        background-color: color-mix(in srgb, var(--error-color) 80%, black);
     }
 
     .translation-modal-delete-btn--inline:focus-visible {
         opacity: 1;
         pointer-events: auto;
-        outline: 2px solid #b3261e;
+        outline: 2px solid color-mix(in srgb, var(--error-color) 80%, black);
         outline-offset: 2px;
     }
 }
