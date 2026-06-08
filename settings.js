@@ -325,13 +325,40 @@ export async function populateAboutVersion() {
             if (typeof marked !== 'undefined') {
                 contentEl.innerHTML = marked.parse(release.body);
             } else {
-                // plain-text fallback if marked failed to load
                 contentEl.textContent = release.body;
             }
-            // Unhide the sub-accordion button now that there is content
             if (whatsNewBtn) whatsNewBtn.closest('.sub-accordion-section').removeAttribute('hidden');
         }
+
+        // Fetch the latest prerelease for the Coming Soon section
+        _populateComingSoon();
     } catch (_) {
         await _fallbackToBuildSha();
     }
+}
+
+async function _populateComingSoon() {
+    const el = document.getElementById('comingSoonContent');
+    if (!el) return;
+    try {
+        const res = await fetch(
+            'https://api.github.com/repos/stevenfarless/bible/releases?per_page=10',
+            { headers: { Accept: 'application/vnd.github+json' } }
+        );
+        if (!res.ok) return;
+        const releases = await res.json();
+        const pre = releases.find(r => r.prerelease === true);
+        if (!pre || !pre.body) return;
+
+        if (typeof marked !== 'undefined') {
+            el.innerHTML = marked.parse(pre.body);
+        } else {
+            el.textContent = pre.body;
+        }
+
+        const section = el.closest('.sub-accordion-section');
+        const tagEl = section?.querySelector('.sub-accordion-header span');
+        if (tagEl && pre.tag_name) tagEl.textContent = \`Coming soon · \${pre.tag_name}\`;
+        section?.removeAttribute('hidden');
+    } catch (_) { /* network error — leave section empty */ }
 }
