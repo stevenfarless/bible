@@ -1148,6 +1148,25 @@ class BibleApp {
     async handleSignup()    { await handleSignup(this); }
     async handleLogout()    { await handleLogout(this); }
     async loadUserData()    { await loadUserData(this, normalizeTranslation); }
+    enablePageMode() {
+        if (this.swipe) return;
+        initSwipe(this);
+    }
+
+    disablePageMode() {
+        destroySwipe(this);
+    }
+
+    togglePageMode() {
+        const enabled = !!this.pageModeToggle?.checked;
+        this.state.pageMode = enabled;
+        try { localStorage.setItem('pageMode', String(enabled)); } catch (_) {}
+        if (this.currentUser) {
+            this.database?.ref(`users/${this.currentUser.uid}/settings/pageMode`)?.set(enabled);
+        }
+        if (enabled) this.enablePageMode(); else this.disablePageMode();
+    }
+
 }
 
 
@@ -1289,24 +1308,4 @@ function showUpdateToast(appInstance) {
         (err) => console.warn('Firebase bundle failed to load — sign-in unavailable:', err)
     );
     new BibleApp();
-
-    enablePageMode() {
-        if (this.swipe) return;
-        initSwipe(this);
-    }
-
-    togglePageMode() {
-        const enabled = !!this.pageModeToggle?.checked;
-        this.state.pageMode = enabled;
-        try { localStorage.setItem('pageMode', String(enabled)); } catch (_) {}
-        if (this.currentUser) {
-            this.database?.ref(`users/${this.currentUser.uid}/settings/pageMode`)?.set(enabled);
-        }
-        if (enabled) this.enablePageMode(); else this.disablePageMode();
-    }
-
-    disablePageMode() {
-        destroySwipe(this);
-    }
-
 })();
