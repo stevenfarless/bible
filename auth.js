@@ -120,6 +120,7 @@ export function handleUserButtonClick(app) {
             perplexity: 'Perplexity (Teal/Minimal)',
             basic:      'Basic (Black & White)',
             geek:       'The Geek Shall Inherit The Earth',
+            gnome:      'GNOME 3 (Adwaita)',
         };
         document.getElementById('userTheme').textContent =
             themeNameMap[colorTheme] || colorTheme;

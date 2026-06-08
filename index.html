@@ -24,7 +24,7 @@
 			var el = document.documentElement;
 			var theme = 'basic';
 			try { theme = localStorage.getItem('colorTheme') || 'basic'; } catch (_) {}
-			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1 };
+			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1 };
 			if (!valid[theme]) theme = 'basic';
 			el.classList.add(theme + '-theme', 'no-color-transition');
 
@@ -322,6 +322,7 @@
 									<option value="perplexity">Perplexity (Teal/Minimal)</option>
 									<option value="basic">Basic (Black &amp; White)</option>
 									<option value="geek">The Geek Shall Inherit The Earth</option>
+									<option value="gnome">GNOME 3 (Adwaita)</option>
 								</select>
 								<small class="help-text">Choose your preferred color scheme.</small>
 							</div>
