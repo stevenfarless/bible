@@ -1148,15 +1148,10 @@ class BibleApp {
     async handleSignup()    { await handleSignup(this); }
     async handleLogout()    { await handleLogout(this); }
     async loadUserData()    { await loadUserData(this, normalizeTranslation); }
-})();
 
     enablePageMode() {
         if (this.swipe) return;
         initSwipe(this);
-    }
-
-    disablePageMode() {
-        destroySwipe(this);
     }
 
     togglePageMode() {
@@ -1168,6 +1163,12 @@ class BibleApp {
         }
         if (enabled) this.enablePageMode(); else this.disablePageMode();
     }
+
+    disablePageMode() {
+        destroySwipe(this);
+    }
+
+
 }
 
 
@@ -1309,4 +1310,4 @@ function showUpdateToast(appInstance) {
         (err) => console.warn('Firebase bundle failed to load — sign-in unavailable:', err)
     );
     new BibleApp();
-
+})();
