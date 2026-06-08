@@ -33,12 +33,43 @@ body.light-mode {
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
 }
 
-/* Alucard — official Dracula light mode (https://spec.draculatheme.com)
-   Targets Dracula (default theme, no theme class) in light mode only.
-   Higher specificity than the generic .light-mode block above. */
-:root.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.basic-theme):not(.geek-theme),
-html.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.basic-theme):not(.geek-theme),
-body.light-mode:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.basic-theme):not(.geek-theme) {
+/* Dracula — explicit selectors so Dracula can be chosen intentionally.
+   Values mirror the previous :root defaults from tokens.css. */
+:root.dracula-theme,
+html.dracula-theme,
+body.dracula-theme {
+    --bg-base: var(--dracula-bg-darker);
+    --bg-card: var(--dracula-bg-dark);
+    --bg-raised: var(--dracula-bg);
+
+    --text-heading: var(--dracula-fg);
+    --text-body: var(--dracula-comment);
+    --text-muted-2: var(--dracula-comment);
+
+    --border-neutral: var(--dracula-current-line);
+    --highlight-border: color-mix(in srgb, var(--border-neutral) 60%, white);
+
+    --primary-color: var(--dracula-purple);
+    --primary-dark: hsl(265, 89%, 64%);
+    --primary-light: var(--dracula-pink);
+    --secondary-color: var(--dracula-orange);
+    --accent-color: var(--dracula-cyan);
+
+    --success-color: var(--dracula-green);
+    --warning-color: var(--dracula-yellow);
+    --error-color: var(--dracula-red);
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* Alucard — official Dracula light mode (https://spec.draculatheme.com) */
+:root.dracula-theme.light-mode,
+html.dracula-theme.light-mode,
+body.dracula-theme.light-mode {
     --bg-base:    var(--alucard-bg);
     --bg-card:    var(--alucard-bg-lighter);
     --bg-raised:  var(--alucard-bg-light);
@@ -138,9 +169,6 @@ body.onyx-theme.light-mode {
 
 /* ================================
    Sage theme — forest green; organic, calm reading
-   Primary hue: 145° green. No overlap with any other theme (nearest is
-   Perplexity at 187° teal — 42° apart). Surfaces: deep forest dark /
-   warm sage-tinted light.
    ================================ */
 :root.sage-theme,
 html.sage-theme,
@@ -205,10 +233,7 @@ body.sage-theme.light-mode {
 }
 
 /* ================================
-   Ember theme — candlelit warmth; analogous warm palette
-   Primary hue: 35° amber. Secondary: 8° rust-red. Accent: 50° gold.
-   All three hues within 45° of each other — fully analogous, zero
-   cool colors. Surfaces: dark chocolate / warm cream.
+   Ember theme — candlelit warmth
    ================================ */
 :root.ember-theme,
 html.ember-theme,
@@ -364,8 +389,6 @@ body.perplexity-theme.light-mode {
    Basic theme — pure achromatic; zero hue, maximum contrast
    Dark mode: pure white text on pure black.
    Light mode: pure black text on pure white.
-   No accent color — links and interactive elements use black/white
-   with an underline or border instead of color.
    ================================ */
 :root.basic-theme,
 html.basic-theme,
@@ -447,7 +470,6 @@ body.basic-theme.light-mode .passage-container {
 /* ================================
    The Geek Shall Inherit The Earth
    Classic terminal: #00AA00 green on pure black.
-   Geek theme changes color only; reading font remains whatever is already active.
    Light mode toggle is intentionally ignored; this theme is always dark.
    ================================ */
 :root.geek-theme,
@@ -490,17 +512,30 @@ body.geek-theme .passage-container {
     box-shadow: none;
 }
 
-/* Beat components.css specificity for passage text color.
-   Geek theme should change color only and leave the active reading font alone. */
+/* Beat components.css specificity for passage text color. */
+:root.geek-theme .passage-text,
+html.geek-theme .passage-text,
 body.geek-theme .passage-text,
+:root.geek-theme .passage,
+html.geek-theme .passage,
 body.geek-theme .passage,
+:root.geek-theme .passage-text h2,
+html.geek-theme .passage-text h2,
 body.geek-theme .passage-text h2,
+:root.geek-theme .passage-text h3,
+html.geek-theme .passage-text h3,
 body.geek-theme .passage-text h3,
+:root.geek-theme .passage-text h4,
+html.geek-theme .passage-text h4,
 body.geek-theme .passage-text h4,
+:root.geek-theme .passage-title,
+html.geek-theme .passage-title,
 body.geek-theme .passage-title {
     color: #00AA00 !important;
 }
 
+:root.geek-theme .verse-num,
+html.geek-theme .verse-num,
 body.geek-theme .verse-num {
     color: #007700 !important;
 }
