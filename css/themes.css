@@ -99,12 +99,15 @@ body.dracula-theme.light-mode {
 }
 
 /* ================================
-   Dracula 2 Test — semantic color mapping per issue #320.
-   Palette constants are identical to dracula-theme; only the
-   semantic token assignments differ:
-     - Scripture body text uses Foreground (#F8F8F2), not Comment.
-     - Headings/structure use Purple (#BD93F9), not Foreground.
-     - Warning uses Orange (#FFB86C), freeing Yellow for highlights.
+   Dracula 2 Test — corrected semantic mapping per issue #320.
+   Key difference from dracula-theme:
+     - --text-body uses Foreground (#F8F8F2) instead of Comment (#6272A4),
+       so Scripture passage text reads at full brightness.
+     - --text-heading also uses Foreground so inline passage h2/h3/h4
+       do NOT turn purple.
+     - Purple is reserved for --primary-color (UI chrome: buttons,
+       active states, links) — not reading text.
+     - Warning uses Orange, freeing Yellow for highlights/search matches.
    ================================ */
 :root.dracula2test-theme,
 html.dracula2test-theme,
@@ -113,8 +116,9 @@ body.dracula2test-theme {
     --bg-card: var(--dracula-bg-dark);
     --bg-raised: var(--dracula-bg);
 
-    /* Body text → Foreground (primary readable content per Dracula spec) */
-    --text-heading: var(--dracula-purple);
+    /* Both heading and body text use Foreground so nothing in the
+       reading view turns purple. Purple stays on UI chrome only. */
+    --text-heading: var(--dracula-fg);
     --text-body: var(--dracula-fg);
     --text-muted-2: var(--dracula-comment);
 
@@ -125,7 +129,6 @@ body.dracula2test-theme {
     --primary-dark: hsl(265, 89%, 64%);
     --primary-light: var(--dracula-pink);
     --secondary-color: var(--dracula-orange);
-    /* Cyan for links, cross-references, interactive references */
     --accent-color: var(--dracula-cyan);
 
     --success-color: var(--dracula-green);
@@ -148,7 +151,7 @@ body.dracula2test-theme.light-mode {
     --bg-card:    var(--alucard-bg-lighter);
     --bg-raised:  var(--alucard-bg-light);
 
-    --text-heading: var(--alucard-purple);
+    --text-heading: var(--alucard-fg);
     --text-body:    var(--alucard-fg);
     --text-muted-2: #9A9580;
 
@@ -172,7 +175,9 @@ body.dracula2test-theme.light-mode {
     --shadow-lg: 0 10px 15px rgba(108, 102, 75, 0.18);
 }
 
-/* Onyx theme (semantic; OLED-friendly) */
+/* ================================
+   Onyx theme (semantic; OLED-friendly)
+   ================================ */
 :root.onyx-theme,
 html.onyx-theme,
 body.onyx-theme {
