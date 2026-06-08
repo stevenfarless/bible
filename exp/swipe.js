@@ -407,6 +407,12 @@ export function initSwipe(app) {
             incomingPanel.style.left     = '';
             incomingPanel.style.width    = '';
 
+            // Snap the uninvolved panel to its canonical off-screen position
+            // before slot reassignment. During the drag it accumulated a
+            // parallax offset; leaving it there causes a visible flash when
+            // it becomes the new prev/next panel.
+            _setTranslateX(uninvolvedPanel, direction === 1 ? +W : -W);
+
             const oldId      = incomingPanel.id;
             incomingPanel.id = 'passageText';
             outgoingPanel.id = oldId;
