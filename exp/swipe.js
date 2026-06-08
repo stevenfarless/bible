@@ -157,6 +157,10 @@ export function initSwipe(app) {
     const currentPanel = document.getElementById('passageText');
     if (!currentPanel) return;
 
+    // Lock native scroll for page mode. body.page-mode is also used by CSS
+    // to hide scrollbars and anchor the viewport to the screen height.
+    document.body.classList.add('page-mode');
+
     const vw = () => window.innerWidth;
 
     const viewport = document.createElement('div');
@@ -446,7 +450,13 @@ export function initSwipe(app) {
                 app.swipe.prevPanel = uninvolvedPanel;
             }
 
-            viewport.style.height = '';
+            // Scroll to top before clearing the fixed viewport height.
+            // Reversing this order causes the browser to reflow to the full
+            // document height first, producing a visible jump before scrollTo fires.
+            window.scrollTo(0, 0);
+            requestAnimationFrame(() => {
+                viewport.style.height = '';
+            });
 
             app.state.currentBook    = incomingPos.book;
             app.state.currentChapter = incomingPos.chapter;
@@ -460,7 +470,6 @@ export function initSwipe(app) {
             app.updateCopyright?.();
             if (app.currentVerseSpan) app.currentVerseSpan.textContent = '1';
             app.showChrome?.();
-            window.scrollTo(0, 0);
             app.saveReadingPosition?.();
             app._savePassageCache?.(
                 incomingPos.book,
@@ -497,6 +506,9 @@ export function destroySwipe(app) {
     prevPanel.remove();
     nextPanel.remove();
     viewport.remove();
+
+    // Restore native scroll
+    document.body.classList.remove('page-mode');
 
     app.swipe = null;
 }
