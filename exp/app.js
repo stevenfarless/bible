@@ -1148,6 +1148,7 @@ class BibleApp {
     async handleSignup()    { await handleSignup(this); }
     async handleLogout()    { await handleLogout(this); }
     async loadUserData()    { await loadUserData(this, normalizeTranslation); }
+
     enablePageMode() {
         if (this.swipe) return;
         initSwipe(this);
@@ -1166,7 +1167,6 @@ class BibleApp {
         }
         if (enabled) this.enablePageMode(); else this.disablePageMode();
     }
-
 }
 
 
