@@ -28,6 +28,16 @@ const REQUIRED_IDS = [
 	'translationModal', 'closeTranslationModal', 'translationList',
 ];
 
+// Suppress color transitions on initial load so the first paint has no flash.
+// The class is added before DOM ready (synchronous) and removed after.
+document.body.classList.add('no-color-transition');
+document.addEventListener('DOMContentLoaded', () => {
+	// One rAF so the browser has committed the first paint before we re-enable.
+	requestAnimationFrame(() => {
+		document.body.classList.remove('no-color-transition');
+	});
+}, { once: true });
+
 export function cacheElements(app) {
 	// Validate all required IDs exist — warns immediately if HTML is stale or mismatched
 	const missing = REQUIRED_IDS.filter(id => !document.getElementById(id));
