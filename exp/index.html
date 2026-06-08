@@ -12,7 +12,7 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="c2082ff" />
+	<meta name="build-id" content="cc6cf3d" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement — always available in <head>) before the
@@ -51,7 +51,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=c2082ff">.
+	     before the parser reaches <script type="module" src="app.js?v=cc6cf3d">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -75,16 +75,16 @@
 	<link rel="preload" href="./fonts/iAWriterQuattroS-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<!-- CSS loaded as parallel <link> tags — @import chains are render-blocking
 	     and sequential; <link> tags are fetched in parallel by the browser. -->
-	<link rel="stylesheet" href="css/fonts.css?v=c2082ff" />
-	<link rel="stylesheet" href="css/base.css?v=c2082ff" />
-	<link rel="stylesheet" href="css/tokens.css?v=c2082ff" />
-	<link rel="stylesheet" href="css/themes.css?v=c2082ff" />
-	<link rel="stylesheet" href="css/layout.css?v=c2082ff" />
-	<link rel="stylesheet" href="css/components.css?v=c2082ff" />
-	<link rel="stylesheet" href="css/modals.css?v=c2082ff" />
-	<link rel="stylesheet" href="css/interactions.css?v=c2082ff" />
-	<link rel="stylesheet" href="css/utilities.css?v=c2082ff" />
-	<link rel="stylesheet" href="css/pericope.css?v=c2082ff" />
+	<link rel="stylesheet" href="css/fonts.css?v=cc6cf3d" />
+	<link rel="stylesheet" href="css/base.css?v=cc6cf3d" />
+	<link rel="stylesheet" href="css/tokens.css?v=cc6cf3d" />
+	<link rel="stylesheet" href="css/themes.css?v=cc6cf3d" />
+	<link rel="stylesheet" href="css/layout.css?v=cc6cf3d" />
+	<link rel="stylesheet" href="css/components.css?v=cc6cf3d" />
+	<link rel="stylesheet" href="css/modals.css?v=cc6cf3d" />
+	<link rel="stylesheet" href="css/interactions.css?v=cc6cf3d" />
+	<link rel="stylesheet" href="css/utilities.css?v=cc6cf3d" />
+	<link rel="stylesheet" href="css/pericope.css?v=cc6cf3d" />
 	<!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
 	<script src="https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV" async defer></script>
 </head>
@@ -94,7 +94,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">c2082ff</span>
+				<span id="build-info">cc6cf3d</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -241,7 +241,7 @@
 	<div id="bookModal" class="modal">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h3>Select a Book</h3>
+				<h2>Select a Book</h2>
 				<button class="close-btn" id="closeBookModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
@@ -260,7 +260,7 @@
 	<div id="chapterModal" class="modal">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h3><span id="chapterModalBook">Genesis</span></h3>
+				<h2><span id="chapterModalBook">Genesis</span></h2>
 				<button class="close-btn" id="closeChapterModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
@@ -272,7 +272,7 @@
 	<div id="verseModal" class="modal">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h3><span id="verseModalBook">Genesis 1</span></h3>
+				<h2><span id="verseModalBook">Genesis 1</span></h2>
 				<button class="close-btn" id="closeVerseModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
@@ -285,7 +285,7 @@
 	<div id="translationModal" class="modal">
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
-				<h3>Translation</h3>
+				<h2>Translation</h2>
 				<button class="close-btn" id="closeTranslationModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
@@ -297,7 +297,7 @@
 	<div id="settingsModal" class="modal">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h3>Settings</h3>
+				<h2>Settings</h2>
 				<button class="close-btn" id="closeSettingsModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
@@ -417,7 +417,7 @@
 	<div id="helpModal" class="modal">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h3>Help &amp; Keyboard Shortcuts</h3>
+				<h2>Help &amp; Keyboard Shortcuts</h2>
 				<button class="close-btn" id="closeHelpModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
@@ -501,7 +501,7 @@
 	<div id="loginModal" class="modal">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h3>Sign In</h3>
+				<h2>Sign In</h2>
 				<button class="close-btn" id="closeLoginModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
@@ -532,7 +532,7 @@
 	<div id="signupModal" class="modal">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h3>Create Account</h3>
+				<h2>Create Account</h2>
 				<button class="close-btn" id="closeSignupModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
@@ -560,7 +560,7 @@
 	<div id="userMenuModal" class="modal">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h3>Account</h3>
+				<h2>Account</h2>
 				<button class="close-btn" id="closeUserMenuModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
@@ -587,7 +587,7 @@
 	<div id="referencesModal" class="modal modal--bottom-sheet">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h3>References</h3>
+				<h2>References</h2>
 				<button class="close-btn" id="closeReferencesModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body"></div>
@@ -598,7 +598,7 @@
 	<div id="deuterocanonInfoModal" class="modal">
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
-				<h3>About the Apocrypha</h3>
+				<h2>About the Apocrypha</h2>
 				<button class="close-btn" id="closeDeuterocanonInfoModal" aria-label="Close">&#xD7;</button>
 			</div>
 			<div class="modal-body">
@@ -630,7 +630,7 @@
 	<!-- Toast notification -->
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=c2082ff"></script>
+	<script type="module" src="app.js?v=cc6cf3d"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');
