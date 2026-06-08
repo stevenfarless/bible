@@ -1148,6 +1148,7 @@ class BibleApp {
     async handleSignup()    { await handleSignup(this); }
     async handleLogout()    { await handleLogout(this); }
     async loadUserData()    { await loadUserData(this, normalizeTranslation); }
+})();
 
     enablePageMode() {
         if (this.swipe) return;
@@ -1308,4 +1309,4 @@ function showUpdateToast(appInstance) {
         (err) => console.warn('Firebase bundle failed to load — sign-in unavailable:', err)
     );
     new BibleApp();
-})();
+
