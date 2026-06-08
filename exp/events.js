@@ -189,8 +189,6 @@ export function attachEventListeners(app) {
     app.crossReferencesToggle?.addEventListener('change', () => app.toggleSetting('showCrossReferences'));
 
     app.verseByVerseToggle?.addEventListener('change',  () => app.toggleVerseByVerse());
-    app.pageModeToggle = document.getElementById('pageModeToggle');
-    app.pageModeToggle?.addEventListener('change', () => app.togglePageMode());
     app.fontSizeSlider?.addEventListener('input',  (e) => app.updateFontSize(e.target.value));
 
     const readingFontSelector = document.getElementById('readingFontSelector');
