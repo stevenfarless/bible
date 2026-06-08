@@ -12,7 +12,7 @@ body.light-mode {
 
     --text-heading: hsl(220, 18%, 18%);
     --text-body: hsl(220, 12%, 34%);
-    --text-muted-2: hsl(220, 10%, 52%);
+    --text-muted: hsl(220, 10%, 52%);
 
     --border-neutral: hsl(220, 12%, 84%);
     --highlight-border: hsl(220, 20%, 94%);
@@ -21,7 +21,8 @@ body.light-mode {
     --primary-dark: hsl(265, 62%, 38%);
     --primary-light: hsl(315, 85%, 55%);
     /* Darkened from 45% → 36% for WCAG AA contrast on white (#fff) */
-    --secondary-color: hsl(28, 80%, 36%);
+    --brand-secondary: hsl(28, 80%, 36%);
+    --section-heading-color: var(--brand-secondary);
     --accent-color: hsl(190, 70%, 30%);
 
     --success-color: hsl(140, 50%, 35%);
@@ -43,21 +44,23 @@ body.dracula-theme {
     --bg-raised: var(--dracula-bg);
 
     --text-heading: var(--dracula-fg);
-    --text-body: var(--dracula-comment);
-    --text-muted-2: var(--dracula-comment);
+    --text-body: var(--dracula-fg);
+    --text-muted: var(--dracula-comment);
 
-    --border-neutral: var(--dracula-current-line);
-    --highlight-border: color-mix(in srgb, var(--border-neutral) 60%, white);
+    --border-neutral:   var(--dracula-selection);
+    --highlight-border: var(--dracula-current-line);
 
     --primary-color: var(--dracula-purple);
     --primary-dark: hsl(265, 89%, 64%);
     --primary-light: var(--dracula-pink);
-    --secondary-color: var(--dracula-orange);
+    --brand-secondary: var(--dracula-orange);
+    --section-heading-color: var(--brand-secondary);
     --accent-color: var(--dracula-cyan);
 
-    --success-color: var(--dracula-green);
-    --warning-color: var(--dracula-yellow);
-    --error-color: var(--dracula-red);
+    /* Functional colors per spec — distinct from syntax palette */
+    --success-color: var(--dracula-func-green);
+    --warning-color: var(--dracula-func-orange);
+    --error-color:   var(--dracula-func-red);
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
 
@@ -66,7 +69,7 @@ body.dracula-theme {
     --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
 }
 
-/* Alucard — official Dracula light mode (https://spec.draculatheme.com) */
+/* Alucard — official Dracula light mode (https://draculatheme.com/spec) */
 :root.dracula-theme.light-mode,
 html.dracula-theme.light-mode,
 body.dracula-theme.light-mode {
@@ -75,21 +78,23 @@ body.dracula-theme.light-mode {
     --bg-raised:  var(--alucard-bg-light);
 
     --text-heading: var(--alucard-fg);
-    --text-body:    var(--alucard-comment);
-    --text-muted-2: #9A9580;
+    --text-body:    var(--alucard-fg);
+    --text-muted:   var(--alucard-comment);
 
     --border-neutral:   var(--alucard-bg-dark);
-    --highlight-border: var(--alucard-selection);
+    --highlight-border: var(--alucard-current-line);
 
     --primary-color:   var(--alucard-purple);
     --primary-dark:    #4D38A8;
     --primary-light:   var(--alucard-pink);
-    --secondary-color: var(--alucard-orange);
+    --brand-secondary: var(--alucard-orange);
+    --section-heading-color: var(--brand-secondary);
     --accent-color:    var(--alucard-cyan);
 
-    --success-color: var(--alucard-green);
-    --warning-color: var(--alucard-yellow);
-    --error-color:   var(--alucard-red);
+    /* Functional colors per spec */
+    --success-color: var(--alucard-func-green);
+    --warning-color: var(--alucard-func-orange);
+    --error-color:   var(--alucard-func-red);
 
     --footnote-hover-bg: color-mix(in srgb, var(--alucard-purple) 14%, transparent);
 
@@ -120,7 +125,7 @@ body.dracula2test-theme {
        reading view turns purple. Purple stays on UI chrome only. */
     --text-heading: var(--dracula-fg);
     --text-body: var(--dracula-fg);
-    --text-muted-2: var(--dracula-comment);
+    --text-muted: var(--dracula-comment);
 
     --border-neutral: var(--dracula-current-line);
     --highlight-border: color-mix(in srgb, var(--border-neutral) 60%, white);
@@ -128,13 +133,14 @@ body.dracula2test-theme {
     --primary-color: var(--dracula-purple);
     --primary-dark: hsl(265, 89%, 64%);
     --primary-light: var(--dracula-pink);
-    --secondary-color: var(--dracula-orange);
+    --brand-secondary: var(--dracula-orange);
+    --section-heading-color: var(--brand-secondary);
     --accent-color: var(--dracula-cyan);
 
-    --success-color: var(--dracula-green);
-    /* Orange for warnings; Yellow freed for highlights/search matches */
-    --warning-color: var(--dracula-orange);
-    --error-color: var(--dracula-red);
+    /* Functional colors per spec — distinct from syntax palette */
+    --success-color: var(--dracula-func-green);
+    --warning-color: var(--dracula-func-orange);
+    --error-color:   var(--dracula-func-red);
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
 
@@ -153,7 +159,7 @@ body.dracula2test-theme.light-mode {
 
     --text-heading: var(--alucard-fg);
     --text-body:    var(--alucard-fg);
-    --text-muted-2: #9A9580;
+    --text-muted: #9A9580;
 
     --border-neutral:   var(--alucard-bg-dark);
     --highlight-border: var(--alucard-selection);
@@ -161,12 +167,13 @@ body.dracula2test-theme.light-mode {
     --primary-color:   var(--alucard-purple);
     --primary-dark:    #4D38A8;
     --primary-light:   var(--alucard-pink);
-    --secondary-color: var(--alucard-orange);
+    --brand-secondary: var(--alucard-orange);
+    --section-heading-color: var(--brand-secondary);
     --accent-color:    var(--alucard-cyan);
 
-    --success-color: var(--alucard-green);
-    --warning-color: var(--alucard-orange);
-    --error-color:   var(--alucard-red);
+    --success-color: var(--alucard-func-green);
+    --warning-color: var(--alucard-func-orange);
+    --error-color:   var(--alucard-func-red);
 
     --footnote-hover-bg: color-mix(in srgb, var(--alucard-purple) 14%, transparent);
 
@@ -187,7 +194,7 @@ body.onyx-theme {
 
     --text-heading: hsl(0, 0%, 96%);
     --text-body: hsl(0, 0%, 72%);
-    --text-muted-2: hsl(0, 0%, 55%);
+    --text-muted: hsl(0, 0%, 55%);
 
     --border-neutral: hsl(0, 0%, 18%);
     --highlight-border: hsl(0, 0%, 26%);
@@ -195,7 +202,8 @@ body.onyx-theme {
     --primary-color: hsl(45, 85%, 55%);
     --primary-dark: hsl(45, 85%, 45%);
     --primary-light: hsl(45, 95%, 68%);
-    --secondary-color: hsl(30, 70%, 52%);
+    --brand-secondary: hsl(30, 70%, 52%);
+    --section-heading-color: var(--brand-secondary);
     --accent-color: hsl(0, 0%, 78%);
 
     --success-color: hsl(110, 45%, 50%);
@@ -226,7 +234,7 @@ body.onyx-theme.light-mode {
 
     --text-heading: hsl(0, 0%, 20%);
     --text-body: hsl(0, 0%, 40%);
-    --text-muted-2: hsl(0, 0%, 58%);
+    --text-muted: hsl(0, 0%, 58%);
 
     --border-neutral: hsl(0, 0%, 86%);
     --highlight-border: hsl(0, 0%, 94%);
@@ -234,7 +242,8 @@ body.onyx-theme.light-mode {
     --primary-color: hsl(45, 75%, 34%);
     --primary-dark: hsl(45, 75%, 28%);
     --primary-light: hsl(45, 70%, 44%);
-    --secondary-color: hsl(30, 60%, 36%);
+    --brand-secondary: hsl(30, 60%, 36%);
+    --section-heading-color: var(--brand-secondary);
     --accent-color: hsl(35, 50%, 42%);
 
     --success-color: hsl(110, 45%, 34%);
@@ -258,7 +267,7 @@ body.sage-theme {
 
     --text-heading: hsl(100, 18%, 90%);
     --text-body:    hsl(130, 10%, 64%);
-    --text-muted-2: hsl(130,  8%, 46%);
+    --text-muted: hsl(130,  8%, 46%);
 
     --border-neutral:   hsl(148, 14%, 22%);
     --highlight-border: hsl(148, 16%, 30%);
@@ -266,7 +275,8 @@ body.sage-theme {
     --primary-color:   hsl(145, 48%, 52%);
     --primary-dark:    hsl(145, 50%, 40%);
     --primary-light:   hsl(145, 55%, 66%);
-    --secondary-color: hsl(40,  65%, 58%);
+    --brand-secondary: hsl(40,  65%, 58%);
+    --section-heading-color: var(--brand-secondary);
     --accent-color:    hsl(170, 45%, 60%);
 
     --success-color: hsl(145, 48%, 52%);
@@ -289,7 +299,7 @@ body.sage-theme.light-mode {
 
     --text-heading: hsl(150, 25%, 12%);
     --text-body:    hsl(150, 14%, 32%);
-    --text-muted-2: hsl(150, 10%, 50%);
+    --text-muted: hsl(150, 10%, 50%);
 
     --border-neutral:   hsl(130, 14%, 84%);
     --highlight-border: hsl(130, 18%, 92%);
@@ -297,7 +307,8 @@ body.sage-theme.light-mode {
     --primary-color:   hsl(145, 50%, 30%);
     --primary-dark:    hsl(145, 52%, 24%);
     --primary-light:   hsl(145, 48%, 42%);
-    --secondary-color: hsl(32,  70%, 40%);
+    --brand-secondary: hsl(32,  70%, 40%);
+    --section-heading-color: var(--brand-secondary);
     --accent-color:    hsl(170, 45%, 28%);
 
     --success-color: hsl(145, 45%, 32%);
@@ -323,7 +334,7 @@ body.ember-theme {
 
     --text-heading: hsl(36, 22%, 88%);
     --text-body:    hsl(30, 14%, 64%);
-    --text-muted-2: hsl(28, 10%, 46%);
+    --text-muted: hsl(28, 10%, 46%);
 
     --border-neutral:   hsl(24, 16%, 22%);
     --highlight-border: hsl(26, 18%, 30%);
@@ -331,7 +342,8 @@ body.ember-theme {
     --primary-color:   hsl(35, 72%, 55%);
     --primary-dark:    hsl(33, 74%, 44%);
     --primary-light:   hsl(40, 78%, 68%);
-    --secondary-color: hsl(8,  60%, 55%);
+    --brand-secondary: hsl(8,  60%, 55%);
+    --section-heading-color: var(--brand-secondary);
     --accent-color:    hsl(50, 70%, 60%);
 
     --success-color: hsl(130, 36%, 48%);
@@ -354,7 +366,7 @@ body.ember-theme.light-mode {
 
     --text-heading: hsl(20, 28%, 14%);
     --text-body:    hsl(22, 18%, 32%);
-    --text-muted-2: hsl(24, 12%, 50%);
+    --text-muted: hsl(24, 12%, 50%);
 
     --border-neutral:   hsl(32, 18%, 84%);
     --highlight-border: hsl(36, 24%, 92%);
@@ -363,7 +375,8 @@ body.ember-theme.light-mode {
     --primary-dark:    hsl(22, 70%, 27%);
     --primary-light:   hsl(30, 65%, 46%);
     /* Darkened from 40% → 32% for WCAG AA contrast on warm cream bg */
-    --secondary-color: hsl(6,  55%, 32%);
+    --brand-secondary: hsl(6,  55%, 32%);
+    --section-heading-color: var(--brand-secondary);
     --accent-color:    hsl(45, 60%, 32%);
 
     --success-color: hsl(130, 38%, 34%);
@@ -401,7 +414,7 @@ body.perplexity-theme {
     /* Text */
     --text-heading: var(--pplx-paper);
     --text-body:    #c8c8cc;
-    --text-muted-2: var(--pplx-muted);
+    --text-muted: var(--pplx-muted);
 
     /* Borders */
     --border-neutral:   var(--pplx-offblack-ll);
@@ -411,7 +424,8 @@ body.perplexity-theme {
     --primary-color:   var(--pplx-teal);
     --primary-dark:    var(--pplx-teal-dark);
     --primary-light:   var(--pplx-teal-light);
-    --secondary-color: var(--pplx-teal-light);
+    --brand-secondary: var(--pplx-teal-light);
+    --section-heading-color: var(--brand-secondary);
     --accent-color:    var(--pplx-teal-light);
 
     /* Functional */
@@ -442,7 +456,7 @@ body.perplexity-theme.light-mode {
 
     --text-heading: var(--pplx-offblack);
     --text-body:    hsl(220, 8%, 30%);
-    --text-muted-2: hsl(220, 6%, 52%);
+    --text-muted: hsl(220, 6%, 52%);
 
     --border-neutral:   hsl(220, 10%, 84%);
     --highlight-border: hsl(220, 14%, 92%);
@@ -450,7 +464,8 @@ body.perplexity-theme.light-mode {
     --primary-color:   var(--pplx-teal);
     --primary-dark:    var(--pplx-teal-dark);
     --primary-light:   var(--pplx-teal-light);
-    --secondary-color: hsl(30, 65%, 38%);
+    --brand-secondary: hsl(30, 65%, 38%);
+    --section-heading-color: var(--brand-secondary);
     --accent-color:    hsl(187, 63%, 30%);
 
     --success-color: hsl(155, 42%, 34%);
@@ -479,7 +494,7 @@ body.basic-theme {
 
     --text-heading: hsl(0, 0%, 100%);
     --text-body:    hsl(0, 0%, 100%);
-    --text-muted-2: hsl(0, 0%, 65%);
+    --text-muted: hsl(0, 0%, 65%);
 
     --border-neutral:   hsl(0, 0%, 20%);
     --highlight-border: hsl(0, 0%, 30%);
@@ -487,7 +502,8 @@ body.basic-theme {
     --primary-color:   hsl(0, 0%, 90%);
     --primary-dark:    hsl(0, 0%, 75%);
     --primary-light:   hsl(0, 0%, 100%);
-    --secondary-color: hsl(0, 0%, 80%);
+    --brand-secondary: hsl(0, 0%, 80%);
+    --section-heading-color: var(--brand-secondary);
     --accent-color:    hsl(0, 0%, 85%);
 
     --success-color: hsl(0, 0%, 80%);
@@ -517,7 +533,7 @@ body.basic-theme.light-mode {
 
     --text-heading: hsl(0, 0%, 0%);
     --text-body:    hsl(0, 0%, 0%);
-    --text-muted-2: hsl(0, 0%, 40%);
+    --text-muted: hsl(0, 0%, 40%);
 
     --border-neutral:   hsl(0, 0%, 80%);
     --highlight-border: hsl(0, 0%, 92%);
@@ -525,7 +541,8 @@ body.basic-theme.light-mode {
     --primary-color:   hsl(0, 0%, 10%);
     --primary-dark:    hsl(0, 0%, 0%);
     --primary-light:   hsl(0, 0%, 30%);
-    --secondary-color: hsl(0, 0%, 20%);
+    --brand-secondary: hsl(0, 0%, 20%);
+    --section-heading-color: var(--brand-secondary);
     --accent-color:    hsl(0, 0%, 15%);
 
     --success-color: hsl(0, 0%, 20%);
@@ -560,7 +577,7 @@ body.geek-theme {
 
     --text-heading: #00AA00;
     --text-body:    #00AA00;
-    --text-muted-2: #007700;
+    --text-muted: #007700;
 
     --border-neutral:   #004400;
     --highlight-border: #006600;
@@ -568,7 +585,8 @@ body.geek-theme {
     --primary-color:   #00AA00;
     --primary-dark:    #007700;
     --primary-light:   #00CC00;
-    --secondary-color: #00AA00;
+    --brand-secondary: #00AA00;
+    --section-heading-color: var(--brand-secondary);
     --accent-color:    #00AA00;
 
     --success-color: #00AA00;
@@ -640,7 +658,7 @@ body.gnome-theme {
     /* Adwaita-dark text — #ffffff heading, #deddda body, #9a9996 muted */
     --text-heading: #ffffff;
     --text-body:    #deddda;
-    --text-muted-2: #9a9996;
+    --text-muted: #9a9996;
 
     /* Adwaita-dark borders */
     --border-neutral:   #3d3d3d;
@@ -650,9 +668,10 @@ body.gnome-theme {
     --primary-color:   #3584e4;
     --primary-dark:    #1a6fc4;
     --primary-light:   #62a0ea;
-    /* secondary-color drives pericope headings via components.css;
+    /* brand-secondary and section-heading-color drive pericope/book-category headings;
        set to muted Adwaita foreground so they read as plain text. */
-    --secondary-color: #9a9996;
+    --brand-secondary: #9a9996;
+    --section-heading-color: var(--text-muted);
     --accent-color:    #62a0ea;
 
     --success-color: #2ec27e;
@@ -722,7 +741,7 @@ body.gnome-theme.light-mode {
     /* Adwaita light text */
     --text-heading: #1e1e1e;
     --text-body:    #3d3d3d;
-    --text-muted-2: #7a7a7a;
+    --text-muted: #7a7a7a;
 
     /* Adwaita light borders */
     --border-neutral:   #c8c5c0;
@@ -732,7 +751,8 @@ body.gnome-theme.light-mode {
     --primary-color:   #1c6dbf;
     --primary-dark:    #145599;
     --primary-light:   #3584e4;
-    --secondary-color: #7a7a7a;
+    --brand-secondary: #7a7a7a;
+    --section-heading-color: var(--text-muted);
     --accent-color:    #3584e4;
 
     --success-color: #1b8a52;
