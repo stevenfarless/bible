@@ -172,6 +172,7 @@ export function applyLightMode(mode) {
 	document.documentElement.classList.toggle('light-mode', isLight);
 	document.body.classList.toggle('light-mode', isLight);
 	updateThemeIcon(isLight);
+	updateThemeColor();
 }
 
 export async function setLightMode(app, mode) {
@@ -225,6 +226,34 @@ export function updateThemeIcon(isLightMode) {
 
 const ALL_THEME_CLASSES = ['dracula-theme', 'onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme'];
 
+// bg-base values sourced from css/tokens.css (Dracula/Alucard) and css/themes.css (all others).
+// dark = the theme's dark-mode --bg-base; light = the theme's light-mode --bg-base.
+const THEME_BG = {
+	'basic-theme':       { dark: '#000000', light: '#ffffff' },
+	'dracula-theme':     { dark: '#191A21', light: '#FFFBEB' },
+	'onyx-theme':        { dark: '#000000', light: '#faf9f7' },
+	'sage-theme':        { dark: '#0d1710', light: '#f6f8f5' },
+	'ember-theme':       { dark: '#161009', light: '#faf8f3' },
+	'perplexity-theme':  { dark: '#0A1616', light: '#f5f5f5' },
+	'geek-theme':        { dark: '#000000', light: '#000000' },
+};
+
+export function updateThemeColor() {
+	const isLight = document.documentElement.classList.contains('light-mode');
+	const activeClass = [...document.documentElement.classList]
+		.find(c => c.endsWith('-theme')) || 'basic-theme';
+	const map = THEME_BG[activeClass] || THEME_BG['basic-theme'];
+	const color = isLight ? map.light : map.dark;
+
+	let meta = document.querySelector('meta[name="theme-color"]');
+	if (!meta) {
+		meta = document.createElement('meta');
+		meta.name = 'theme-color';
+		document.head.appendChild(meta);
+	}
+	meta.content = color;
+}
+
 export async function changeColorTheme(app, theme) {
 	// Sync removal and addition on both <html> and <body> so that
 	// both the :root/:html CSS variable selectors and the body.X-theme
@@ -238,6 +267,8 @@ export async function changeColorTheme(app, theme) {
 
 	document.documentElement.classList.add(cls);
 	document.body.classList.add(cls);
+
+	updateThemeColor();
 
 	try { localStorage.setItem('colorTheme', resolved); } catch (_) {}
 
