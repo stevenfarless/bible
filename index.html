@@ -24,7 +24,7 @@
 			var el = document.documentElement;
 			var theme = 'basic';
 			try { theme = localStorage.getItem('colorTheme') || 'basic'; } catch (_) {}
-			var valid = { dracula: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1 };
+			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1 };
 			if (!valid[theme]) theme = 'basic';
 			el.classList.add(theme + '-theme', 'no-color-transition');
 
@@ -315,6 +315,7 @@
 								<label for="themeSelector">Color Theme</label>
 								<select id="themeSelector" class="input-field">
 									<option value="dracula">Dracula (Purple/Pink)</option>
+									<option value="dracula2test">Dracula 2 Test (Purple/Pink)</option>
 								<option value="onyx">Onyx (Gold/OLED)</option>
 									<option value="sage">Sage (Green/Forest)</option>
 									<option value="ember">Ember (Amber/Candlelit)</option>
