@@ -11,6 +11,10 @@
     background-color: var(--bg-raised);
 }
 
+.accordion-section.active {
+    overflow: visible;
+}
+
 .accordion-header {
     width: 100%;
     display: flex;
@@ -51,7 +55,8 @@
 }
 
 .accordion-section.active .accordion-panel {
-    max-height: 1000px;
+    max-height: none;
+    overflow: visible;
 }
 
 .accordion-panel .settings-group {
@@ -1204,6 +1209,10 @@ body.hide-verse-numbers .verse .verse-num {
     margin-bottom: var(--spacing-sm);
 }
 
+.sub-accordion-section.active {
+    overflow: visible;
+}
+
 .sub-accordion-header {
     width: 100%;
     display: flex;
@@ -1240,7 +1249,8 @@ body.hide-verse-numbers .verse .verse-num {
 }
 
 .sub-accordion-section.active .sub-accordion-panel {
-    max-height: 800px;
+    max-height: none;
+    overflow: visible;
 }
 
 .sub-accordion-panel .settings-group,
