@@ -621,39 +621,37 @@ body.geek-theme .verse-num {
 
 /* ================================
    GNOME 3 theme — Adwaita palette
-   Dark surfaces: Adwaita-dark's actual window stack carries a
-   blue-violet tint (#1d1d2b base → #232333 card → #2e2e3e raised),
-   matching the purple-gray hue of GTK's Dark 3/4 named colors.
+   Dark surfaces: true Adwaita-dark achromatic window stack —
+   #1e1e1e base, #242424 card, #303030 raised. No blue-violet tint.
    Light surfaces: exact Adwaita HIG values (#f6f5f4, #ffffff, #e0dedd).
    Accent: HIG Blue 3 (#3584e4). Darkened to #1c6dbf on light for WCAG AA.
-   Passage title and pericope headings use Adwaita foreground text —
-   no accent hue on static reading content, matching native GTK app
-   convention where blue/green are reserved for interactive widgets.
+   Blue is reserved for interactive controls only. Static reading content
+   (passage title, pericope headings, verse numbers, modal headers) uses
+   plain Adwaita foreground text — matching native GTK app convention.
    ================================ */
 :root.gnome-theme,
 html.gnome-theme,
 body.gnome-theme {
-    /* Adwaita-dark surface stack — blue-violet tint from HIG Dark 3/4 */
-    --bg-base:   #1d1d2b;
-    --bg-card:   #232333;
-    --bg-raised: #2e2e3e;
+    /* Adwaita-dark surface stack — achromatic, no blue-violet tint */
+    --bg-base:   #1e1e1e;
+    --bg-card:   #242424;
+    --bg-raised: #303030;
 
     /* Adwaita-dark text — #ffffff heading, #deddda body, #9a9996 muted */
     --text-heading: #ffffff;
     --text-body:    #deddda;
     --text-muted-2: #9a9996;
 
-    /* Adwaita-dark borders — HIG Dark 3 (#3d3846) */
-    --border-neutral:   #3d3846;
-    --highlight-border: #4a4659;
+    /* Adwaita-dark borders */
+    --border-neutral:   #3d3d3d;
+    --highlight-border: #484848;
 
-    /* Blue accent — HIG Blue 3 */
+    /* Blue accent — HIG Blue 3; reserved for interactive controls only */
     --primary-color:   #3584e4;
     --primary-dark:    #1a6fc4;
     --primary-light:   #62a0ea;
-    /* secondary-color drives .book-category h4 and .passage-text h2/h3/h4
-       via components.css. Set to muted foreground so pericope headings
-       read as plain text, not status indicators. */
+    /* secondary-color drives pericope headings via components.css;
+       set to muted Adwaita foreground so they read as plain text. */
     --secondary-color: #9a9996;
     --accent-color:    #62a0ea;
 
@@ -668,19 +666,21 @@ body.gnome-theme {
     --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.60);
 }
 
-/* passage-title uses --primary-color in components.css; override it to
-   Adwaita full foreground. A native GTK Bible app would render the
-   chapter title as a bold window/headerbar title — white, no accent hue. */
+/* passage-container sits on the card surface in dark mode */
+:root.gnome-theme:not(.light-mode) .passage-container,
+html.gnome-theme:not(.light-mode) .passage-container,
+body.gnome-theme:not(.light-mode) .passage-container {
+    background-color: #242424;
+}
+
+/* passage-title: Adwaita full foreground — no accent hue on static text */
 :root.gnome-theme .passage-title,
 html.gnome-theme .passage-title,
 body.gnome-theme .passage-title {
     color: #ffffff;
 }
 
-/* Pericope headings (h2/h3/h4 inside .passage-text) also override
-   --secondary-color in components.css. Explicitly set here as a
-   belt-and-suspenders rule; value matches a de-emphasized Adwaita
-   foreground — readable but visually subordinate to the chapter title. */
+/* Pericope headings: de-emphasized Adwaita foreground */
 :root.gnome-theme .passage-text h2,
 html.gnome-theme .passage-text h2,
 body.gnome-theme .passage-text h2,
@@ -693,11 +693,21 @@ body.gnome-theme .passage-text h4 {
     color: #c0bfbc;
 }
 
-/* GNOME dark: passage container sits on the card surface */
-:root.gnome-theme:not(.light-mode) .passage-container,
-html.gnome-theme:not(.light-mode) .passage-container,
-body.gnome-theme:not(.light-mode) .passage-container {
-    background-color: #232333;
+/* Verse numbers in verse-by-verse mode match prose mode muted color.
+   Without this, .verse-by-verse .verse-num would inherit --primary-color
+   from components.css and render blue. */
+:root.gnome-theme .verse-by-verse .verse-num,
+html.gnome-theme .verse-by-verse .verse-num,
+body.gnome-theme .verse-by-verse .verse-num {
+    color: #9a9996 !important;
+}
+
+/* Settings modal title: plain Adwaita foreground, not accent blue.
+   A native GTK dialog title is always the window foreground color. */
+:root.gnome-theme #settingsModal .modal-header h2,
+html.gnome-theme #settingsModal .modal-header h2,
+body.gnome-theme #settingsModal .modal-header h2 {
+    color: #deddda;
 }
 
 :root.gnome-theme.light-mode,
@@ -753,4 +763,18 @@ body.gnome-theme.light-mode .passage-text h3,
 html.gnome-theme.light-mode .passage-text h4,
 body.gnome-theme.light-mode .passage-text h4 {
     color: #5e5c64;
+}
+
+/* Light mode: verse-by-verse verse numbers match prose mode */
+:root.gnome-theme.light-mode .verse-by-verse .verse-num,
+html.gnome-theme.light-mode .verse-by-verse .verse-num,
+body.gnome-theme.light-mode .verse-by-verse .verse-num {
+    color: #7a7a7a !important;
+}
+
+/* Light mode: settings modal title to dark Adwaita foreground */
+:root.gnome-theme.light-mode #settingsModal .modal-header h2,
+html.gnome-theme.light-mode #settingsModal .modal-header h2,
+body.gnome-theme.light-mode #settingsModal .modal-header h2 {
+    color: #1e1e1e;
 }
