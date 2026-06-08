@@ -702,11 +702,12 @@ body.gnome-theme .verse-by-verse .verse-num {
     color: #9a9996 !important;
 }
 
-/* Settings modal title: plain Adwaita foreground, not accent blue.
-   A native GTK dialog title is always the window foreground color. */
-:root.gnome-theme #settingsModal .modal-header h2,
-html.gnome-theme #settingsModal .modal-header h2,
-body.gnome-theme #settingsModal .modal-header h2 {
+/* All modal header titles use plain Adwaita foreground.
+   modals.css sets .modal-header h2 { color: var(--primary-color) } globally;
+   this overrides that for every modal so no dialog title is blue. */
+:root.gnome-theme .modal-header h2,
+html.gnome-theme .modal-header h2,
+body.gnome-theme .modal-header h2 {
     color: #deddda;
 }
 
@@ -772,9 +773,9 @@ body.gnome-theme.light-mode .verse-by-verse .verse-num {
     color: #7a7a7a !important;
 }
 
-/* Light mode: settings modal title to dark Adwaita foreground */
-:root.gnome-theme.light-mode #settingsModal .modal-header h2,
-html.gnome-theme.light-mode #settingsModal .modal-header h2,
-body.gnome-theme.light-mode #settingsModal .modal-header h2 {
+/* Light mode: all modal header titles to dark Adwaita foreground */
+:root.gnome-theme.light-mode .modal-header h2,
+html.gnome-theme.light-mode .modal-header h2,
+body.gnome-theme.light-mode .modal-header h2 {
     color: #1e1e1e;
 }
