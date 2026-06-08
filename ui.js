@@ -224,18 +224,19 @@ export function updateThemeIcon(isLightMode) {
 	}
 }
 
-const ALL_THEME_CLASSES = ['dracula-theme', 'onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme'];
+const ALL_THEME_CLASSES = ['dracula-theme', 'dracula2test-theme', 'onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme'];
 
 // bg-base values sourced from css/tokens.css (Dracula/Alucard) and css/themes.css (all others).
 // dark = the theme's dark-mode --bg-base; light = the theme's light-mode --bg-base.
 const THEME_BG = {
-	'basic-theme':       { dark: '#000000', light: '#ffffff' },
-	'dracula-theme':     { dark: '#191A21', light: '#FFFBEB' },
-	'onyx-theme':        { dark: '#000000', light: '#faf9f7' },
-	'sage-theme':        { dark: '#0d1710', light: '#f6f8f5' },
-	'ember-theme':       { dark: '#161009', light: '#faf8f3' },
-	'perplexity-theme':  { dark: '#0A1616', light: '#f5f5f5' },
-	'geek-theme':        { dark: '#000000', light: '#000000' },
+	'basic-theme':        { dark: '#000000', light: '#ffffff' },
+	'dracula-theme':      { dark: '#191A21', light: '#FFFBEB' },
+	'dracula2test-theme': { dark: '#191A21', light: '#FFFBEB' },
+	'onyx-theme':         { dark: '#000000', light: '#faf9f7' },
+	'sage-theme':         { dark: '#0d1710', light: '#f6f8f5' },
+	'ember-theme':        { dark: '#161009', light: '#faf8f3' },
+	'perplexity-theme':   { dark: '#0A1616', light: '#f5f5f5' },
+	'geek-theme':         { dark: '#000000', light: '#000000' },
 };
 
 export function updateThemeColor() {
