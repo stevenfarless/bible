@@ -12,7 +12,7 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="14f7b22" />
+	<meta name="build-id" content="61efa8d" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement — always available in <head>) before the
@@ -51,7 +51,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=14f7b22">.
+	     before the parser reaches <script type="module" src="app.js?v=61efa8d">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -75,19 +75,19 @@
 	<link rel="preload" href="./fonts/iAWriterQuattroS-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<!-- CSS loaded as parallel <link> tags — @import chains are render-blocking
 	     and sequential; <link> tags are fetched in parallel by the browser. -->
-	<link rel="stylesheet" href="css/fonts.css?v=14f7b22" />
-	<link rel="stylesheet" href="css/base.css?v=14f7b22" />
-	<link rel="stylesheet" href="css/tokens.css?v=14f7b22" />
-	<link rel="stylesheet" href="css/themes.css?v=14f7b22" />
-	<link rel="stylesheet" href="css/layout.css?v=14f7b22" />
-	<link rel="stylesheet" href="css/components.css?v=14f7b22" />
-	<link rel="stylesheet" href="css/modals.css?v=14f7b22" />
-	<link rel="stylesheet" href="css/interactions.css?v=14f7b22" />
-	<link rel="stylesheet" href="css/utilities.css?v=14f7b22" />
-	<link rel="stylesheet" href="css/pericope.css?v=14f7b22" />
+	<link rel="stylesheet" href="css/fonts.css?v=61efa8d" />
+	<link rel="stylesheet" href="css/base.css?v=61efa8d" />
+	<link rel="stylesheet" href="css/tokens.css?v=61efa8d" />
+	<link rel="stylesheet" href="css/themes.css?v=61efa8d" />
+	<link rel="stylesheet" href="css/layout.css?v=61efa8d" />
+	<link rel="stylesheet" href="css/components.css?v=61efa8d" />
+	<link rel="stylesheet" href="css/modals.css?v=61efa8d" />
+	<link rel="stylesheet" href="css/interactions.css?v=61efa8d" />
+	<link rel="stylesheet" href="css/utilities.css?v=61efa8d" />
+	<link rel="stylesheet" href="css/pericope.css?v=61efa8d" />
 	<!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
 	<script src="https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV" async defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js?v=14f7b22"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js?v=61efa8d"></script>
 </head>
 
 <body class="initializing">
@@ -95,7 +95,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">14f7b22</span>
+				<span id="build-info">61efa8d</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -383,6 +383,13 @@
 									<span>Show chapter arrows</span>
 								</label>
 							</div>
+							<div class="setting-item">
+								<label class="checkbox-label">
+									<input type="checkbox" id="pageModeToggle" />
+									<span>Page mode (swipe to navigate)</span>
+								</label>
+								<small class="help-text">Each chapter fills the screen. Swipe left/right to change chapters.</small>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -535,6 +542,10 @@
 												<span>Toggle section headings</span>
 											</div>
 											<div class="shortcut-item">
+												<kbd>P</kbd>
+												<span>Toggle page mode</span>
+											</div>
+											<div class="shortcut-item">
 												<kbd>Esc</kbd>
 												<span>Close modal / search</span>
 											</div>
@@ -656,42 +667,4 @@
 			<div class="modal-body">
 				<div class="deuterocanon-info-content">
 					<h4>What is the Deuterocanon?</h4>
-					<p>The Deuterocanon, also called the Apocrypha, is a set of Jewish writings from roughly 400&#x2013;50 BC, the period between the Old and New Testaments. It includes books such as Tobit, Judith, 1 &amp; 2 Maccabees, Sirach, and Wisdom of Solomon.</p>
-
-					<h4>Who accepts them as Scripture?</h4>
-					<p>Catholic and Orthodox Christians consider these books canonical. Most Protestants do not, following the Hebrew Bible&#x2019;s narrower canon. The books were never cited as Scripture by Jesus or the Apostles, and some passages are difficult to reconcile with the rest of Scripture, for example prayers for the dead in 2 Maccabees 12.</p>
-
-					<h4>What did the Protestant Reformers say?</h4>
-					<blockquote>
-						<strong>Martin Luther (1534):</strong> &#x201C;Apocrypha, that is, books not considered equal to Holy Scripture, but which are still useful and good to read.&#x201D;
-					</blockquote>
-					<blockquote>
-						<strong>Thirty-Nine Articles (1563):</strong> &#x201C;The other books the Church doth read for example of life and instruction of manners; but yet doth it not apply them to establish any doctrine.&#x201D;
-					</blockquote>
-					<blockquote>
-						<strong>Belgic Confession (1561):</strong> &#x201C;The church may certainly read these books and learn from them as far as they agree with the canonical books.&#x201D;
-					</blockquote>
-
-					<h4>Why are they here?</h4>
-					<p>They are included for study and historical interest. These writings shaped Jewish thought in the centuries before Christ and appear in translations used by billions of Christians worldwide.</p>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<!-- Toast notification -->
-	<div id="toast" class="toast" role="status" aria-live="polite"></div>
-
-	<script type="module" src="app.js?v=14f7b22"></script>
-	<script>
-		if ('serviceWorker' in navigator) {
-			navigator.serviceWorker.register('./sw.js');
-		}
-		// Hide raw build placeholder when pipeline substitution hasn't run.
-		document.addEventListener('DOMContentLoaded', function() {
-			var b = document.getElementById('build-info');
-			if (b && b.textContent.trim().startsWith('__')) b.style.visibility = 'hidden';
-		});
-	</script>
-</body>
-</html>
+					<p>The Deuterocanon, also called the Apocrypha, is a set of Jewish writings from roughly 400&#x2013;50 BC, the period between the Old and New Testaments. It includes books such as Tobit, Judith, 1 &amp; 2 Maccabees, Sirach, and Wisdom of Solomon
