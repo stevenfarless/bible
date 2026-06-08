@@ -102,12 +102,14 @@ body.chrome-no-transition .top-chrome {
     letter-spacing: -0.025em;
 }
 
-/* Dracula dark: logo uses orange (--dracula-orange) instead of purple.
-   Dracula dark = no theme class + no .light-mode. */
-:root:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.geek-theme):not(.light-mode) .logo,
-html:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.geek-theme):not(.light-mode) .logo,
-body:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.geek-theme):not(.light-mode) .logo {
-    color: var(--dracula-orange);
+/* Dracula themes: logo uses --brand-secondary (orange) not --primary-color (purple). */
+:root.dracula-theme .logo,
+html.dracula-theme .logo,
+body.dracula-theme .logo,
+:root.dracula2test-theme .logo,
+html.dracula2test-theme .logo,
+body.dracula2test-theme .logo {
+    color: var(--brand-secondary);
 }
 
 /* Navigation */
