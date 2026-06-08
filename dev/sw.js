@@ -1,6 +1,8 @@
-// BUILD_ID is resolved inside the install handler from this SW file's own
-// Last-Modified response header so every deploy busts the cache without a
-// build step. Fallback is Date.now() for hosts that strip response headers.
+// BUILD_ID is injected at deploy time by the CI workflow:
+//   sed -i "s/0f2a40c/$GITHUB_SHA/g" sw.js
+// The placeholder below is replaced with the full commit SHA before
+// the file is published to GitHub Pages. Never edit the placeholder
+// directly — changes here are overwritten on every deploy.
 let BUILD_ID = 'pending';
 let CACHE_NAME = 'bible-pending';
 
@@ -97,7 +99,7 @@ function translationFromUrl(pathname) {
 }
 
 function resolveBuildId() {
-  return 'c747314be40c250ab9d71b53d7a6f6eaf2f55b78';
+  return '0f2a40c';
 }
 
 async function precacheFiles() {
@@ -121,7 +123,7 @@ async function precacheFiles() {
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil((async () => {
-    BUILD_ID = await resolveBuildId();
+    BUILD_ID = resolveBuildId();
     CACHE_NAME = `bible-${BUILD_ID}`;
     const cache = await caches.open(CACHE_NAME);
     await cache.addAll(APP_SHELL);
