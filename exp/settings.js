@@ -358,7 +358,7 @@ async function _populateComingSoon() {
 
         const section = el.closest('.sub-accordion-section');
         const tagEl = section?.querySelector('.sub-accordion-header span');
-        if (tagEl && pre.tag_name) tagEl.textContent = \`Coming soon · \${pre.tag_name}\`;
+        if (tagEl && pre.tag_name) tagEl.textContent = `Coming soon · ${pre.tag_name}`;
         section?.removeAttribute('hidden');
     } catch (_) { /* network error — leave section empty */ }
 }
