@@ -217,6 +217,18 @@ export function initSwipe(app) {
         },
     };
 
+    // ── Re-snap panels when viewport width changes (rotation, resize) ─────
+    // Without this the panels retain their old pixel offsets after rotation
+    // and bleed into the visible area.
+
+    const ro = new ResizeObserver(() => {
+        if (_tracking || _animating) return;
+        const W = vw();
+        _setTranslateX(app.swipe.prevPanel, -W);
+        _setTranslateX(app.swipe.nextPanel,  W);
+    });
+    ro.observe(viewport);
+
     // ── Touch handling ────────────────────────────────────────────────────
 
     let _startX = 0;
