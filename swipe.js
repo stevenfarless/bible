@@ -239,12 +239,8 @@ export function initSwipe(app) {
         return _atBoundary(dx) ? dx * RESISTANCE : dx;
     }
 
-    // Remove the inline position styles that touchmove sets on the current
-    // panel when a drag is confirmed horizontal. Must be called whenever a
-    // gesture ends without going through the normal cancel/commit animation
-    // path, otherwise app.passageText is left with position:absolute and
-    // no viewport height, which lets the panel float freely.
     function _cleanupDrag() {
+        viewport.classList.remove('swiping');
         _removeTransition(app.passageText);
         _removeTransition(app.swipe.prevPanel);
         _removeTransition(app.swipe.nextPanel);
@@ -291,6 +287,7 @@ export function initSwipe(app) {
                 return;
             }
             _tracking = true;
+            viewport.classList.add('swiping');
 
             app.passageText.style.position = 'absolute';
             app.passageText.style.top      = '0';
@@ -318,8 +315,6 @@ export function initSwipe(app) {
 
     viewport.addEventListener('touchend', (e) => {
         if (_vetoed || !_tracking) {
-            // If tracking had started before the veto, the inline position
-            // styles are already on the panel — clear them immediately.
             if (_tracking) _cleanupDrag();
             _tracking = false;
             _vetoed   = false;
@@ -337,6 +332,7 @@ export function initSwipe(app) {
         const animMs    = _animDuration(_velocity);
 
         const cancelSwipe = () => {
+            viewport.classList.remove('swiping');
             _addTransition(app.passageText, animMs);
             _addTransition(app.swipe.prevPanel, animMs);
             _addTransition(app.swipe.nextPanel, animMs);
@@ -373,6 +369,7 @@ export function initSwipe(app) {
         _haptic(false);
         _animating = true;
 
+        viewport.classList.remove('swiping');
         _addTransition(app.passageText, animMs);
         _addTransition(app.swipe.prevPanel, animMs);
         _addTransition(app.swipe.nextPanel, animMs);
