@@ -47,6 +47,7 @@ import {
     initSubAccordions, populateAboutVersion,
 } from './settings.js';
 import { handleKeyboardShortcuts } from './keyboard.js';
+import { initSwipe, destroySwipe } from './swipe.js';
 import { attachEventListeners } from './events.js';
 
 const TRANSLATION_ALIASES = { NRSVue: 'NRSVUE' };
@@ -1288,4 +1289,24 @@ function showUpdateToast(appInstance) {
         (err) => console.warn('Firebase bundle failed to load — sign-in unavailable:', err)
     );
     new BibleApp();
+
+    enablePageMode() {
+        if (this.swipe) return;
+        initSwipe(this);
+    }
+
+    togglePageMode() {
+        const enabled = !!this.pageModeToggle?.checked;
+        this.state.pageMode = enabled;
+        try { localStorage.setItem('pageMode', String(enabled)); } catch (_) {}
+        if (this.currentUser) {
+            this.database?.ref(`users/${this.currentUser.uid}/settings/pageMode`)?.set(enabled);
+        }
+        if (enabled) this.enablePageMode(); else this.disablePageMode();
+    }
+
+    disablePageMode() {
+        destroySwipe(this);
+    }
+
 })();

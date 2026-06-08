@@ -15,6 +15,7 @@ const DEFAULTS = {
     colorTheme:          'basic',
     translation:         'KJV',
     readingFont:         'gentium',
+    pageMode:            false,
 };
 
 const RECAPTCHA_STYLE_ID = 'recaptcha-badge-style';
@@ -61,6 +62,7 @@ export function loadLocalSettings(app) {
     app.state.showFootnotes       = readBool('showFootnotes',       DEFAULTS.showFootnotes);
     app.state.showCrossReferences = readBool('showCrossReferences', DEFAULTS.showCrossReferences);
     app.state.verseByVerse        = readBool('verseByVerse',        DEFAULTS.verseByVerse);
+    app.state.pageMode            = readBool('pageMode',            DEFAULTS.pageMode);
     app.state.showChapterArrows   = readBool('showChapterArrows',   DEFAULTS.showChapterArrows);
     const _rawLightMode = (() => { try { return localStorage.getItem('lightMode'); } catch (_) { return null; } })();
     app.state.lightMode =
@@ -120,6 +122,9 @@ export function applySettings(app) {
 
     if (app.passageText) app.passageText.classList.toggle('verse-by-verse', !!app.state.verseByVerse);
     if (app.verseByVerseToggle) app.verseByVerseToggle.checked = !!app.state.verseByVerse;
+    const pageModeToggle = document.getElementById('pageModeToggle');
+    if (pageModeToggle) pageModeToggle.checked = !!app.state.pageMode;
+    if (app.state.pageMode) app.enablePageMode?.(); else app.disablePageMode?.();
 
     const fontSize = app.state.fontSize || DEFAULTS.fontSize;
     if (app.fontSizeSlider) app.fontSizeSlider.value = fontSize;

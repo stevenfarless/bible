@@ -465,3 +465,25 @@ export function initSwipe(app) {
         }, animMs);
     }, { passive: true });
 }
+
+export function destroySwipe(app) {
+    if (!app.swipe) return;
+    const { viewport, prevPanel, nextPanel } = app.swipe;
+
+    // Move passageText back out of the viewport wrapper
+    const passageText = app.passageText;
+    viewport.parentNode.insertBefore(passageText, viewport);
+
+    // Restore its inline styles set by swipe init
+    passageText.style.position  = '';
+    passageText.style.top       = '';
+    passageText.style.left      = '';
+    passageText.style.width     = '';
+    passageText.style.transform = '';
+
+    prevPanel.remove();
+    nextPanel.remove();
+    viewport.remove();
+
+    app.swipe = null;
+}

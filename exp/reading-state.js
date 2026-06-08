@@ -12,6 +12,7 @@ export function initializeState() {
         showFootnotes: false,
         showCrossReferences: false,
         verseByVerse: false,
+        pageMode: false,
         colorTheme: 'dracula',
         lightMode: false,
         translation: 'KJV'
