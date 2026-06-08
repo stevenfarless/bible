@@ -1,0 +1,201 @@
+/* ================================
+   ESV Bible Reader - Styles
+
+   TABLE OF CONTENTS
+   0. Web Fonts
+   1. CSS Reset & Base
+   2. CSS Custom Properties (Variables)
+   3. Theme Overrides
+   4. Typography & Base Elements
+   5. Layout Components
+   6. UI Components (Alphabetical)
+   7. Modals & Overlays
+   8. Interactive States & Effects
+   9. Animations
+   10. Responsive Design
+   11. Utility Classes
+   12. Print Styles
+   ================================ */
+
+
+/* ================================
+   0. WEB FONTS
+   ================================ */
+
+@font-face {
+    font-family: 'Cinzel';
+    src: url('../fonts/Cinzel-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Gentium Book Plus';
+    src: url('../fonts/GentiumBookPlus-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Gentium Book Plus';
+    src: url('../fonts/GentiumBookPlus-Italic.woff2') format('woff2');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Gentium Book Plus';
+    src: url('../fonts/GentiumBookPlus-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Gentium Book Plus';
+    src: url('../fonts/GentiumBookPlus-BoldItalic.woff2') format('woff2');
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Andika';
+    src: url('../fonts/Andika-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Andika';
+    src: url('../fonts/Andika-Italic.woff2') format('woff2');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Andika';
+    src: url('../fonts/Andika-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Andika';
+    src: url('../fonts/Andika-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* Open Dyslexic */
+
+@font-face {
+    font-family: 'OpenDyslexic3';
+    src: url('../fonts/OpenDyslexic3-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'OpenDyslexic3';
+    src: url('../fonts/OpenDyslexic3-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Ubuntu */
+
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('../fonts/Ubuntu-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('../fonts/Ubuntu-Italic.woff2') format('woff2');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('../fonts/Ubuntu-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('../fonts/Ubuntu-BoldItalic.woff2') format('woff2');
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* Retrocide */
+
+@font-face {
+    font-family: 'Retrocide';
+    src: url('../fonts/Retrocide.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* iA Writer Quattro S */
+
+@font-face {
+    font-family: 'iA Writer Quattro S';
+    src: url('../fonts/iAWriterQuattroS-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'iA Writer Quattro S';
+    src: url('../fonts/iAWriterQuattroS-Italic.woff2') format('woff2');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'iA Writer Quattro S';
+    src: url('../fonts/iAWriterQuattroS-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'iA Writer Quattro S';
+    src: url('../fonts/iAWriterQuattroS-BoldItalic.woff2') format('woff2');
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* iA Writer Mono S */
+
+@font-face {
+    font-family: 'iA Writer Mono S';
+    src: url('../fonts/iAWriterMonoS-Regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
