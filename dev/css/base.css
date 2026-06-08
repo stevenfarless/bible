@@ -32,4 +32,33 @@ body.modal-open {
     overflow: hidden;
 }
 
+/* ================================
+   COLOR TRANSITIONS
+   Smooth 300ms ease on background-color, color, and border-color for all
+   elements so theme and light/dark mode switches animate rather than snap.
 
+   body.no-color-transition suppresses this during initial page load
+   (guard applied before first paint, removed on DOMContentLoaded) so
+   users never see a color flash on cold load.
+
+   prefers-reduced-motion zeroes all durations per WCAG 2.3.
+   ================================ */
+
+body:not(.no-color-transition) *,
+body:not(.no-color-transition) *::before,
+body:not(.no-color-transition) *::after {
+    transition:
+        background-color 300ms ease,
+        color            300ms ease,
+        border-color     300ms ease,
+        fill             300ms ease,
+        stroke           300ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body:not(.no-color-transition) *,
+    body:not(.no-color-transition) *::before,
+    body:not(.no-color-transition) *::after {
+        transition-duration: 0.01ms !important;
+    }
+}

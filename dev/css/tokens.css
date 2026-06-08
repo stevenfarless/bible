@@ -81,37 +81,38 @@
 
     /* ================================
        Semantic tokens (canonical)
-       Default = Dracula Dark
+       Default = Basic (black & white)
+       Theme overrides in themes.css.
        ================================ */
 
     /* Surfaces */
-    --bg-base: var(--dracula-bg-darker);
-    --bg-card: var(--dracula-bg-dark);
-    --bg-raised: var(--dracula-bg);
+    --bg-base: hsl(0, 0%, 0%);
+    --bg-card: hsl(0, 0%, 4%);
+    --bg-raised: hsl(0, 0%, 9%);
 
     /* Text */
-    --text-heading: var(--dracula-fg);
-    --text-body: var(--dracula-comment);
-    --text-muted-2: var(--dracula-comment);
+    --text-heading: hsl(0, 0%, 100%);
+    --text-body: hsl(0, 0%, 100%);
+    --text-muted-2: hsl(0, 0%, 65%);
 
     /* Borders */
-    --border-neutral: var(--dracula-current-line);
-    --highlight-border: color-mix(in srgb, var(--border-neutral) 60%, white);
+    --border-neutral: hsl(0, 0%, 20%);
+    --highlight-border: hsl(0, 0%, 30%);
 
     /* Brand */
-    --primary-color: var(--dracula-purple);
-    --primary-dark: hsl(265, 89%, 64%);
-    --primary-light: var(--dracula-pink);
-    --secondary-color: var(--dracula-orange);
-    --accent-color: var(--dracula-cyan);
+    --primary-color: hsl(0, 0%, 90%);
+    --primary-dark: hsl(0, 0%, 75%);
+    --primary-light: hsl(0, 0%, 100%);
+    --secondary-color: hsl(0, 0%, 80%);
+    --accent-color: hsl(0, 0%, 85%);
 
     /* Functional */
-    --success-color: var(--dracula-green);
-    --warning-color: var(--dracula-yellow);
-    --error-color: var(--dracula-red);
+    --success-color: hsl(0, 0%, 80%);
+    --warning-color: hsl(0, 0%, 80%);
+    --error-color: hsl(0, 0%, 80%);
 
     /* Component tokens */
-    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+    --footnote-hover-bg: rgba(255, 255, 255, 0.10);
 
     /* ================================
        Legacy aliases (existing component contract)
@@ -128,6 +129,3 @@
 
     --border-color: var(--border-neutral);
 }
-
-
-

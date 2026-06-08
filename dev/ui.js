@@ -28,6 +28,21 @@ const REQUIRED_IDS = [
 	'translationModal', 'closeTranslationModal', 'translationList',
 ];
 
+// The inline <script> in <head> stamps the theme class and no-color-transition
+// onto document.documentElement before first paint (document.body is null then).
+// Once DOMContentLoaded fires, body is available — mirror all classes from
+// <html> to <body> so component CSS targeting body.X-theme continues to work,
+// then lift the transition guard from both elements.
+document.addEventListener('DOMContentLoaded', () => {
+	const htmlClasses = [...document.documentElement.classList];
+	if (htmlClasses.length) document.body.classList.add(...htmlClasses);
+
+	requestAnimationFrame(() => {
+		document.documentElement.classList.remove('no-color-transition');
+		document.body.classList.remove('no-color-transition');
+	});
+}, { once: true });
+
 export function cacheElements(app) {
 	// Validate all required IDs exist — warns immediately if HTML is stale or mismatched
 	const missing = REQUIRED_IDS.filter(id => !document.getElementById(id));
@@ -208,24 +223,27 @@ export function updateThemeIcon(isLightMode) {
 	}
 }
 
+const ALL_THEME_CLASSES = ['dracula-theme', 'onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme'];
+
 export async function changeColorTheme(app, theme) {
-	document.body.classList.remove('dracula-theme', 'onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme');
+	// Sync removal and addition on both <html> and <body> so that
+	// both the :root/:html CSS variable selectors and the body.X-theme
+	// component selectors (header, modals, geek overrides) resolve correctly.
+	document.documentElement.classList.remove(...ALL_THEME_CLASSES);
+	document.body.classList.remove(...ALL_THEME_CLASSES);
 
-	if (theme === 'dracula')         document.body.classList.add('dracula-theme');
-	else if (theme === 'onyx')       document.body.classList.add('onyx-theme');
-	else if (theme === 'sage')       document.body.classList.add('sage-theme');
-	else if (theme === 'ember')      document.body.classList.add('ember-theme');
-	else if (theme === 'perplexity') document.body.classList.add('perplexity-theme');
-	else if (theme === 'basic')      document.body.classList.add('basic-theme');
-	else if (theme === 'geek')       document.body.classList.add('geek-theme');
-	else { theme = 'basic'; document.body.classList.add('basic-theme'); }
+	const valid = ALL_THEME_CLASSES.includes(theme + '-theme');
+	const resolved = valid ? theme : 'basic';
+	const cls = resolved + '-theme';
 
-	// Always write locally so cold loads get the correct value immediately.
-	try { localStorage.setItem('colorTheme', theme); } catch (_) {}
+	document.documentElement.classList.add(cls);
+	document.body.classList.add(cls);
+
+	try { localStorage.setItem('colorTheme', resolved); } catch (_) {}
 
 	if (app.currentUser) {
 		await app.database
 			.ref(`users/${app.currentUser.uid}/settings/colorTheme`)
-			.set(theme);
+			.set(resolved);
 	}
 }
