@@ -130,3 +130,26 @@ body.dracula2test-theme .logo {
     gap: var(--spacing-md);
 }
 
+
+/* ================================
+   PAGE MODE
+   Applied by initSwipe() via body.page-mode.
+   Locks native scroll so the swipe panels own all vertical movement.
+   Removed by destroySwipe() to restore normal scroll mode.
+   ================================ */
+
+body.page-mode {
+    overflow: hidden;
+    height: 100dvh;
+    /* Prevent iOS rubber-band scroll bleeding through the swipe viewport */
+    overscroll-behavior: none;
+    /* Prevent the address bar bounce from shifting layout mid-swipe */
+    position: fixed;
+    width: 100%;
+}
+
+/* Restore the main-content scroll within a fixed viewport.
+   The passage panels handle their own overflow independently. */
+body.page-mode .main-content {
+    overflow: hidden;
+}
