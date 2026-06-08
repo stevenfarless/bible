@@ -20,13 +20,23 @@ export function closeModal(app, modal) {
     }
 
     if (modal === app.settingsModal || modal === app.referencesModal) {
-        const content = modal.querySelector('.modal-content');
-        content.style.animation = 'slideDownToBottom 250ms ease';
-        setTimeout(() => {
-            modal.classList.remove('active');
-            _maybeRemoveModalOpen();
-            content.style.animation = '';
-        }, 250);
+        // For bottom sheets: add .closing to trigger the CSS dismiss transition,
+        // then remove .active once the animation completes (320ms).
+        if (modal === app.settingsModal) {
+            modal.classList.add('closing');
+            setTimeout(() => {
+                modal.classList.remove('active', 'closing');
+                _maybeRemoveModalOpen();
+            }, 320);
+        } else {
+            const content = modal.querySelector('.modal-content');
+            content.style.animation = 'slideDownToBottom 250ms ease';
+            setTimeout(() => {
+                modal.classList.remove('active');
+                _maybeRemoveModalOpen();
+                content.style.animation = '';
+            }, 250);
+        }
     } else {
         modal.classList.remove('active');
         _maybeRemoveModalOpen();
@@ -546,7 +556,7 @@ async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progre
         await app.bibleApi.downloadTranslation(t.id, bookList, (done, tot) => {
             const pct = Math.round((done / tot) * 100);
             progressBar.style.width = `${pct}%`;
-            progressLabel.textContent = `${done} / ${tot}`;
+            progressLabel.textContent = `${done} / ${tot}`;
         });
 
         _downloading.delete(t.id);
@@ -653,7 +663,7 @@ function attachDragHandlers(app, modal, dismissOnDrag = true) {
         const totalDrag = e.changedTouches[0].clientY - touchStartY;
         if (dismissOnDrag && totalDrag > 150 && touchStartScrollTop === 0) {
             app.closeModal(modal);
-            setTimeout(() => { content.style.height = '50vh'; }, 300);
+            setTimeout(() => { content.style.height = '50vh'; }, 320);
         }
     }, { passive: true });
 
@@ -682,7 +692,7 @@ function attachDragHandlers(app, modal, dismissOnDrag = true) {
         content.classList.remove('dragging');
         if (dismissOnDrag && e.clientY - mouseStartY > 150) {
             app.closeModal(modal);
-            setTimeout(() => { content.style.height = '50vh'; }, 300);
+            setTimeout(() => { content.style.height = '50vh'; }, 320);
         }
     });
 }
