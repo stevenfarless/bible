@@ -22,7 +22,7 @@
 }
 
 .modal-content {
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-card);
     border-radius: 12px;
     width: 90%;
     max-width: 700px;
@@ -31,7 +31,7 @@
     flex-direction: column;
     box-shadow: var(--shadow-lg);
     animation: slideUp var(--transition-normal);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border-neutral);
 }
 
 .modal-header {
@@ -39,7 +39,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-neutral);
 }
 
 .modal-header h2 {
@@ -162,7 +162,7 @@
 
 .translation-modal-section-heading:not(:first-child) {
     margin-top: var(--spacing-sm);
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--border-neutral);
     padding-top: var(--spacing-md);
 }
 
@@ -195,8 +195,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: #d93025;
-        color: #fff;
+        background-color: var(--error-color);
+        color: var(--bg-base);
         border: none;
         cursor: pointer;
         border-radius: 0;
@@ -234,8 +234,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: #d93025;
-        color: #fff;
+        background-color: var(--error-color);
+        color: var(--bg-base);
         border: none;
         border-radius: 6px;
         cursor: pointer;
@@ -256,13 +256,13 @@
     }
 
     .translation-modal-delete-btn--inline:hover {
-        background-color: #b3261e;
+        background-color: color-mix(in srgb, var(--error-color) 80%, black);
     }
 
     .translation-modal-delete-btn--inline:focus-visible {
         opacity: 1;
         pointer-events: auto;
-        outline: 2px solid #b3261e;
+        outline: 2px solid color-mix(in srgb, var(--error-color) 80%, black);
         outline-offset: 2px;
     }
 }
@@ -279,30 +279,30 @@
     cursor: pointer;
     transition: background-color var(--transition-fast), color var(--transition-fast), transform 200ms ease;
     border: 1px solid transparent;
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-card);
     position: relative;
     z-index: 1;
     will-change: transform;
 }
 
 .translation-modal-item:hover {
-    background-color: var(--bg-tertiary);
-    border-color: var(--border-color);
+    background-color: var(--bg-raised);
+    border-color: var(--border-neutral);
 }
 
 .translation-modal-item--active {
-    background-color: color-mix(in srgb, var(--primary-color) 14%, var(--bg-secondary));
+    background-color: color-mix(in srgb, var(--primary-color) 14%, var(--bg-card));
     border-color: var(--primary-color);
 }
 
 .translation-modal-item--focused {
-    background-color: var(--bg-tertiary);
+    background-color: var(--bg-raised);
     outline: 2px solid var(--primary-color);
     outline-offset: -2px;
 }
 
 .translation-modal-item--active.translation-modal-item--focused {
-    background-color: color-mix(in srgb, var(--primary-color) 22%, var(--bg-secondary));
+    background-color: color-mix(in srgb, var(--primary-color) 22%, var(--bg-card));
 }
 
 @media (forced-colors: active) {
@@ -326,7 +326,7 @@
 
 .translation-modal-item__desc {
     font-size: 0.85rem;
-    color: var(--text-secondary);
+    color: var(--text-body);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -389,7 +389,7 @@
     flex: 1;
     height: 3px;
     border-radius: 999px;
-    background-color: var(--border-color);
+    background-color: var(--border-neutral);
     overflow: hidden;
 }
 
