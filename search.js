@@ -93,12 +93,26 @@ export function parseReference(reference, bookList) {
     return { book, chapter, verse };
 }
 
+// Returns true when the query should be routed through the reference/wildcard-
+// reference path rather than the keyword search path.
+//
+// Recognised patterns:
+//   Concrete refs   — "John 3", "John 3:16", "1 Cor 6:7"
+//   Wildcard book   — "* 6:7", "* 6:*", "* *:16"
+//   Wildcard chap   — "John *", "John *:*"
+//   Wildcard verse  — "John 3:*"
 export function isPassageReference(query) {
+    const q = query.trim();
+    // Wildcard-book patterns: "* ch", "* ch:v", "* ch:*", "* *:v", "* *:*"
+    if (/^\*\s+[\d*]+(?:[:]\s*[\d*]+)?$/i.test(q)) return true;
+    // Concrete or wildcard-verse/chapter patterns for named books
     const patterns = [
         /^[1-3]?\s*[a-z]+\s+\d+/i,
         /^[1-3]?\s*[a-z]+\s+\d+:\d+/i,
+        /^[1-3]?\s*[a-z]+\s+\*(?::\s*[\d*]+)?$/i,
+        /^[1-3]?\s*[a-z]+\s+\d+:\s*\*$/i,
     ];
-    return patterns.some((p) => p.test(query.trim()));
+    return patterns.some((p) => p.test(q));
 }
 
 export async function loadPassageFromReference(app, reference) {
@@ -390,6 +404,14 @@ export function activateSelectedSearchResult(app) {
 // ─── API calls ───────────────────────────────────────────────────────────────────────────────
 
 export async function handlePassageReference(app, reference) {
+    const q = reference.trim();
+    // Wildcard reference patterns bypass the passage-fetch API and go directly
+    // to keyword search, which now handles them in bible-api.js.
+    if (/^\*/.test(q) || /\*/.test(q.replace(/^[^:]+/, ''))) {
+        await performKeywordSearch(app, reference);
+        return;
+    }
+
     const data = await app.bibleApi.fetchPassage(reference);
 
     if (data && data.passages && data.passages.length > 0) {
