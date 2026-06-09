@@ -10,7 +10,7 @@ import {
     scrollToVerse as scrollVerse,
     applyVerseGlow as glowVerse,
 } from './reading-state.js';
-import { cacheElements, loadTheme, toggleTheme, changeColorTheme } from './ui.js';
+import { cacheElements, loadTheme, changeColorTheme, applyLightMode } from './ui.js';
 import {
     initializeBibleStructure,
     buildBibleBooks,
@@ -44,6 +44,7 @@ import {
 import {
     loadLocalSettings, applySettings, toggleSetting,
     toggleVerseByVerse, updateFontSize, changeTranslation, updateCopyright,
+    initSubAccordions, populateAboutVersion,
 } from './settings.js';
 import { handleKeyboardShortcuts } from './keyboard.js';
 import { attachEventListeners } from './events.js';
@@ -598,7 +599,9 @@ class BibleApp {
 
     /**
      * Rebuild app.bibleBooks from a translation's meta.json.
-     * Called by changeTranslation() after it fetches the incoming translation's meta.
+     * Called by changeTranslation() after it fetches the incoming translation's meta,
+     * and by _loadTranslationRegistry() on initial load so a deuterocanonical
+     * translation restored from localStorage shows all its books immediately.
      * If meta is null or has no books array, falls back to the static 66-book structure.
      * If the book modal is currently open, re-renders it so the user sees the new list.
      *
@@ -721,8 +724,8 @@ class BibleApp {
             const themeSelector = document.getElementById('themeSelector');
             const lightModeToggle = document.getElementById('lightModeToggle');
             if (themeSelector) {
-                let saved = 'dracula';
-                try { saved = localStorage.getItem('colorTheme') || 'dracula'; } catch (_) {}
+                let saved = 'basic';
+                try { saved = localStorage.getItem('colorTheme') || 'basic'; } catch (_) {}
                 themeSelector.value = saved;
             }
             if (lightModeToggle) lightModeToggle.checked = document.body.classList.contains('light-mode');
@@ -818,9 +821,11 @@ class BibleApp {
             }
 
             if (this.auth && this.database) {
+                let _authResolved = false;
                 this.auth.onAuthStateChanged(async (user) => {
                     this._dbg.t_auth_state = ms();
                     if (user) {
+                        _authResolved = true;
                         this._dbg.authStateUser = user.email;
                         this._dbgEvent(`auth: signed in as ${user.email}`);
                         this.currentUser = user;
@@ -840,7 +845,9 @@ class BibleApp {
                         this._dbg.authStateUser = 'signed out';
                         this._dbgEvent('auth: signed out');
                         this.currentUser = null;
-                        this.checkApiKey();
+                        // Only prompt sign-in on a real sign-out, not the startup
+                        // null event that fires before Firebase rehydrates IndexedDB.
+                        if (_authResolved) this.checkApiKey();
                     }
                 });
             }
@@ -875,15 +882,18 @@ class BibleApp {
             for (const t of translations) this._copyrightMap[t.id] = t.copyright || '';
             this.updateCopyright?.();
 
-            // Fetch the starting translation's meta.json so the fallback search
-            // path knows its canon from the first search. Fire-and-forget — a
-            // failure here is harmless; the fallback just uses BOOK_LOAD_ORDER.
+            // Fetch the starting translation's meta.json to populate the book
+            // list for search and — critically — to rebuild app.bibleBooks so
+            // the book picker shows the correct canon (including Deuterocanon)
+            // when a deuterocanonical translation is restored from localStorage
+            // on page refresh without a changeTranslation call.
             const startingTranslation = this.state.translation;
             fetch(`./translations/${startingTranslation}/meta.json`)
                 .then(r => (r.ok ? r.json() : null))
                 .then(meta => {
                     if (meta?.books?.length) {
                         this.bibleApi.setBookList(startingTranslation, meta.books.map(b => b.name));
+                        this._rebuildBibleBooks(meta);
                         this._dbgEvent(`setBookList: ${startingTranslation} (${meta.books.length} books)`);
                     }
                 })
@@ -902,6 +912,8 @@ class BibleApp {
                 if (!isActive) section.classList.add('active');
             });
         });
+        initSubAccordions();
+        populateAboutVersion();
         const openAccountBtn = document.getElementById('openAccountBtn');
         if (openAccountBtn) {
             openAccountBtn.addEventListener('click', () => {

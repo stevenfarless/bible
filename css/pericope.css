@@ -19,11 +19,11 @@
 
 .passage-prologue {
     font-style: italic;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     font-size: 0.92em;
     margin: 0 0 1.2em 0;
     padding: 0.6em 0.8em;
-    border-left: 3px solid var(--border-color);
+    border-left: 3px solid var(--border-neutral);
     line-height: 1.6;
 }
 
@@ -39,9 +39,9 @@
     font-weight: bold;
     font-family: serif;
     line-height: 1;
-    color: var(--text-secondary);
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    background: var(--bg-card);
+    border: 1px solid var(--border-neutral);
     border-radius: 50%;
     cursor: pointer;
     vertical-align: middle;
@@ -50,7 +50,7 @@
 
 .deuterocanon-info-btn:hover {
     background: var(--primary-color);
-    color: var(--bg-primary);
+    color: var(--bg-base);
     border-color: var(--primary-color);
 }
 
@@ -62,7 +62,7 @@
     margin-top: 1.2em;
     margin-bottom: 0.5em;
     font-size: 1.05em;
-    color: var(--text-primary);
+    color: var(--text-body);
 }
 
 .deuterocanon-info-content h4:first-child {
@@ -82,8 +82,8 @@
 .deuterocanon-info-content blockquote {
     margin: 1em 0;
     padding: 0.6em 1em;
-    background: var(--bg-secondary);
-    border-left: 3px solid var(--border-color);
+    background: var(--bg-card);
+    border-left: 3px solid var(--border-neutral);
     font-size: 0.92em;
     line-height: 1.5;
 }
@@ -109,7 +109,7 @@
 
 .toast-action {
     background: var(--primary-color);
-    color: var(--bg-primary);
+    color: var(--bg-base);
     border: none;
     padding: 0.25rem 0.6rem;
     border-radius: 4px;
@@ -137,7 +137,7 @@
 }
 
 .toast-dismiss:hover {
-    color: var(--text-primary);
+    color: var(--text-body);
 }
 
 /* ================================
@@ -146,13 +146,13 @@
 
 #build-info {
     display: inline-block;
-    font-family: 'Courier New', monospace;
-    font-size: 0.6rem;
-    font-weight: 600;
+    font-family: 'iA Writer Mono S', 'Courier New', monospace;
+    font-size: .75rem;
+    font-weight: bold;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--dracula-bg);
-    background: var(--dracula-comment);
+    color: #ffffff;
+    background: #444444;
     padding: 0.15rem 0.45rem;
     border-radius: 4px;
     vertical-align: middle;

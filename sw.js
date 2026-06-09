@@ -1,28 +1,37 @@
-const BUILD_ID = "cd0281e49d9c95169a1652fb2740415113c01fdd";
-const CACHE_NAME = `bible-${BUILD_ID}`;
+// BUILD_ID is injected at deploy time by the CI workflow:
+//   sed -i "s/99d402c/$GITHUB_SHA/g" sw.js
+// The placeholder below is replaced with the full commit SHA before
+// the file is published to GitHub Pages. Never edit the placeholder
+// directly — changes here are overwritten on every deploy.
+let BUILD_ID = 'pending';
+let CACHE_NAME = 'bible-pending';
 
-// App shell assets (JS modules + CSS): network-first, bypass the browser
-// HTTP cache entirely so style and code changes deploy immediately.
-// vendor/ files are third-party SDKs that never change for a given
-// version — they go through the cache-first path below.
-const APP_SHELL_PATTERN = /^(?!\..*\/vendor\/).*\.(js|mjs|css)$/;
+const APP_SHELL_PATTERN = /\.(js|mjs|css)$/;
 
-const TRANSLATIONS = [
-  'ASV', 'BLB', 'BSB', 'CSB', 'ESV', 'ISV', 'KJV', 'LEB',
-  'MEV', 'MSB', 'NET', 'NIV', 'NKJV', 'NLT', 'NRSVUE', 'WEB',
+const PRECACHED_TRANSLATIONS = new Set(['KJV', 'BSB']);
+
+const installedTranslations = new Set(PRECACHED_TRANSLATIONS);
+
+const CANONICAL_BOOKS = [
+  'Genesis','Exodus','Leviticus','Numbers','Deuteronomy',
+  'Joshua','Judges','Ruth','1 Samuel','2 Samuel',
+  '1 Kings','2 Kings','1 Chronicles','2 Chronicles',
+  'Ezra','Nehemiah','Esther','Job','Psalm','Proverbs',
+  'Ecclesiastes','Song of Solomon','Isaiah','Jeremiah',
+  'Lamentations','Ezekiel','Daniel','Hosea','Joel','Amos',
+  'Obadiah','Jonah','Micah','Nahum','Habakkuk','Zephaniah',
+  'Haggai','Zechariah','Malachi','Matthew','Mark','Luke',
+  'John','Acts','Romans','1 Corinthians','2 Corinthians',
+  'Galatians','Ephesians','Philippians','Colossians',
+  '1 Thessalonians','2 Thessalonians','1 Timothy','2 Timothy',
+  'Titus','Philemon','Hebrews','James','1 Peter','2 Peter',
+  '1 John','2 John','3 John','Jude','Revelation',
 ];
 
-// High-value per-book files to precache on activation.
-// Genesis covers the default landing page; John covers the most commonly
-// read book. Everything else loads on demand and caches after first open.
-// 2 books × 16 translations × ~80KB avg = ~2.6MB total install payload.
-const HIGH_VALUE_BOOKS = ['John', 'Genesis'];
-
-const PER_BOOK_PRECACHE = TRANSLATIONS.flatMap(t =>
-  HIGH_VALUE_BOOKS.map(b => `./translations/${t}/${b}.json`)
+const PER_BOOK_PRECACHE = [...PRECACHED_TRANSLATIONS].flatMap(t =>
+  CANONICAL_BOOKS.map(b => `./translations/${t}/${encodeURIComponent(b)}.json`)
 );
 
-// BSB structure files (per-book JSON) used by bsb-structure.js.
 const BSB_STRUCTURE_FILES = [
   './translations/BSB/BSB_structure/Genesis.json',
   './translations/BSB/BSB_structure/Psalm.json',
@@ -36,17 +45,27 @@ const BSB_STRUCTURE_FILES = [
   './translations/BSB/BSB_structure/Revelation.json',
 ];
 
-// Full app shell — everything needed to render the UI without any network.
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
+  './css/base.css',
+  './css/tokens.css',
+  './css/fonts.css',
+  './css/themes.css',
+  './css/layout.css',
+  './css/components.css',
+  './css/modals.css',
+  './css/interactions.css',
+  './css/utilities.css',
+  './css/pericope.css',
   './app.js',
   './bible-api.js',
   './bible-structure.js',
   './bsb-structure.js',
   './book-aliases.js',
   './reading-state.js',
+  './translation-store.js',
   './ui.js',
   './navigation.js',
   './search.js',
@@ -58,6 +77,9 @@ const APP_SHELL = [
   './swipe.js',
   './firebase-config.js',
   './translations/index.json',
+  './translations/KJV/KJV_search_index.json',
+  './translations/BSB/BSB_search_index.json',
+  './vendor/minisearch/minisearch.esm.min.js',
   './site.webmanifest',
   './android-chrome-192x192.png',
   './android-chrome-512x512.png',
@@ -65,7 +87,6 @@ const APP_SHELL = [
   './favicon-16x16.png',
   './favicon-32x32.png',
   './favicon.ico',
-  // Self-hosted fonts — precached so they load offline with no latency.
   './fonts/Cinzel-Regular.woff2',
   './fonts/GentiumBookPlus-Regular.woff2',
   './fonts/GentiumBookPlus-Italic.woff2',
@@ -73,7 +94,6 @@ const APP_SHELL = [
   './fonts/GentiumBookPlus-BoldItalic.woff2',
 ];
 
-// Firebase RTDB paths that are safe to cache indefinitely.
 function isFirebaseCacheable(url) {
   if (!url.hostname.endsWith('.firebaseio.com')) return false;
   const p = url.pathname;
@@ -82,6 +102,15 @@ function isFirebaseCacheable(url) {
   if (p.startsWith('/translationIndex')) return true;
   if (p.startsWith('/searchIndex/')) return true;
   return false;
+}
+
+function translationFromUrl(pathname) {
+  const m = pathname.match(/\/translations\/([^/]+)\//);
+  return m ? m[1] : null;
+}
+
+function resolveBuildId() {
+  return '99d402c';
 }
 
 async function precacheFiles() {
@@ -104,11 +133,12 @@ async function precacheFiles() {
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) =>
-      cache.addAll(APP_SHELL)
-    )
-  );
+  event.waitUntil((async () => {
+    BUILD_ID = resolveBuildId();
+    CACHE_NAME = `bible-${BUILD_ID}`;
+    const cache = await caches.open(CACHE_NAME);
+    await cache.addAll(APP_SHELL);
+  })());
 });
 
 self.addEventListener('activate', (event) => {
@@ -122,15 +152,22 @@ self.addEventListener('activate', (event) => {
       client.postMessage({ type: 'NEW_BUILD', buildId: BUILD_ID });
     }
 
-    // Precache high-value per-book files in the background after activation.
     precacheFiles();
   })());
+});
+
+self.addEventListener('message', (event) => {
+  if (event.origin !== self.location.origin) return;
+
+  if (event.data?.type === 'TRANSLATION_INSTALLED') {
+    const t = event.data.translation;
+    if (t && typeof t === 'string') installedTranslations.add(t);
+  }
 });
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Pass through all cross-origin requests the SW has no business handling.
   if (url.origin !== self.location.origin &&
       !url.hostname.endsWith('.firebaseio.com') &&
       !url.hostname.endsWith('.firebase.google.com')) {
@@ -191,7 +228,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Everything else (vendor JS, JSON data files, fonts, images): cache-first.
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(event.request);
@@ -199,7 +235,9 @@ self.addEventListener('fetch', (event) => {
     try {
       const resp = await fetch(event.request);
       if (event.request.method === 'GET' && resp && resp.status === 200) {
-        cache.put(event.request, resp.clone());
+        const translation = translationFromUrl(url.pathname);
+        const allowCache = translation === null || installedTranslations.has(translation);
+        if (allowCache) cache.put(event.request, resp.clone());
       }
       return resp;
     } catch {
