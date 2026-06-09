@@ -2,7 +2,7 @@ name: Build search indexes
 
 on:
   push:
-    branches: [exp, main]
+    branches: [exp]
     paths:
       - 'translations/**/*.json'
       - 'scripts/build-search-indexes.cjs'
