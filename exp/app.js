@@ -1152,11 +1152,28 @@ class BibleApp {
     enablePageMode() {
         if (this.swipe) return;
         document.body.classList.add('page-mode');
+
+        const measureTop = () => {
+            const header = document.querySelector('.header');
+            const nav    = document.querySelector('.nav-bar');
+            const top    = (header?.offsetHeight ?? 0) + (nav?.offsetHeight ?? 0);
+            document.documentElement.style.setProperty('--page-mode-top', `${top}px`);
+        };
+        measureTop();
+
+        this._pageModeResizeObserver = new ResizeObserver(measureTop);
+        const header = document.querySelector('.header');
+        const nav    = document.querySelector('.nav-bar');
+        if (header) this._pageModeResizeObserver.observe(header);
+        if (nav)    this._pageModeResizeObserver.observe(nav);
+
         initSwipe(this);
         this.swipe?.syncAdjacentPanels();
     }
 
     disablePageMode() {
+        this._pageModeResizeObserver?.disconnect();
+        this._pageModeResizeObserver = null;
         destroySwipe(this);
         document.body.classList.remove('page-mode');
     }
