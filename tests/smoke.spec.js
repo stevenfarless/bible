@@ -46,13 +46,12 @@ async function waitForPassage(page) {
 // Helper — makes the nav chrome visible so #prevChapter / #nextChapter can
 // be clicked. Headless CI never fires the pointer events that trigger
 // showChrome(), so the buttons exist in the DOM but remain hidden.
+// Waits for #nextChapter to be fully visible rather than just checking the
+// chrome-hidden class, so the CSS transition has completed before returning.
 // ---------------------------------------------------------------------------
 async function showChrome(page) {
         await page.evaluate(() => window._bibleApp?.showChrome());
-        await page.waitForFunction(
-                () => !document.body.classList.contains('chrome-hidden'),
-                { timeout: 5000 }
-        );
+        await page.waitForSelector('#nextChapter', { state: 'visible', timeout: 5000 });
 }
 
 // ---------------------------------------------------------------------------
