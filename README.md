@@ -1,7 +1,7 @@
-# Bible Reader
+# Lege Lux - Bible Reader
 
 A fast, offline-capable Bible reading web app built with vanilla JavaScript.
-Served via GitHub Pages. Firebase handles auth and reading state sync only.
+Served via GitHub Pages. Firebase handles auth and reading state sync.
 
 Live app: [stevenfarless.github.io/bible](https://stevenfarless.github.io/bible)
 
