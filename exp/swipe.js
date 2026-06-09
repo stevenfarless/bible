@@ -461,12 +461,12 @@ export function initSwipe(app) {
 
             _animating = false;
 
-            // Defer rendering into off-screen panels until the next frame so
-            // the browser paints their correct ±W transforms before new HTML
-            // is injected. Without this the content can appear at center
-            // briefly before the off-screen snap is committed to paint.
+            // Double rAF: first frame commits the ±W transforms to paint;
+            // second frame injects HTML into panels already guaranteed off-screen.
             requestAnimationFrame(() => {
-                app.swipe.syncAdjacentPanels();
+                requestAnimationFrame(() => {
+                    app.swipe.syncAdjacentPanels();
+                });
             });
         }, animMs);
     }, { passive: true });
