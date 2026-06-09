@@ -459,9 +459,8 @@ export function initSwipe(app) {
             app._dbgEvent?.(`swipe commit: ${incomingPos.book} ${incomingPos.chapter} (direction=${direction})`);
             app._dbgUserAction?.(`swipe: ${direction === 1 ? 'next' : 'prev'} → ${incomingPos.book} ${incomingPos.chapter}`);
 
-            _animating = false;
-
             await app.swipe.syncAdjacentPanels();
+            _animating = false;
         }, animMs);
     }, { passive: true });
 }
