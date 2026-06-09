@@ -642,7 +642,7 @@ body.geek-theme .verse-num {
    Dark surfaces: true Adwaita-dark achromatic window stack —
    #1e1e1e base, #242424 card, #303030 raised. No blue-violet tint.
    Light surfaces: exact Adwaita HIG values (#f6f5f4, #ffffff, #e0dedd).
-   Accent: HIG Blue 3 (#3584e4). Darkened to #1c6dbf on light for WCAG AA.
+   Accent: HIG Blue 3 (#618df2). Darkened to #1c6dbf on light for WCAG AA.
    Blue is reserved for interactive controls only. Static reading content
    (passage title, pericope headings, verse numbers, modal headers) uses
    plain Adwaita foreground text — matching native GTK app convention.
@@ -665,7 +665,7 @@ body.gnome-theme {
     --highlight-border: #484848;
 
     /* Blue accent — HIG Blue 3; reserved for interactive controls only */
-    --primary-color:   #3584e4;
+    --primary-color:   #618DF2; /* changed from #3584e4
     --primary-dark:    #1a6fc4;
     --primary-light:   #62a0ea;
     /* brand-secondary and section-heading-color drive pericope/book-category headings;
