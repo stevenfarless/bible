@@ -16,7 +16,7 @@ const REQUIRED_IDS = [
 	'oldTestamentBooks', 'newTestamentBooks',
 	'chapterModalBook', 'chapterGrid', 'verseModalBook', 'verseGrid',
 	'verseNumbersToggle', 'headingsToggle', 'footnotesToggle',
-	'crossReferencesToggle', 'verseByVerseToggle', 'chapterArrowsToggle', 'pageModeToggle',
+	'crossReferencesToggle', 'verseByVerseToggle', 'chapterArrowsToggle',
 	'fontSizeSlider', 'fontSizeValue',
 	'referencesModal', 'closeReferencesModal',
 	'deuterocanonInfoModal', 'closeDeuterocanonInfoModal',
@@ -122,7 +122,6 @@ export function cacheElements(app) {
 	app.crossReferencesToggle = document.getElementById('crossReferencesToggle');
 	app.verseByVerseToggle = document.getElementById('verseByVerseToggle');
 	app.chapterArrowsToggle = document.getElementById('chapterArrowsToggle');
-	app.pageModeToggle = document.getElementById('pageModeToggle');
 	app.fontSizeSlider = document.getElementById('fontSizeSlider');
 	app.fontSizeValue = document.getElementById('fontSizeValue');
 	// translationSelector (<select>) was removed from the settings modal;

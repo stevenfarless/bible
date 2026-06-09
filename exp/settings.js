@@ -15,7 +15,6 @@ const DEFAULTS = {
     colorTheme:          'basic',
     translation:         'KJV',
     readingFont:         'gentium',
-    pageMode:            false,
 };
 
 const RECAPTCHA_STYLE_ID = 'recaptcha-badge-style';
@@ -62,7 +61,6 @@ export function loadLocalSettings(app) {
     app.state.showFootnotes       = readBool('showFootnotes',       DEFAULTS.showFootnotes);
     app.state.showCrossReferences = readBool('showCrossReferences', DEFAULTS.showCrossReferences);
     app.state.verseByVerse        = readBool('verseByVerse',        DEFAULTS.verseByVerse);
-    app.state.pageMode            = readBool('pageMode',            DEFAULTS.pageMode);
     app.state.showChapterArrows   = readBool('showChapterArrows',   DEFAULTS.showChapterArrows);
     const _rawLightMode = (() => { try { return localStorage.getItem('lightMode'); } catch (_) { return null; } })();
     app.state.lightMode =
@@ -122,16 +120,6 @@ export function applySettings(app) {
 
     if (app.passageText) app.passageText.classList.toggle('verse-by-verse', !!app.state.verseByVerse);
     if (app.verseByVerseToggle) app.verseByVerseToggle.checked = !!app.state.verseByVerse;
-
-    const pageModeToggle = document.getElementById('pageModeToggle');
-    if (pageModeToggle) pageModeToggle.checked = !!app.state.pageMode;
-
-    // Gate on the CSS class, not app.swipe — swipe is always initialized for
-    // scroll-mode chapter navigation, so !!app.swipe is always true and the
-    // old guard made enablePageMode/disablePageMode permanently unreachable.
-    const pageModeActive = document.body.classList.contains('page-mode');
-    if (app.state.pageMode && !pageModeActive) app.enablePageMode?.();
-    else if (!app.state.pageMode && pageModeActive) app.disablePageMode?.();
 
     const fontSize = app.state.fontSize || DEFAULTS.fontSize;
     if (app.fontSizeSlider) app.fontSizeSlider.value = fontSize;

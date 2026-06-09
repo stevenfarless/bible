@@ -157,25 +157,15 @@ export function initSwipe(app) {
     const currentPanel = document.getElementById('passageText');
     if (!currentPanel) return;
 
-    // body.page-mode is added by app.enablePageMode() before calling initSwipe.
-    // initSwipe does not touch it — ownership stays with the app layer so the
-    // class is never applied on startup when page mode is off.
-
-    const pageMode = () => document.body.classList.contains('page-mode');
     const vw = () => window.innerWidth;
 
     const viewport = document.createElement('div');
     viewport.id = 'swipeViewport';
-
-    // In page mode, CSS owns position/overflow/width via body.page-mode #swipeViewport.
-    // Setting them inline here would override the stylesheet and collapse the viewport.
-    if (!pageMode()) {
-        Object.assign(viewport.style, {
-            position: 'relative',
-            overflow: 'hidden',
-            width:    '100%',
-        });
-    }
+    Object.assign(viewport.style, {
+        position: 'relative',
+        overflow: 'hidden',
+        width:    '100%',
+    });
 
     currentPanel.parentNode.insertBefore(viewport, currentPanel);
     viewport.appendChild(currentPanel);
@@ -217,9 +207,6 @@ export function initSwipe(app) {
             }
         },
         async syncAdjacentPanels() {
-            // Guard: destroySwipe may have run while an earlier async call was
-            // awaiting a fetch. Bail out rather than writing into detached panels.
-            if (app.swipe !== this) return;
             this._syncClasses();
             const prevPos = _adjacentPosition(app, -1);
             const nextPos = _adjacentPosition(app, +1);
@@ -235,7 +222,6 @@ export function initSwipe(app) {
     // and bleed into the visible area.
 
     const ro = new ResizeObserver(() => {
-        if (!app.swipe) return;
         if (_tracking || _animating) return;
         const W = vw();
         _setTranslateX(app.swipe.prevPanel, -W);
@@ -256,7 +242,6 @@ export function initSwipe(app) {
     let _currentOffsetPx = 0;
 
     function _atBoundary(dx) {
-        if (!app.swipe) return false;
         if (dx > 0) return !app.swipe.prevPanel.dataset.book;
         if (dx < 0) return !app.swipe.nextPanel.dataset.book;
         return false;
@@ -267,7 +252,6 @@ export function initSwipe(app) {
     }
 
     function _cleanupDrag() {
-        if (!app.swipe) return;
         viewport.classList.remove('swiping');
         _removeTransition(app.passageText);
         _removeTransition(app.swipe.prevPanel);
@@ -276,14 +260,9 @@ export function initSwipe(app) {
         app.passageText.style.top      = '';
         app.passageText.style.left     = '';
         app.passageText.style.width    = '';
-        // In page mode the viewport height is owned by CSS (top/bottom: 0).
-        if (!pageMode()) viewport.style.height = '';
+        viewport.style.height          = '';
     }
 
-    // passive: false is required so that e.preventDefault() in touchmove can
-    // actually suppress native scroll on iOS Safari. When touchstart is passive
-    // the browser commits to a scroll direction before touchmove fires and
-    // ignores any subsequent preventDefault call.
     viewport.addEventListener('touchstart', (e) => {
         if (_animating) {
             _vetoed = true;
@@ -297,7 +276,7 @@ export function initSwipe(app) {
         _tracking        = false;
         _vetoed          = false;
         _currentOffsetPx = 0;
-    }, { passive: false });
+    }, { passive: true });
 
     viewport.addEventListener('touchmove', (e) => {
         if (_vetoed) return;
@@ -322,20 +301,14 @@ export function initSwipe(app) {
             _tracking = true;
             viewport.classList.add('swiping');
 
-            // In page mode the panels are already absolutely positioned and the
-            // viewport height is fixed by CSS. Skip the scroll-mode height lock.
-            if (!pageMode()) {
-                app.passageText.style.position = 'absolute';
-                app.passageText.style.top      = '0';
-                app.passageText.style.left     = '0';
-                app.passageText.style.width    = '100%';
-                viewport.style.height = app.passageText.offsetHeight + 'px';
-            }
+            app.passageText.style.position = 'absolute';
+            app.passageText.style.top      = '0';
+            app.passageText.style.left     = '0';
+            app.passageText.style.width    = '100%';
+            viewport.style.height = app.passageText.offsetHeight + 'px';
         }
 
         e.preventDefault();
-
-        if (!app.swipe) return;
 
         const W         = vw();
         const effective = _applyResistance(dx);
@@ -361,8 +334,6 @@ export function initSwipe(app) {
         }
         _tracking = false;
 
-        if (!app.swipe) return;
-
         const dx    = _currentOffsetPx;
         const W     = vw();
         const absDx = Math.abs(dx);
@@ -383,7 +354,6 @@ export function initSwipe(app) {
             _setTranslateX(app.swipe.nextPanel, +W);
 
             setTimeout(() => {
-                if (!app.swipe) return;
                 _cleanupDrag();
                 _setTranslateX(app.swipe.prevPanel, -W);
                 _setTranslateX(app.swipe.nextPanel, +W);
@@ -422,8 +392,6 @@ export function initSwipe(app) {
         _setTranslateX(app.swipe.nextPanel, outOffset + W);
 
         setTimeout(async () => {
-            if (!app.swipe) { _animating = false; return; }
-
             _removeTransition(app.passageText);
             _removeTransition(app.swipe.prevPanel);
             _removeTransition(app.swipe.nextPanel);
@@ -465,18 +433,7 @@ export function initSwipe(app) {
                 app.swipe.prevPanel = uninvolvedPanel;
             }
 
-            // In page mode there is no document scroll — the viewport is fixed
-            // and the panels scroll independently. Skip scrollTo and the height
-            // clear; CSS owns both.
-            if (!pageMode()) {
-                // Scroll to top before clearing the fixed viewport height.
-                // Reversing this order causes the browser to reflow to the full
-                // document height first, producing a visible jump before scrollTo fires.
-                window.scrollTo(0, 0);
-                requestAnimationFrame(() => {
-                    viewport.style.height = '';
-                });
-            }
+            viewport.style.height = '';
 
             app.state.currentBook    = incomingPos.book;
             app.state.currentChapter = incomingPos.chapter;
@@ -490,6 +447,7 @@ export function initSwipe(app) {
             app.updateCopyright?.();
             if (app.currentVerseSpan) app.currentVerseSpan.textContent = '1';
             app.showChrome?.();
+            window.scrollTo(0, 0);
             app.saveReadingPosition?.();
             app._savePassageCache?.(
                 incomingPos.book,
@@ -503,29 +461,7 @@ export function initSwipe(app) {
 
             _animating = false;
 
-            await app.swipe?.syncAdjacentPanels();
+            await app.swipe.syncAdjacentPanels();
         }, animMs);
     }, { passive: true });
-}
-
-export function destroySwipe(app) {
-    if (!app.swipe) return;
-    const { viewport, prevPanel, nextPanel } = app.swipe;
-
-    // Move passageText back out of the viewport wrapper
-    const passageText = app.passageText;
-    viewport.parentNode.insertBefore(passageText, viewport);
-
-    // Restore its inline styles set by swipe init
-    passageText.style.position  = '';
-    passageText.style.top       = '';
-    passageText.style.left      = '';
-    passageText.style.width     = '';
-    passageText.style.transform = '';
-
-    prevPanel.remove();
-    nextPanel.remove();
-    viewport.remove();
-
-    app.swipe = null;
 }

@@ -47,7 +47,6 @@ import {
     initSubAccordions, populateAboutVersion,
 } from './settings.js';
 import { handleKeyboardShortcuts } from './keyboard.js';
-import { initSwipe, destroySwipe } from './swipe.js';
 import { attachEventListeners } from './events.js';
 
 const TRANSLATION_ALIASES = { NRSVue: 'NRSVUE' };
@@ -1148,46 +1147,6 @@ class BibleApp {
     async handleSignup()    { await handleSignup(this); }
     async handleLogout()    { await handleLogout(this); }
     async loadUserData()    { await loadUserData(this, normalizeTranslation); }
-
-    enablePageMode() {
-        if (this.swipe) return;
-        document.body.classList.add('page-mode');
-
-        const measureTop = () => {
-            const header = document.querySelector('.header');
-            const nav    = document.querySelector('.navigation');
-            const top    = (header?.offsetHeight ?? 0) + (nav?.offsetHeight ?? 0);
-            document.documentElement.style.setProperty('--page-mode-top', `${top}px`);
-        };
-        measureTop();
-
-        this._pageModeResizeObserver = new ResizeObserver(measureTop);
-        const header = document.querySelector('.header');
-        const nav    = document.querySelector('.navigation');
-        if (header) this._pageModeResizeObserver.observe(header);
-        if (nav)    this._pageModeResizeObserver.observe(nav);
-
-        initSwipe(this);
-        this.swipe?.syncAdjacentPanels();
-    }
-
-    disablePageMode() {
-        this._pageModeResizeObserver?.disconnect();
-        this._pageModeResizeObserver = null;
-        destroySwipe(this);
-        document.body.classList.remove('page-mode');
-    }
-
-    togglePageMode() {
-        const enabled = !!this.pageModeToggle?.checked;
-        this.state.pageMode = enabled;
-        try { localStorage.setItem('pageMode', String(enabled)); } catch (_) {}
-        if (this.currentUser) {
-            this.database?.ref(`users/${this.currentUser.uid}/settings/pageMode`)?.set(enabled);
-        }
-        if (enabled) this.enablePageMode(); else this.disablePageMode();
-    }
-
 }
 
 
