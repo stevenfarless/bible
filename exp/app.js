@@ -1155,7 +1155,7 @@ class BibleApp {
 
         const measureTop = () => {
             const header = document.querySelector('.header');
-            const nav    = document.querySelector('.nav-bar');
+            const nav    = document.querySelector('.navigation');
             const top    = (header?.offsetHeight ?? 0) + (nav?.offsetHeight ?? 0);
             document.documentElement.style.setProperty('--page-mode-top', `${top}px`);
         };
@@ -1163,7 +1163,7 @@ class BibleApp {
 
         this._pageModeResizeObserver = new ResizeObserver(measureTop);
         const header = document.querySelector('.header');
-        const nav    = document.querySelector('.nav-bar');
+        const nav    = document.querySelector('.navigation');
         if (header) this._pageModeResizeObserver.observe(header);
         if (nav)    this._pageModeResizeObserver.observe(nav);
 
