@@ -459,8 +459,15 @@ export function initSwipe(app) {
             app._dbgEvent?.(`swipe commit: ${incomingPos.book} ${incomingPos.chapter} (direction=${direction})`);
             app._dbgUserAction?.(`swipe: ${direction === 1 ? 'next' : 'prev'} → ${incomingPos.book} ${incomingPos.chapter}`);
 
-            await app.swipe.syncAdjacentPanels();
             _animating = false;
+
+            // Defer rendering into off-screen panels until the next frame so
+            // the browser paints their correct ±W transforms before new HTML
+            // is injected. Without this the content can appear at center
+            // briefly before the off-screen snap is committed to paint.
+            requestAnimationFrame(() => {
+                app.swipe.syncAdjacentPanels();
+            });
         }, animMs);
     }, { passive: true });
 }
