@@ -45,13 +45,21 @@ async function waitForPassage(page) {
 // ---------------------------------------------------------------------------
 // Helper — makes the nav chrome visible so #prevChapter / #nextChapter can
 // be clicked. Headless CI never fires the pointer events that trigger
-// showChrome(), so the buttons exist in the DOM but remain hidden.
-// Waits for #nextChapter to be fully visible rather than just checking the
-// chrome-hidden class, so the CSS transition has completed before returning.
+// showChrome(), so the buttons exist in the DOM but remain hidden behind a
+// translateY(-100%) transform.
+//
+// chrome-no-transition disables the slide animation so Playwright's
+// bounding-box visibility check resolves immediately rather than racing
+// against the CSS transition that would keep the element above the viewport
+// until it completes.
 // ---------------------------------------------------------------------------
 async function showChrome(page) {
-        await page.evaluate(() => window._bibleApp?.showChrome());
+        await page.evaluate(() => {
+                document.body.classList.add('chrome-no-transition');
+                window._bibleApp?.showChrome();
+        });
         await page.waitForSelector('#nextChapter', { state: 'visible', timeout: 5000 });
+        await page.evaluate(() => document.body.classList.remove('chrome-no-transition'));
 }
 
 // ---------------------------------------------------------------------------
@@ -109,7 +117,7 @@ async function signIn(page) {
 
         await page.locator('#loginEmail').fill(email);
         await page.locator('#loginPassword').fill(password);
-        await page.locator('#loginSubmit').click();
+        await page.locator('#loginForm button[type="submit"]').click();
 
         // Wait for Firebase auth state to settle — currentUser is set by the
         // onAuthStateChanged callback in app.js after signInWithEmailAndPassword.
