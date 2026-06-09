@@ -135,7 +135,9 @@ function _addTransition(el, ms) {
 }
 
 function _removeTransition(el) {
-    el.style.transition = '';
+    // Pin to 'none' rather than '' so the base.css wildcard never takes over
+    // on side panels. _addTransition sets it explicitly when needed.
+    el.style.transition = 'none';
 }
 
 function _animDuration(velocityPxMs) {
@@ -174,22 +176,24 @@ export function initSwipe(app) {
     prevPanel.id        = 'swipePrev';
     prevPanel.className = currentPanel.className;
     Object.assign(prevPanel.style, {
-        position:  'absolute',
-        top:       '0',
-        left:      '0',
-        width:     '100%',
-        transform: `translateX(${-vw()}px)`,
+        position:   'absolute',
+        top:        '0',
+        left:       '0',
+        width:      '100%',
+        transform:  `translateX(${-vw()}px)`,
+        transition: 'none',
     });
 
     const nextPanel = document.createElement('div');
     nextPanel.id        = 'swipeNext';
     nextPanel.className = currentPanel.className;
     Object.assign(nextPanel.style, {
-        position:  'absolute',
-        top:       '0',
-        left:      '0',
-        width:     '100%',
-        transform: `translateX(${vw()}px)`,
+        position:   'absolute',
+        top:        '0',
+        left:       '0',
+        width:      '100%',
+        transform:  `translateX(${vw()}px)`,
+        transition: 'none',
     });
 
     viewport.insertBefore(prevPanel, currentPanel);
@@ -208,9 +212,11 @@ export function initSwipe(app) {
         },
         async syncAdjacentPanels() {
             this._syncClasses();
-            // Suppress the base.css wildcard transform transition so the
-            // off-screen panels don't animate through the visible area when
-            // new HTML is injected and transforms are re-applied.
+            // Keep transitions pinned to 'none' for the entire render.
+            // Do NOT restore to '' afterward — that hands control back to
+            // the base.css wildcard and races with the ResizeObserver,
+            // causing the pre-render flash. _addTransition sets transitions
+            // explicitly only when a commit or cancel animation needs them.
             this.prevPanel.style.transition = 'none';
             this.nextPanel.style.transition = 'none';
             const prevPos = _adjacentPosition(app, -1);
@@ -219,8 +225,6 @@ export function initSwipe(app) {
                 _renderIntoPanel(app, this.prevPanel, prevPos),
                 _renderIntoPanel(app, this.nextPanel, nextPos),
             ]);
-            this.prevPanel.style.transition = '';
-            this.nextPanel.style.transition = '';
         },
     };
 
@@ -406,7 +410,7 @@ export function initSwipe(app) {
         setTimeout(async () => {
             _removeTransition(app.passageText);
             _removeTransition(incomingPanel);
-            uninvolvedPanel.style.transition = '';
+            uninvolvedPanel.style.transition = 'none';
 
             const outgoingPanel = app.passageText;
 
