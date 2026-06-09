@@ -208,12 +208,19 @@ export function initSwipe(app) {
         },
         async syncAdjacentPanels() {
             this._syncClasses();
+            // Suppress the base.css wildcard transform transition so the
+            // off-screen panels don't animate through the visible area when
+            // new HTML is injected and transforms are re-applied.
+            this.prevPanel.style.transition = 'none';
+            this.nextPanel.style.transition = 'none';
             const prevPos = _adjacentPosition(app, -1);
             const nextPos = _adjacentPosition(app, +1);
             await Promise.all([
                 _renderIntoPanel(app, this.prevPanel, prevPos),
                 _renderIntoPanel(app, this.nextPanel, nextPos),
             ]);
+            this.prevPanel.style.transition = '';
+            this.nextPanel.style.transition = '';
         },
     };
 
@@ -461,8 +468,6 @@ export function initSwipe(app) {
 
             _animating = false;
 
-            // Double rAF: first frame commits the ±W transforms to paint;
-            // second frame injects HTML into panels already guaranteed off-screen.
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     app.swipe.syncAdjacentPanels();
