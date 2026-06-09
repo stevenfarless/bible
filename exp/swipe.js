@@ -161,15 +161,21 @@ export function initSwipe(app) {
     // initSwipe does not touch it — ownership stays with the app layer so the
     // class is never applied on startup when page mode is off.
 
+    const pageMode = () => document.body.classList.contains('page-mode');
     const vw = () => window.innerWidth;
 
     const viewport = document.createElement('div');
     viewport.id = 'swipeViewport';
-    Object.assign(viewport.style, {
-        position: 'relative',
-        overflow: 'hidden',
-        width:    '100%',
-    });
+
+    // In page mode, CSS owns position/overflow/width via body.page-mode #swipeViewport.
+    // Setting them inline here would override the stylesheet and collapse the viewport.
+    if (!pageMode()) {
+        Object.assign(viewport.style, {
+            position: 'relative',
+            overflow: 'hidden',
+            width:    '100%',
+        });
+    }
 
     currentPanel.parentNode.insertBefore(viewport, currentPanel);
     viewport.appendChild(currentPanel);
@@ -270,7 +276,8 @@ export function initSwipe(app) {
         app.passageText.style.top      = '';
         app.passageText.style.left     = '';
         app.passageText.style.width    = '';
-        viewport.style.height          = '';
+        // In page mode the viewport height is owned by CSS (top/bottom: 0).
+        if (!pageMode()) viewport.style.height = '';
     }
 
     // passive: false is required so that e.preventDefault() in touchmove can
@@ -315,11 +322,15 @@ export function initSwipe(app) {
             _tracking = true;
             viewport.classList.add('swiping');
 
-            app.passageText.style.position = 'absolute';
-            app.passageText.style.top      = '0';
-            app.passageText.style.left     = '0';
-            app.passageText.style.width    = '100%';
-            viewport.style.height = app.passageText.offsetHeight + 'px';
+            // In page mode the panels are already absolutely positioned and the
+            // viewport height is fixed by CSS. Skip the scroll-mode height lock.
+            if (!pageMode()) {
+                app.passageText.style.position = 'absolute';
+                app.passageText.style.top      = '0';
+                app.passageText.style.left     = '0';
+                app.passageText.style.width    = '100%';
+                viewport.style.height = app.passageText.offsetHeight + 'px';
+            }
         }
 
         e.preventDefault();
@@ -454,13 +465,18 @@ export function initSwipe(app) {
                 app.swipe.prevPanel = uninvolvedPanel;
             }
 
-            // Scroll to top before clearing the fixed viewport height.
-            // Reversing this order causes the browser to reflow to the full
-            // document height first, producing a visible jump before scrollTo fires.
-            window.scrollTo(0, 0);
-            requestAnimationFrame(() => {
-                viewport.style.height = '';
-            });
+            // In page mode there is no document scroll — the viewport is fixed
+            // and the panels scroll independently. Skip scrollTo and the height
+            // clear; CSS owns both.
+            if (!pageMode()) {
+                // Scroll to top before clearing the fixed viewport height.
+                // Reversing this order causes the browser to reflow to the full
+                // document height first, producing a visible jump before scrollTo fires.
+                window.scrollTo(0, 0);
+                requestAnimationFrame(() => {
+                    viewport.style.height = '';
+                });
+            }
 
             app.state.currentBook    = incomingPos.book;
             app.state.currentChapter = incomingPos.chapter;
