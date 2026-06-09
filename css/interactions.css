@@ -12,7 +12,6 @@
     border-radius: 8px;
     padding: 12px;
     margin: 8px 0;
-    overflow: hidden;
     box-shadow:
         0 0 20px rgba(255, 215, 0, 0.3),
         inset 0 0 10px rgba(255, 215, 0, 0.1);
