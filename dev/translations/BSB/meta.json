@@ -345,6 +345,11 @@
       "name": "Revelation",
       "testament": "New Testament",
       "chapters": 22
+    },
+    {
+      "name": "BSB_bible",
+      "testament": "Other",
+      "chapters": 67
     }
   ]
 }
