@@ -64,7 +64,9 @@ Full copyright and attribution information is in [NOTICE](NOTICE).
 ├── reading-state.js        # State initialisation, chapter nav, verse scroll/glow
 ├── bible-api.js            # Translation loader and passage renderer
 ├── bible-structure.js      # Book/chapter/testament lookup tables
+├── book-aliases.js         # Book name alias resolution for search and passage lookup
 ├── bsb-structure.js        # Heading/paragraph scaffold loader (BSB)
+├── translation-store.js    # Loaded translation cache and access helpers
 ├── ui.js                   # Theme, element caching, icon updates
 ├── swipe.js                # Touch swipe gesture handler for chapter navigation
 ├── firebase-config.js      # Root stub, re-exports from config/firebase-config.js
@@ -81,18 +83,21 @@ Full copyright and attribution information is in [NOTICE](NOTICE).
 │   ├── themes.css          # Color theme definitions
 │   ├── interactions.css    # Hover, focus, and transition styles
 │   └── utilities.css       # Utility/helper classes
+├── js/
+│   └── utils.js            # Shared utility functions
 ├── cross_references.txt    # Cross-reference source data (8 MB)
 ├── package.json            # Dev dependencies (Vitest, Playwright)
 ├── vitest.config.js        # Unit test config
 ├── playwright.config.js    # E2E test config
 ├── config/
 │   └── firebase-config.js  # Firebase init and exports (auth, db, config)
+├── bundles/                # Prebuilt translation bundles for GitHub Pages deployment
 ├── data/
 │   ├── bsb-usfm/           # BSB USFM source files (67 books)
 │   └── known_absent_verses.json
-├── js/                     # Additional JS modules
+├── fonts/                  # Self-hosted font files
+├── vendor/                 # Third-party libraries
 ├── translations/           # Per-translation Bible JSON files
-├── scripts/                # Build and conversion scripts
 ├── tests/                  # Unit (Vitest) and E2E (Playwright) tests
 └── docs/                   # Project documentation
 ```
@@ -117,9 +122,12 @@ touch only the modules relevant to that feature:
 | New event binding (button, toggle, etc.) | `events.js` only |
 | New API call or passage rendering change | `bible-api.js` or `reading-state.js` |
 | New search capability | `search.js` + `events.js` if it needs a new trigger |
+| Book name alias or passage lookup variant | `book-aliases.js` only |
+| Translation loading or caching | `translation-store.js` only |
 | New lifecycle step at startup | `app.js` (`init`) |
 | Change to how passages load | `app.js` (`loadPassage`) |
 | Touch/swipe gesture behaviour | `swipe.js` only |
+| Shared utility function | `js/utils.js` only |
 | Styles for a new component | add a rule in the relevant `css/*.css` file |
 | New design token (color, spacing, etc.) | `css/tokens.css` only |
 
