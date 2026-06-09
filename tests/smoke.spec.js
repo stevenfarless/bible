@@ -43,6 +43,19 @@ async function waitForPassage(page) {
 }
 
 // ---------------------------------------------------------------------------
+// Helper — makes the nav chrome visible so #prevChapter / #nextChapter can
+// be clicked. Headless CI never fires the pointer events that trigger
+// showChrome(), so the buttons exist in the DOM but remain hidden.
+// ---------------------------------------------------------------------------
+async function showChrome(page) {
+        await page.evaluate(() => window._bibleApp?.showChrome());
+        await page.waitForFunction(
+                () => !document.body.classList.contains('chrome-hidden'),
+                { timeout: 5000 }
+        );
+}
+
+// ---------------------------------------------------------------------------
 // Helper — opens the settings modal and expands the named accordion section.
 // The accordion toggles 'active' on the parent .accordion-section element;
 // panels are visible when the section has that class.
@@ -204,6 +217,8 @@ test('chapter buttons: prev and next navigate correctly', async ({ page }) => {
         await page.locator('#chapterGrid button', { hasText: '5' }).first().click();
         await expect(page.locator('#passageTitle')).toContainText('Matthew 5');
 
+        await showChrome(page);
+
         await page.locator('#nextChapter').click();
         await expect(page.locator('#passageTitle')).toContainText('Matthew 6');
 
@@ -306,6 +321,8 @@ test('search: closing search clears input and hides panel', async ({ page }) => 
 test('reading position: localStorage updated after chapter navigation', async ({ page }) => {
         await page.goto('/');
         await waitForPassage(page);
+
+        await showChrome(page);
 
         await page.locator('#nextChapter').click();
         await page.waitForFunction(
