@@ -265,3 +265,100 @@ export function updateCopyright(app) {
         `<span class="recaptcha-disclosure">${RECAPTCHA_DISCLOSURE_HTML}</span>`,
     ].filter(Boolean).join('<br />');
 }
+
+/**
+ * Wire sub-accordion toggle behaviour for the About section.
+ * Called once during settings init.
+ */
+export function initSubAccordions() {
+    document.querySelectorAll('.sub-accordion-header').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const section = btn.closest('.sub-accordion-section');
+            const isActive = section.classList.contains('active');
+            // Collapse all siblings first
+            section.closest('.about-group')
+                .querySelectorAll('.sub-accordion-section')
+                .forEach(s => s.classList.remove('active'));
+            if (!isActive) section.classList.add('active');
+            btn.setAttribute('aria-expanded', (!isActive).toString());
+        });
+    });
+}
+
+/**
+ * Fetch the latest GitHub release, populate #aboutVersion with the tag name,
+ * and render the release body markdown into #whatsNewContent.
+ *
+ * Falls back to the build-info SHA if the API request fails.
+ */
+export async function populateAboutVersion() {
+    const versionEl   = document.getElementById('aboutVersion');
+    const contentEl   = document.getElementById('whatsNewContent');
+    const whatsNewBtn = document.querySelector('[data-section="whats-new"] .sub-accordion-header');
+
+    async function _fallbackToBuildSha() {
+        if (!versionEl) return;
+        const buildInfo = document.getElementById('build-info');
+        if (!buildInfo) return;
+        const raw = buildInfo.textContent.trim();
+        const sha = raw.split(/[\s·]/)[0];
+        if (sha && sha !== '__BUILD_INFO__') versionEl.textContent = sha;
+    }
+
+    try {
+        const res = await fetch(
+            'https://api.github.com/repos/stevenfarless/bible/releases/latest',
+            { headers: { Accept: 'application/vnd.github+json' } }
+        );
+        if (!res.ok) { await _fallbackToBuildSha(); return; }
+
+        const release = await res.json();
+
+        if (versionEl && release.tag_name) {
+            versionEl.textContent = release.tag_name;
+        } else {
+            await _fallbackToBuildSha();
+        }
+
+        if (contentEl && release.body) {
+            // marked is loaded via CDN in index.html before this runs
+            if (typeof marked !== 'undefined') {
+                contentEl.innerHTML = marked.parse(release.body);
+            } else {
+                contentEl.textContent = release.body;
+            }
+            if (whatsNewBtn) whatsNewBtn.closest('.sub-accordion-section').removeAttribute('hidden');
+        }
+
+        // Fetch the latest prerelease for the Coming Soon section
+        _populateComingSoon();
+    } catch (_) {
+        await _fallbackToBuildSha();
+    }
+}
+
+async function _populateComingSoon() {
+    const el = document.getElementById('comingSoonContent');
+    if (!el) return;
+    try {
+        const res = await fetch(
+            'https://api.github.com/repos/stevenfarless/bible/releases?per_page=10',
+            { headers: { Accept: 'application/vnd.github+json' } }
+        );
+        if (!res.ok) return;
+        const releases = await res.json();
+        const pre = releases.find(r => r.prerelease === true);
+        if (!pre || !pre.body) return;
+
+        if (typeof marked !== 'undefined') {
+            el.innerHTML = marked.parse(pre.body);
+        } else {
+            el.textContent = pre.body;
+        }
+
+        const section = el.closest('.sub-accordion-section');
+        const tagEl = section?.querySelector('.sub-accordion-header span');
+        if (tagEl && pre.tag_name) tagEl.textContent = `Coming soon · ${pre.tag_name}`;
+        section?.removeAttribute('hidden');
+    } catch (_) { /* network error — leave section empty */ }
+}

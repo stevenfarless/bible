@@ -27,10 +27,10 @@ body {
 }
 
 /* Lock scrolling while a modal is open.
-   Applied to html (not body) so the scroll container owner never changes.
-   body.style.overflow writes were the previous approach; they corrupted
-   iOS Safari's scroll-container resolution after modal close. */
-body.modal-open {
+   html is the actual scroll container (overflow-y: auto above).
+   Locking body has no effect since body overflow is visible. */
+body.modal-open,
+html:has(body.modal-open) {
     overflow: hidden;
 }
 

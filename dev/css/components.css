@@ -11,6 +11,10 @@
     background-color: var(--bg-raised);
 }
 
+.accordion-section.active {
+    overflow: visible;
+}
+
 .accordion-header {
     width: 100%;
     display: flex;
@@ -51,7 +55,8 @@
 }
 
 .accordion-section.active .accordion-panel {
-    max-height: 1000px;
+    max-height: none;
+    overflow: visible;
 }
 
 .accordion-panel .settings-group {
@@ -1194,4 +1199,201 @@ body.hide-verse-numbers .verse .verse-num {
 .user-info-box strong {
     color: var(--primary-color);
     font-weight: 600;
+}
+
+/* Sub-accordion (nested inside About accordion panel) */
+.sub-accordion-section {
+    border: 1px solid var(--border-neutral);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: var(--spacing-sm);
+}
+
+.sub-accordion-section.active {
+    overflow: visible;
+}
+
+.sub-accordion-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--bg-raised);
+    border: none;
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+    color: var(--text-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.sub-accordion-header:hover {
+    background-color: var(--bg-card);
+}
+
+.sub-accordion-header .accordion-chevron {
+    transition: transform var(--transition-normal);
+    flex-shrink: 0;
+}
+
+.sub-accordion-section.active .sub-accordion-header .accordion-chevron {
+    transform: rotate(180deg);
+}
+
+.sub-accordion-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height var(--transition-normal) ease;
+    background-color: var(--bg-card);
+}
+
+.sub-accordion-section.active .sub-accordion-panel {
+    max-height: none;
+    overflow: visible;
+}
+
+.sub-accordion-panel .settings-group,
+.sub-accordion-panel .tips-list {
+    padding: var(--spacing-md) var(--spacing-lg);
+    margin-bottom: 0;
+}
+
+/* About section app info block */
+.about-group {
+    padding: var(--spacing-lg);
+}
+
+.about-app-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-neutral);
+}
+
+.about-app-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-heading);
+}
+
+.about-version {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.about-tagline {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.whats-new-content {
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: 0.9rem;
+    color: var(--text-body);
+    line-height: 1.6;
+}
+
+.whats-new-content ul {
+    padding-left: var(--spacing-lg);
+    margin-top: var(--spacing-sm);
+}
+
+.whats-new-content li {
+    margin-bottom: var(--spacing-xs, 0.25rem);
+}
+
+/* Rendered markdown inside whats-new-content */
+.whats-new-content h1,
+.whats-new-content h2,
+.whats-new-content h3 {
+    font-size: var(--text-sm, 0.9rem);
+    font-weight: 700;
+    color: var(--text-heading);
+    margin: var(--spacing-md) 0 var(--spacing-sm);
+}
+
+.whats-new-content h1 { font-size: 1rem; }
+
+.whats-new-content p {
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-body);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    max-width: unset;
+}
+
+.whats-new-content ul,
+.whats-new-content ol {
+    padding-left: var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
+}
+
+.whats-new-content li {
+    font-size: 0.875rem;
+    color: var(--text-body);
+    line-height: 1.6;
+    margin-bottom: 0.2rem;
+}
+
+.whats-new-content a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.whats-new-content a:hover {
+    text-decoration: underline;
+}
+
+.whats-new-content code {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.8rem;
+    background-color: var(--bg-raised);
+    border: 1px solid var(--border-neutral);
+    border-radius: 3px;
+    padding: 0.1em 0.35em;
+    color: var(--primary-color);
+}
+
+.whats-new-content hr {
+    border: none;
+    border-top: 1px solid var(--border-neutral);
+    margin: var(--spacing-md) 0;
+}
+
+.whats-new-content strong { font-weight: 700; color: var(--text-heading); }
+.whats-new-content em    { font-style: italic; }
+
+/* Dev branch link block inside Coming Soon panel */
+.dev-branch-link {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-md);
+    border-top: 1px solid var(--border-neutral);
+    flex-wrap: wrap;
+}
+
+.dev-branch-link a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.dev-branch-link a:hover {
+    text-decoration: underline;
+}
+
+.dev-branch-disclaimer {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-style: italic;
 }
