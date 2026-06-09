@@ -122,14 +122,16 @@ export function applySettings(app) {
 
     if (app.passageText) app.passageText.classList.toggle('verse-by-verse', !!app.state.verseByVerse);
     if (app.verseByVerseToggle) app.verseByVerseToggle.checked = !!app.state.verseByVerse;
+
     const pageModeToggle = document.getElementById('pageModeToggle');
     if (pageModeToggle) pageModeToggle.checked = !!app.state.pageMode;
-    // Only transition swipe state when it doesn't already match — prevents
-    // destroySwipe from firing every time settings close (which caused the
-    // null app.swipe crash at swipe.js:227).
-    const swipeActive = !!app.swipe;
-    if (app.state.pageMode && !swipeActive) app.enablePageMode?.();
-    else if (!app.state.pageMode && swipeActive) app.disablePageMode?.();
+
+    // Gate on the CSS class, not app.swipe — swipe is always initialized for
+    // scroll-mode chapter navigation, so !!app.swipe is always true and the
+    // old guard made enablePageMode/disablePageMode permanently unreachable.
+    const pageModeActive = document.body.classList.contains('page-mode');
+    if (app.state.pageMode && !pageModeActive) app.enablePageMode?.();
+    else if (!app.state.pageMode && pageModeActive) app.disablePageMode?.();
 
     const fontSize = app.state.fontSize || DEFAULTS.fontSize;
     if (app.fontSizeSlider) app.fontSizeSlider.value = fontSize;
