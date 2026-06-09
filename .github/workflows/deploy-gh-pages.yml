@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - '**'
-      - '!main'
 
 concurrency:
   group: gh-pages-${{ github.ref_name }}
@@ -28,23 +27,30 @@ jobs:
       - name: Derive destination directory
         id: dest
         run: |
-          # Replace every / with - so branch names like refactor/split-app-js
-          # become a valid directory slug: refactor-split-app-js
-          DEST="${GITHUB_REF_NAME//\//-}"
-          echo "dir=$DEST" >> "$GITHUB_OUTPUT"
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            echo "dir=." >> "$GITHUB_OUTPUT"
+          else
+            DEST="${GITHUB_REF_NAME//\//-}"
+            echo "dir=$DEST" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Inject build info
         run: |
           BRANCH="${GITHUB_REF_NAME}"
           SHA7="${GITHUB_SHA::7}"
-          case "${BRANCH}" in
-            dev)  BUILD_COLOR="#09752b" ;;
-            exp)  BUILD_COLOR="#790606" ;;
-            *)    BUILD_COLOR="#444444" ;;
-          esac
-          echo "Injecting: $SHA7"
-          sed -i "s|__BUILD_INFO__|${SHA7}|g" index.html
-          sed -i "s|__BUILD_COLOR__|${BUILD_COLOR}|g" css/pericope.css
+          if [ "${BRANCH}" = "main" ]; then
+            sed -i "s|__BUILD_INFO__||g" index.html
+            sed -i "s|__BUILD_COLOR__|#444444|g" css/pericope.css
+          else
+            case "${BRANCH}" in
+              dev)  BUILD_COLOR="#09752b" ;;
+              exp)  BUILD_COLOR="#790606" ;;
+              *)    BUILD_COLOR="#444444" ;;
+            esac
+            echo "Injecting: $SHA7"
+            sed -i "s|__BUILD_INFO__|${SHA7}|g" index.html
+            sed -i "s|__BUILD_COLOR__|${BUILD_COLOR}|g" css/pericope.css
+          fi
           sed -i "s/__BUILD_ID__/${SHA7}/g" sw.js index.html
           sed -i "s|\(<script[^>]* src=\"\)\([^?\"]*\)\(\.js\)\(\"\)|\1\2\3?v=${SHA7}\4|g" index.html
           sed -i "s|\(<link[^>]* href=\"css/[^?\"]*\)\(\.css\)\(\"\)|\1\2?v=${SHA7}\3|g" index.html
