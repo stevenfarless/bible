@@ -389,19 +389,24 @@ export function initSwipe(app) {
         _animating = true;
 
         viewport.classList.remove('swiping');
+
+        // Pin the uninvolved panel at its canonical off-screen position for
+        // the entire commit animation. Without transition:none the base.css
+        // wildcard would animate it through center screen.
+        uninvolvedPanel.style.transition = 'none';
+        _setTranslateX(uninvolvedPanel, direction === 1 ? -W : +W);
+
         _addTransition(app.passageText, animMs);
-        _addTransition(app.swipe.prevPanel, animMs);
-        _addTransition(app.swipe.nextPanel, animMs);
+        _addTransition(incomingPanel, animMs);
 
         const outOffset = direction === 1 ? -W : +W;
         _setTranslateX(app.passageText, outOffset);
-        _setTranslateX(app.swipe.prevPanel, outOffset - W);
-        _setTranslateX(app.swipe.nextPanel, outOffset + W);
+        _setTranslateX(incomingPanel, 0);
 
         setTimeout(async () => {
             _removeTransition(app.passageText);
-            _removeTransition(app.swipe.prevPanel);
-            _removeTransition(app.swipe.nextPanel);
+            _removeTransition(incomingPanel);
+            uninvolvedPanel.style.transition = '';
 
             const outgoingPanel = app.passageText;
 
@@ -413,12 +418,6 @@ export function initSwipe(app) {
             incomingPanel.style.top      = '';
             incomingPanel.style.left     = '';
             incomingPanel.style.width    = '';
-
-            // Snap the uninvolved panel to its canonical off-screen position
-            // before slot reassignment. During the drag it accumulated a
-            // parallax offset; leaving it there causes a visible flash when
-            // it becomes the new prev/next panel.
-            _setTranslateX(uninvolvedPanel, direction === 1 ? +W : -W);
 
             const oldId      = incomingPanel.id;
             incomingPanel.id = 'passageText';
