@@ -1,7 +1,7 @@
 // settings.js
 // Reading preferences: load from storage, apply to DOM, persist to Firebase and localStorage.
 
-import { changeColorTheme, updateThemeIcon } from './ui.js';
+import { changeColorTheme, applyLightMode } from './ui.js';
 
 const DEFAULTS = {
     fontSize:            18,
@@ -10,7 +10,8 @@ const DEFAULTS = {
     showFootnotes:       false,
     showCrossReferences: false,
     verseByVerse:        false,
-    lightMode:           false,
+    showChapterArrows:   false,
+    lightMode:           'system',
     colorTheme:          'basic',
     translation:         'KJV',
     readingFont:         'gentium',
@@ -60,10 +61,18 @@ export function loadLocalSettings(app) {
     app.state.showFootnotes       = readBool('showFootnotes',       DEFAULTS.showFootnotes);
     app.state.showCrossReferences = readBool('showCrossReferences', DEFAULTS.showCrossReferences);
     app.state.verseByVerse        = readBool('verseByVerse',        DEFAULTS.verseByVerse);
-    app.state.lightMode           = readBool('lightMode',           DEFAULTS.lightMode);
+    app.state.showChapterArrows   = readBool('showChapterArrows',   DEFAULTS.showChapterArrows);
+    const _rawLightMode = (() => { try { return localStorage.getItem('lightMode'); } catch (_) { return null; } })();
+    app.state.lightMode =
+        _rawLightMode === 'light' || _rawLightMode === 'dark' || _rawLightMode === 'system'
+            ? _rawLightMode
+            : DEFAULTS.lightMode;
 
-    try { app.state.colorTheme = localStorage.getItem('colorTheme') || DEFAULTS.colorTheme; }
-    catch (_) { app.state.colorTheme = DEFAULTS.colorTheme; }
+    try {
+        const storedTheme = localStorage.getItem('colorTheme') || DEFAULTS.colorTheme;
+        // 'dracula' was briefly remapped to 'onyx' in a bad deploy — restore it.
+        app.state.colorTheme = storedTheme;
+    } catch (_) { app.state.colorTheme = DEFAULTS.colorTheme; }
 
     try { app.state.readingFont = localStorage.getItem('readingFont') || DEFAULTS.readingFont; }
     catch (_) { app.state.readingFont = DEFAULTS.readingFont; }
@@ -99,16 +108,15 @@ export function applySettings(app) {
     }
     app.bibleApi.setTranslation(app.state.translation || DEFAULTS.translation);
 
-    document.body.classList.toggle('light-mode', !!app.state.lightMode);
-    const lightModeToggle = document.getElementById('lightModeToggle');
-    if (lightModeToggle) lightModeToggle.checked = !!app.state.lightMode;
-    updateThemeIcon(app.state.lightMode);
+    applyLightMode(app.state.lightMode);
+    const lightModeSelect = document.getElementById('lightModeSelect');
+    if (lightModeSelect) lightModeSelect.value = app.state.lightMode;
 
     document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
+    document.body.classList.toggle('hide-chapter-arrows', !app.state.showChapterArrows);
     if (app.verseNumbersToggle)    app.verseNumbersToggle.checked    = !!app.state.showVerseNumbers;
     if (app.headingsToggle)        app.headingsToggle.checked        = !!app.state.showHeadings;
-    if (app.footnotesToggle)       app.footnotesToggle.checked       = !!app.state.showFootnotes;
-    if (app.crossReferencesToggle) app.crossReferencesToggle.checked = !!app.state.showCrossReferences;
+    if (app.chapterArrowsToggle)   app.chapterArrowsToggle.checked   = !!app.state.showChapterArrows;
 
     if (app.passageText) app.passageText.classList.toggle('verse-by-verse', !!app.state.verseByVerse);
     if (app.verseByVerseToggle) app.verseByVerseToggle.checked = !!app.state.verseByVerse;
@@ -124,10 +132,9 @@ export function applySettings(app) {
 }
 
 const TOGGLE_MAP = {
-    showVerseNumbers:    'verseNumbersToggle',
-    showHeadings:        'headingsToggle',
-    showFootnotes:       'footnotesToggle',
-    showCrossReferences: 'crossReferencesToggle',
+    showVerseNumbers:  'verseNumbersToggle',
+    showHeadings:      'headingsToggle',
+    showChapterArrows: 'chapterArrowsToggle',
 };
 
 export async function toggleSetting(app, setting) {
@@ -148,7 +155,15 @@ export async function toggleSetting(app, setting) {
         return;
     }
 
-    applySettings(app);
+    if (setting === 'showVerseNumbers') {
+        document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
+        return;
+    }
+
+    if (setting === 'showChapterArrows') {
+        document.body.classList.toggle('hide-chapter-arrows', !app.state.showChapterArrows);
+        return;
+    }
 }
 
 export async function toggleVerseByVerse(app) {
@@ -166,12 +181,13 @@ export async function toggleVerseByVerse(app) {
 }
 
 export function applyReadingFont(app, font) {
-    document.body.classList.remove('font-andika', 'font-ubuntu', 'font-opendyslexic3', 'font-retrocide');
+    document.body.classList.remove('font-andika', 'font-ubuntu', 'font-opendyslexic3', 'font-retrocide', 'font-ia-quattro');
 
     if (font === 'andika')        document.body.classList.add('font-andika');
     if (font === 'ubuntu')        document.body.classList.add('font-ubuntu');
     if (font === 'opendyslexic3') document.body.classList.add('font-opendyslexic3');
     if (font === 'retrocide')     document.body.classList.add('font-retrocide');
+    if (font === 'ia-quattro')    document.body.classList.add('font-ia-quattro');
 
     const selector = document.getElementById('readingFontSelector');
     const helpText = document.getElementById('readingFontHelpText');
@@ -248,4 +264,101 @@ export function updateCopyright(app) {
         copyrightHtml,
         `<span class="recaptcha-disclosure">${RECAPTCHA_DISCLOSURE_HTML}</span>`,
     ].filter(Boolean).join('<br />');
+}
+
+/**
+ * Wire sub-accordion toggle behaviour for the About section.
+ * Called once during settings init.
+ */
+export function initSubAccordions() {
+    document.querySelectorAll('.sub-accordion-header').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const section = btn.closest('.sub-accordion-section');
+            const isActive = section.classList.contains('active');
+            // Collapse all siblings first
+            section.closest('.about-group')
+                .querySelectorAll('.sub-accordion-section')
+                .forEach(s => s.classList.remove('active'));
+            if (!isActive) section.classList.add('active');
+            btn.setAttribute('aria-expanded', (!isActive).toString());
+        });
+    });
+}
+
+/**
+ * Fetch the latest GitHub release, populate #aboutVersion with the tag name,
+ * and render the release body markdown into #whatsNewContent.
+ *
+ * Falls back to the build-info SHA if the API request fails.
+ */
+export async function populateAboutVersion() {
+    const versionEl   = document.getElementById('aboutVersion');
+    const contentEl   = document.getElementById('whatsNewContent');
+    const whatsNewBtn = document.querySelector('[data-section="whats-new"] .sub-accordion-header');
+
+    async function _fallbackToBuildSha() {
+        if (!versionEl) return;
+        const buildInfo = document.getElementById('build-info');
+        if (!buildInfo) return;
+        const raw = buildInfo.textContent.trim();
+        const sha = raw.split(/[\s·]/)[0];
+        if (sha && sha !== '__BUILD_INFO__') versionEl.textContent = sha;
+    }
+
+    try {
+        const res = await fetch(
+            'https://api.github.com/repos/stevenfarless/bible/releases/latest',
+            { headers: { Accept: 'application/vnd.github+json' } }
+        );
+        if (!res.ok) { await _fallbackToBuildSha(); return; }
+
+        const release = await res.json();
+
+        if (versionEl && release.tag_name) {
+            versionEl.textContent = release.tag_name;
+        } else {
+            await _fallbackToBuildSha();
+        }
+
+        if (contentEl && release.body) {
+            // marked is loaded via CDN in index.html before this runs
+            if (typeof marked !== 'undefined') {
+                contentEl.innerHTML = marked.parse(release.body);
+            } else {
+                contentEl.textContent = release.body;
+            }
+            if (whatsNewBtn) whatsNewBtn.closest('.sub-accordion-section').removeAttribute('hidden');
+        }
+
+        // Fetch the latest prerelease for the Coming Soon section
+        _populateComingSoon();
+    } catch (_) {
+        await _fallbackToBuildSha();
+    }
+}
+
+async function _populateComingSoon() {
+    const el = document.getElementById('comingSoonContent');
+    if (!el) return;
+    try {
+        const res = await fetch(
+            'https://api.github.com/repos/stevenfarless/bible/releases?per_page=10',
+            { headers: { Accept: 'application/vnd.github+json' } }
+        );
+        if (!res.ok) return;
+        const releases = await res.json();
+        const pre = releases.find(r => r.prerelease === true);
+        if (!pre || !pre.body) return;
+
+        if (typeof marked !== 'undefined') {
+            el.innerHTML = marked.parse(pre.body);
+        } else {
+            el.textContent = pre.body;
+        }
+
+        const section = el.closest('.sub-accordion-section');
+        const tagEl = section?.querySelector('.sub-accordion-header span');
+        if (tagEl && pre.tag_name) tagEl.textContent = `Coming soon · ${pre.tag_name}`;
+        section?.removeAttribute('hidden');
+    } catch (_) { /* network error — leave section empty */ }
 }

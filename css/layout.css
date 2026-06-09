@@ -6,8 +6,8 @@ body {
     font-family: var(--font-sans);
     font-size: 16px;
     line-height: 1.6;
-    color: var(--text-primary);
-    background-color: var(--bg-primary);
+    color: var(--text-body);
+    background-color: var(--bg-base);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color var(--transition-normal), color var(--transition-normal);
@@ -15,7 +15,7 @@ body {
 
 ::selection {
     background-color: var(--primary-color);
-    color: var(--bg-primary);
+    color: var(--bg-base);
 }
 
 a {
@@ -72,8 +72,8 @@ body.chrome-no-transition .top-chrome {
 
 /* Header */
 .header {
-    background-color: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+    border-bottom: 1px solid var(--border-neutral);
     position: relative;
     z-index: 100;
     box-shadow: var(--shadow-sm);
@@ -102,18 +102,20 @@ body.chrome-no-transition .top-chrome {
     letter-spacing: -0.025em;
 }
 
-/* Dracula dark: logo uses orange (--dracula-orange) instead of purple.
-   Dracula dark = no theme class + no .light-mode. */
-:root:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.light-mode) .logo,
-html:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.light-mode) .logo,
-body:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):not(.light-mode) .logo {
-    color: var(--dracula-orange);
+/* Dracula themes: logo uses --brand-secondary (orange) not --primary-color (purple). */
+:root.dracula-theme .logo,
+html.dracula-theme .logo,
+body.dracula-theme .logo,
+:root.dracula2test-theme .logo,
+html.dracula2test-theme .logo,
+body.dracula2test-theme .logo {
+    color: var(--brand-secondary);
 }
 
 /* Navigation */
 .navigation {
-    background-color: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+    border-bottom: 1px solid var(--border-neutral);
     position: relative;
     z-index: 99;
 }
@@ -127,5 +129,4 @@ body:not(.onyx-theme):not(.sage-theme):not(.ember-theme):not(.perplexity-theme):
     align-items: center;
     gap: var(--spacing-md);
 }
-
 

@@ -1,7 +1,10 @@
 // modals.js
 // Modal open/close, population, and drag-to-resize for BibleApp.
 
-// ── Open / close ─────────────────────────────────────────────────────────────────────────────────────
+import { LOCAL_TRANSLATIONS, PRECACHED_TRANSLATIONS } from './bible-api.js';
+import { idbIsDownloaded, idbDeleteTranslation } from './translation-store.js';
+
+// ── Open / close ─────────────────────────────────────────────────────────────
 
 export function openModal(app, modal) {
     if (!modal) return;
@@ -12,19 +15,28 @@ export function openModal(app, modal) {
 export function closeModal(app, modal) {
     if (!modal) return;
 
-    // Clear translation keyboard focus state when the translation modal closes
     if (modal === app.translationModal) {
         _translationKbClear(app);
     }
 
     if (modal === app.settingsModal || modal === app.referencesModal) {
-        const content = modal.querySelector('.modal-content');
-        content.style.animation = 'slideDownToBottom 250ms ease';
-        setTimeout(() => {
-            modal.classList.remove('active');
-            _maybeRemoveModalOpen();
-            content.style.animation = '';
-        }, 250);
+        // For bottom sheets: add .closing to trigger the CSS dismiss transition,
+        // then remove .active once the animation completes (320ms).
+        if (modal === app.settingsModal) {
+            modal.classList.add('closing');
+            setTimeout(() => {
+                modal.classList.remove('active', 'closing');
+                _maybeRemoveModalOpen();
+            }, 320);
+        } else {
+            const content = modal.querySelector('.modal-content');
+            content.style.animation = 'slideDownToBottom 250ms ease';
+            setTimeout(() => {
+                modal.classList.remove('active');
+                _maybeRemoveModalOpen();
+                content.style.animation = '';
+            }, 250);
+        }
     } else {
         modal.classList.remove('active');
         _maybeRemoveModalOpen();
@@ -37,27 +49,13 @@ function _maybeRemoveModalOpen() {
     }
 }
 
-// ── Book modal ──────────────────────────────────────────────────────────────────────────────────
+// ── Book modal ────────────────────────────────────────────────────────────────
 
 export function openBookModal(app) {
     populateBookModal(app);
     openModal(app, app.bookModal);
 }
 
-/**
- * Renders the book picker dynamically from app.bibleBooks.
- *
- * app.bibleBooks is { testament: { book: chapterCount } } and may contain
- * any number of testament sections (OT, NT, Deuterocanon, etc.).
- * One .book-category block is created per section, so extended-canon
- * translations automatically get their extra sections without any HTML
- * or code changes.
- *
- * The two static #oldTestamentBooks / #newTestamentBooks divs in index.html
- * are preserved so REQUIRED_IDS validation stays clean, but this function
- * targets the .modal-body container directly and rebuilds it from scratch
- * on every open.
- */
 export function populateBookModal(app) {
     const modalBody = app.bookModal?.querySelector('.modal-body');
     if (!modalBody) return;
@@ -89,7 +87,6 @@ export function populateBookModal(app) {
             infoBtn.innerHTML = '?';
             infoBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                console.log('[DeutModal] button clicked');
                 openDeuterocanonInfoModal(app);
             });
             heading.appendChild(infoBtn);
@@ -98,8 +95,6 @@ export function populateBookModal(app) {
 
         const grid = document.createElement('div');
         grid.className = 'book-grid';
-        // Mirror the legacy IDs on the first two sections so any external
-        // code that targets #oldTestamentBooks / #newTestamentBooks still works.
         if (testament === 'Old Testament') grid.id = 'oldTestamentBooks';
         if (testament === 'New Testament') grid.id = 'newTestamentBooks';
 
@@ -112,13 +107,10 @@ export function populateBookModal(app) {
     }
 }
 
-
-// ── Deuterocanon info modal ─────────────────────────────────────────────────────────────────────────────────
+// ── Deuterocanon info modal ───────────────────────────────────────────────────
 
 export function openDeuterocanonInfoModal(app) {
-    console.log('[DeutModal] openDeuterocanonInfoModal called');
     const modal = document.getElementById('deuterocanonInfoModal');
-    console.log('[DeutModal] modal element:', modal);
     if (modal) {
         openModal(app, modal);
     } else {
@@ -126,8 +118,7 @@ export function openDeuterocanonInfoModal(app) {
     }
 }
 
-
-// ── Chapter modal ─────────────────────────────────────────────────────────────────────────────────
+// ── Chapter modal ─────────────────────────────────────────────────────────────
 
 export function openChapterModal(app) {
     populateChapterModal(app);
@@ -153,7 +144,7 @@ export function populateChapterModal(app) {
     }
 }
 
-// ── Verse modal ──────────────────────────────────────────────────────────────────────────────────
+// ── Verse modal ───────────────────────────────────────────────────────────────
 
 export function openVerseModal(app) {
     populateVerseModal(app);
@@ -191,7 +182,21 @@ export function getCurrentVerseCount(app) {
     return app.passageText.querySelectorAll('.verse-num').length;
 }
 
-// ── Translation modal ────────────────────────────────────────────────────────────────────────────────
+// ── Translation modal ─────────────────────────────────────────────────────────
+
+const _SVG_DOWNLOAD = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><path d="M11.29,16.71h0a1.15,1.15,0,0,0,.33.21.94.94,0,0,0,.76,0,1.15,1.15,0,0,0,.33-.21h0l4-4a1,1,0,0,0-1.42-1.42L13,13.59V3a1,1,0,0,0-2,0V13.59l-2.29-2.3a1,1,0,1,0-1.42,1.42Z"/><path d="M19,20H5a1,1,0,0,0,0,2H19a1,1,0,0,0,0-2Z"/></svg>`;
+
+const _SVG_DOWNLOADED = `<svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><path d="M34.459 1.375a2.999 2.999 0 0 0-4.149.884L13.5 28.17l-8.198-7.58a2.999 2.999 0 1 0-4.073 4.405l10.764 9.952s.309.266.452.359a2.999 2.999 0 0 0 4.15-.884L35.343 5.524a2.999 2.999 0 0 0-.884-4.149z"/></svg>`;
+
+const _SVG_SPINNER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="translation-dl-spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`;
+
+const _SVG_TRASH = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 12L14 16M14 12L10 16M18 6L17.1991 18.0129C17.129 19.065 17.0939 19.5911 16.8667 19.99C16.6666 20.3412 16.3648 20.6235 16.0011 20.7998C15.588 21 15.0607 21 14.0062 21H9.99377C8.93927 21 8.41202 21 7.99889 20.7998C7.63517 20.6235 7.33339 20.3412 7.13332 19.99C6.90607 19.5911 6.871 19.065 6.80086 18.0129L6 6M4 6H20M16 6L15.7294 5.18807C15.4671 4.40125 15.3359 4.00784 15.0927 3.71698C14.8779 3.46013 14.6021 3.26132 14.2905 3.13878C13.9376 3 13.523 3 12.6936 3H11.3064C10.477 3 10.0624 3 9.70951 3.13878C9.39792 3.26132 9.12208 3.46013 8.90729 3.71698C8.66405 4.00784 8.53292 4.40125 8.27064 5.18807L8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+const _downloading = new Set();
+const _hasHover = window.matchMedia('(hover: hover)').matches;
+
+const _FLY_EASING   = 'cubic-bezier(0.4, 0, 0.2, 1)';
+const _FLY_DURATION = '420ms';
 
 export function openTranslationModal(app) {
     populateTranslationModal(app);
@@ -202,7 +207,7 @@ export function openTranslationModal(app) {
     _translationKbApply(app, items);
 }
 
-export function populateTranslationModal(app) {
+export async function populateTranslationModal(app) {
     if (!app.translationList) return;
     app.translationList.innerHTML = '';
 
@@ -217,8 +222,35 @@ export function populateTranslationModal(app) {
         return;
     }
 
-    for (const t of registry) {
+    const idbChecks = await Promise.all(
+        registry.map((t) =>
+            PRECACHED_TRANSLATIONS.has(t.id) ? Promise.resolve(true) : idbIsDownloaded(t.id)
+        )
+    );
+
+    const installed = [];
+    const available = [];
+
+    registry.forEach((t, i) => {
+        if (idbChecks[i]) installed.push(t);
+        else available.push(t);
+    });
+
+    installed.sort((a, b) => a.id.localeCompare(b.id));
+
+    const appendSectionHeading = (label) => {
         const li = document.createElement('li');
+        li.className = 'translation-modal-section-heading';
+        li.textContent = label;
+        li.setAttribute('role', 'presentation');
+        app.translationList.appendChild(li);
+    };
+
+    const appendItem = (t, isPrecached, isDownloaded) => {
+        const wrapper = document.createElement('li');
+        wrapper.className = 'translation-modal-item-wrapper';
+
+        const li = document.createElement('div');
         li.className = 'translation-modal-item';
         if (t.id === app.state.translation) li.classList.add('translation-modal-item--active');
 
@@ -233,16 +265,330 @@ export function populateTranslationModal(app) {
         li.appendChild(nameSpan);
         li.appendChild(descSpan);
 
-        li.addEventListener('click', () => {
-            app.changeTranslation(t.id);
-            app.closeModal(app.translationModal);
-        });
+        if (!isPrecached) {
+            const iconEl = document.createElement('span');
+            iconEl.className = 'translation-modal-item__status-icon';
 
-        app.translationList.appendChild(li);
+            const progressWrap = document.createElement('div');
+            progressWrap.className = 'translation-dl-progress';
+            progressWrap.hidden = true;
+
+            const progressTrack = document.createElement('div');
+            progressTrack.className = 'translation-dl-progress__bar-track';
+
+            const progressBar = document.createElement('div');
+            progressBar.className = 'translation-dl-progress__bar';
+
+            const progressLabel = document.createElement('span');
+            progressLabel.className = 'translation-dl-progress__label';
+
+            progressTrack.appendChild(progressBar);
+            progressWrap.appendChild(progressTrack);
+            progressWrap.appendChild(progressLabel);
+            li.appendChild(iconEl);
+            li.appendChild(progressWrap);
+
+            if (_downloading.has(t.id)) {
+                progressWrap.hidden = false;
+                iconEl.innerHTML = _SVG_SPINNER;
+                progressLabel.textContent = 'Downloading…';
+                li.classList.add('translation-modal-item--downloading');
+            } else if (isDownloaded) {
+                li.classList.add('translation-modal-item--downloaded');
+                iconEl.innerHTML = _SVG_DOWNLOADED;
+            } else {
+                iconEl.innerHTML = _SVG_DOWNLOAD;
+            }
+
+            li.addEventListener('click', () => {
+                if (_downloading.has(t.id)) return;
+                if (li.classList.contains('translation-modal-item--downloaded')) {
+                    app.changeTranslation(t.id);
+                    app.closeModal(app.translationModal);
+                    return;
+                }
+                _handleTranslationSelect(app, t, li, iconEl, progressWrap, progressBar, progressLabel);
+            });
+
+            if (isDownloaded && !isPrecached) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'translation-modal-delete-btn';
+                deleteBtn.setAttribute('aria-label', `Uninstall ${t.id}`);
+                deleteBtn.innerHTML = _SVG_TRASH;
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    _handleUninstall(app, t, wrapper);
+                });
+
+                if (_hasHover) {
+                    deleteBtn.classList.add('translation-modal-delete-btn--inline');
+                    iconEl.classList.add('translation-modal-item__icon-wrap');
+                    iconEl.appendChild(deleteBtn);
+                } else {
+                    wrapper.appendChild(deleteBtn);
+                    _attachSwipe(wrapper, li);
+                }
+            }
+        } else {
+            li.addEventListener('click', () => {
+                app.changeTranslation(t.id);
+                app.closeModal(app.translationModal);
+            });
+        }
+
+        wrapper.appendChild(li);
+        app.translationList.appendChild(wrapper);
+    };
+
+    if (installed.length > 0) {
+        appendSectionHeading('Installed');
+        for (const t of installed) appendItem(t, PRECACHED_TRANSLATIONS.has(t.id), true);
+    }
+
+    if (available.length > 0) {
+        appendSectionHeading('Available');
+        for (const t of available) appendItem(t, false, false);
     }
 }
 
-// ── Translation modal keyboard helpers ───────────────────────────────────────────────
+async function _flyItem(app, t, sourceWrapper) {
+    const fromRect = sourceWrapper.getBoundingClientRect();
+
+    await populateTranslationModal(app);
+
+    const targetWrapper = Array.from(app.translationList.querySelectorAll('.translation-modal-item-wrapper'))
+        .find((w) => {
+            const name = w.querySelector('.translation-modal-item__name');
+            return name && name.textContent === t.id;
+        });
+
+    if (!targetWrapper) return;
+
+    const toRect = targetWrapper.getBoundingClientRect();
+    targetWrapper.style.opacity = '0';
+
+    const clone = sourceWrapper.cloneNode(true);
+    clone.style.cssText = [
+        `position:fixed`,
+        `top:${fromRect.top}px`,
+        `left:${fromRect.left}px`,
+        `width:${fromRect.width}px`,
+        `height:${fromRect.height}px`,
+        `margin:0`,
+        `pointer-events:none`,
+        `z-index:9999`,
+        `border-radius:var(--radius-md,8px)`,
+        `background:var(--surface-primary,var(--color-surface))`,
+        `box-shadow:var(--shadow-lg,0 12px 32px rgba(0,0,0,.2))`,
+        `transition:transform ${_FLY_DURATION} ${_FLY_EASING},opacity ${_FLY_DURATION} ${_FLY_EASING},box-shadow ${_FLY_DURATION} ${_FLY_EASING}`,
+        `will-change:transform,opacity`,
+    ].join(';');
+    document.body.appendChild(clone);
+
+    const dx = toRect.left - fromRect.left;
+    const dy = toRect.top  - fromRect.top;
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            clone.style.transform  = `translate(${dx}px,${dy}px)`;
+            clone.style.boxShadow  = 'var(--shadow-sm,0 1px 2px rgba(0,0,0,.06))';
+        });
+    });
+
+    clone.addEventListener('transitionend', () => {
+        clone.remove();
+        targetWrapper.style.opacity = '';
+    }, { once: true });
+}
+
+async function _flyToInstalled(app, t, sourceWrapper) {
+    await _flyItem(app, t, sourceWrapper);
+}
+
+async function _flyToAvailable(app, t, sourceWrapper) {
+    await _flyItem(app, t, sourceWrapper);
+}
+
+const _SWIPE_THRESHOLD = 60;
+const _DELETE_BTN_W   = 72;
+
+let _openWrapper = null;
+
+function _closeOpenWrapper() {
+    if (_openWrapper) {
+        const li = _openWrapper.querySelector('.translation-modal-item');
+        if (li) {
+            li.style.transition = 'transform 200ms ease';
+            li.style.transform = 'translateX(0)';
+        }
+        _openWrapper.classList.remove('translation-modal-item-wrapper--open');
+        _openWrapper = null;
+    }
+}
+
+function _attachSwipe(wrapper, li) {
+    let startX = 0;
+    let startY = 0;
+    let isDragging = false;
+    let currentX = 0;
+    let axis = null;
+
+    const clampX = (x) => Math.max(-_DELETE_BTN_W, Math.min(0, x));
+
+    const setX = (x, animate) => {
+        currentX = clampX(x);
+        li.style.transition = animate ? 'transform 200ms ease' : 'none';
+        li.style.transform = `translateX(${currentX}px)`;
+    };
+
+    const open = () => {
+        if (_openWrapper && _openWrapper !== wrapper) _closeOpenWrapper();
+        _openWrapper = wrapper;
+        setX(-_DELETE_BTN_W, true);
+        wrapper.classList.add('translation-modal-item-wrapper--open');
+    };
+
+    const close = () => {
+        if (_openWrapper === wrapper) _openWrapper = null;
+        setX(0, true);
+        wrapper.classList.remove('translation-modal-item-wrapper--open');
+    };
+
+    let _onMove = null;
+    let _onEnd  = null;
+
+    function cleanup() {
+        if (_onMove) { li.removeEventListener('touchmove', _onMove); _onMove = null; }
+        if (_onEnd)  {
+            li.removeEventListener('touchend',    _onEnd);
+            li.removeEventListener('touchcancel', _onEnd);
+            _onEnd = null;
+        }
+    }
+
+    li.addEventListener('touchstart', (e) => {
+        if (_openWrapper && _openWrapper !== wrapper) {
+            _closeOpenWrapper();
+            return;
+        }
+
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        isDragging = true;
+        axis = null;
+        li.style.transition = 'none';
+
+        _onMove = (ev) => {
+            if (!isDragging) return;
+
+            const dx = ev.touches[0].clientX - startX;
+            const dy = ev.touches[0].clientY - startY;
+
+            if (axis === null) {
+                if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+                axis = Math.abs(dx) > Math.abs(dy);
+                if (!axis) {
+                    isDragging = false;
+                    cleanup();
+                    return;
+                }
+            }
+
+            ev.preventDefault();
+            ev.stopPropagation();
+            const base = wrapper.classList.contains('translation-modal-item-wrapper--open') ? -_DELETE_BTN_W : 0;
+            setX(base + dx, false);
+        };
+
+        _onEnd = () => {
+            if (isDragging) {
+                isDragging = false;
+                if (currentX < -_SWIPE_THRESHOLD) open();
+                else close();
+            }
+            cleanup();
+        };
+
+        li.addEventListener('touchmove',   _onMove, { passive: false });
+        li.addEventListener('touchend',    _onEnd,  { passive: true });
+        li.addEventListener('touchcancel', _onEnd,  { passive: true });
+    }, { passive: true });
+}
+
+async function _handleUninstall(app, t, wrapper) {
+    await idbDeleteTranslation(t.id);
+
+    if (app.bibleApi?.evictTranslation) {
+        app.bibleApi.evictTranslation(t.id);
+    }
+
+    if (app.state.translation === t.id) {
+        const fallback = [...PRECACHED_TRANSLATIONS][0];
+        if (fallback) app.changeTranslation(fallback);
+    }
+
+    _flyToAvailable(app, t, wrapper);
+}
+
+async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progressBar, progressLabel) {
+    if (!navigator.onLine) {
+        _showInlineError(li, progressWrap, progressLabel, 'Connect to internet to download');
+        return;
+    }
+
+    _downloading.add(t.id);
+    li.classList.add('translation-modal-item--downloading');
+    iconEl.innerHTML = _SVG_SPINNER;
+    progressWrap.hidden = false;
+    progressBar.style.width = '0%';
+    progressLabel.textContent = 'Downloading…';
+
+    let bookList = null;
+    try {
+        const metaRes = await fetch(`./translations/${t.id}/meta.json`);
+        if (metaRes.ok) {
+            const meta = await metaRes.json();
+            if (meta?.books?.length) bookList = meta.books.map((b) => b.name);
+        }
+    } catch (_) {}
+
+    try {
+        await app.bibleApi.downloadTranslation(t.id, bookList, (done, tot) => {
+            const pct = Math.round((done / tot) * 100);
+            progressBar.style.width = `${pct}%`;
+            progressLabel.textContent = `${done} / ${tot}`;
+        });
+
+        _downloading.delete(t.id);
+        li.classList.remove('translation-modal-item--downloading');
+        li.classList.add('translation-modal-item--downloaded');
+        iconEl.innerHTML = _SVG_DOWNLOADED;
+        progressWrap.hidden = true;
+
+        const sourceWrapper = li.closest('.translation-modal-item-wrapper');
+        setTimeout(() => {
+            if (sourceWrapper) _flyToInstalled(app, t, sourceWrapper);
+        }, 500);
+    } catch (err) {
+        _downloading.delete(t.id);
+        li.classList.remove('translation-modal-item--downloading');
+        iconEl.innerHTML = _SVG_DOWNLOAD;
+        progressBar.style.width = '0%';
+        _showInlineError(li, progressWrap, progressLabel, 'Download failed — try again');
+        console.error('Translation download failed', err);
+    }
+}
+
+function _showInlineError(li, progressWrap, progressLabel, message) {
+    progressWrap.hidden = false;
+    progressWrap.classList.add('translation-dl-progress--error');
+    progressLabel.textContent = message;
+    setTimeout(() => {
+        progressWrap.hidden = true;
+        progressWrap.classList.remove('translation-dl-progress--error');
+        progressLabel.textContent = '';
+    }, 3000);
+}
 
 function _translationItems(app) {
     return app.translationList
@@ -278,14 +624,8 @@ export function translationKbSelect(app) {
     const items = _translationItems(app);
     const idx   = app._translationKbIndex ?? -1;
     if (idx < 0 || idx >= items.length) return;
-    const registry = app._translationRegistry || [];
-    const t = registry[idx];
-    if (!t) return;
-    app.changeTranslation(t.id);
-    app.closeModal(app.translationModal);
+    items[idx].click();
 }
-
-// ── Drag-to-resize ───────────────────────────────────────────────────────────────────────────────────────
 
 function attachDragHandlers(app, modal, dismissOnDrag = true) {
     const content = modal.querySelector('.modal-content');
@@ -323,7 +663,7 @@ function attachDragHandlers(app, modal, dismissOnDrag = true) {
         const totalDrag = e.changedTouches[0].clientY - touchStartY;
         if (dismissOnDrag && totalDrag > 150 && touchStartScrollTop === 0) {
             app.closeModal(modal);
-            setTimeout(() => { content.style.height = '50vh'; }, 300);
+            setTimeout(() => { content.style.height = '50vh'; }, 320);
         }
     }, { passive: true });
 
@@ -352,7 +692,7 @@ function attachDragHandlers(app, modal, dismissOnDrag = true) {
         content.classList.remove('dragging');
         if (dismissOnDrag && e.clientY - mouseStartY > 150) {
             app.closeModal(modal);
-            setTimeout(() => { content.style.height = '50vh'; }, 300);
+            setTimeout(() => { content.style.height = '50vh'; }, 320);
         }
     });
 }

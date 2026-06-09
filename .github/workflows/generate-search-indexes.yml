@@ -1,0 +1,41 @@
+name: Generate Search Indexes
+
+on:
+  workflow_dispatch:
+    inputs:
+      translations:
+        description: "Space-separated translation codes to regenerate (leave blank for all)"
+        required: false
+        default: ""
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: exp
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate indexes
+        run: |
+          if [ -n "${{ github.event.inputs.translations }}" ]; then
+            node scripts/generate-search-indexes.js ${{ github.event.inputs.translations }}
+          else
+            node scripts/generate-search-indexes.js
+          fi
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add translations/*/\*_search_index.json
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "build: regenerate search indexes"
+          git push

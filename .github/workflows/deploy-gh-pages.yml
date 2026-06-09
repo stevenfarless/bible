@@ -37,19 +37,24 @@ jobs:
       - name: Inject build info
         run: |
           BRANCH="${GITHUB_REF_NAME}"
-          BUILD="${GITHUB_RUN_NUMBER}"
-          SHA="${GITHUB_SHA::7}"
+          SHA7="${GITHUB_SHA::7}"
           if [ "${BRANCH}" = "main" ]; then
-            # Production: clear the placeholder, don't expose branch/build details
             sed -i "s|__BUILD_INFO__||g" index.html
+            sed -i "s|__BUILD_COLOR__|#444444|g" css/pericope.css
           else
-            INFO="${BRANCH} #${BUILD} · ${SHA}"
-            echo "Injecting: $INFO"
-            sed -i "s|__BUILD_INFO__|${INFO}|g" index.html
+            case "${BRANCH}" in
+              dev)  BUILD_COLOR="#09752b" ;;
+              exp)  BUILD_COLOR="#790606" ;;
+              *)    BUILD_COLOR="#444444" ;;
+            esac
+            echo "Injecting: $SHA7"
+            sed -i "s|__BUILD_INFO__|${SHA7}|g" index.html
+            sed -i "s|__BUILD_COLOR__|${BUILD_COLOR}|g" css/pericope.css
           fi
-          sed -i "s/__BUILD_ID__/$GITHUB_SHA/g" sw.js index.html
-          sed -i "s|\\(<script[^>]* src=\\\"\\)\\([^?\\\"]*\\)\\(\\.js\\)\\(\\\"\\)|\\1\\2\\3?v=${GITHUB_SHA}\\4|g" index.html
-          echo "$GITHUB_SHA" > version.txt
+          sed -i "s/__BUILD_ID__/${SHA7}/g" sw.js index.html
+          sed -i "s|\(<script[^>]* src=\"\)\([^?\"]*\)\(\.js\)\(\"\)|\1\2\3?v=${SHA7}\4|g" index.html
+          sed -i "s|\(<link[^>]* href=\"css/[^?\"]*\)\(\.css\)\(\"\)|\1\2?v=${SHA7}\3|g" index.html
+          echo "${GITHUB_SHA}" > version.txt
 
       - name: Inject Firebase config
         env:

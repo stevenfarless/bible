@@ -4,6 +4,30 @@
 
 import { normaliseBookAlias } from './book-aliases.js';
 
+// Canonical book order for cross-book sort — must stay in sync with
+// BOOK_LOAD_ORDER in bible-api.js.
+const CANON_BOOK_ORDER = [
+    'Genesis','Exodus','Leviticus','Numbers','Deuteronomy',
+    'Joshua','Judges','Ruth','1 Samuel','2 Samuel',
+    '1 Kings','2 Kings','1 Chronicles','2 Chronicles',
+    'Ezra','Nehemiah','Esther','Job','Psalm','Proverbs',
+    'Ecclesiastes','Song of Solomon','Isaiah','Jeremiah',
+    'Lamentations','Ezekiel','Daniel','Hosea','Joel','Amos',
+    'Obadiah','Jonah','Micah','Nahum','Habakkuk','Zephaniah',
+    'Haggai','Zechariah','Malachi','Matthew','Mark','Luke',
+    'John','Acts','Romans','1 Corinthians','2 Corinthians',
+    'Galatians','Ephesians','Philippians','Colossians',
+    '1 Thessalonians','2 Thessalonians','1 Timothy','2 Timothy',
+    'Titus','Philemon','Hebrews','James','1 Peter','2 Peter',
+    '1 John','2 John','3 John','Jude','Revelation',
+    'Additions to Esther','Bel and the Dragon','Prayer of Manasseh','Letter of Jeremiah',
+    'Prayer of Azariah','Wisdom of Solomon','2 Maccabees','4 Maccabees',
+    '3 Maccabees','1 Maccabees','Psalm 151','1 Esdras',
+    '2 Esdras','Susanna','Sirach','Baruch',
+    'Judith','Tobit',
+];
+const CANON_BOOK_INDEX = new Map(CANON_BOOK_ORDER.map((b, i) => [b, i]));
+
 // ─── Utilities ──────────────────────────────────────────────────────────────────────────────
 
 export function escapeRegExp(str) {
@@ -69,12 +93,26 @@ export function parseReference(reference, bookList) {
     return { book, chapter, verse };
 }
 
+// Returns true when the query should be routed through the reference/wildcard-
+// reference path rather than the keyword search path.
+//
+// Recognised patterns:
+//   Concrete refs   — "John 3", "John 3:16", "1 Cor 6:7"
+//   Wildcard book   — "* 6:7", "* 6:*", "* *:16"
+//   Wildcard chap   — "John *", "John *:*"
+//   Wildcard verse  — "John 3:*"
 export function isPassageReference(query) {
+    const q = query.trim();
+    // Wildcard-book patterns: "* ch", "* ch:v", "* ch:*", "* *:v", "* *:*"
+    if (/^\*\s+[\d*]+(?:[:]\s*[\d*]+)?$/i.test(q)) return true;
+    // Concrete or wildcard-verse/chapter patterns for named books
     const patterns = [
         /^[1-3]?\s*[a-z]+\s+\d+/i,
         /^[1-3]?\s*[a-z]+\s+\d+:\d+/i,
+        /^[1-3]?\s*[a-z]+\s+\*(?::\s*[\d*]+)?$/i,
+        /^[1-3]?\s*[a-z]+\s+\d+:\s*\*$/i,
     ];
-    return patterns.some((p) => p.test(query.trim()));
+    return patterns.some((p) => p.test(q));
 }
 
 export async function loadPassageFromReference(app, reference) {
@@ -91,14 +129,6 @@ export async function loadPassageFromReference(app, reference) {
 }
 
 // ─── Delegated event handler ───────────────────────────────────────────────────────────
-//
-// Attached to app.searchContainer (not app.searchResults) so that the
-// summary bar's expand/collapse buttons — which are siblings of
-// searchResults, not children — are covered by the same handler.
-//
-// Scroll-detection guard is still applied, but only blocks the action
-// when the tap target is inside searchResults (result items, headings).
-// Taps on the summary bar buttons are never ambiguous with a scroll.
 
 export function initSearchResultsDelegate(app) {
     if (app._searchDelegateAttached) return;
@@ -106,15 +136,12 @@ export function initSearchResultsDelegate(app) {
 
     let scrollTopAtTouchStart = 0;
 
-    // Track scroll position on the results list for the scroll-vs-tap guard.
     app.searchResults.addEventListener('touchstart', () => {
         scrollTopAtTouchStart = app.searchResults.scrollTop;
     }, { passive: true });
 
     function handleTap(e) {
         const target = e.target;
-
-        // Apply scroll guard only when the tap is inside the scrollable results list.
         const insideResultsList = app.searchResults.contains(target);
 
         if (e.type === 'touchend') {
@@ -184,19 +211,34 @@ export function initSearchResultsDelegate(app) {
             return;
         }
 
+        // ── Translation badge (multi-translation) ────────────────────────
+        const badge = target.closest('.search-result-translation-badge[data-translation-id]');
+        if (badge) {
+            e.preventDefault();
+            e.stopPropagation();
+            const card = badge.closest('.search-result-item');
+            if (!card) return;
+            const translationId = badge.dataset.translationId;
+            const translationContent = badge.dataset.translationContent;
+            card.dataset.activeTranslation = translationId;
+            card.querySelector('.search-result-content').innerHTML =
+                highlightSearchTerm(translationContent, query);
+            card.querySelectorAll('.search-result-translation-badge[data-translation-id]').forEach((b) => {
+                b.classList.toggle('active', b.dataset.translationId === translationId);
+            });
+            return;
+        }
+
         // ── Result item ────────────────────────────────────────────────
         const resultItem = target.closest('.search-result-item');
         if (resultItem) {
             e.preventDefault();
-            const sourceTrans = resultItem.dataset.sourceTranslation;
+            const activeTrans = resultItem.dataset.activeTranslation || null;
             const ref = resultItem.dataset.reference;
-            // Close the panel immediately — before any awaits — so the iOS
-            // synthetic click (~350ms after touchend) lands on nothing and
-            // cannot re-trigger this handler.
             closeSearch(app);
             (async () => {
-                if (sourceTrans && sourceTrans !== app.bibleApi.translation) {
-                    await app.changeTranslation(sourceTrans);
+                if (activeTrans && activeTrans !== app.bibleApi.translation) {
+                    await app.changeTranslation(activeTrans);
                 }
                 await loadPassageFromReference(app, ref);
             })();
@@ -204,7 +246,6 @@ export function initSearchResultsDelegate(app) {
         }
     }
 
-    // Listen on the container so the summary bar buttons are included.
     app.searchContainer.addEventListener('touchend', handleTap, { passive: false });
     app.searchContainer.addEventListener('click', handleTap);
 }
@@ -363,6 +404,14 @@ export function activateSelectedSearchResult(app) {
 // ─── API calls ───────────────────────────────────────────────────────────────────────────────
 
 export async function handlePassageReference(app, reference) {
+    const q = reference.trim();
+    // Wildcard reference patterns bypass the passage-fetch API and go directly
+    // to keyword search, which now handles them in bible-api.js.
+    if (/^\*/.test(q) || /\*/.test(q.replace(/^[^:]+/, ''))) {
+        await performKeywordSearch(app, reference);
+        return;
+    }
+
     const data = await app.bibleApi.fetchPassage(reference);
 
     if (data && data.passages && data.passages.length > 0) {
@@ -402,7 +451,10 @@ export async function runMegasearch(app, query) {
 
     app._dbgUserAction(`megasearch: activated for "${q}"`);
 
-    const knownRefs = new Set(app.currentSearchResults.map((r) => r.reference));
+    const activeTranslation = app.bibleApi.translation;
+    const knownRefs = new Set(
+        app.currentSearchResults.map((r) => r.reference)
+    );
 
     let supplemental;
     try {
@@ -420,6 +472,12 @@ export async function runMegasearch(app, query) {
     }
 
     const combined = [...app.currentSearchResults, ...supplemental];
+    combined.sort((a, b) => {
+        const bi = (CANON_BOOK_INDEX.get(a.book) ?? 999) - (CANON_BOOK_INDEX.get(b.book) ?? 999);
+        if (bi !== 0) return bi;
+        if (a.chapter !== b.chapter) return a.chapter - b.chapter;
+        return a.verse - b.verse;
+    });
     app.currentSearchResults = combined;
     app._dbgUserAction(`megasearch: added ${supplemental.length} supplemental results (total: ${combined.length})`);
     displaySearchResults(app, combined, query);
@@ -427,16 +485,59 @@ export async function runMegasearch(app, query) {
 
 // ─── Grouping & display ───────────────────────────────────────────────────────────────────
 
+// Merges results with the same reference into one object. The active
+// translation's text becomes the default displayed content; supplemental
+// translations are collected into a translations array for the inline badges.
+function mergeResultsByReference(results, activeTranslation) {
+    const seen = new Map(); // reference → merged result
+
+    for (const r of results) {
+        const ref = r.reference;
+        if (!seen.has(ref)) {
+            seen.set(ref, {
+                reference: r.reference,
+                book: r.book,
+                chapter: r.chapter,
+                verse: r.verse,
+                content: r.content,
+                activeTranslation: r.sourceTranslation || activeTranslation,
+                translations: [],
+            });
+        }
+        const merged = seen.get(ref);
+        const tid = r.sourceTranslation || activeTranslation;
+
+        // Promote active translation to primary content.
+        if (!r.sourceTranslation) {
+            merged.content = r.content;
+            merged.activeTranslation = activeTranslation;
+        }
+
+        // Avoid duplicate badges for the same translation.
+        if (!merged.translations.some((t) => t.id === tid)) {
+            merged.translations.push({ id: tid, content: r.content });
+        }
+    }
+
+    return [...seen.values()];
+}
+
 export function groupSearchResultsByCanon(app, results) {
     if (!Array.isArray(results)) return [];
 
-    const otBooks = Object.keys(app.bibleBooks['Old Testament']);
-    const ntBooks = Object.keys(app.bibleBooks['New Testament']);
+    const activeTranslation = app.bibleApi.translation;
+    const merged = mergeResultsByReference(results, activeTranslation);
+
+    const allBooks = app.getAllBooks();
+    const otBooks = Object.keys(app.bibleBooks['Old Testament'] || {});
+    const ntBooks = Object.keys(app.bibleBooks['New Testament'] || {});
+    const dcBooks = Object.keys(app.bibleBooks['Deuterocanon'] || {});
     const otGroups = new Map();
     const ntGroups = new Map();
+    const dcGroups = new Map();
 
-    for (const result of results) {
-        const parsed = parseReference(result.reference);
+    for (const result of merged) {
+        const parsed = parseReference(result.reference, allBooks);
         if (!parsed) continue;
         const { book } = parsed;
         const testament = app.getTestament?.(book);
@@ -447,6 +548,9 @@ export function groupSearchResultsByCanon(app, results) {
         } else if (testament === 'New Testament') {
             if (!ntGroups.has(book)) ntGroups.set(book, []);
             ntGroups.get(book).push(result);
+        } else if (testament === 'Deuterocanon') {
+            if (!dcGroups.has(book)) dcGroups.set(book, []);
+            dcGroups.get(book).push(result);
         }
     }
 
@@ -456,6 +560,13 @@ export function groupSearchResultsByCanon(app, results) {
         grouped.push({
             heading: 'Old Testament',
             books: otBooks.filter((b) => otGroups.has(b)).map((book) => ({ book, results: otGroups.get(book) })),
+        });
+    }
+
+    if (dcGroups.size) {
+        grouped.push({
+            heading: 'Deuterocanon',
+            books: dcBooks.filter((b) => dcGroups.has(b)).map((book) => ({ book, results: dcGroups.get(book) })),
         });
     }
 
@@ -474,16 +585,11 @@ export async function performKeywordSearch(app, query) {
     app.searchSelectedIndex = -1;
     app.searchResultItems = [];
 
-    // Clear expand state for the new query, then seed the initial open state
-    // (first testament + first book). This runs exactly once per search so
-    // subsequent displaySearchResults calls render the Sets as-is without
-    // any auto-open side effects.
     app.searchExpandedTestaments?.clear();
     app.searchExpandedBooks?.clear();
 
     await fetchAllSearchResults(app, query, (accumulatedResults) => {
         if (accumulatedResults.length > 0) {
-            // Seed initial open state before the first incremental render.
             if (app.searchExpandedTestaments.size === 0 && app.searchExpandedBooks.size === 0) {
                 const groups = groupSearchResultsByCanon(app, accumulatedResults);
                 const firstGroup = groups[0];
@@ -533,7 +639,7 @@ export function displaySearchResults(app, results, query) {
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-    const totalVerses = results.length;
+    const totalVerses = groups.reduce((acc, g) => acc + g.books.reduce((a, b) => a + b.results.length, 0), 0);
     const totalBooks = groups.reduce((acc, g) => acc + g.books.length, 0);
     const countLabel = `${totalVerses} verse${totalVerses !== 1 ? 's' : ''} in ${totalBooks} book${totalBooks !== 1 ? 's' : ''}`;
 
@@ -577,13 +683,22 @@ export function displaySearchResults(app, results, query) {
                     console.warn('highlight failed', err);
                 }
 
-                const badge = result.sourceTranslation
-                    ? ` <span class="search-result-translation-badge">${esc(result.sourceTranslation)}</span>`
-                    : '';
+                // Badges sit inline in the reference line, same as single-translation cards.
+                // When multiple translations matched, each gets a badge with data attrs for
+                // the tap handler; the active one gets class `active`.
+                let badgesHtml = '';
+                if (result.translations.length === 1) {
+                    badgesHtml = `<span class="search-result-translation-badge">${esc(result.translations[0].id)}</span>`;
+                } else if (result.translations.length > 1) {
+                    badgesHtml = result.translations.map((t) => {
+                        const isActive = t.id === result.activeTranslation;
+                        return `<span class="search-result-translation-badge${isActive ? ' active' : ''}" data-translation-id="${esc(t.id)}" data-translation-content="${esc(t.content)}">${esc(t.id)}</span>`;
+                    }).join('');
+                }
 
                 parts.push(`
-          <div class="search-result-item" data-reference="${esc(result.reference)}" ${result.sourceTranslation ? `data-source-translation="${esc(result.sourceTranslation)}"` : ''}>
-            <div class="search-result-reference">${esc(result.reference)}${badge}</div>
+          <div class="search-result-item" data-reference="${esc(result.reference)}" data-active-translation="${esc(result.activeTranslation)}">
+            <div class="search-result-reference">${esc(result.reference)} ${badgesHtml}</div>
             <div class="search-result-content">${highlighted}</div>
           </div>
         `);

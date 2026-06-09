@@ -2,7 +2,7 @@
 // Wires all DOM event listeners to BibleApp instance methods.
 // New feature bindings go here — app.js does not need to change.
 
-import { toggleTheme, changeColorTheme } from './ui.js';
+import { setLightMode, changeColorTheme, applyLightMode } from './ui.js';
 import { attachDragToResize } from './modals.js';
 import { runMegasearch, performKeywordSearch } from './search.js';
 import { applyReadingFont } from './settings.js';
@@ -160,21 +160,19 @@ export function attachEventListeners(app) {
     // Backdrop-click closes any modal
     [
         app.bookModal, app.chapterModal, app.verseModal,
-        app.settingsModal, app.helpModal, app.loginModal,
+        app.settingsModal, app.loginModal,
         app.signupModal, app.userMenuModal, app.referencesModal,
-        app.translationModal,
+        app.translationModal, app.deuterocanonInfoModal,
     ].forEach((modal) => {
         if (!modal) return;
         modal.addEventListener('click', (e) => { if (e.target === modal) app.closeModal(modal); });
     });
 
-    app.helpBtn?.addEventListener('click',            () => app.openModal(app.helpModal));
     app.settingsBtn?.addEventListener('click',        () => app.openModal(app.settingsModal));
     app.closeVerseModal?.addEventListener('click',    () => app.closeModal(app.verseModal));
     app.closeBookModal?.addEventListener('click',     () => app.closeModal(app.bookModal));
     app.closeDeuterocanonInfoModal?.addEventListener('click', () => app.closeModal(app.deuterocanonInfoModal));
     app.closeChapterModal?.addEventListener('click',  () => app.closeModal(app.chapterModal));
-    app.closeHelpModal?.addEventListener('click',     () => app.closeModal(app.helpModal));
     app.closeSettingsModal?.addEventListener('click', () => app.closeModal(app.settingsModal));
     app.closeReferencesModal?.addEventListener('click', () => app.closeModal(app.referencesModal));
     app.closeTranslationModal?.addEventListener('click', () => app.closeModal(app.translationModal));
@@ -185,11 +183,12 @@ export function attachEventListeners(app) {
     app.verseNumbersToggle?.addEventListener('change', () => app.toggleSetting('showVerseNumbers'));
     app.headingsToggle?.addEventListener('change',     () => app.toggleSetting('showHeadings'));
     app.footnotesToggle?.addEventListener('change',    () => app.toggleSetting('showFootnotes'));
+    app.chapterArrowsToggle?.addEventListener('change',() => app.toggleSetting('showChapterArrows'));
 
     app.crossReferencesToggle = document.getElementById('crossReferencesToggle');
     app.crossReferencesToggle?.addEventListener('change', () => app.toggleSetting('showCrossReferences'));
 
-    app.verseByVerseToggle?.addEventListener('change', () => app.toggleVerseByVerse());
+    app.verseByVerseToggle?.addEventListener('change',  () => app.toggleVerseByVerse());
     app.fontSizeSlider?.addEventListener('input',  (e) => app.updateFontSize(e.target.value));
 
     const readingFontSelector = document.getElementById('readingFontSelector');
@@ -212,9 +211,8 @@ export function attachEventListeners(app) {
     app.translationSelector?.addEventListener('change', async (e) => app.changeTranslation(e.target.value));
 
     // ── Theme ────────────────────────────────────────────────────
-    app.themeToggleBtn?.addEventListener('click', () => toggleTheme(app));
-    document.getElementById('themeSelector')?.addEventListener('change',   (e) => changeColorTheme(app, e.target.value));
-    document.getElementById('lightModeToggle')?.addEventListener('change', () => toggleTheme(app));
+    document.getElementById('themeSelector')?.addEventListener('change', (e) => changeColorTheme(app, e.target.value));
+    document.getElementById('lightModeSelect')?.addEventListener('change', (e) => setLightMode(app, e.target.value));
 
     // ── Auth ─────────────────────────────────────────────────────
     document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
@@ -255,4 +253,10 @@ export function attachEventListeners(app) {
 
     // ── Keyboard ────────────────────────────────────────────────
     document.addEventListener('keydown', (e) => app.handleKeyboardShortcuts(e));
+    // Live-update appearance when OS dark/light mode changes
+    window.matchMedia('(prefers-color-scheme: light)')
+        .addEventListener('change', () => {
+            if (app.state.lightMode === 'system') applyLightMode('system');
+        });
+
 }

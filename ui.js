@@ -3,20 +3,20 @@
 
 const REQUIRED_IDS = [
 	'topChrome',
-	'searchToggle', 'helpBtn', 'settingsBtn',
+	'searchToggle', 'settingsBtn',
 	'prevChapter', 'nextChapter', 'bookSelector', 'chapterSelector', 'verseSelector',
 	'currentBook', 'currentChapter', 'currentVerse',
 	'searchContainer', 'closeSearch', 'searchInput', 'searchResults',
 	'passageTitle', 'passageText', 'copyright',
-	'bookModal', 'chapterModal', 'verseModal', 'settingsModal', 'helpModal',
+	'bookModal', 'chapterModal', 'verseModal', 'settingsModal',
 	'loginModal', 'signupModal', 'userMenuModal',
 	'closeBookModal', 'closeChapterModal', 'closeVerseModal',
-	'closeSettingsModal', 'closeHelpModal', 'closeLoginModal',
+	'closeSettingsModal', 'closeLoginModal',
 	'closeSignupModal', 'closeUserMenuModal',
 	'oldTestamentBooks', 'newTestamentBooks',
 	'chapterModalBook', 'chapterGrid', 'verseModalBook', 'verseGrid',
 	'verseNumbersToggle', 'headingsToggle', 'footnotesToggle',
-	'crossReferencesToggle', 'verseByVerseToggle',
+	'crossReferencesToggle', 'verseByVerseToggle', 'chapterArrowsToggle',
 	'fontSizeSlider', 'fontSizeValue',
 	'referencesModal', 'closeReferencesModal',
 	'deuterocanonInfoModal', 'closeDeuterocanonInfoModal',
@@ -27,6 +27,21 @@ const REQUIRED_IDS = [
 	'translationSelectorBtn', 'currentTranslation',
 	'translationModal', 'closeTranslationModal', 'translationList',
 ];
+
+// The inline <script> in <head> stamps the theme class and no-color-transition
+// onto document.documentElement before first paint (document.body is null then).
+// Once DOMContentLoaded fires, body is available — mirror all classes from
+// <html> to <body> so component CSS targeting body.X-theme continues to work,
+// then lift the transition guard from both elements.
+document.addEventListener('DOMContentLoaded', () => {
+	const htmlClasses = [...document.documentElement.classList];
+	if (htmlClasses.length) document.body.classList.add(...htmlClasses);
+
+	requestAnimationFrame(() => {
+		document.documentElement.classList.remove('no-color-transition');
+		document.body.classList.remove('no-color-transition');
+	});
+}, { once: true });
 
 export function cacheElements(app) {
 	// Validate all required IDs exist — warns immediately if HTML is stale or mismatched
@@ -40,7 +55,6 @@ export function cacheElements(app) {
 
 	// Header
 	app.searchToggleBtn = document.getElementById('searchToggle');
-	app.helpBtn = document.getElementById('helpBtn');
 	app.settingsBtn = document.getElementById('settingsBtn');
 	app.themeToggleBtn = document.getElementById('themeToggle');
 
@@ -80,7 +94,6 @@ export function cacheElements(app) {
 	app.chapterModal = document.getElementById('chapterModal');
 	app.verseModal = document.getElementById('verseModal');
 	app.settingsModal = document.getElementById('settingsModal');
-	app.helpModal = document.getElementById('helpModal');
 	app.loginModal = document.getElementById('loginModal');
 	app.signupModal = document.getElementById('signupModal');
 	app.userMenuModal = document.getElementById('userMenuModal');
@@ -90,7 +103,6 @@ export function cacheElements(app) {
 	app.closeChapterModal = document.getElementById('closeChapterModal');
 	app.closeVerseModal = document.getElementById('closeVerseModal');
 	app.closeSettingsModal = document.getElementById('closeSettingsModal');
-	app.closeHelpModal = document.getElementById('closeHelpModal');
 	app.closeLoginModal = document.getElementById('closeLoginModal');
 	app.closeSignupModal = document.getElementById('closeSignupModal');
 	app.closeUserMenuModal = document.getElementById('closeUserMenuModal');
@@ -109,6 +121,7 @@ export function cacheElements(app) {
 	app.footnotesToggle = document.getElementById('footnotesToggle');
 	app.crossReferencesToggle = document.getElementById('crossReferencesToggle');
 	app.verseByVerseToggle = document.getElementById('verseByVerseToggle');
+	app.chapterArrowsToggle = document.getElementById('chapterArrowsToggle');
 	app.fontSizeSlider = document.getElementById('fontSizeSlider');
 	app.fontSizeValue = document.getElementById('fontSizeValue');
 	// translationSelector (<select>) was removed from the settings modal;
@@ -132,32 +145,45 @@ export function cacheElements(app) {
 }
 
 // Load theme on app start (uses localStorage as initial fallback)
-export function loadTheme(app) {
-	let savedLightMode = false;
-	try { savedLightMode = localStorage.getItem('lightMode') === 'true'; } catch (_) {}
-	if (savedLightMode) {
-		document.documentElement.classList.add('light-mode');
-		document.body.classList.add('light-mode');
-	}
-	updateThemeIcon(savedLightMode);
+export function loadTheme() {
+	let mode = 'system';
+	try {
+		const raw = localStorage.getItem('lightMode');
+		// migrate old boolean strings
+		if (raw === 'true')  mode = 'light';
+		else if (raw === 'false') mode = 'dark';
+		else if (raw === 'light' || raw === 'dark' || raw === 'system') mode = raw;
+	} catch (_) {}
+	applyLightMode(mode);
 }
 
-// Toggle between light and dark mode
-export async function toggleTheme(app) {
-	document.documentElement.classList.toggle('light-mode');
-	document.body.classList.toggle('light-mode');
 
-	const isLightMode = document.body.classList.contains('light-mode');
+export function resolveLightMode(mode) {
+	if (mode === 'light') return true;
+	if (mode === 'dark')  return false;
+	return window.matchMedia('(prefers-color-scheme: light)').matches;
+}
 
-	// Always write locally so cold loads get the correct value immediately.
-	try { localStorage.setItem('lightMode', isLightMode); } catch (_) {}
+export function applyLightMode(mode) {
+	const isLight = resolveLightMode(mode);
+	document.documentElement.classList.toggle('light-mode', isLight);
+	document.body.classList.toggle('light-mode', isLight);
+	updateThemeIcon(isLight);
+	updateThemeColor();
+}
 
+export async function setLightMode(app, mode) {
+	const normalized = mode === 'light' || mode === 'dark' || mode === 'system' ? mode : 'system';
+	app.state.lightMode = normalized;
+	try { localStorage.setItem('lightMode', normalized); } catch (_) {}
+	applyLightMode(normalized);
+	const sel = document.getElementById('lightModeSelect');
+	if (sel) sel.value = normalized;
 	if (app.currentUser) {
-		await app.database.ref(`users/${app.currentUser.uid}/settings/lightMode`).set(isLightMode);
+		await app.database.ref(`users/${app.currentUser.uid}/settings/lightMode`).set(normalized);
 	}
-
-	updateThemeIcon(isLightMode);
 }
+
 
 // Update theme icon based on current mode
 export function updateThemeIcon(isLightMode) {
@@ -195,22 +221,59 @@ export function updateThemeIcon(isLightMode) {
 	}
 }
 
+const ALL_THEME_CLASSES = ['dracula-theme', 'dracula2test-theme', 'onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme', 'gnome-theme'];
+
+// bg-base values sourced from css/tokens.css (Dracula/Alucard) and css/themes.css (all others).
+// dark = the theme's dark-mode --bg-base; light = the theme's light-mode --bg-base.
+const THEME_BG = {
+	'basic-theme':        { dark: '#000000', light: '#ffffff' },
+	'dracula-theme':      { dark: '#191A21', light: '#FFFBEB' },
+	'dracula2test-theme': { dark: '#191A21', light: '#FFFBEB' },
+	'onyx-theme':         { dark: '#000000', light: '#faf9f7' },
+	'sage-theme':         { dark: '#0d1710', light: '#f6f8f5' },
+	'ember-theme':        { dark: '#161009', light: '#faf8f3' },
+	'perplexity-theme':   { dark: '#0A1616', light: '#f5f5f5' },
+	'geek-theme':         { dark: '#000000', light: '#000000' },
+	'gnome-theme':        { dark: '#1e1e1e', light: '#f6f5f4' },
+};
+
+export function updateThemeColor() {
+	const isLight = document.documentElement.classList.contains('light-mode');
+	const activeClass = [...document.documentElement.classList]
+		.find(c => c.endsWith('-theme')) || 'basic-theme';
+	const map = THEME_BG[activeClass] || THEME_BG['basic-theme'];
+	const color = isLight ? map.light : map.dark;
+
+	let meta = document.querySelector('meta[name="theme-color"]');
+	if (!meta) {
+		meta = document.createElement('meta');
+		meta.name = 'theme-color';
+		document.head.appendChild(meta);
+	}
+	meta.content = color;
+}
+
 export async function changeColorTheme(app, theme) {
-	document.body.classList.remove('onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme');
+	// Sync removal and addition on both <html> and <body> so that
+	// both the :root/:html CSS variable selectors and the body.X-theme
+	// component selectors (header, modals, geek overrides) resolve correctly.
+	document.documentElement.classList.remove(...ALL_THEME_CLASSES);
+	document.body.classList.remove(...ALL_THEME_CLASSES);
 
-	if (theme === 'onyx')            document.body.classList.add('onyx-theme');
-	else if (theme === 'sage')       document.body.classList.add('sage-theme');
-	else if (theme === 'ember')      document.body.classList.add('ember-theme');
-	else if (theme === 'perplexity') document.body.classList.add('perplexity-theme');
-	else if (theme === 'basic')      document.body.classList.add('basic-theme');
-	else if (theme === 'geek')       document.body.classList.add('geek-theme');
+	const valid = ALL_THEME_CLASSES.includes(theme + '-theme');
+	const resolved = valid ? theme : 'basic';
+	const cls = resolved + '-theme';
 
-	// Always write locally so cold loads get the correct value immediately.
-	try { localStorage.setItem('colorTheme', theme); } catch (_) {}
+	document.documentElement.classList.add(cls);
+	document.body.classList.add(cls);
+
+	updateThemeColor();
+
+	try { localStorage.setItem('colorTheme', resolved); } catch (_) {}
 
 	if (app.currentUser) {
 		await app.database
 			.ref(`users/${app.currentUser.uid}/settings/colorTheme`)
-			.set(theme);
+			.set(resolved);
 	}
 }
