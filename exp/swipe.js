@@ -273,6 +273,10 @@ export function initSwipe(app) {
         viewport.style.height          = '';
     }
 
+    // passive: false is required so that e.preventDefault() in touchmove can
+    // actually suppress native scroll on iOS Safari. When touchstart is passive
+    // the browser commits to a scroll direction before touchmove fires and
+    // ignores any subsequent preventDefault call.
     viewport.addEventListener('touchstart', (e) => {
         if (_animating) {
             _vetoed = true;
@@ -286,7 +290,7 @@ export function initSwipe(app) {
         _tracking        = false;
         _vetoed          = false;
         _currentOffsetPx = 0;
-    }, { passive: true });
+    }, { passive: false });
 
     viewport.addEventListener('touchmove', (e) => {
         if (_vetoed) return;
