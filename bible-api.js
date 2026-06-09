@@ -54,6 +54,8 @@ const BOOK_LOAD_ORDER = [
     'Judith','Tobit',
 ];
 
+const REFERENCE_PATTERN_RE = /^(?:\*|(?:[1-3]\s+)?[A-Za-z][A-Za-z ]*?)\s+(?:\*|\d+)(?::(?:\*|\d+))?$/i;
+
 // Canonical position map for cross-book sort.
 const BOOK_ORDER_INDEX = new Map(BOOK_LOAD_ORDER.map((b, i) => [b, i]));
 
@@ -85,6 +87,62 @@ function _buildWordRegex(q) {
     return new RegExp(`\\b${escaped}\\b`, 'i');
 }
 
+function _escapeRegex(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function _looksLikeReferencePattern(query) {
+    const normalized = String(query || '').trim().replace(/\s+/g, ' ');
+    return REFERENCE_PATTERN_RE.test(normalized);
+}
+
+function _buildReferenceRegex(query) {
+    const normalized = String(query || '').trim().replace(/\s+/g, ' ');
+    const match = normalized.match(/^(.*?)\s+(\*|\d+)(?::(\*|\d+))?$/);
+    if (!match) return null;
+
+    const rawBook = match[1].trim();
+    const rawChapter = match[2];
+    const rawVerse = match[3] ?? null;
+
+    const bookPart = rawBook === '*'
+        ? '.+?'
+        : _escapeRegex(normaliseBookAlias(rawBook)).replace(/\\\*/g, '.+?');
+    const chapterPart = rawChapter === '*' ? '\\d+' : _escapeRegex(rawChapter);
+    const versePart = rawVerse === null ? null : (rawVerse === '*' ? '\\d+' : _escapeRegex(rawVerse));
+
+    return new RegExp(
+        `^${bookPart}\\s+${chapterPart}${versePart !== null ? `:${versePart}` : ''}$`,
+        'i'
+    );
+}
+
+function _buildWildcardTextRegex(query) {
+    const parts = String(query || '').trim().split('*').map((part) => part.trim()).filter(Boolean);
+    if (parts.length === 0) return null;
+
+    const tokenPatterns = parts.map((part) => {
+        const tokens = part.split(/[^\p{L}\p{N}']+/u).filter(Boolean);
+        if (tokens.length === 0) return '';
+        return tokens.map((token) => {
+            const stem = _normalizeTerm(token.toLowerCase());
+            const escapedStem = _escapeRegex(stem);
+            return `\\b${escapedStem}\\w*`;
+        }).join('\\s+');
+    }).filter(Boolean);
+
+    if (tokenPatterns.length === 0) return null;
+    return new RegExp(tokenPatterns.join('(?:\\W+\\w+){0,40}?\\W+'), 'i');
+}
+
+function _classifySearchQuery(query) {
+    const normalized = String(query || '').trim();
+    if (!normalized) return 'empty';
+    if (_looksLikeReferencePattern(normalized)) return 'reference';
+    if (normalized.includes('*')) return 'wildcardText';
+    return 'text';
+}
+
 /**
  * Builds a stem-expanded regex for `q` so that a search for "love" also
  * matches "loves", "loved", "loveth", "loving", etc. — matching the
@@ -95,12 +153,9 @@ function _buildWordRegex(q) {
  */
 function _buildStemRegex(q) {
     const terms = q.split(/[^\p{L}\p{N}']+/u).filter(Boolean);
-    // All terms must appear (AND semantics) — build one combined RegExp per term.
     const regexes = terms.map((term) => {
         const stem = _normalizeTerm(term.toLowerCase());
         const escapedStem = stem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        // Match the stem followed by any word characters (covers inflections),
-        // bounded by word boundaries.
         return new RegExp(`\\b${escapedStem}\\w*`, 'i');
     });
     return regexes;
@@ -126,23 +181,18 @@ export async function loadTranslationIndex() {
 function _normalizeTerm(word) {
     const w = word.toLowerCase();
     if (w.length < 3) return w;
-    // KJV archaisms: loveth/hath/doth -> love/ha/do -> then consonant-e rule trims further
     if (w.endsWith('eth') && w.length > 4) {
         return _normalizeTerm(w.slice(0, -3));
     }
-    // loved/moved/fixed -> lov/mov/fix  (strip -ed after consonant)
     if (w.endsWith('ed') && w.length > 4 && !'aeiou'.includes(w[w.length - 3])) {
         return w.slice(0, -2);
     }
-    // loves/moves/fixes -> lov/mov/fix  (strip -es after consonant)
     if (w.endsWith('es') && w.length > 4 && !'aeiou'.includes(w[w.length - 3])) {
         return w.slice(0, -2);
     }
-    // love/grace/name -> lov/grac/nam  (strip silent trailing -e after consonant)
     if (w.endsWith('e') && w.length >= 4 && !'aeiou'.includes(w[w.length - 2])) {
         return w.slice(0, -1);
     }
-    // commandments -> commandment  (plain plural -s after consonant)
     if (w.endsWith('s') && w.length > 4 && !'aeiou'.includes(w[w.length - 2])) {
         return w.slice(0, -1);
     }
@@ -223,7 +273,6 @@ export class BibleApi {
                             this._bookCache.set(cacheKey, cached);
                             return cached;
                         }
-                        // Not installed — do not fetch from network.
                         this._bookCache.set(cacheKey, null);
                         return null;
                     }
@@ -299,8 +348,6 @@ export class BibleApi {
                 }
 
                 if (isRepo && !PRECACHED_TRANSLATIONS.has(translation)) {
-                    // Only serve installed translations — never fetch network data for
-                    // a translation the user has not explicitly downloaded.
                     const installed = await idbIsDownloaded(translation);
                     if (!installed) {
                         this._searchIndexCache.set(translation, null);
@@ -312,7 +359,6 @@ export class BibleApi {
                         this._searchIndexCache.set(translation, cached);
                         return cached;
                     }
-                    // Installed but search index missing from IDB — re-fetch and store.
                 }
 
                 const url = isRepo
@@ -381,7 +427,6 @@ export class BibleApi {
 
         await idbMarkDownloaded(translation);
 
-        // Notify the SW so it starts caching this translation's files on access.
         if (navigator.serviceWorker?.controller) {
             navigator.serviceWorker.controller.postMessage({
                 type: 'TRANSLATION_INSTALLED',
@@ -535,22 +580,19 @@ export class BibleApi {
         return { passages: [html], canonical };
     }
 
-    // Scan a search index object with stemmed regex matching, returning refs in
-    // canonical book→chapter→verse order.
-    _scanSearchIndex(searchIndex, stemRegexes) {
+    _scanSearchIndex(searchIndex, matcher, mode = 'text') {
         const matched = [];
         for (const ref of Object.keys(searchIndex)) {
-            const text = searchIndex[ref];
-            if (stemRegexes.every((re) => re.test(text))) {
-                const colonIdx = ref.lastIndexOf(':');
-                const spaceIdx = ref.lastIndexOf(' ', colonIdx);
-                matched.push({
-                    ref,
-                    book:    ref.slice(0, spaceIdx),
-                    chapter: Number(ref.slice(spaceIdx + 1, colonIdx)),
-                    verse:   Number(ref.slice(colonIdx + 1)),
-                });
-            }
+            const target = mode === 'reference' ? ref : searchIndex[ref];
+            if (!matcher(target)) continue;
+            const colonIdx = ref.lastIndexOf(':');
+            const spaceIdx = ref.lastIndexOf(' ', colonIdx);
+            matched.push({
+                ref,
+                book:    ref.slice(0, spaceIdx),
+                chapter: Number(ref.slice(spaceIdx + 1, colonIdx)),
+                verse:   Number(ref.slice(colonIdx + 1)),
+            });
         }
         matched.sort((a, b) => {
             const bi = (BOOK_ORDER_INDEX.get(a.book) ?? 999) - (BOOK_ORDER_INDEX.get(b.book) ?? 999);
@@ -562,12 +604,24 @@ export class BibleApi {
     }
 
     async searchPassages(query, onBatchResults = null) {
-        const q = String(query || '').toLowerCase().trim();
+        const q = String(query || '').trim();
         if (!q) return { results: [], total_results: 0, page_size: PAGE_SIZE };
 
-        const queryTerms = q.split(/[^\p{L}\p{N}']+/u).filter(Boolean);
+        const normalizedQ = q.toLowerCase();
+        const mode = _classifySearchQuery(q);
+        const queryTerms = normalizedQ.split(/[^\p{L}\p{N}']+/u).filter(Boolean);
         const normalizedQueryTerms = queryTerms.map((term) => _normalizeTerm(term));
-        const stemRegexes = _buildStemRegex(q);
+        const stemRegexes = mode === 'text' ? _buildStemRegex(normalizedQ) : [];
+        const wildcardTextRegex = mode === 'wildcardText' ? _buildWildcardTextRegex(q) : null;
+        const referenceRegex = mode === 'reference' ? _buildReferenceRegex(q) : null;
+
+        const matcher = mode === 'reference'
+            ? (value) => referenceRegex?.test(value) ?? false
+            : mode === 'wildcardText'
+                ? (value) => wildcardTextRegex?.test(String(value || '')) ?? false
+                : (value) => stemRegexes.every((re) => re.test(String(value || '')));
+
+        const scanMode = mode === 'reference' ? 'reference' : 'text';
 
         const debugSearch = (engine, matchedRefs) => {
             const topRefs = matchedRefs.slice(0, 5);
@@ -575,7 +629,8 @@ export class BibleApi {
             console.debug('BibleApi.searchPassages', {
                 engine,
                 translation: this._translation,
-                query: q,
+                query: normalizedQ,
+                mode,
                 queryTerms,
                 normalizedQueryTerms,
                 totalHits: matchedRefs.length,
@@ -587,9 +642,8 @@ export class BibleApi {
         const searchIndex = await this._loadSearchIndex(this._translation);
 
         if (searchIndex !== null) {
-            // Stemmed scan over the flat search index — canonical order preserved.
-            const matches = this._scanSearchIndex(searchIndex, stemRegexes);
-            debugSearch('stemScan', matches.map((m) => m.ref));
+            const matches = this._scanSearchIndex(searchIndex, matcher, scanMode);
+            debugSearch(`${mode}Scan`, matches.map((m) => m.ref));
 
             const uniqueBooks = [...new Set(matches.map((m) => m.book))];
             const bookDataMap = new Map();
@@ -629,11 +683,11 @@ export class BibleApi {
             return { results, total_results: results.length, page_size: PAGE_SIZE };
         }
 
-        // Slow path: no search index — scan book JSONs with stemmed regex.
         console.debug('BibleApi.searchPassages', {
             engine: 'bookScan',
             translation: this._translation,
-            query: q,
+            query: normalizedQ,
+            mode,
             queryTerms,
             normalizedQueryTerms,
             searchIndexAvailable: false,
@@ -662,9 +716,13 @@ export class BibleApi {
                         .sort((a, b) => Number(a[0]) - Number(b[0]));
                     for (const [verseStr, text] of verseEntries) {
                         const verseText = String(text || '');
-                        if (!stemRegexes.every((re) => re.test(verseText))) continue;
+                        const reference = `${book} ${chapterStr}:${verseStr}`;
+                        const isMatch = mode === 'reference'
+                            ? matcher(reference)
+                            : matcher(verseText);
+                        if (!isMatch) continue;
                         batchResults.push({
-                            reference: `${book} ${chapterStr}:${verseStr}`,
+                            reference,
                             content:   verseText,
                             book,
                             chapter:   Number(chapterStr),
@@ -684,23 +742,25 @@ export class BibleApi {
     }
 
     async searchPassagesAllTranslations(query, knownRefs) {
-        const q = String(query || '').toLowerCase().trim();
+        const q = String(query || '').trim();
         if (q.length < 3) return [];
 
         const activeTranslation = this._translation;
-
-        // All LOCAL_TRANSLATIONS are always available — no idbIsDownloaded check needed.
         const candidates = [...LOCAL_TRANSLATIONS].filter((t) => t !== activeTranslation);
 
         if (candidates.length === 0) return [];
 
-        const stemRegexes = _buildStemRegex(q);
+        const mode = _classifySearchQuery(q);
+        const stemRegexes = mode === 'text' ? _buildStemRegex(q.toLowerCase()) : [];
+        const wildcardTextRegex = mode === 'wildcardText' ? _buildWildcardTextRegex(q) : null;
+        const referenceRegex = mode === 'reference' ? _buildReferenceRegex(q) : null;
+        const matcher = mode === 'reference'
+            ? (value) => referenceRegex?.test(value) ?? false
+            : mode === 'wildcardText'
+                ? (value) => wildcardTextRegex?.test(String(value || '')) ?? false
+                : (value) => stemRegexes.every((re) => re.test(String(value || '')));
+        const scanMode = mode === 'reference' ? 'reference' : 'text';
 
-        // seen is keyed on "TRANSLATION::ref" so the same verse from two
-        // different translations are both included as separate badged results.
-        // knownRefs contains bare refs (e.g. "Genesis 1:1") from the
-        // active-translation search. Prefix with activeTranslation to match the
-        // "TRANSLATION::ref" key format used throughout seen.
         const seen = new Set(
             [...knownRefs].map((ref) => `${activeTranslation}::${ref}`)
         );
@@ -710,7 +770,7 @@ export class BibleApi {
             const searchIndex = await this._loadSearchIndex(translation);
 
             if (searchIndex !== null) {
-                const matches = this._scanSearchIndex(searchIndex, stemRegexes);
+                const matches = this._scanSearchIndex(searchIndex, matcher, scanMode);
 
                 const filteredMatches = [];
                 for (const m of matches) {
@@ -746,7 +806,6 @@ export class BibleApi {
                 return;
             }
 
-            // Slow path: scan whatever books are already in the memory cache.
             for (const book of BOOK_LOAD_ORDER) {
                 const bookData = this._bookCache.get(`${translation}/${book}`)
                     ?? this._bookCache.get(`${translation}/${BOOK_KEY_ALIASES[book]}`);
@@ -758,24 +817,35 @@ export class BibleApi {
                     for (const [verseStr, text] of Object.entries(chapterData)) {
                         if (Number(verseStr) <= 0) continue;
                         const verseText = String(text || '');
-                        if (!stemRegexes.every((re) => re.test(verseText))) continue;
                         const ref = `${book} ${chapterStr}:${verseStr}`;
+                        const isMatch = mode === 'reference'
+                            ? matcher(ref)
+                            : matcher(verseText);
+                        if (!isMatch) continue;
                         const seenKey = `${translation}::${ref}`;
                         if (seen.has(seenKey)) continue;
                         seen.add(seenKey);
                         supplemental.push({
-                            reference:         ref,
-                            content:           verseText,
+                            reference: ref,
+                            content: verseText,
                             book,
-                            chapter:           Number(chapterStr),
-                            verse:             Number(verseStr),
-                            text:              verseText,
+                            chapter: Number(chapterStr),
+                            verse: Number(verseStr),
+                            text: verseText,
                             sourceTranslation: translation,
                         });
                     }
                 }
             }
         }));
+
+        supplemental.sort((a, b) => {
+            const bi = (BOOK_ORDER_INDEX.get(a.book) ?? 999) - (BOOK_ORDER_INDEX.get(b.book) ?? 999);
+            if (bi !== 0) return bi;
+            if (a.chapter !== b.chapter) return a.chapter - b.chapter;
+            if (a.verse !== b.verse) return a.verse - b.verse;
+            return String(a.sourceTranslation || '').localeCompare(String(b.sourceTranslation || ''));
+        });
 
         return supplemental;
     }

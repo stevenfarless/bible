@@ -160,7 +160,7 @@ export function attachEventListeners(app) {
     // Backdrop-click closes any modal
     [
         app.bookModal, app.chapterModal, app.verseModal,
-        app.settingsModal, app.helpModal, app.loginModal,
+        app.settingsModal, app.loginModal,
         app.signupModal, app.userMenuModal, app.referencesModal,
         app.translationModal, app.deuterocanonInfoModal,
     ].forEach((modal) => {
@@ -168,13 +168,11 @@ export function attachEventListeners(app) {
         modal.addEventListener('click', (e) => { if (e.target === modal) app.closeModal(modal); });
     });
 
-    app.helpBtn?.addEventListener('click',            () => app.openModal(app.helpModal));
     app.settingsBtn?.addEventListener('click',        () => app.openModal(app.settingsModal));
     app.closeVerseModal?.addEventListener('click',    () => app.closeModal(app.verseModal));
     app.closeBookModal?.addEventListener('click',     () => app.closeModal(app.bookModal));
     app.closeDeuterocanonInfoModal?.addEventListener('click', () => app.closeModal(app.deuterocanonInfoModal));
     app.closeChapterModal?.addEventListener('click',  () => app.closeModal(app.chapterModal));
-    app.closeHelpModal?.addEventListener('click',     () => app.closeModal(app.helpModal));
     app.closeSettingsModal?.addEventListener('click', () => app.closeModal(app.settingsModal));
     app.closeReferencesModal?.addEventListener('click', () => app.closeModal(app.referencesModal));
     app.closeTranslationModal?.addEventListener('click', () => app.closeModal(app.translationModal));

@@ -3,15 +3,15 @@
 
 const REQUIRED_IDS = [
 	'topChrome',
-	'searchToggle', 'helpBtn', 'settingsBtn',
+	'searchToggle', 'settingsBtn',
 	'prevChapter', 'nextChapter', 'bookSelector', 'chapterSelector', 'verseSelector',
 	'currentBook', 'currentChapter', 'currentVerse',
 	'searchContainer', 'closeSearch', 'searchInput', 'searchResults',
 	'passageTitle', 'passageText', 'copyright',
-	'bookModal', 'chapterModal', 'verseModal', 'settingsModal', 'helpModal',
+	'bookModal', 'chapterModal', 'verseModal', 'settingsModal',
 	'loginModal', 'signupModal', 'userMenuModal',
 	'closeBookModal', 'closeChapterModal', 'closeVerseModal',
-	'closeSettingsModal', 'closeHelpModal', 'closeLoginModal',
+	'closeSettingsModal', 'closeLoginModal',
 	'closeSignupModal', 'closeUserMenuModal',
 	'oldTestamentBooks', 'newTestamentBooks',
 	'chapterModalBook', 'chapterGrid', 'verseModalBook', 'verseGrid',
@@ -55,7 +55,6 @@ export function cacheElements(app) {
 
 	// Header
 	app.searchToggleBtn = document.getElementById('searchToggle');
-	app.helpBtn = document.getElementById('helpBtn');
 	app.settingsBtn = document.getElementById('settingsBtn');
 	app.themeToggleBtn = document.getElementById('themeToggle');
 
@@ -95,7 +94,6 @@ export function cacheElements(app) {
 	app.chapterModal = document.getElementById('chapterModal');
 	app.verseModal = document.getElementById('verseModal');
 	app.settingsModal = document.getElementById('settingsModal');
-	app.helpModal = document.getElementById('helpModal');
 	app.loginModal = document.getElementById('loginModal');
 	app.signupModal = document.getElementById('signupModal');
 	app.userMenuModal = document.getElementById('userMenuModal');
@@ -105,7 +103,6 @@ export function cacheElements(app) {
 	app.closeChapterModal = document.getElementById('closeChapterModal');
 	app.closeVerseModal = document.getElementById('closeVerseModal');
 	app.closeSettingsModal = document.getElementById('closeSettingsModal');
-	app.closeHelpModal = document.getElementById('closeHelpModal');
 	app.closeLoginModal = document.getElementById('closeLoginModal');
 	app.closeSignupModal = document.getElementById('closeSignupModal');
 	app.closeUserMenuModal = document.getElementById('closeUserMenuModal');

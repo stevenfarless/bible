@@ -135,7 +135,9 @@ function _addTransition(el, ms) {
 }
 
 function _removeTransition(el) {
-    el.style.transition = '';
+    // Pin to 'none' rather than '' so the base.css wildcard never takes over
+    // on side panels. _addTransition sets it explicitly when needed.
+    el.style.transition = 'none';
 }
 
 function _animDuration(velocityPxMs) {
@@ -174,22 +176,24 @@ export function initSwipe(app) {
     prevPanel.id        = 'swipePrev';
     prevPanel.className = currentPanel.className;
     Object.assign(prevPanel.style, {
-        position:  'absolute',
-        top:       '0',
-        left:      '0',
-        width:     '100%',
-        transform: `translateX(${-vw()}px)`,
+        position:   'absolute',
+        top:        '0',
+        left:       '0',
+        width:      '100%',
+        transform:  `translateX(${-vw()}px)`,
+        transition: 'none',
     });
 
     const nextPanel = document.createElement('div');
     nextPanel.id        = 'swipeNext';
     nextPanel.className = currentPanel.className;
     Object.assign(nextPanel.style, {
-        position:  'absolute',
-        top:       '0',
-        left:      '0',
-        width:     '100%',
-        transform: `translateX(${vw()}px)`,
+        position:   'absolute',
+        top:        '0',
+        left:       '0',
+        width:      '100%',
+        transform:  `translateX(${vw()}px)`,
+        transition: 'none',
     });
 
     viewport.insertBefore(prevPanel, currentPanel);
@@ -208,6 +212,13 @@ export function initSwipe(app) {
         },
         async syncAdjacentPanels() {
             this._syncClasses();
+            // Keep transitions pinned to 'none' for the entire render.
+            // Do NOT restore to '' afterward — that hands control back to
+            // the base.css wildcard and races with the ResizeObserver,
+            // causing the pre-render flash. _addTransition sets transitions
+            // explicitly only when a commit or cancel animation needs them.
+            this.prevPanel.style.transition = 'none';
+            this.nextPanel.style.transition = 'none';
             const prevPos = _adjacentPosition(app, -1);
             const nextPos = _adjacentPosition(app, +1);
             await Promise.all([
@@ -382,19 +393,24 @@ export function initSwipe(app) {
         _animating = true;
 
         viewport.classList.remove('swiping');
+
+        // Pin the uninvolved panel at its canonical off-screen position for
+        // the entire commit animation. Without transition:none the base.css
+        // wildcard would animate it through center screen.
+        uninvolvedPanel.style.transition = 'none';
+        _setTranslateX(uninvolvedPanel, direction === 1 ? -W : +W);
+
         _addTransition(app.passageText, animMs);
-        _addTransition(app.swipe.prevPanel, animMs);
-        _addTransition(app.swipe.nextPanel, animMs);
+        _addTransition(incomingPanel, animMs);
 
         const outOffset = direction === 1 ? -W : +W;
         _setTranslateX(app.passageText, outOffset);
-        _setTranslateX(app.swipe.prevPanel, outOffset - W);
-        _setTranslateX(app.swipe.nextPanel, outOffset + W);
+        _setTranslateX(incomingPanel, 0);
 
         setTimeout(async () => {
             _removeTransition(app.passageText);
-            _removeTransition(app.swipe.prevPanel);
-            _removeTransition(app.swipe.nextPanel);
+            _removeTransition(incomingPanel);
+            uninvolvedPanel.style.transition = 'none';
 
             const outgoingPanel = app.passageText;
 
@@ -455,7 +471,11 @@ export function initSwipe(app) {
 
             _animating = false;
 
-            await app.swipe.syncAdjacentPanels();
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    app.swipe.syncAdjacentPanels();
+                });
+            });
         }, animMs);
     }, { passive: true });
 }
