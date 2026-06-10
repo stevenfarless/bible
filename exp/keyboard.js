@@ -52,12 +52,6 @@ export function handleKeyboardShortcuts(app, e) {
     if (modalOpen || searchOpen) return;
 
     switch (e.key) {
-        case 'Enter':
-            if (app.state.selectedVerse !== null) {
-                e.preventDefault();
-                app.toggleVerseTray();
-            }
-            break;
         case '/':
             e.preventDefault();
             app.toggleSearch();
