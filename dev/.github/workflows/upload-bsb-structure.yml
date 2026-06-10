@@ -1,0 +1,63 @@
+name: Upload BSB Structure to Firebase
+
+on:
+  workflow_dispatch:
+
+jobs:
+  upload:
+    name: Upload BSB structure scaffolds to Firebase RTDB
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install firebase-admin
+
+      - name: Write service account key
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: echo "$FIREBASE_SERVICE_ACCOUNT" > /tmp/service_account.json
+
+      - name: Upload BSB structure
+        run: |
+          python - <<'EOF'
+          import json
+          import glob
+          import os
+          import firebase_admin
+          from firebase_admin import credentials, db
+
+          cred = credentials.Certificate("/tmp/service_account.json")
+          firebase_admin.initialize_app(cred, {
+              "databaseURL": "https://esv-bible-6dffb-default-rtdb.firebaseio.com"
+          })
+
+          files = sorted(glob.glob("translations/BSB/BSB_structure/*.json"))
+
+          if not files:
+              print("No structure files found.")
+              exit(1)
+
+          for path in files:
+              book_name = os.path.splitext(os.path.basename(path))[0]
+              print(f"Uploading {book_name}...")
+              with open(path, "r", encoding="utf-8-sig") as f:
+                  data = json.load(f)
+              db.reference(f"structure/BSB/{book_name}").set(data)
+              print(f"  Done.")
+
+          print("All structure files uploaded.")
+          EOF
+
+      - name: Clean up key
+        if: always()
+        run: rm -f /tmp/service_account.json

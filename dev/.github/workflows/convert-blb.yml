@@ -1,0 +1,45 @@
+name: Convert BLB xlsx to JSON
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_result:
+        description: 'Commit BLB_bible.json and meta.json to the branch'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout feature/special-access
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: feature/special-access
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.12'
+
+      - name: Install openpyxl
+        run: pip install openpyxl
+
+      - name: Convert blb.xlsx to BLB_bible.json
+        run: python .github/scripts/convert_blb.py
+
+      - name: Commit and push
+        if: ${{ github.event.inputs.commit_result == 'true' }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add translations/BLB/BLB_bible.json translations/BLB/meta.json
+          git diff --cached --quiet && echo "Nothing to commit" || git commit -m "chore: generate BLB_bible.json from blb.xlsx"
+          git push
