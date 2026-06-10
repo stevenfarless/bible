@@ -1,0 +1,44 @@
+name: Restore and Normalize Translation Files
+
+on:
+  workflow_dispatch:
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout feature/special-access (full history)
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          ref: feature/special-access
+          fetch-depth: 0
+
+      - name: Restore original translation files from last good commit
+        run: |
+          # Last good commit before placeholders were written
+          GOOD_COMMIT="0c530520d819e227e8be01fa268149398a25f741"
+          for T in ASV BSB KJV LEB MSB NET WEB; do
+            # Original files were named {T}.json before rename
+            git show ${GOOD_COMMIT}:translations/${T}/${T}.json > translations/${T}/${T}_bible.json
+            echo "Restored translations/${T}/${T}_bible.json from ${GOOD_COMMIT}"
+          done
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: '3.12'
+
+      - name: Normalize all restored files
+        run: python .github/scripts/normalize_translations.py
+
+      - name: Commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add translations/
+          git diff --cached --quiet && echo "Nothing to commit" || \
+            git commit -m "fix: restore and normalize translation files (replace placeholders with real data)"
+          git push origin feature/special-access

@@ -105,7 +105,7 @@ function openChangePasswordModal(app) {
  * @param {object} app - BibleApp instance
  */
 export function attachEventListeners(app) {
-    // ── Search ───────────────────────────────────────────────────
+    // ── Search ───────────────────────────────────────────────────────────────
     app.searchToggleBtn?.addEventListener('click', () => app.toggleSearch());
     app.closeSearchBtn?.addEventListener('click',  () => app.closeSearch());
     app.searchInput?.addEventListener('input',     (e) => app.handleSearch(e.target.value, 'type'));
@@ -129,7 +129,7 @@ export function attachEventListeners(app) {
         }
     });
 
-    // ── Navigation ──────────────────────────────────────────────
+    // ── Navigation ──────────────────────────────────────────────────────────
     app.prevChapterBtn?.addEventListener('click',  () => app.navigateChapter(-1));
     app.nextChapterBtn?.addEventListener('click',  () => app.navigateChapter(1));
     app.bookSelector?.addEventListener('click',    () => app.openBookModal());
@@ -143,13 +143,36 @@ export function attachEventListeners(app) {
     // app.swipe.syncAdjacentPanels() (called from app.loadPassage).
     initSwipe(app);
 
-    // ── Translation badge (nav) ──────────────────────────────────
+    // ── Translation badge (nav) ──────────────────────────────────────────────
     app.translationSelectorBtn?.addEventListener('click', () => app.openTranslationModal());
 
-    // ── Copy passage ─────────────────────────────────────────────
+    // ── Copy passage ─────────────────────────────────────────────────────────
     document.getElementById('copyPassage')?.addEventListener('click', () => app.copyPassage());
 
-    // ── Modals: late-cached elements ─────────────────────────────────
+    // ── Verse tap-to-select ──────────────────────────────────────────────────
+    // Delegated to #swipeViewport (the stable wrapper) rather than app.passageText,
+    // because app.passageText is reassigned to a new DOM node on every swipe commit.
+    // Attaching to passageText directly would break verse selection after any swipe.
+    // touch-action:manipulation on .verse (set in CSS) eliminates the 300ms tap
+    // delay on mobile without disabling scroll.
+    // Tapping the already-selected verse deselects it.
+    const verseClickTarget = document.getElementById('swipeViewport') ?? app.passageText;
+    verseClickTarget?.addEventListener('click', (e) => {
+        const verse = e.target.closest('.verse');
+        if (!verse) return;
+        // Ignore clicks that originated inside the tool tray or trigger.
+        if (e.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
+        const num = parseInt(verse.dataset.verse, 10);
+        if (!num) return;
+        if (app.state.selectedVerse === num) {
+            app.state.selectedVerse = null;
+            app.applyVerseGlow();
+        } else {
+            app.scrollToVerse(num);
+        }
+    });
+
+    // ── Modals: late-cached elements ─────────────────────────────────────────
     app.referencesModal        = document.getElementById('referencesModal');
     app.closeReferencesModal   = document.getElementById('closeReferencesModal');
     app.footnotesSection       = document.getElementById('footnotesSection');
@@ -179,7 +202,7 @@ export function attachEventListeners(app) {
 
     attachDragToResize(app);
 
-    // ── Settings toggles ────────────────────────────────────────────
+    // ── Settings toggles ─────────────────────────────────────────────────────
     app.verseNumbersToggle?.addEventListener('change', () => app.toggleSetting('showVerseNumbers'));
     app.headingsToggle?.addEventListener('change',     () => app.toggleSetting('showHeadings'));
     app.footnotesToggle?.addEventListener('change',    () => app.toggleSetting('showFootnotes'));
@@ -210,11 +233,11 @@ export function attachEventListeners(app) {
     // Settings <select> still works as a secondary route
     app.translationSelector?.addEventListener('change', async (e) => app.changeTranslation(e.target.value));
 
-    // ── Theme ────────────────────────────────────────────────────
+    // ── Theme ─────────────────────────────────────────────────────────────────
     document.getElementById('themeSelector')?.addEventListener('change', (e) => changeColorTheme(app, e.target.value));
     document.getElementById('lightModeSelect')?.addEventListener('change', (e) => setLightMode(app, e.target.value));
 
-    // ── Auth ─────────────────────────────────────────────────────
+    // ── Auth ──────────────────────────────────────────────────────────────────
     document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
     document.getElementById('changeEmailBtn')?.addEventListener('click', () => { app.closeModal(app.userMenuModal); openChangeEmailModal(app); });
     document.getElementById('changePasswordBtn')?.addEventListener('click', () => { app.closeModal(app.userMenuModal); openChangePasswordModal(app); });
@@ -244,14 +267,14 @@ export function attachEventListeners(app) {
     app.closeSignupModal?.addEventListener('click',   () => app.closeModal(app.signupModal));
     app.closeUserMenuModal?.addEventListener('click', () => app.closeModal(app.userMenuModal));
 
-    // ── Scroll (chrome hide/show + position save) ───────────────────
+    // ── Scroll (chrome hide/show + position save) ────────────────────────────
     window.addEventListener('scroll', () => {
         app.handleChromeScroll();
         clearTimeout(app.scrollTimeout);
         app.scrollTimeout = setTimeout(() => app.saveReadingPosition(), 500);
     }, { passive: true });
 
-    // ── Keyboard ────────────────────────────────────────────────
+    // ── Keyboard ──────────────────────────────────────────────────────────────
     document.addEventListener('keydown', (e) => app.handleKeyboardShortcuts(e));
     // Live-update appearance when OS dark/light mode changes
     window.matchMedia('(prefers-color-scheme: light)')
