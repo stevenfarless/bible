@@ -181,13 +181,14 @@ export async function toggleVerseByVerse(app) {
 }
 
 export function applyReadingFont(app, font) {
-    document.body.classList.remove('font-andika', 'font-ubuntu', 'font-opendyslexic3', 'font-retrocide', 'font-ia-quattro');
+    document.body.classList.remove('font-andika', 'font-ubuntu', 'font-opendyslexic3', 'font-retrocide', 'font-ia-quattro', 'font-adwaitasans');
 
     if (font === 'andika')        document.body.classList.add('font-andika');
     if (font === 'ubuntu')        document.body.classList.add('font-ubuntu');
     if (font === 'opendyslexic3') document.body.classList.add('font-opendyslexic3');
     if (font === 'retrocide')     document.body.classList.add('font-retrocide');
     if (font === 'ia-quattro')    document.body.classList.add('font-ia-quattro');
+    if (font === 'adwaitasans')   document.body.classList.add('font-adwaitasans');
 
     const selector = document.getElementById('readingFontSelector');
     const helpText = document.getElementById('readingFontHelpText');
