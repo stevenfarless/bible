@@ -2,6 +2,12 @@
    8. INTERACTIVE STATES & EFFECTS
    ================================ */
 
+/* Eliminate 300ms tap delay on verses; scroll is unaffected. */
+.verse {
+    touch-action: manipulation;
+    cursor: pointer;
+}
+
 .selected-verse-glow {
     display: block;
     box-sizing: border-box;
@@ -95,7 +101,6 @@ body.light-mode .verse-tools-trigger:focus-visible {
     transition:
         max-height 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
         opacity    0.25s ease;
-    /* bottom-radius carried by the glow wrapper; tray sits flush */
     border-top: 1px solid rgba(255, 215, 0, 0.15);
     margin: 0 -12px;
     padding: 0 12px;
@@ -106,21 +111,68 @@ body.light-mode .verse-tools-trigger:focus-visible {
     opacity: 1;
 }
 
-.verse-tools-placeholder {
-    display: block;
-    padding: 14px 0;
-    font-size: 0.8rem;
-    color: rgba(255, 215, 0, 0.4);
-    text-align: center;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
-
 body.light-mode .verse-tools-tray {
     border-top-color: rgba(255, 140, 0, 0.2);
 }
-body.light-mode .verse-tools-placeholder {
-    color: rgba(200, 100, 0, 0.45);
+
+/* ── Tool action row ── */
+
+.verse-tools-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 10px 0 12px;
+    gap: 4px;
+}
+
+.verse-tool-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 215, 0, 0.08);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    cursor: pointer;
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        transform 0.15s ease;
+    touch-action: manipulation;
+}
+
+.verse-tool-btn:hover,
+.verse-tool-btn:focus-visible {
+    background: rgba(255, 215, 0, 0.18);
+    border-color: rgba(255, 215, 0, 0.5);
+    outline: none;
+}
+
+.verse-tool-btn:active {
+    transform: scale(0.92);
+}
+
+.verse-tool-letter {
+    font-family: var(--font-ui, system-ui, sans-serif);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(255, 215, 0, 0.75);
+    line-height: 1;
+    user-select: none;
+}
+
+body.light-mode .verse-tool-btn {
+    background: rgba(255, 140, 0, 0.08);
+    border-color: rgba(255, 140, 0, 0.25);
+}
+body.light-mode .verse-tool-btn:hover,
+body.light-mode .verse-tool-btn:focus-visible {
+    background: rgba(255, 140, 0, 0.18);
+    border-color: rgba(255, 140, 0, 0.5);
+}
+body.light-mode .verse-tool-letter {
+    color: rgba(200, 100, 0, 0.8);
 }
 
 

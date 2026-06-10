@@ -103,8 +103,14 @@ export function applyVerseGlow(app) {
     const tray = document.createElement('div');
     tray.className = 'verse-tools-tray';
     tray.setAttribute('aria-hidden', 'true');
-    // Placeholder content until tools are implemented.
-    tray.innerHTML = `<span class="verse-tools-placeholder">Tools coming soon</span>`;
+    tray.innerHTML = `
+        <div class="verse-tools-actions">
+            <button class="verse-tool-btn" aria-label="Highlight"><span class="verse-tool-letter">H</span></button>
+            <button class="verse-tool-btn" aria-label="Bookmark"><span class="verse-tool-letter">B</span></button>
+            <button class="verse-tool-btn" aria-label="Note"><span class="verse-tool-letter">N</span></button>
+            <button class="verse-tool-btn" aria-label="Copy"><span class="verse-tool-letter">C</span></button>
+            <button class="verse-tool-btn" aria-label="Share"><span class="verse-tool-letter">S</span></button>
+        </div>`;
     wrapper.appendChild(tray);
 
     trigger.addEventListener('click', () => toggleVerseTray(wrapper, trigger, tray));
