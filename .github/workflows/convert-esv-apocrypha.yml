@@ -11,13 +11,13 @@ jobs:
 
     steps:
       - name: Checkout main-book-update
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: main-book-update
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout script from dev
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: dev
           path: dev-scripts
