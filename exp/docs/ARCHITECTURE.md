@@ -486,7 +486,7 @@ Tap the panel to copy to clipboard. Tap outside to close.
 
 ```bash
 # Clone the repo
-git clone https://github.com/stevenfarless/bible.git
+git clone https://github.com/stevenfarless/lege-lux.git
 cd bible
 
 # Install test dependencies (Playwright, Vitest only — app has no npm runtime deps)

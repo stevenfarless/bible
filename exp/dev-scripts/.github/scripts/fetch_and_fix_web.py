@@ -24,7 +24,7 @@ WEB_structure format (matches translations/BSB/BSB_structure):
   verse that immediately follows it.
 
 Usage (local):
-    GITHUB_TOKEN=<pat> GITHUB_REPO=stevenfarless/bible TARGET_BRANCH=main-book-update python fetch_and_fix_web.py
+    GITHUB_TOKEN=<pat> GITHUB_REPO=stevenfarless/lege-lux TARGET_BRANCH=main-book-update python fetch_and_fix_web.py
 
 Usage (GitHub Actions):
     Set GITHUB_TOKEN via secrets; GITHUB_REPO via github.repository;
@@ -52,7 +52,7 @@ TRANSLATION_ID = "WEB"
 TARGET_DIR     = "translations/WEB"
 STRUCTURE_DIR  = "translations/WEB/WEB_structure"
 BRANCH         = os.environ.get("TARGET_BRANCH", "main-book-update")
-REPO           = os.environ.get("GITHUB_REPO", "stevenfarless/bible")
+REPO           = os.environ.get("GITHUB_REPO", "stevenfarless/lege-lux")
 TOKEN          = os.environ.get("GITHUB_TOKEN", "")
 API            = "https://api.github.com"
 

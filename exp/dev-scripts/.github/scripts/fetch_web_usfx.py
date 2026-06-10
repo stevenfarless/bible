@@ -10,7 +10,7 @@ translations/WEB/meta.json and pushes everything to the target branch
 via the GitHub API in a single commit.
 
 Usage (local):
-    GITHUB_TOKEN=<pat> GITHUB_REPO=stevenfarless/bible TARGET_BRANCH=main-book-update python fetch_web_usfx.py
+    GITHUB_TOKEN=<pat> GITHUB_REPO=stevenfarless/lege-lux TARGET_BRANCH=main-book-update python fetch_web_usfx.py
 
 Usage (GitHub Actions):
     Set GITHUB_TOKEN via secrets; GITHUB_REPO is set automatically.
@@ -36,7 +36,7 @@ USFX_URL = "https://ebible.org/Scriptures/eng-webbe_usfx.zip"
 TRANSLATION_ID = "WEB"
 TARGET_DIR = "translations/WEB"
 BRANCH = os.environ.get("TARGET_BRANCH", "main-book-update")
-REPO = os.environ.get("GITHUB_REPO", "stevenfarless/bible")
+REPO = os.environ.get("GITHUB_REPO", "stevenfarless/lege-lux")
 TOKEN = os.environ.get("GITHUB_TOKEN", "")
 API_BASE = "https://api.github.com"
 

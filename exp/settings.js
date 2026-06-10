@@ -308,7 +308,7 @@ export async function populateAboutVersion() {
 
     try {
         const res = await fetch(
-            'https://api.github.com/repos/stevenfarless/bible/releases/latest',
+            'https://api.github.com/repos/stevenfarless/lege-lux/releases/latest',
             { headers: { Accept: 'application/vnd.github+json' } }
         );
         if (!res.ok) { await _fallbackToBuildSha(); return; }
@@ -343,7 +343,7 @@ async function _populateComingSoon() {
     if (!el) return;
     try {
         const res = await fetch(
-            'https://api.github.com/repos/stevenfarless/bible/releases?per_page=10',
+            'https://api.github.com/repos/stevenfarless/lege-lux/releases?per_page=10',
             { headers: { Accept: 'application/vnd.github+json' } }
         );
         if (!res.ok) return;
