@@ -2,176 +2,322 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Lege Lux Lite</title>
 <style>
-body {
+/* Kindle Paperwhite 7th gen: 1072x1448 @ 300ppi, ~90 logical px/inch after scaling.
+   Silk browser behaves like a ~768px viewport at default zoom. Target minimum
+   tap target: 44px logical. Body text: 22px for comfortable e-ink reading. */
+
+* { -webkit-box-sizing: border-box; box-sizing: border-box; }
+
+html, body {
   margin: 0;
   padding: 0;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 18px;
-  line-height: 1.7;
+  font-size: 22px;
+  line-height: 1.75;
   color: #000;
   background: #fff;
 }
 a { color: #000; }
 a:visited { color: #000; }
 
+/* ── Toolbar ── */
 #toolbar {
   background: #000;
   color: #fff;
-  padding: 6px 10px;
+  padding: 10px 12px;
   font-family: Arial, sans-serif;
-  font-size: 14px;
 }
-#toolbar a {
+#toolbar form {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+#trans-select {
+  font-size: 18px;
+  height: 44px;
+  padding: 0 6px;
+  border: none;
+  background: #333;
   color: #fff;
-  text-decoration: none;
-  margin-right: 8px;
+  -webkit-appearance: none;
+  border-radius: 4px;
+  min-width: 70px;
 }
-#toolbar select {
-  font-size: 13px;
-  margin-right: 6px;
-}
-#toolbar input[type=text] {
-  font-size: 13px;
-  width: 120px;
+#ref-input {
+  font-size: 18px;
+  height: 44px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 4px;
+  -webkit-flex: 1;
+  flex: 1;
+  min-width: 100px;
+  color: #000;
 }
 #toolbar input[type=submit] {
-  font-size: 13px;
+  font-size: 18px;
+  height: 44px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 4px;
+  background: #555;
+  color: #fff;
+  cursor: pointer;
 }
-
-#nav {
-  padding: 6px 10px;
+#toolbar-links {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  border-top: 1px solid #444;
+  margin-top: 8px;
+}
+#toolbar-links a {
+  display: block;
+  -webkit-flex: 1;
+  flex: 1;
+  text-align: center;
+  color: #fff;
   font-family: Arial, sans-serif;
-  font-size: 13px;
-  border-bottom: 1px solid #999;
-  background: #f0f0f0;
-}
-#nav a {
-  margin-right: 10px;
-}
-#nav .loc {
+  font-size: 18px;
   font-weight: bold;
+  text-decoration: none;
+  padding: 12px 0;
+}
+#toolbar-links a:first-child {
+  border-right: 1px solid #444;
 }
 
+/* ── Chapter nav bar ── */
+#nav {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: stretch;
+  -ms-flex-align: stretch;
+  align-items: stretch;
+  font-family: Arial, sans-serif;
+  border-bottom: 2px solid #000;
+  background: #eee;
+}
+#nav-prev-wrap, #nav-next-wrap {
+  -webkit-flex: 0 0 auto;
+  flex: 0 0 auto;
+}
+#nav-prev-wrap a, #nav-next-wrap a {
+  display: block;
+  font-size: 20px;
+  font-weight: bold;
+  padding: 14px 18px;
+  text-decoration: none;
+  color: #000;
+  white-space: nowrap;
+  background: #ddd;
+  border: none;
+  line-height: 1;
+}
+#nav-prev-wrap a:active, #nav-next-wrap a:active {
+  background: #bbb;
+}
+#nav-loc-wrap {
+  -webkit-flex: 1;
+  flex: 1;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  padding: 0 8px;
+}
+#nav-loc {
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* ── Reading content ── */
 #content {
-  max-width: 640px;
+  max-width: 680px;
   margin: 0 auto;
-  padding: 16px 14px 40px;
+  padding: 20px 18px 60px;
 }
 
 h2.chapter-title {
   font-family: Arial, sans-serif;
-  font-size: 16px;
+  font-size: 22px;
   font-weight: bold;
-  margin: 0 0 14px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #ccc;
+  margin: 0 0 18px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #000;
 }
-h3.section-head {
-  font-family: Arial, sans-serif;
-  font-size: 14px;
-  font-weight: bold;
-  margin: 18px 0 4px;
-  color: #333;
+h2.chapter-title span {
+  font-weight: normal;
+  font-size: 17px;
 }
 .passage-para {
-  margin: 0 0 12px;
+  margin: 0 0 16px;
   padding: 0;
-  text-indent: 1.4em;
-}
-.passage-para:first-of-type {
-  text-indent: 0;
-}
-.verse-num {
-  font-size: 11px;
-  vertical-align: super;
-  font-family: Arial, sans-serif;
-  color: #555;
-  margin-right: 1px;
-  font-style: normal;
+  text-indent: 1.5em;
 }
 .passage-prologue {
   font-style: italic;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
+  text-indent: 0;
 }
-
-#search-results {
-  margin-top: 10px;
-}
-.result-item {
-  border-bottom: 1px solid #ddd;
-  padding: 8px 0;
-}
-.result-ref {
-  font-family: Arial, sans-serif;
+.verse-num {
   font-size: 13px;
-  font-weight: bold;
-}
-.result-text {
-  margin: 3px 0 0;
-  font-size: 16px;
+  vertical-align: super;
+  font-family: Arial, sans-serif;
+  color: #444;
+  margin-right: 1px;
+  font-style: normal;
+  line-height: 0;
 }
 
+/* ── Loading ── */
 #loading {
-  padding: 20px 14px;
+  padding: 30px 18px;
   font-family: Arial, sans-serif;
-  font-size: 14px;
+  font-size: 20px;
 }
 
+/* ── Picker ── */
 #picker-screen {
-  padding: 10px 14px;
+  padding: 14px 16px;
   font-family: Arial, sans-serif;
-  font-size: 14px;
 }
 #picker-screen h3 {
-  margin: 0 0 8px;
-  font-size: 15px;
+  margin: 0 0 12px;
+  font-size: 20px;
+  font-weight: bold;
+  border-bottom: 2px solid #000;
+  padding-bottom: 6px;
 }
 #book-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  column-count: 2;
+  -webkit-columns: 2;
+  columns: 2;
+  column-gap: 0;
 }
-#book-list li {
-  margin: 2px 0;
-}
+#book-list li { margin: 0; }
 #book-list a {
   display: block;
-  padding: 4px 6px;
-  font-size: 14px;
-  border-bottom: 1px solid #eee;
+  padding: 12px 10px;
+  font-size: 18px;
+  border-bottom: 1px solid #ccc;
+  text-decoration: none;
+  color: #000;
 }
+#book-list a:active { background: #eee; }
 #chap-list {
-  list-style: none;
-  margin: 8px 0 0;
+  margin: 12px 0 0;
   padding: 0;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 #chap-list a {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border: 2px solid #999;
+  border-radius: 4px;
+  font-size: 18px;
+  font-family: Arial, sans-serif;
+  text-decoration: none;
+  color: #000;
+}
+#chap-list a:active { background: #eee; }
+.picker-back {
   display: inline-block;
-  width: 36px;
-  text-align: center;
-  padding: 5px 2px;
-  margin: 2px;
-  border: 1px solid #999;
-  font-size: 13px;
+  font-size: 18px;
+  padding: 10px 0 14px;
+  text-decoration: none;
+  color: #000;
 }
 
-.err { color: #900; font-family: Arial, sans-serif; font-size: 14px; padding: 10px 14px; }
+/* ── Search ── */
+#search-screen {
+  padding: 14px 16px;
+  font-family: Arial, sans-serif;
+}
+#search-screen form {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+#search-input {
+  font-size: 18px;
+  height: 44px;
+  padding: 0 8px;
+  border: 2px solid #999;
+  border-radius: 4px;
+  -webkit-flex: 1;
+  flex: 1;
+}
+#search-screen input[type=submit] {
+  font-size: 18px;
+  height: 44px;
+  padding: 0 16px;
+  border: 2px solid #999;
+  border-radius: 4px;
+  background: #eee;
+  cursor: pointer;
+}
+#search-results { margin-top: 4px; }
+.result-item {
+  border-bottom: 1px solid #ccc;
+  padding: 12px 0;
+}
+.result-ref {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+.result-ref a { text-decoration: none; color: #000; }
+.result-text { font-size: 18px; line-height: 1.6; }
 
-@media (max-width: 400px) {
-  body { font-size: 16px; }
-  #book-list { column-count: 1; }
-  #toolbar input[type=text] { width: 80px; }
+/* ── Error ── */
+.err {
+  color: #900;
+  font-family: Arial, sans-serif;
+  font-size: 18px;
+  padding: 16px 18px;
+  line-height: 1.5;
 }
 </style>
 </head>
 <body>
 
 <div id="toolbar">
-  <form id="jump-form" action="" method="get" style="display:inline;">
+  <form id="jump-form" action="" method="get">
     <select id="trans-select" name="t">
       <option value="KJV">KJV</option>
       <option value="BSB">BSB</option>
@@ -190,32 +336,30 @@ h3.section-head {
       <option value="NRSVUE">NRSVUE</option>
       <option value="BLB">BLB</option>
     </select>
-    <input type="text" id="ref-input" name="ref" placeholder="John 3:16" value="">
+    <input type="text" id="ref-input" name="ref" placeholder="e.g. John 3" value="">
     <input type="submit" value="Go">
   </form>
-  &nbsp;
-  <a href="#" id="picker-link">Browse</a>
-  &nbsp;
-  <a href="#" id="search-link">Search</a>
+  <div id="toolbar-links">
+    <a href="#" id="picker-link">Browse</a>
+    <a href="#" id="search-link">Search</a>
+  </div>
 </div>
 
 <div id="nav">
-  <span id="nav-prev"></span>
-  <span id="nav-loc" class="loc"></span>
-  <span id="nav-next" style="float:right;"></span>
+  <div id="nav-prev-wrap"></div>
+  <div id="nav-loc-wrap"><span id="nav-loc"></span></div>
+  <div id="nav-next-wrap"></div>
 </div>
 
 <div id="loading">Loading&hellip;</div>
 <div id="content" style="display:none;"></div>
 <div id="picker-screen" style="display:none;"></div>
 <div id="search-screen" style="display:none;">
-  <div style="padding:10px 14px;">
-    <form id="search-form" action="" method="get">
-      <input type="text" id="search-input" name="q" placeholder="Search word or phrase" style="font-size:14px;width:200px;">
-      <input type="submit" value="Search">
-    </form>
-    <div id="search-results"></div>
-  </div>
+  <form id="search-form" action="" method="get">
+    <input type="text" id="search-input" name="q" placeholder="Search word or phrase">
+    <input type="submit" value="Search">
+  </form>
+  <div id="search-results"></div>
 </div>
 
 <script>
@@ -273,8 +417,7 @@ var BOOK_ALIASES = {
   '1jo':'1 John','2jo':'2 John','3jo':'3 John','jud':'Jude','rev':'Revelation'
 };
 
-var state = { translation: 'KJV', book: 'John', chapter: 1, view: 'passage' };
-
+var state = { translation: 'KJV', book: 'John', chapter: 1 };
 var bookCache = {};
 
 function xhrGetJSON(url, cb) {
@@ -336,8 +479,8 @@ function normaliseBook(raw) {
 }
 
 function showScreen(which) {
-  document.getElementById('loading').style.display      = which === 'loading' ? 'block' : 'none';
-  document.getElementById('content').style.display      = which === 'content' ? 'block' : 'none';
+  document.getElementById('loading').style.display       = which === 'loading' ? 'block' : 'none';
+  document.getElementById('content').style.display       = which === 'content' ? 'block' : 'none';
   document.getElementById('picker-screen').style.display = which === 'picker'  ? 'block' : 'none';
   document.getElementById('search-screen').style.display = which === 'search'  ? 'block' : 'none';
 }
@@ -348,11 +491,11 @@ function showError(msg) {
 }
 
 function setNav(loc, prevHref, nextHref) {
-  document.getElementById('nav-loc').innerHTML = loc;
-  document.getElementById('nav-prev').innerHTML = prevHref
-    ? '<a href="' + prevHref + '">&laquo; Prev</a>' : '';
-  document.getElementById('nav-next').innerHTML = nextHref
-    ? '<a href="' + nextHref + '">Next &raquo;</a>' : '';
+  document.getElementById('nav-loc').innerHTML = escHtml(loc);
+  document.getElementById('nav-prev-wrap').innerHTML = prevHref
+    ? '<a href="' + prevHref + '">\u00ab Prev</a>' : '';
+  document.getElementById('nav-next-wrap').innerHTML = nextHref
+    ? '<a href="' + nextHref + '">Next \u00bb</a>' : '';
 }
 
 function renderPassage(translation, book, chapter) {
@@ -368,7 +511,7 @@ function renderPassage(translation, book, chapter) {
 
     var html = '<h2 class="chapter-title">'
       + escHtml(book) + ' ' + chapter
-      + ' <span style="font-weight:normal;font-size:13px;">(' + escHtml(translation) + ')</span>'
+      + ' <span>(' + escHtml(translation) + ')</span>'
       + '</h2>';
 
     if (chapterData['0']) {
@@ -388,7 +531,7 @@ function renderPassage(translation, book, chapter) {
     html += '<p class="passage-para">';
     for (var i = 0; i < verseNums.length; i++) {
       var v = verseNums[i];
-      html += '<span id="v' + v + '" class="verse">'
+      html += '<span id="v' + v + '">'
         + '<sup class="verse-num">' + v + '</sup> '
         + escHtml(chapterData[String(v)] || '') + ' '
         + '</span>';
@@ -408,7 +551,7 @@ function renderPassage(translation, book, chapter) {
       ? base + encodeURIComponent(book) + '/' + nextChap
       : (nextBk ? base + encodeURIComponent(nextBk) + '/1' : null);
 
-    setNav(escHtml(book) + ' ' + chapter, prevHref, nextHref);
+    setNav(book + ' ' + chapter, prevHref, nextHref);
     document.getElementById('content').innerHTML = html;
     showScreen('content');
     try { window.scrollTo(0, 0); } catch(e) {}
@@ -432,7 +575,7 @@ function renderPickerBook(book) {
   showScreen('picker');
   var chapCount = maxChapter(book);
   var base = '#r/' + encodeURIComponent(state.translation) + '/' + encodeURIComponent(book) + '/';
-  var html = '<p><a href="#picker">&laquo; All books</a></p>'
+  var html = '<a class="picker-back" href="#picker">\u00ab All books</a>'
     + '<h3>' + escHtml(book) + '</h3>'
     + '<div id="chap-list">';
   for (var c = 1; c <= chapCount; c++) {
@@ -452,7 +595,7 @@ function runSearch(query) {
   var q = String(query || '').replace(/^\s+|\s+$/g, '');
   if (!q) return;
   var resultsEl = document.getElementById('search-results');
-  resultsEl.innerHTML = '<p style="font-family:Arial;font-size:13px;">Searching&hellip;</p>';
+  resultsEl.innerHTML = '<p style="font-family:Arial;font-size:18px;">Searching&hellip;</p>';
 
   var refMatch = q.match(/^((?:[1-3]\s+)?[A-Za-z][A-Za-z ]*?)\s+(\d+)(?::(\d+))?$/i);
   if (refMatch) {
@@ -490,14 +633,14 @@ function runSearch(query) {
     }
 
     if (filtered.length === 0) {
-      resultsEl.innerHTML = '<p style="font-family:Arial;font-size:13px;">No results for &ldquo;'
+      resultsEl.innerHTML = '<p style="font-family:Arial;font-size:18px;">No results for &ldquo;'
         + escHtml(q) + '&rdquo;.</p>';
       return;
     }
 
-    var html = '<p style="font-family:Arial;font-size:13px;">'
+    var html = '<p style="font-family:Arial;font-size:18px;">'
       + filtered.length + ' result' + (filtered.length === 1 ? '' : 's')
-      + ' for &ldquo;' + escHtml(q) + '&rdquo;</p><div>';
+      + ' for &ldquo;' + escHtml(q) + '&rdquo;</p>';
 
     for (var ri = 0; ri < filtered.length; ri++) {
       var r = filtered[ri];
@@ -512,7 +655,6 @@ function runSearch(query) {
         + '<div class="result-text">' + escHtml(r.text) + '</div>'
         + '</div>';
     }
-    html += '</div>';
     resultsEl.innerHTML = html;
   });
 }
