@@ -10,6 +10,7 @@
     border-left: 4px solid rgba(255, 215, 0, 0.6);
     border-radius: 8px;
     padding: 12px;
+    padding-bottom: 0;
     margin: 8px 0;
     box-shadow:
         0 0 20px rgba(255, 215, 0, 0.3),
@@ -30,6 +31,96 @@ body.light-mode .selected-verse-glow {
     background-color: rgba(255, 165, 0, 0.08);
     border-left: 3px solid rgba(255, 165, 0, 0.8);
     animation: verse-highlight-light 0.6s ease;
+}
+
+/* ── Verse tools trigger (chevron) ── */
+
+.verse-tools-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 6px 0 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(255, 215, 0, 0.55);
+    transition: color 0.2s ease;
+}
+
+.verse-tools-trigger:hover,
+.verse-tools-trigger:focus-visible {
+    color: rgba(255, 215, 0, 0.9);
+    outline: none;
+}
+
+.verse-tools-trigger svg {
+    transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    flex-shrink: 0;
+}
+
+.verse-tools-trigger--open svg {
+    transform: rotate(180deg);
+}
+
+/* "or press Enter" hint — desktop pointer devices only */
+@media (hover: hover) and (pointer: fine) {
+    .verse-tools-trigger::after {
+        content: 'or press Enter';
+        font-size: 0.7rem;
+        letter-spacing: 0.04em;
+        opacity: 0.5;
+        white-space: nowrap;
+    }
+    .verse-tools-trigger--open::after {
+        content: 'or press Enter';
+    }
+}
+
+body.light-mode .verse-tools-trigger {
+    color: rgba(255, 140, 0, 0.5);
+}
+body.light-mode .verse-tools-trigger:hover,
+body.light-mode .verse-tools-trigger:focus-visible {
+    color: rgba(255, 140, 0, 0.9);
+}
+
+/* ── Verse tools tray ── */
+
+.verse-tools-tray {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition:
+        max-height 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        opacity    0.25s ease;
+    /* bottom-radius carried by the glow wrapper; tray sits flush */
+    border-top: 1px solid rgba(255, 215, 0, 0.15);
+    margin: 0 -12px;
+    padding: 0 12px;
+}
+
+.verse-tools-tray--open {
+    max-height: 400px;
+    opacity: 1;
+}
+
+.verse-tools-placeholder {
+    display: block;
+    padding: 14px 0;
+    font-size: 0.8rem;
+    color: rgba(255, 215, 0, 0.4);
+    text-align: center;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+body.light-mode .verse-tools-tray {
+    border-top-color: rgba(255, 140, 0, 0.2);
+}
+body.light-mode .verse-tools-placeholder {
+    color: rgba(200, 100, 0, 0.45);
 }
 
 
