@@ -149,6 +149,26 @@ export function attachEventListeners(app) {
     // ── Copy passage ─────────────────────────────────────────────
     document.getElementById('copyPassage')?.addEventListener('click', () => app.copyPassage());
 
+    // ── Verse tap-to-select ──────────────────────────────────────
+    // Event delegation on passageText handles verses rendered at any time.
+    // touch-action:manipulation on .verse (set in CSS) eliminates the
+    // 300ms tap delay on mobile without disabling scroll.
+    // Tapping the already-selected verse deselects it.
+    app.passageText?.addEventListener('click', (e) => {
+        const verse = e.target.closest('.verse');
+        if (!verse) return;
+        // Ignore clicks that originated inside the tool tray or trigger.
+        if (e.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
+        const num = parseInt(verse.dataset.verse, 10);
+        if (!num) return;
+        if (app.state.selectedVerse === num) {
+            app.state.selectedVerse = null;
+            app.applyVerseGlow();
+        } else {
+            app.scrollToVerse(num);
+        }
+    });
+
     // ── Modals: late-cached elements ─────────────────────────────────
     app.referencesModal        = document.getElementById('referencesModal');
     app.closeReferencesModal   = document.getElementById('closeReferencesModal');

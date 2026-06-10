@@ -12,11 +12,11 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="76506e5" />
+	<meta name="build-id" content="e3d8ad9" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement — always available in <head>) before the
-	     browser paints, preventing a Dracula-flash on cold load.
+	     browser paints, preventing a theme flash on cold load.
 	     document.body is null at this point; do NOT use it here.
 	     ES modules are deferred and cannot achieve this. -->
 	<script>
@@ -43,7 +43,6 @@
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
 	<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
 	<link rel="icon" href="./favicon.ico" />
-	<!-- Preconnect to external hosts used on first load -->
 	<link rel="preconnect" href="https://esv-bible-6dffb-default-rtdb.firebaseio.com" />
 	<link rel="preconnect" href="https://www.gstatic.com" />
 	<link rel="preconnect" href="https://www.google.com" />
@@ -51,7 +50,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=76506e5">.
+	     before the parser reaches <script type="module" src="app.js?v=e3d8ad9">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -73,21 +72,22 @@
 	<link rel="preload" href="./fonts/OpenDyslexic3-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<link rel="preload" href="./fonts/Ubuntu-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<link rel="preload" href="./fonts/iAWriterQuattroS-Regular.woff2" as="font" type="font/woff2" crossorigin />
+	<link rel="preload" href="./fonts/AdwaitaSans-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<!-- CSS loaded as parallel <link> tags — @import chains are render-blocking
 	     and sequential; <link> tags are fetched in parallel by the browser. -->
-	<link rel="stylesheet" href="css/fonts.css?v=76506e5" />
-	<link rel="stylesheet" href="css/base.css?v=76506e5" />
-	<link rel="stylesheet" href="css/tokens.css?v=76506e5" />
-	<link rel="stylesheet" href="css/themes.css?v=76506e5" />
-	<link rel="stylesheet" href="css/layout.css?v=76506e5" />
-	<link rel="stylesheet" href="css/components.css?v=76506e5" />
-	<link rel="stylesheet" href="css/modals.css?v=76506e5" />
-	<link rel="stylesheet" href="css/interactions.css?v=76506e5" />
-	<link rel="stylesheet" href="css/utilities.css?v=76506e5" />
-	<link rel="stylesheet" href="css/pericope.css?v=76506e5" />
+	<link rel="stylesheet" href="css/fonts.css?v=e3d8ad9" />
+	<link rel="stylesheet" href="css/base.css?v=e3d8ad9" />
+	<link rel="stylesheet" href="css/tokens.css?v=e3d8ad9" />
+	<link rel="stylesheet" href="css/themes.css?v=e3d8ad9" />
+	<link rel="stylesheet" href="css/layout.css?v=e3d8ad9" />
+	<link rel="stylesheet" href="css/components.css?v=e3d8ad9" />
+	<link rel="stylesheet" href="css/modals.css?v=e3d8ad9" />
+	<link rel="stylesheet" href="css/interactions.css?v=e3d8ad9" />
+	<link rel="stylesheet" href="css/utilities.css?v=e3d8ad9" />
+	<link rel="stylesheet" href="css/pericope.css?v=e3d8ad9" />
 	<!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
 	<script src="https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV" async defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js?v=76506e5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js?v=e3d8ad9"></script>
 </head>
 
 <body class="initializing">
@@ -95,7 +95,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">76506e5</span>
+				<span id="build-info">e3d8ad9</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,13 +214,11 @@
 				<div class="loading">Loading passage...</div>
 			</div>
 
-			<!-- Footnotes section (below passage text, shown when showFootnotes is on) -->
 			<div id="footnotesSection" class="passage-extras-section hidden">
 				<h4 class="passage-extras-heading">Footnotes</h4>
 				<div id="footnotesContent" class="passage-extras-content"></div>
 			</div>
 
-			<!-- Cross-references section (below passage text, shown when showCrossReferences is on) -->
 			<div id="crossReferencesSection" class="passage-extras-section hidden">
 				<h4 class="passage-extras-heading">Cross-References</h4>
 				<div id="crossReferencesContent" class="passage-extras-content"></div>
@@ -275,7 +273,6 @@
 		</div>
 	</div>
 
-	<!-- Translation picker modal -->
 	<div id="translationModal" class="modal">
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
@@ -309,7 +306,6 @@
 								<label for="themeSelector">Color Theme</label>
 								<select id="themeSelector" class="input-field">
 				    	<option value="dracula">Dracula</option>
-								<!--	<option value="dracula2test">Dracula 2 Test (Purple/Pink)</option> -->
 								 <option value="onyx">Gold (OLED)</option>
 									<option value="sage">Sage</option>
 									<option value="ember">Ember</option>
@@ -337,11 +333,12 @@
 							<div class="setting-item">
 								<label for="readingFontSelector">Reading Font</label>
 								<select id="readingFontSelector" class="input-field">
-									<option value="gentium">Gentium Book Plus (Serif)</option>
-									<option value="andika">Andika (Sans Serif)</option>
+									<option value="gentium">Gentium Book Plus</option>
+									<option value="andika">Andika</option>
 									<option value="ubuntu">Ubuntu</option>
 									<option value="opendyslexic3">Open Dyslexic 3</option>
 									<option value="ia-quattro">iA Writer Quattro S</option>
+									<option value="adwaitasans">Adwaita Sans</option>
 								</select>
 								<small class="help-text" id="readingFontHelpText">Choose the typeface used for passage text.</small>
 							</div>
@@ -635,7 +632,6 @@
 		</div>
 	</div>
 
-	<!-- References bottom-sheet modal -->
 	<div id="referencesModal" class="modal modal--bottom-sheet">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -646,7 +642,6 @@
 		</div>
 	</div>
 
-	<!-- Deuterocanon info modal -->
 	<div id="deuterocanonInfoModal" class="modal">
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
@@ -679,10 +674,9 @@
 		</div>
 	</div>
 
-	<!-- Toast notification -->
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=76506e5"></script>
+	<script type="module" src="app.js?v=e3d8ad9"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');
