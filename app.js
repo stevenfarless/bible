@@ -9,6 +9,7 @@ import {
     navigateChapter as navChapter,
     scrollToVerse as scrollVerse,
     applyVerseGlow as glowVerse,
+    toggleVerseTray as trayToggle,
 } from './reading-state.js';
 import { cacheElements, loadTheme, changeColorTheme, applyLightMode } from './ui.js';
 import {
@@ -1055,6 +1056,7 @@ class BibleApp {
     getCurrentVerseCount()     { return getCurrentVerseCount(this); }
     scrollToVerse(n)           { scrollVerse(this, n); }
     applyVerseGlow()           { glowVerse(this); }
+    toggleVerseTray()          { trayToggle(this); }
 
     loadLocalSettings()        { loadLocalSettings(this); }
     applySettings()            { applySettings(this); }
@@ -1241,11 +1243,6 @@ async function registerServiceWorker(appInstance) {
         }
         setInterval(_checkVersion, 5 * 60 * 1000);
 
-        // On iOS PWA, switching apps and returning fires visibilitychange but
-        // the page context may be frozen — version.txt fetch and reg.update()
-        // are both no-ops if the network is unavailable, so failures are
-        // silently swallowed. The reload only triggers when the remote SHA
-        // genuinely differs, so stale-cache reloads don't happen spuriously.
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState !== 'visible') return;
             fetch('./version.txt', { cache: 'no-store' })

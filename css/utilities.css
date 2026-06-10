@@ -175,6 +175,12 @@ body.font-ia-quattro .search-result-content {
     font-family: 'iA Writer Quattro S', sans-serif;
 }
 
+body.font-adwaitasans .passage-text,
+body.font-adwaitasans .passage,
+body.font-adwaitasans .search-result-content {
+    font-family: 'Adwaita Sans', sans-serif;
+}
+
 
 
 /* ================================

@@ -62,10 +62,11 @@ export function scrollToVerse(app, verseNumber) {
 }
 
 export function applyVerseGlow(app) {
-    // Remove any existing glow wrapper without resetting innerHTML.
-    // The wrapper is a <div data-verse-glow> inserted around the target .verse span.
+    // Remove trigger and tray before unwrapping so they aren't left as
+    // orphaned siblings in the passage — this is the failure mode when
+    // the cache is restored with a previously-mutated innerHTML.
     app.passageText.querySelectorAll('[data-verse-glow]').forEach(wrapper => {
-        // Unwrap: move the verse span back to where the wrapper was, then remove wrapper.
+        wrapper.querySelectorAll('.verse-tools-trigger, .verse-tools-tray').forEach(el => el.remove());
         const parent = wrapper.parentNode;
         while (wrapper.firstChild) {
             parent.insertBefore(wrapper.firstChild, wrapper);
@@ -81,15 +82,62 @@ export function applyVerseGlow(app) {
     if (!target) return;
 
     // Wrap the target verse in a block-level div that carries the glow styling.
-    // Using a wrapper div means the glow is *always* a block element from the
-    // very first paint — there is no inline-to-block reflow, so no position jump.
     const wrapper = document.createElement('div');
     wrapper.className = 'selected-verse-glow';
     wrapper.setAttribute('data-verse-glow', '');
     target.parentNode.insertBefore(wrapper, target);
     wrapper.appendChild(target);
 
-    // scrollIntoView on an inline <span> is unreliable across browsers —
-    // scroll to the block wrapper instead, which has stable geometry.
+    // Chevron trigger button — centered at bottom of glow box.
+    // On desktop: shows a "or press Enter" hint via CSS ::after (pointer device only).
+    const trigger = document.createElement('button');
+    trigger.className = 'verse-tools-trigger';
+    trigger.setAttribute('aria-label', 'Open verse tools');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+        aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>`;
+    wrapper.appendChild(trigger);
+
+    // Tray — renders below the glow box, collapsed by default.
+    const tray = document.createElement('div');
+    tray.className = 'verse-tools-tray';
+    tray.setAttribute('aria-hidden', 'true');
+    tray.innerHTML = `
+        <div class="verse-tools-actions">
+            <button class="verse-tool-btn" aria-label="Highlight"><span class="verse-tool-letter">H</span></button>
+            <button class="verse-tool-btn" aria-label="Bookmark"><span class="verse-tool-letter">B</span></button>
+            <button class="verse-tool-btn" aria-label="Note"><span class="verse-tool-letter">N</span></button>
+            <button class="verse-tool-btn" aria-label="Copy"><span class="verse-tool-letter">C</span></button>
+            <button class="verse-tool-btn" aria-label="Share"><span class="verse-tool-letter">S</span></button>
+        </div>`;
+    wrapper.appendChild(tray);
+
+    trigger.addEventListener('click', () => toggleVerseTray(wrapper, trigger, tray));
+
     wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// Exported so app.js can delegate app.toggleVerseTray() to this.
+export function toggleVerseTray(wrapperOrApp, triggerArg, trayArg) {
+    // Called via app.toggleVerseTray() from keyboard.js — locate live elements.
+    let wrapper, trigger, tray;
+    if (wrapperOrApp && wrapperOrApp.passageText) {
+        // Called as toggleVerseTray(app)
+        wrapper = wrapperOrApp.passageText.querySelector('[data-verse-glow]');
+        if (!wrapper) return;
+        trigger = wrapper.querySelector('.verse-tools-trigger');
+        tray    = wrapper.querySelector('.verse-tools-tray');
+    } else {
+        // Called directly from the click listener with (wrapper, trigger, tray)
+        wrapper = wrapperOrApp;
+        trigger = triggerArg;
+        tray    = trayArg;
+    }
+    if (!trigger || !tray) return;
+
+    const isOpen = tray.classList.toggle('verse-tools-tray--open');
+    trigger.classList.toggle('verse-tools-trigger--open', isOpen);
+    trigger.setAttribute('aria-expanded', String(isOpen));
+    tray.setAttribute('aria-hidden', String(!isOpen));
 }
