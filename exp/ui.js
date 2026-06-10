@@ -7,12 +7,10 @@ const REQUIRED_IDS = [
 	'prevChapter', 'nextChapter', 'bookSelector', 'chapterSelector', 'verseSelector',
 	'currentBook', 'currentChapter', 'currentVerse',
 	'searchContainer', 'closeSearch', 'searchInput', 'searchResults',
-	'passageTitle', 'passageText', 'copyright',
-	'bookModal', 'chapterModal', 'verseModal', 'settingsModal',
+	'passageTitle', 'passageText', 'copyright', 'bookModal', 'chapterModal', 'verseModal', 'settingsModal',
 	'loginModal', 'signupModal', 'userMenuModal',
 	'closeBookModal', 'closeChapterModal', 'closeVerseModal',
-	'closeSettingsModal', 'closeLoginModal',
-	'closeSignupModal', 'closeUserMenuModal',
+	'closeSettingsModal', 'closeLoginModal', 'closeSignupModal', 'closeUserMenuModal',
 	'oldTestamentBooks', 'newTestamentBooks',
 	'chapterModalBook', 'chapterGrid', 'verseModalBook', 'verseGrid',
 	'verseNumbersToggle', 'headingsToggle', 'footnotesToggle',
@@ -143,6 +141,7 @@ export function applyLightMode(mode) {
 }
 
 export async function setLightMode(app, mode) {
+	app.state.lightMode = mode;
 	const normalized = mode === 'light' || mode === 'dark' || mode === 'system' ? mode : 'system';
 	app.state.lightMode = normalized;
 	try { localStorage.setItem('lightMode', normalized); } catch (_) {}
@@ -187,6 +186,7 @@ export function updateThemeColor() {
 }
 
 export async function changeColorTheme(app, theme) {
+	if (!app.state) app.state = {};
 	app.state.colorTheme = theme;
 
 	document.documentElement.classList.remove(...ALL_THEME_CLASSES);
