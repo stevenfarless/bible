@@ -52,7 +52,7 @@ jobs:
             sed -i "s|__BUILD_COLOR__|${BUILD_COLOR}|g" css/pericope.css
           fi
           sed -i "s/__BUILD_ID__/${SHA7}/g" sw.js index.html
-          sed -i "s|\(<script[^>]* src=\"\)\([^?\"]*\)\(\.js\)\(\"\\)|\1\2\3?v=${SHA7}\4|g" index.html
+          sed -i "s|\(<script[^>]* src=\"\)\([^?\"]*\)\(\.js\)\(\"\)|\1\2\3?v=${SHA7}\4|g" index.html
           sed -i "s|\(<link[^>]* href=\"css/[^?\"]*\)\(\.css\)\(\"\)|\1\2?v=${SHA7}\3|g" index.html
           echo "${GITHUB_SHA}" > version.txt
 
@@ -78,4 +78,3 @@ jobs:
           keep_files: true
           force_orphan: false
           enable_jekyll: false
-          exclude_assets: 'tests/**,package.json,package-lock.json,vitest.config.*,playwright.config.*'
