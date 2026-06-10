@@ -134,7 +134,16 @@ export function attachEventListeners(app) {
     app.nextChapterBtn?.addEventListener('click',  () => app.navigateChapter(1));
     app.bookSelector?.addEventListener('click',    () => app.openBookModal());
     app.chapterSelector?.addEventListener('click', () => app.openChapterModal());
-    app.verseSelector?.addEventListener('click',   () => app.openVerseModal());
+
+    // When a verse is already highlighted, the chevron re-navigates to it
+    // instead of opening the picker. This matches the Enter-key behaviour.
+    app.verseSelector?.addEventListener('click', () => {
+        if (app.state.selectedVerse !== null) {
+            app.scrollToVerse(app.state.selectedVerse);
+        } else {
+            app.openVerseModal();
+        }
+    });
 
     // Phase 3 three-panel drag-follow swipe navigation.
     // Replaces the Phase 1/2 touchstart+touchend handler that was inline here.
