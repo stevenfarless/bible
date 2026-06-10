@@ -16,7 +16,7 @@
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement — always available in <head>) before the
-	     browser paints, preventing a Dracula-flash on cold load.
+	     browser paints, preventing a theme flash on cold load.
 	     document.body is null at this point; do NOT use it here.
 	     ES modules are deferred and cannot achieve this. -->
 	<script>
@@ -43,7 +43,6 @@
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
 	<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
 	<link rel="icon" href="./favicon.ico" />
-	<!-- Preconnect to external hosts used on first load -->
 	<link rel="preconnect" href="https://esv-bible-6dffb-default-rtdb.firebaseio.com" />
 	<link rel="preconnect" href="https://www.gstatic.com" />
 	<link rel="preconnect" href="https://www.google.com" />
@@ -215,13 +214,11 @@
 				<div class="loading">Loading passage...</div>
 			</div>
 
-			<!-- Footnotes section (below passage text, shown when showFootnotes is on) -->
 			<div id="footnotesSection" class="passage-extras-section hidden">
 				<h4 class="passage-extras-heading">Footnotes</h4>
 				<div id="footnotesContent" class="passage-extras-content"></div>
 			</div>
 
-			<!-- Cross-references section (below passage text, shown when showCrossReferences is on) -->
 			<div id="crossReferencesSection" class="passage-extras-section hidden">
 				<h4 class="passage-extras-heading">Cross-References</h4>
 				<div id="crossReferencesContent" class="passage-extras-content"></div>
@@ -276,7 +273,6 @@
 		</div>
 	</div>
 
-	<!-- Translation picker modal -->
 	<div id="translationModal" class="modal">
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
@@ -310,7 +306,6 @@
 								<label for="themeSelector">Color Theme</label>
 								<select id="themeSelector" class="input-field">
 				    	<option value="dracula">Dracula</option>
-								<!--	<option value="dracula2test">Dracula 2 Test (Purple/Pink)</option> -->
 								 <option value="onyx">Gold (OLED)</option>
 									<option value="sage">Sage</option>
 									<option value="ember">Ember</option>
@@ -637,7 +632,6 @@
 		</div>
 	</div>
 
-	<!-- References bottom-sheet modal -->
 	<div id="referencesModal" class="modal modal--bottom-sheet">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -648,7 +642,6 @@
 		</div>
 	</div>
 
-	<!-- Deuterocanon info modal -->
 	<div id="deuterocanonInfoModal" class="modal">
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
@@ -681,7 +674,6 @@
 		</div>
 	</div>
 
-	<!-- Toast notification -->
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 	<script type="module" src="app.js"></script>
