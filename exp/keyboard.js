@@ -55,7 +55,7 @@ export function handleKeyboardShortcuts(app, e) {
         case 'Enter':
             if (app.state.selectedVerse !== null) {
                 e.preventDefault();
-                app.scrollToVerse(app.state.selectedVerse);
+                app.toggleVerseTray();
             }
             break;
         case '/':
