@@ -62,8 +62,11 @@ export function scrollToVerse(app, verseNumber) {
 }
 
 export function applyVerseGlow(app) {
-    // Remove any existing glow wrapper without resetting innerHTML.
+    // Remove trigger and tray before unwrapping so they aren't left as
+    // orphaned siblings in the passage — this is the failure mode when
+    // the cache is restored with a previously-mutated innerHTML.
     app.passageText.querySelectorAll('[data-verse-glow]').forEach(wrapper => {
+        wrapper.querySelectorAll('.verse-tools-trigger, .verse-tools-tray').forEach(el => el.remove());
         const parent = wrapper.parentNode;
         while (wrapper.firstChild) {
             parent.insertBefore(wrapper.firstChild, wrapper);
