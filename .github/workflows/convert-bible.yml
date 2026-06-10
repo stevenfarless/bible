@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       source_url:
-        description: 'raw.githubusercontent.com URL to a bible-database flat-array JSON file (e.g. https://raw.githubusercontent.com/stevenfarless/bible-database/refs/heads/main/data/json/en/NRSVUE.json)'
+        description: 'raw.githubusercontent.com URL to a bible-database flat-array JSON file (e.g. https://raw.githubusercontent.com/stevenfarless/lege-lux-database/refs/heads/main/data/json/en/NRSVUE.json)'
         required: true
         type: string
       translation_abbrev:
