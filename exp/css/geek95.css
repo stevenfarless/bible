@@ -1,0 +1,358 @@
+:root.geek95-theme,
+html.geek95-theme,
+body.geek95-theme,
+:root.geek95-theme.light-mode,
+html.geek95-theme.light-mode,
+body.geek95-theme.light-mode {
+    --bg-base: #000055;
+    --bg-card: #000055;
+    --bg-raised: #394dcd;
+    --text-heading: #ffffff;
+    --text-body: #ffffff;
+    --text-muted: #c0c0c0;
+    --border-neutral: #c0c0c0;
+    --highlight-border: #ffffff;
+    --primary-color: #dfe300;
+    --primary-dark: #b5b900;
+    --primary-light: #ffff66;
+    --brand-secondary: #dfe300;
+    --section-heading-color: #208c71;
+    --accent-color: #208c71;
+    --success-color: #208c71;
+    --warning-color: #dfe300;
+    --error-color: #e35f5f;
+    --footnote-hover-bg: rgba(223, 227, 0, 0.18);
+    --font-sans: 'iA Writer Mono S', 'Courier New', monospace;
+    --font-serif: 'iA Writer Mono S', 'Courier New', monospace;
+    --border-radius: 0;
+    --border-radius-lg: 0;
+    --shadow-sm: 1px 1px 0 #000000;
+    --shadow-md: 2px 2px 0 #000000;
+    --shadow-lg: 4px 4px 0 #000000;
+}
+
+html.geek95-theme,
+body.geek95-theme {
+    background: #000055;
+}
+
+body.geek95-theme {
+    color: #ffffff;
+    font-family: 'iA Writer Mono S', 'Courier New', monospace;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.geek95-theme ::selection {
+    background: #dfe300;
+    color: #000055;
+}
+
+.geek95-theme .header,
+.geek95-theme .navigation,
+.geek95-theme .search-container {
+    background: #000055;
+    border-color: #c0c0c0;
+    box-shadow: none;
+}
+
+.geek95-theme .header {
+    border-bottom: 2px solid #c0c0c0;
+}
+
+.geek95-theme .navigation {
+    border-bottom: 2px solid #c0c0c0;
+}
+
+.geek95-theme .logo,
+.geek95-theme .passage-title,
+.geek95-theme .modal-header h2,
+.geek95-theme .accordion-title {
+    color: #dfe300;
+    font-family: 'iA Writer Mono S', 'Courier New', monospace;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.geek95-theme .logo {
+    text-shadow: 1px 1px 0 #000000;
+}
+
+.geek95-theme .icon-btn,
+.geek95-theme .close-btn,
+.geek95-theme .selector-btn,
+.geek95-theme .nav-btn,
+.geek95-theme .primary-btn,
+.geek95-theme .secondary-btn,
+.geek95-theme .book-item,
+.geek95-theme .chapter-item,
+.geek95-theme .toast-action,
+.geek95-theme .input-field {
+    border-radius: 0;
+    border: 2px solid;
+    border-color: #ffffff #6c6c6c #6c6c6c #ffffff;
+    background: #394dcd;
+    color: #ffffff;
+    box-shadow: 1px 1px 0 #000000;
+    font-family: 'iA Writer Mono S', 'Courier New', monospace;
+}
+
+.geek95-theme .icon-btn,
+.geek95-theme .close-btn {
+    background: transparent;
+    color: #dfe300;
+}
+
+.geek95-theme .icon-btn:hover,
+.geek95-theme .close-btn:hover,
+.geek95-theme .selector-btn:hover,
+.geek95-theme .nav-btn:hover:not(:disabled),
+.geek95-theme .book-item:hover,
+.geek95-theme .chapter-item:hover,
+.geek95-theme .primary-btn:hover,
+.geek95-theme .secondary-btn:hover {
+    background: #dfe300;
+    color: #000055;
+    border-color: #ffffff #6c6c6c #6c6c6c #ffffff;
+    transform: none;
+}
+
+.geek95-theme .icon-btn:active,
+.geek95-theme .close-btn:active,
+.geek95-theme .selector-btn:active,
+.geek95-theme .nav-btn:active,
+.geek95-theme .book-item:active,
+.geek95-theme .chapter-item:active,
+.geek95-theme .primary-btn:active,
+.geek95-theme .secondary-btn:active {
+    border-color: #6c6c6c #ffffff #ffffff #6c6c6c;
+    box-shadow: none;
+    transform: translate(1px, 1px);
+}
+
+.geek95-theme .selector-btn svg,
+.geek95-theme .nav-btn svg,
+.geek95-theme .icon-btn svg {
+    stroke: currentColor;
+}
+
+.geek95-theme .main-content {
+    background: #000055;
+}
+
+.geek95-theme .passage-container {
+    background: #000055;
+    border: 3px solid;
+    border-color: #ffffff #6c6c6c #6c6c6c #ffffff;
+    border-radius: 0;
+    box-shadow: 3px 3px 0 #000000;
+}
+
+.geek95-theme .passage-header {
+    border-bottom: 2px solid #c0c0c0;
+    background: #394dcd;
+    padding: 0.5rem 0.75rem;
+    margin: calc(-1 * var(--spacing-xl)) calc(-1 * var(--spacing-xl)) var(--spacing-lg);
+}
+
+.geek95-theme .passage-title {
+    color: #ffffff;
+}
+
+.geek95-theme .passage-text,
+.geek95-theme .passage,
+.geek95-theme .passage-text p,
+.geek95-theme .verse {
+    color: #ffffff;
+    background: #000055;
+    font-family: 'iA Writer Mono S', 'Courier New', monospace;
+}
+
+.geek95-theme .passage-text h2,
+.geek95-theme .passage-text h3,
+.geek95-theme .passage-text h4,
+.geek95-theme .pericope-heading {
+    color: #208c71;
+    font-family: 'iA Writer Mono S', 'Courier New', monospace;
+    font-style: normal;
+    text-transform: none;
+}
+
+.geek95-theme .passage-text .verse-num,
+.geek95-theme .verse .verse-num {
+    color: #dfe300;
+}
+
+.geek95-theme .passage-footer {
+    border-top: 1px dashed #c0c0c0;
+}
+
+.geek95-theme .copyright,
+.geek95-theme .help-text,
+.geek95-theme .text-muted {
+    color: #c0c0c0;
+}
+
+.geek95-theme .modal {
+    background: rgba(0, 0, 0, 0.78);
+    backdrop-filter: none;
+}
+
+.geek95-theme .modal-content,
+.geek95-theme #settingsModal .modal-content {
+    background: #000055;
+    color: #ffffff;
+    border: 3px solid;
+    border-color: #ffffff #6c6c6c #6c6c6c #ffffff;
+    border-radius: 0;
+    box-shadow: 4px 4px 0 #000000;
+}
+
+.geek95-theme .modal-header,
+.geek95-theme #settingsModal .modal-header {
+    background: #394dcd;
+    border-bottom: 2px solid #c0c0c0;
+    padding: 0.5rem 0.75rem;
+}
+
+.geek95-theme #settingsModal .modal-header::before {
+    display: none;
+}
+
+.geek95-theme .modal-body {
+    background: #000055;
+    scrollbar-color: #c0c0c0 #000055;
+}
+
+.geek95-theme .modal-body::-webkit-scrollbar {
+    width: 16px;
+}
+
+.geek95-theme .modal-body::-webkit-scrollbar-track {
+    background: #000055;
+    border-left: 1px solid #6c6c6c;
+}
+
+.geek95-theme .modal-body::-webkit-scrollbar-thumb {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #6c6c6c #6c6c6c #ffffff;
+}
+
+.geek95-theme .book-category h4,
+.geek95-theme .passage-extras-heading,
+.geek95-theme .translation-modal-section-heading {
+    color: #208c71;
+    border-color: #dfe300;
+    font-family: 'iA Writer Mono S', 'Courier New', monospace;
+    text-transform: uppercase;
+}
+
+.geek95-theme .book-grid,
+.geek95-theme .chapter-grid {
+    gap: 0.5rem;
+}
+
+.geek95-theme .book-item,
+.geek95-theme .chapter-item {
+    min-height: 3rem;
+    background: #000055;
+    color: #ffffff;
+}
+
+.geek95-theme .accordion-section {
+    background: #000055;
+    border: 2px solid;
+    border-color: #ffffff #6c6c6c #6c6c6c #ffffff;
+    border-radius: 0;
+}
+
+.geek95-theme .accordion-header,
+.geek95-theme .accordion-panel .settings-group {
+    background: #000055;
+    color: #ffffff;
+}
+
+.geek95-theme .accordion-header {
+    border-bottom: 1px solid #c0c0c0;
+}
+
+.geek95-theme .accordion-header:hover {
+    background: #394dcd;
+}
+
+.geek95-theme .setting-item label,
+.geek95-theme .checkbox-label,
+.geek95-theme .shortcut-item span,
+.geek95-theme .footnote-text,
+.geek95-theme .crossref-reference {
+    color: #ffffff;
+}
+
+.geek95-theme .input-field {
+    background: #000055;
+    color: #ffffff;
+    appearance: auto;
+}
+
+.geek95-theme .input-field:focus,
+.geek95-theme .selector-btn:focus-visible,
+.geek95-theme .nav-btn:focus-visible,
+.geek95-theme .book-item:focus-visible,
+.geek95-theme .chapter-item:focus-visible {
+    outline: 1px dotted #dfe300;
+    outline-offset: 2px;
+}
+
+.geek95-theme input[type='checkbox'] {
+    accent-color: #dfe300;
+}
+
+.geek95-theme input[type='range'] {
+    accent-color: #dfe300;
+}
+
+.geek95-theme .setting-item--disabled,
+.geek95-theme .nav-btn:disabled {
+    color: #6c6c6c;
+    opacity: 1;
+}
+
+.geek95-theme .error {
+    background: #e35f5f;
+    color: #ffffff;
+    border-radius: 0;
+}
+
+.geek95-theme .success,
+.geek95-theme .toast.success {
+    background: #208c71;
+    color: #ffffff;
+}
+
+.geek95-theme #build-info {
+    background: #e35f5f;
+    color: #ffffff;
+    border-radius: 0;
+    border: 2px solid;
+    border-color: #ffffff #6c6c6c #6c6c6c #ffffff;
+    box-shadow: 1px 1px 0 #000000;
+}
+
+@media (max-width: 600px) {
+    .geek95-theme .passage-container {
+        border-left-width: 2px;
+        border-right-width: 2px;
+        box-shadow: 2px 2px 0 #000000;
+    }
+
+    .geek95-theme .passage-header {
+        margin-left: calc(-1 * var(--spacing-lg));
+        margin-right: calc(-1 * var(--spacing-lg));
+    }
+
+    .geek95-theme .book-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
