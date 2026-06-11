@@ -24,17 +24,31 @@
     }
 
     .nav-content {
+        display: grid;
         grid-template-columns: 44px minmax(0, 1fr) 44px;
         gap: var(--spacing-xs);
         padding-left: var(--spacing-sm);
         padding-right: var(--spacing-sm);
     }
 
+    #prevChapter {
+        grid-column: 1;
+    }
+
     .passage-selector {
+        grid-column: 2;
         min-width: 0;
         width: 100%;
         justify-content: center;
         gap: var(--spacing-xs);
+    }
+
+    #nextChapter {
+        grid-column: 3;
+    }
+
+    body.hide-chapter-arrows .passage-selector {
+        grid-column: 1 / -1;
     }
 
     .nav-btn {
