@@ -113,5 +113,4 @@ function attachBottomSheetDrag(app, modal) {
 
 export function attachDragToResize(app) {
     if (app.settingsModal) attachBottomSheetDrag(app, app.settingsModal);
-    if (app.referencesModal) attachBottomSheetDrag(app, app.referencesModal);
 }
