@@ -1,6 +1,11 @@
 // ui.js
 // Responsibility: DOM caching, theme management
 
+const experimentalThemeStylesheet = document.createElement('link');
+experimentalThemeStylesheet.rel = 'stylesheet';
+experimentalThemeStylesheet.href = 'css/vespers-contrast-test.css';
+document.head.appendChild(experimentalThemeStylesheet);
+
 const REQUIRED_IDS = [
 	'topChrome',
 	'searchToggle', 'settingsBtn',
@@ -36,6 +41,15 @@ const REQUIRED_IDS = [
 document.addEventListener('DOMContentLoaded', () => {
 	const htmlClasses = [...document.documentElement.classList];
 	if (htmlClasses.length) document.body.classList.add(...htmlClasses);
+
+	const themeSelector = document.getElementById('themeSelector');
+	if (themeSelector && !themeSelector.querySelector('option[value="lux"]')) {
+		const option = document.createElement('option');
+		option.value = 'lux';
+		option.textContent = 'Vespers Contrast Test (Experimental)';
+		const vespersOption = themeSelector.querySelector('option[value="vespers"]');
+		vespersOption?.insertAdjacentElement('afterend', option);
+	}
 
 	requestAnimationFrame(() => {
 		document.documentElement.classList.remove('no-color-transition');
@@ -235,7 +249,7 @@ const THEME_BG = {
 	'perplexity-theme':   { dark: '#0A1616', light: '#f5f5f5' },
 	'geek-theme':         { dark: '#000000', light: '#000000' },
 	'gnome-theme':        { dark: '#1e1e1e', light: '#f6f5f4' },
-	'lux-theme':		  { dark: '#1a1614', light: '#f5f2ec' },
+	'lux-theme':          { dark: '#1a1a1a', light: '#f5f2ec' },
 	'vespers-theme':      { dark: '#1a1714', light: '#f5f2ec' },
 	'vigil-theme':        { dark: '#000000', light: '#f5f2ec' },
 };
