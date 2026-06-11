@@ -263,7 +263,7 @@ body:not(.hide-verse-numbers) .passage-text .verse-num {
     width: 1.5em;
     margin-left: -1.5em;
     margin-right: 0;
-    padding-right: 0.15em; /* padding between verse nimber and verse text. changed frkm 0.35 */
+    padding-right: 0.35em; /* padding between verse nimber and verse text. changed frkm 0.15 */
     text-align: right;
     box-sizing: border-box;
 }
