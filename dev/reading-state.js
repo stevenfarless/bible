@@ -104,6 +104,9 @@ export function applyVerseGlow(app) {
     tray.className = 'verse-tools-tray';
     tray.setAttribute('aria-hidden', 'true');
     tray.innerHTML = `
+        <div class="verse-tools-actions verse-tools-actions--top">
+            <button class="verse-tool-btn verse-tool-btn--square" aria-label="Cross References"><span class="verse-tool-letter">R</span></button>
+        </div>
         <div class="verse-tools-actions">
             <button class="verse-tool-btn" aria-label="Highlight"><span class="verse-tool-letter">H</span></button>
             <button class="verse-tool-btn" aria-label="Bookmark"><span class="verse-tool-letter">B</span></button>

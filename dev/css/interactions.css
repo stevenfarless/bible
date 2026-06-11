@@ -115,7 +115,7 @@ body.light-mode .verse-tools-tray {
     border-top-color: rgba(255, 140, 0, 0.2);
 }
 
-/* ── Tool action row ── */
+/* ── Tool action rows ── */
 
 .verse-tools-actions {
     display: flex;
@@ -123,6 +123,17 @@ body.light-mode .verse-tools-tray {
     justify-content: space-around;
     padding: 10px 0 12px;
     gap: 4px;
+}
+
+.verse-tools-actions--top {
+    justify-content: flex-start;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+    margin-bottom: 2px;
+}
+
+body.light-mode .verse-tools-actions--top {
+    border-bottom-color: rgba(255, 140, 0, 0.15);
 }
 
 .verse-tool-btn {
@@ -140,6 +151,10 @@ body.light-mode .verse-tools-tray {
         border-color 0.18s ease,
         transform 0.15s ease;
     touch-action: manipulation;
+}
+
+.verse-tool-btn--square {
+    border-radius: 6px;
 }
 
 .verse-tool-btn:hover,

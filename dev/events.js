@@ -3,7 +3,7 @@
 // New feature bindings go here — app.js does not need to change.
 
 import { setLightMode, changeColorTheme, applyLightMode } from './ui.js';
-import { attachDragToResize } from './modals.js';
+import { attachDragToResize } from './bottom-sheet-drag.js';
 import { runMegasearch, performKeywordSearch } from './search.js';
 import { applyReadingFont } from './settings.js';
 import { initSwipe } from './swipe.js';
