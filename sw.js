@@ -202,10 +202,25 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (APP_SHELL_PATTERN.test(url.pathname)) {
+    // Stale-while-revalidate for app shell JS/CSS:
+    // Serve from cache immediately, revalidate in the background.
     event.respondWith(
-      fetch(new Request(event.request, { cache: 'no-store' })).catch(async () => {
-        const cached = await caches.match(event.request);
-        return cached || new Response('Offline', { status: 503 });
+      caches.match(event.request).then((cached) => {
+        // Start background fetch to keep cache fresh
+        const networkFetch = fetch(event.request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, clone);
+            });
+          }
+          return response;
+        }).catch(() => {
+          // Network fetch failed; that's okay, we already returned cached version
+        });
+        
+        // Return cached version immediately, or wait for network if not cached
+        return cached || networkFetch;
       })
     );
     return;
