@@ -17,7 +17,7 @@
 
     .selector-btn {
         flex: 0 0 auto;
-        justify-content: space-between;
+        justify-content: center;
         gap: 4px;
         height: 44px;
         padding: 0 8px;
@@ -30,7 +30,17 @@
         text-align: center;
     }
 
-    .selector-btn > svg {
+    #bookSelector > svg,
+    #chapterSelector > svg,
+    #verseSelector > svg {
+        display: none;
+    }
+
+    #translationSelectorBtn {
+        justify-content: space-between;
+    }
+
+    #translationSelectorBtn > svg {
         width: 16px;
         height: 16px;
         flex: 0 0 16px;
@@ -136,24 +146,6 @@
 }
 
 @media (max-width: 480px) {
-    .selector-btn {
-        flex-direction: column;
-        justify-content: center;
-        gap: 1px;
-        padding: 3px 7px 2px;
-    }
-
-    .selector-btn > span {
-        flex: 0 0 auto;
-        line-height: 1;
-    }
-
-    .selector-btn > svg {
-        width: 14px;
-        height: 14px;
-        flex-basis: 14px;
-    }
-
     .passage-title {
         font-size: 1.25rem;
     }
