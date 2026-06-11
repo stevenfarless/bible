@@ -43,7 +43,7 @@ body.geek-theme.light-mode {
 
 body.geek-theme.light-mode {
     color: #ffffff;
-    font-family: 'iA Writer Mono S', 'Courier New', monospace;
+    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
     -webkit-font-smoothing: none;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -53,35 +53,15 @@ body.geek-theme.light-mode {
     color: #000055;
 }
 
-.geek-theme.light-mode .header,
-.geek-theme.light-mode .navigation,
-.geek-theme.light-mode .search-container {
-    background: #000055;
-    border-color: #c0c0c0;
-    box-shadow: none;
-}
-
-.geek-theme.light-mode .header {
-    border-bottom: 2px solid #c0c0c0;
-}
-
-.geek-theme.light-mode .navigation {
-    border-bottom: 2px solid #c0c0c0;
-}
-
 .geek-theme.light-mode .logo,
 .geek-theme.light-mode .passage-title,
 .geek-theme.light-mode .modal-header h2,
 .geek-theme.light-mode .accordion-title {
     color: #dfe300;
-    font-family: 'iA Writer Mono S', 'Courier New', monospace;
+    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
     font-weight: 700;
     letter-spacing: 0;
     text-transform: uppercase;
-}
-
-.geek-theme.light-mode .logo {
-    text-shadow: 1px 1px 0 #000000;
 }
 
 .geek-theme.light-mode .icon-btn,
@@ -100,7 +80,53 @@ body.geek-theme.light-mode {
     background: #394dcd;
     color: #ffffff;
     box-shadow: 1px 1px 0 #000000;
-    font-family: 'iA Writer Mono S', 'Courier New', monospace;
+    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
+}
+
+.geek-theme.light-mode .passage-text,
+.geek-theme.light-mode .passage,
+.geek-theme.light-mode .passage-text p,
+.geek-theme.light-mode .verse {
+    color: #ffffff;
+    background: #000055;
+    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
+}
+
+.geek-theme.light-mode .passage-text h2,
+.geek-theme.light-mode .passage-text h3,
+.geek-theme.light-mode .passage-text h4,
+.geek-theme.light-mode .pericope-heading {
+    color: #208c71;
+    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
+    font-style: normal;
+    text-transform: none;
+}
+
+.geek-theme.light-mode .book-category h4,
+.geek-theme.light-mode .passage-extras-heading,
+.geek-theme.light-mode .translation-modal-section-heading {
+    color: #208c71;
+    border-color: #dfe300;
+    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
+    text-transform: uppercase;
+}
+
+.geek-theme.light-mode .header,
+.geek-theme.light-mode .navigation,
+.geek-theme.light-mode .search-container,
+.geek-theme.light-mode .main-content {
+    background: #000055;
+    border-color: #c0c0c0;
+    box-shadow: none;
+}
+
+.geek-theme.light-mode .header,
+.geek-theme.light-mode .navigation {
+    border-bottom: 2px solid #c0c0c0;
+}
+
+.geek-theme.light-mode .logo {
+    text-shadow: 1px 1px 0 #000000;
 }
 
 .geek-theme.light-mode .icon-btn,
@@ -142,10 +168,6 @@ body.geek-theme.light-mode {
     stroke: currentColor;
 }
 
-.geek-theme.light-mode .main-content {
-    background: #000055;
-}
-
 .geek-theme.light-mode .passage-container {
     background: #000055;
     border: 3px solid;
@@ -163,25 +185,6 @@ body.geek-theme.light-mode {
 
 .geek-theme.light-mode .passage-title {
     color: #ffffff;
-}
-
-.geek-theme.light-mode .passage-text,
-.geek-theme.light-mode .passage,
-.geek-theme.light-mode .passage-text p,
-.geek-theme.light-mode .verse {
-    color: #ffffff;
-    background: #000055;
-    font-family: 'iA Writer Mono S', 'Courier New', monospace;
-}
-
-.geek-theme.light-mode .passage-text h2,
-.geek-theme.light-mode .passage-text h3,
-.geek-theme.light-mode .passage-text h4,
-.geek-theme.light-mode .pericope-heading {
-    color: #208c71;
-    font-family: 'iA Writer Mono S', 'Courier New', monospace;
-    font-style: normal;
-    text-transform: none;
 }
 
 .geek-theme.light-mode .passage-text .verse-num,
@@ -245,15 +248,6 @@ body.geek-theme.light-mode {
     border-color: #ffffff #6c6c6c #6c6c6c #ffffff;
 }
 
-.geek-theme.light-mode .book-category h4,
-.geek-theme.light-mode .passage-extras-heading,
-.geek-theme.light-mode .translation-modal-section-heading {
-    color: #208c71;
-    border-color: #dfe300;
-    font-family: 'iA Writer Mono S', 'Courier New', monospace;
-    text-transform: uppercase;
-}
-
 .geek-theme.light-mode .book-grid,
 .geek-theme.light-mode .chapter-grid {
     gap: 0.5rem;
@@ -310,10 +304,7 @@ body.geek-theme.light-mode {
     outline-offset: 2px;
 }
 
-.geek-theme.light-mode input[type='checkbox'] {
-    accent-color: #dfe300;
-}
-
+.geek-theme.light-mode input[type='checkbox'],
 .geek-theme.light-mode input[type='range'] {
     accent-color: #dfe300;
 }
@@ -360,10 +351,4 @@ body.geek-theme.light-mode {
     .geek-theme.light-mode .book-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
-}
-
-@font-face {
-    font-family: 'IBM VGA 9x16';
-    src: url('../fonts/Web437_IBM_VGA_9x16-2x.woff') format('woff');
-    font-display: swap;
 }
