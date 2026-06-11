@@ -201,7 +201,7 @@
 
 .modal-body::-webkit-scrollbar,
 .modal-bottom-sheet .modal-body::-webkit-scrollbar {
-    width: 8px;
+    width: 12px;
 }
 
 .modal-body::-webkit-scrollbar-track,
@@ -211,10 +211,11 @@
 
 .modal-body::-webkit-scrollbar-thumb,
 .modal-bottom-sheet .modal-body::-webkit-scrollbar-thumb {
+    min-height: 36px;
     background-color: var(--border-neutral);
-    border: 2px solid transparent;
+    border: 3px solid transparent;
     border-radius: 999px;
-    background-clip: padding-box;
+    background-clip: content-box;
 }
 
 .modal-body::-webkit-scrollbar-thumb:hover,
