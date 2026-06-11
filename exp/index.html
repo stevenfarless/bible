@@ -12,7 +12,7 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="6b71773" />
+	<meta name="build-id" content="dd6882d" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement — always available in <head>) before the
@@ -24,7 +24,7 @@
 			var el = document.documentElement;
 			var theme = 'basic';
 			try { theme = localStorage.getItem('colorTheme') || 'basic'; } catch (_) {}
-			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1, parchment: 1, vespers: 1, vigil: 1 };
+			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1, lux: 1, vespers: 1, vigil: 1 };
 			if (!valid[theme]) theme = 'basic';
 			el.classList.add(theme + '-theme', 'no-color-transition');
 
@@ -50,7 +50,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=6b71773">.
+	     before the parser reaches <script type="module" src="app.js?v=dd6882d">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -75,19 +75,19 @@
 	<link rel="preload" href="./fonts/AdwaitaSans-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<!-- CSS loaded as parallel <link> tags — @import chains are render-blocking
 	     and sequential; <link> tags are fetched in parallel by the browser. -->
-	<link rel="stylesheet" href="css/fonts.css?v=6b71773" />
-	<link rel="stylesheet" href="css/base.css?v=6b71773" />
-	<link rel="stylesheet" href="css/tokens.css?v=6b71773" />
-	<link rel="stylesheet" href="css/themes.css?v=6b71773" />
-	<link rel="stylesheet" href="css/layout.css?v=6b71773" />
-	<link rel="stylesheet" href="css/components.css?v=6b71773" />
-	<link rel="stylesheet" href="css/modals.css?v=6b71773" />
-	<link rel="stylesheet" href="css/interactions.css?v=6b71773" />
-	<link rel="stylesheet" href="css/utilities.css?v=6b71773" />
-	<link rel="stylesheet" href="css/pericope.css?v=6b71773" />
+	<link rel="stylesheet" href="css/fonts.css?v=dd6882d" />
+	<link rel="stylesheet" href="css/base.css?v=dd6882d" />
+	<link rel="stylesheet" href="css/tokens.css?v=dd6882d" />
+	<link rel="stylesheet" href="css/themes.css?v=dd6882d" />
+	<link rel="stylesheet" href="css/layout.css?v=dd6882d" />
+	<link rel="stylesheet" href="css/components.css?v=dd6882d" />
+	<link rel="stylesheet" href="css/modals.css?v=dd6882d" />
+	<link rel="stylesheet" href="css/interactions.css?v=dd6882d" />
+	<link rel="stylesheet" href="css/utilities.css?v=dd6882d" />
+	<link rel="stylesheet" href="css/pericope.css?v=dd6882d" />
 	<!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
 	<script src="https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV" async defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js?v=6b71773"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js?v=dd6882d"></script>
 </head>
 
 <body class="initializing">
@@ -95,7 +95,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">6b71773</span>
+				<span id="build-info">dd6882d</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -305,17 +305,16 @@
 							<div class="setting-item">
 								<label for="themeSelector">Color Theme</label>
 								<select id="themeSelector" class="input-field">
-									<option value="parchment">Parchment</option>
-									<option value="vespers">Vespers</option>
-									<option value="vigil">Vigil (OLED)</option>
-									<option value="dracula">Dracula</option>
-									<option value="onyx">Gold (OLED)</option>
-									<option value="sage">Sage</option>
-									<option value="ember">Ember</option>
-									<option value="perplexity">Perplexitude</option>
-									<option value="basic">Basic (Black OLED &amp; White)</option>
-									<option value="geek">The Geek Shall Inherit The Earth (OLED)</option>
-									<option value="gnome">Adwaitish</option>
+									<option value="vespers">Lux (Light) | Vespers (Dark)</option>
+									<option value="vigil">Lux (Light) | Vigil (Dark OLED)</option>
+									<option value="dracula">Dracula (Dark) | Alucard (Light)</option>
+									<option value="onyx">Gold (Light|Dark OLED)</option>
+									<option value="sage">Sage (Light|Dark)</option>
+									<option value="ember">Ember (Light|Dark)</option>
+									<option value="perplexity">Perplexitude (Light|Dark)</option>
+									<option value="basic">Basic Black (Dark) | Basic White (Light)</option>
+									<option value="geek">The Geek Shall Inherit The Earth (Dark OLED)</option>
+									<option value="gnome">Adwaitish (Light|Dark)</option>
 								</select>
 								<small class="help-text">Choose your preferred color scheme.</small>
 							</div>
@@ -679,7 +678,7 @@
 
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=6b71773"></script>
+	<script type="module" src="app.js?v=dd6882d"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');
