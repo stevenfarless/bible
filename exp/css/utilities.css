@@ -18,7 +18,7 @@
     .selector-btn {
         flex: 0 0 auto;
         justify-content: center;
-        height: 30px;
+        height: 44px;
         padding: 0.25rem 0.35rem;
         min-width: 0;
         font-size: 0.8rem;
@@ -58,7 +58,7 @@
     .nav-btn {
         width: 44px;
         min-width: 44px;
-        height: 30px;
+        height: 44px;
         padding: 0.35rem;
         justify-content: center;
     }
