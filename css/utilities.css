@@ -75,6 +75,7 @@
         justify-self: end;
     }
 
+    html.hide-chapter-arrows .passage-selector,
     body.hide-chapter-arrows .passage-selector {
         grid-column: 1 / -1;
         justify-self: center;
@@ -229,17 +230,25 @@
 
 .hidden { display: none !important; }
 
-/* Hide verse numbers when setting is off */
+html.hide-chapter-arrows #prevChapter,
+html.hide-chapter-arrows #nextChapter,
+body.hide-chapter-arrows #prevChapter,
+body.hide-chapter-arrows #nextChapter {
+    display: none !important;
+}
+
+html.hide-verse-numbers .passage-text .verse-num,
 body.hide-verse-numbers .passage-text .verse-num {
     display: none !important;
 }
 
-/* Verse-by-Verse Display */
+html.verse-by-verse-enabled .passage-text .verse,
 .verse-by-verse .verse {
     display: block;
     margin-bottom: 0.75rem;
 }
 
+html.verse-by-verse-enabled .passage-text .verse-num,
 .verse-by-verse .verse-num {
     display: inline;
     font-weight: 600;
@@ -247,44 +256,64 @@ body.hide-verse-numbers .passage-text .verse-num {
     margin-right: 0.5em;
 }
 
+html.verse-by-verse-enabled .passage-text p,
 .verse-by-verse p {
     margin: 0.5rem 0;
 }
 
+html.verse-by-verse-enabled .passage-text h3,
 .verse-by-verse h3 {
     margin-top: 1.5rem;
     margin-bottom: 0.75rem;
 }
 
-/* Reading font family */
+html.font-andika .passage-text,
+html.font-andika .passage,
+html.font-andika .search-result-content,
 body.font-andika .passage-text,
 body.font-andika .passage,
 body.font-andika .search-result-content {
     font-family: 'Andika', sans-serif;
 }
 
+html.font-ubuntu .passage-text,
+html.font-ubuntu .passage,
+html.font-ubuntu .search-result-content,
 body.font-ubuntu .passage-text,
 body.font-ubuntu .passage,
 body.font-ubuntu .search-result-content {
     font-family: 'Ubuntu', sans-serif;
 }
 
+html.font-opendyslexic3 .passage-text,
+html.font-opendyslexic3 .passage,
+html.font-opendyslexic3 .search-result-content,
 body.font-opendyslexic3 .passage-text,
 body.font-opendyslexic3 .passage,
 body.font-opendyslexic3 .search-result-content {
     font-family: 'OpenDyslexic3', sans-serif;
 }
 
+html.font-ia-quattro .passage-text,
+html.font-ia-quattro .passage,
+html.font-ia-quattro .search-result-content,
 body.font-ia-quattro .passage-text,
 body.font-ia-quattro .passage,
 body.font-ia-quattro .search-result-content {
     font-family: 'iA Writer Quattro S', sans-serif;
 }
 
+html.font-adwaitasans .passage-text,
+html.font-adwaitasans .passage,
+html.font-adwaitasans .search-result-content,
 body.font-adwaitasans .passage-text,
 body.font-adwaitasans .passage,
 body.font-adwaitasans .search-result-content {
     font-family: 'Adwaita Sans', sans-serif;
+}
+
+html .passage-text {
+    font-size: var(--startup-passage-font-size, 20px);
 }
 
 /* ================================
