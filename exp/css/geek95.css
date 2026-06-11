@@ -53,6 +53,20 @@ body.geek-theme.light-mode {
     color: #000055;
 }
 
+.geek-theme.light-mode .header,
+.geek-theme.light-mode .navigation,
+.geek-theme.light-mode .search-container,
+.geek-theme.light-mode .main-content {
+    background: #000055;
+    border-color: #c0c0c0;
+    box-shadow: none;
+}
+
+.geek-theme.light-mode .header,
+.geek-theme.light-mode .navigation {
+    border-bottom: 2px solid #c0c0c0;
+}
+
 .geek-theme.light-mode .logo,
 .geek-theme.light-mode .passage-title,
 .geek-theme.light-mode .modal-header h2,
@@ -62,6 +76,10 @@ body.geek-theme.light-mode {
     font-weight: 700;
     letter-spacing: 0;
     text-transform: uppercase;
+}
+
+.geek-theme.light-mode .logo {
+    text-shadow: 1px 1px 0 #000000;
 }
 
 .geek-theme.light-mode .icon-btn,
@@ -81,52 +99,6 @@ body.geek-theme.light-mode {
     color: #ffffff;
     box-shadow: 1px 1px 0 #000000;
     font-family: 'IBM VGA 9x16', 'Courier New', monospace;
-}
-
-.geek-theme.light-mode .passage-text,
-.geek-theme.light-mode .passage,
-.geek-theme.light-mode .passage-text p,
-.geek-theme.light-mode .verse {
-    color: #ffffff;
-    background: #000055;
-    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
-}
-
-.geek-theme.light-mode .passage-text h2,
-.geek-theme.light-mode .passage-text h3,
-.geek-theme.light-mode .passage-text h4,
-.geek-theme.light-mode .pericope-heading {
-    color: #208c71;
-    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
-    font-style: normal;
-    text-transform: none;
-}
-
-.geek-theme.light-mode .book-category h4,
-.geek-theme.light-mode .passage-extras-heading,
-.geek-theme.light-mode .translation-modal-section-heading {
-    color: #208c71;
-    border-color: #dfe300;
-    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
-    text-transform: uppercase;
-}
-
-.geek-theme.light-mode .header,
-.geek-theme.light-mode .navigation,
-.geek-theme.light-mode .search-container,
-.geek-theme.light-mode .main-content {
-    background: #000055;
-    border-color: #c0c0c0;
-    box-shadow: none;
-}
-
-.geek-theme.light-mode .header,
-.geek-theme.light-mode .navigation {
-    border-bottom: 2px solid #c0c0c0;
-}
-
-.geek-theme.light-mode .logo {
-    text-shadow: 1px 1px 0 #000000;
 }
 
 .geek-theme.light-mode .icon-btn,
@@ -185,6 +157,38 @@ body.geek-theme.light-mode {
 
 .geek-theme.light-mode .passage-title {
     color: #ffffff;
+}
+
+.geek-theme.light-mode .passage-text,
+.geek-theme.light-mode .passage {
+    color: #ffffff;
+    background: #000055;
+    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
+    transform: none;
+    width: auto;
+    font-size: 18px !important;
+    line-height: 1.55;
+    letter-spacing: 0;
+}
+
+.geek-theme.light-mode .passage-text p,
+.geek-theme.light-mode .verse {
+    color: #ffffff;
+    background: #000055;
+    font-family: inherit;
+}
+
+.geek-theme.light-mode .passage-text h2,
+.geek-theme.light-mode .passage-text h3,
+.geek-theme.light-mode .passage-text h4,
+.geek-theme.light-mode .pericope-heading {
+    color: #208c71;
+    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
+    font-style: normal;
+    text-transform: none;
+    transform: none;
+    width: auto;
+    letter-spacing: 0;
 }
 
 .geek-theme.light-mode .passage-text .verse-num,
@@ -246,6 +250,15 @@ body.geek-theme.light-mode {
     background: #c0c0c0;
     border: 2px solid;
     border-color: #ffffff #6c6c6c #6c6c6c #ffffff;
+}
+
+.geek-theme.light-mode .book-category h4,
+.geek-theme.light-mode .passage-extras-heading,
+.geek-theme.light-mode .translation-modal-section-heading {
+    color: #208c71;
+    border-color: #dfe300;
+    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
+    text-transform: uppercase;
 }
 
 .geek-theme.light-mode .book-grid,
