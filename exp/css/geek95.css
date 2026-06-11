@@ -1,9 +1,6 @@
-:root.geek95-theme,
-html.geek95-theme,
-body.geek95-theme,
-:root.geek95-theme.light-mode,
-html.geek95-theme.light-mode,
-body.geek95-theme.light-mode {
+:root.geek-theme.light-mode,
+html.geek-theme.light-mode,
+body.geek-theme.light-mode {
     --bg-base: #000055;
     --bg-card: #000055;
     --bg-raised: #394dcd;
@@ -31,43 +28,43 @@ body.geek95-theme.light-mode {
     --shadow-lg: 4px 4px 0 #000000;
 }
 
-html.geek95-theme,
-body.geek95-theme {
+html.geek-theme.light-mode,
+body.geek-theme.light-mode {
     background: #000055;
 }
 
-body.geek95-theme {
+body.geek-theme.light-mode {
     color: #ffffff;
     font-family: 'iA Writer Mono S', 'Courier New', monospace;
     -webkit-font-smoothing: none;
     -moz-osx-font-smoothing: grayscale;
 }
 
-.geek95-theme ::selection {
+.geek-theme.light-mode ::selection {
     background: #dfe300;
     color: #000055;
 }
 
-.geek95-theme .header,
-.geek95-theme .navigation,
-.geek95-theme .search-container {
+.geek-theme.light-mode .header,
+.geek-theme.light-mode .navigation,
+.geek-theme.light-mode .search-container {
     background: #000055;
     border-color: #c0c0c0;
     box-shadow: none;
 }
 
-.geek95-theme .header {
+.geek-theme.light-mode .header {
     border-bottom: 2px solid #c0c0c0;
 }
 
-.geek95-theme .navigation {
+.geek-theme.light-mode .navigation {
     border-bottom: 2px solid #c0c0c0;
 }
 
-.geek95-theme .logo,
-.geek95-theme .passage-title,
-.geek95-theme .modal-header h2,
-.geek95-theme .accordion-title {
+.geek-theme.light-mode .logo,
+.geek-theme.light-mode .passage-title,
+.geek-theme.light-mode .modal-header h2,
+.geek-theme.light-mode .accordion-title {
     color: #dfe300;
     font-family: 'iA Writer Mono S', 'Courier New', monospace;
     font-weight: 700;
@@ -75,20 +72,20 @@ body.geek95-theme {
     text-transform: uppercase;
 }
 
-.geek95-theme .logo {
+.geek-theme.light-mode .logo {
     text-shadow: 1px 1px 0 #000000;
 }
 
-.geek95-theme .icon-btn,
-.geek95-theme .close-btn,
-.geek95-theme .selector-btn,
-.geek95-theme .nav-btn,
-.geek95-theme .primary-btn,
-.geek95-theme .secondary-btn,
-.geek95-theme .book-item,
-.geek95-theme .chapter-item,
-.geek95-theme .toast-action,
-.geek95-theme .input-field {
+.geek-theme.light-mode .icon-btn,
+.geek-theme.light-mode .close-btn,
+.geek-theme.light-mode .selector-btn,
+.geek-theme.light-mode .nav-btn,
+.geek-theme.light-mode .primary-btn,
+.geek-theme.light-mode .secondary-btn,
+.geek-theme.light-mode .book-item,
+.geek-theme.light-mode .chapter-item,
+.geek-theme.light-mode .toast-action,
+.geek-theme.light-mode .input-field {
     border-radius: 0;
     border: 2px solid;
     border-color: #ffffff #6c6c6c #6c6c6c #ffffff;
@@ -98,50 +95,50 @@ body.geek95-theme {
     font-family: 'iA Writer Mono S', 'Courier New', monospace;
 }
 
-.geek95-theme .icon-btn,
-.geek95-theme .close-btn {
+.geek-theme.light-mode .icon-btn,
+.geek-theme.light-mode .close-btn {
     background: transparent;
     color: #dfe300;
 }
 
-.geek95-theme .icon-btn:hover,
-.geek95-theme .close-btn:hover,
-.geek95-theme .selector-btn:hover,
-.geek95-theme .nav-btn:hover:not(:disabled),
-.geek95-theme .book-item:hover,
-.geek95-theme .chapter-item:hover,
-.geek95-theme .primary-btn:hover,
-.geek95-theme .secondary-btn:hover {
+.geek-theme.light-mode .icon-btn:hover,
+.geek-theme.light-mode .close-btn:hover,
+.geek-theme.light-mode .selector-btn:hover,
+.geek-theme.light-mode .nav-btn:hover:not(:disabled),
+.geek-theme.light-mode .book-item:hover,
+.geek-theme.light-mode .chapter-item:hover,
+.geek-theme.light-mode .primary-btn:hover,
+.geek-theme.light-mode .secondary-btn:hover {
     background: #dfe300;
     color: #000055;
     border-color: #ffffff #6c6c6c #6c6c6c #ffffff;
     transform: none;
 }
 
-.geek95-theme .icon-btn:active,
-.geek95-theme .close-btn:active,
-.geek95-theme .selector-btn:active,
-.geek95-theme .nav-btn:active,
-.geek95-theme .book-item:active,
-.geek95-theme .chapter-item:active,
-.geek95-theme .primary-btn:active,
-.geek95-theme .secondary-btn:active {
+.geek-theme.light-mode .icon-btn:active,
+.geek-theme.light-mode .close-btn:active,
+.geek-theme.light-mode .selector-btn:active,
+.geek-theme.light-mode .nav-btn:active,
+.geek-theme.light-mode .book-item:active,
+.geek-theme.light-mode .chapter-item:active,
+.geek-theme.light-mode .primary-btn:active,
+.geek-theme.light-mode .secondary-btn:active {
     border-color: #6c6c6c #ffffff #ffffff #6c6c6c;
     box-shadow: none;
     transform: translate(1px, 1px);
 }
 
-.geek95-theme .selector-btn svg,
-.geek95-theme .nav-btn svg,
-.geek95-theme .icon-btn svg {
+.geek-theme.light-mode .selector-btn svg,
+.geek-theme.light-mode .nav-btn svg,
+.geek-theme.light-mode .icon-btn svg {
     stroke: currentColor;
 }
 
-.geek95-theme .main-content {
+.geek-theme.light-mode .main-content {
     background: #000055;
 }
 
-.geek95-theme .passage-container {
+.geek-theme.light-mode .passage-container {
     background: #000055;
     border: 3px solid;
     border-color: #ffffff #6c6c6c #6c6c6c #ffffff;
@@ -149,58 +146,58 @@ body.geek95-theme {
     box-shadow: 3px 3px 0 #000000;
 }
 
-.geek95-theme .passage-header {
-    border-bottom: 2px solid #c0c0c0;
+.geek-theme.light-mode .passage-header {
     background: #394dcd;
+    border-bottom: 2px solid #c0c0c0;
     padding: 0.5rem 0.75rem;
     margin: calc(-1 * var(--spacing-xl)) calc(-1 * var(--spacing-xl)) var(--spacing-lg);
 }
 
-.geek95-theme .passage-title {
+.geek-theme.light-mode .passage-title {
     color: #ffffff;
 }
 
-.geek95-theme .passage-text,
-.geek95-theme .passage,
-.geek95-theme .passage-text p,
-.geek95-theme .verse {
+.geek-theme.light-mode .passage-text,
+.geek-theme.light-mode .passage,
+.geek-theme.light-mode .passage-text p,
+.geek-theme.light-mode .verse {
     color: #ffffff;
     background: #000055;
     font-family: 'iA Writer Mono S', 'Courier New', monospace;
 }
 
-.geek95-theme .passage-text h2,
-.geek95-theme .passage-text h3,
-.geek95-theme .passage-text h4,
-.geek95-theme .pericope-heading {
+.geek-theme.light-mode .passage-text h2,
+.geek-theme.light-mode .passage-text h3,
+.geek-theme.light-mode .passage-text h4,
+.geek-theme.light-mode .pericope-heading {
     color: #208c71;
     font-family: 'iA Writer Mono S', 'Courier New', monospace;
     font-style: normal;
     text-transform: none;
 }
 
-.geek95-theme .passage-text .verse-num,
-.geek95-theme .verse .verse-num {
+.geek-theme.light-mode .passage-text .verse-num,
+.geek-theme.light-mode .verse .verse-num {
     color: #dfe300;
 }
 
-.geek95-theme .passage-footer {
+.geek-theme.light-mode .passage-footer {
     border-top: 1px dashed #c0c0c0;
 }
 
-.geek95-theme .copyright,
-.geek95-theme .help-text,
-.geek95-theme .text-muted {
+.geek-theme.light-mode .copyright,
+.geek-theme.light-mode .help-text,
+.geek-theme.light-mode .text-muted {
     color: #c0c0c0;
 }
 
-.geek95-theme .modal {
+.geek-theme.light-mode .modal {
     background: rgba(0, 0, 0, 0.78);
     backdrop-filter: none;
 }
 
-.geek95-theme .modal-content,
-.geek95-theme #settingsModal .modal-content {
+.geek-theme.light-mode .modal-content,
+.geek-theme.light-mode #settingsModal .modal-content {
     background: #000055;
     color: #ffffff;
     border: 3px solid;
@@ -209,129 +206,129 @@ body.geek95-theme {
     box-shadow: 4px 4px 0 #000000;
 }
 
-.geek95-theme .modal-header,
-.geek95-theme #settingsModal .modal-header {
+.geek-theme.light-mode .modal-header,
+.geek-theme.light-mode #settingsModal .modal-header {
     background: #394dcd;
     border-bottom: 2px solid #c0c0c0;
     padding: 0.5rem 0.75rem;
 }
 
-.geek95-theme #settingsModal .modal-header::before {
+.geek-theme.light-mode #settingsModal .modal-header::before {
     display: none;
 }
 
-.geek95-theme .modal-body {
+.geek-theme.light-mode .modal-body {
     background: #000055;
     scrollbar-color: #c0c0c0 #000055;
 }
 
-.geek95-theme .modal-body::-webkit-scrollbar {
+.geek-theme.light-mode .modal-body::-webkit-scrollbar {
     width: 16px;
 }
 
-.geek95-theme .modal-body::-webkit-scrollbar-track {
+.geek-theme.light-mode .modal-body::-webkit-scrollbar-track {
     background: #000055;
     border-left: 1px solid #6c6c6c;
 }
 
-.geek95-theme .modal-body::-webkit-scrollbar-thumb {
+.geek-theme.light-mode .modal-body::-webkit-scrollbar-thumb {
     background: #c0c0c0;
     border: 2px solid;
     border-color: #ffffff #6c6c6c #6c6c6c #ffffff;
 }
 
-.geek95-theme .book-category h4,
-.geek95-theme .passage-extras-heading,
-.geek95-theme .translation-modal-section-heading {
+.geek-theme.light-mode .book-category h4,
+.geek-theme.light-mode .passage-extras-heading,
+.geek-theme.light-mode .translation-modal-section-heading {
     color: #208c71;
     border-color: #dfe300;
     font-family: 'iA Writer Mono S', 'Courier New', monospace;
     text-transform: uppercase;
 }
 
-.geek95-theme .book-grid,
-.geek95-theme .chapter-grid {
+.geek-theme.light-mode .book-grid,
+.geek-theme.light-mode .chapter-grid {
     gap: 0.5rem;
 }
 
-.geek95-theme .book-item,
-.geek95-theme .chapter-item {
+.geek-theme.light-mode .book-item,
+.geek-theme.light-mode .chapter-item {
     min-height: 3rem;
     background: #000055;
     color: #ffffff;
 }
 
-.geek95-theme .accordion-section {
+.geek-theme.light-mode .accordion-section {
     background: #000055;
     border: 2px solid;
     border-color: #ffffff #6c6c6c #6c6c6c #ffffff;
     border-radius: 0;
 }
 
-.geek95-theme .accordion-header,
-.geek95-theme .accordion-panel .settings-group {
+.geek-theme.light-mode .accordion-header,
+.geek-theme.light-mode .accordion-panel .settings-group {
     background: #000055;
     color: #ffffff;
 }
 
-.geek95-theme .accordion-header {
+.geek-theme.light-mode .accordion-header {
     border-bottom: 1px solid #c0c0c0;
 }
 
-.geek95-theme .accordion-header:hover {
+.geek-theme.light-mode .accordion-header:hover {
     background: #394dcd;
 }
 
-.geek95-theme .setting-item label,
-.geek95-theme .checkbox-label,
-.geek95-theme .shortcut-item span,
-.geek95-theme .footnote-text,
-.geek95-theme .crossref-reference {
+.geek-theme.light-mode .setting-item label,
+.geek-theme.light-mode .checkbox-label,
+.geek-theme.light-mode .shortcut-item span,
+.geek-theme.light-mode .footnote-text,
+.geek-theme.light-mode .crossref-reference {
     color: #ffffff;
 }
 
-.geek95-theme .input-field {
+.geek-theme.light-mode .input-field {
     background: #000055;
     color: #ffffff;
     appearance: auto;
 }
 
-.geek95-theme .input-field:focus,
-.geek95-theme .selector-btn:focus-visible,
-.geek95-theme .nav-btn:focus-visible,
-.geek95-theme .book-item:focus-visible,
-.geek95-theme .chapter-item:focus-visible {
+.geek-theme.light-mode .input-field:focus,
+.geek-theme.light-mode .selector-btn:focus-visible,
+.geek-theme.light-mode .nav-btn:focus-visible,
+.geek-theme.light-mode .book-item:focus-visible,
+.geek-theme.light-mode .chapter-item:focus-visible {
     outline: 1px dotted #dfe300;
     outline-offset: 2px;
 }
 
-.geek95-theme input[type='checkbox'] {
+.geek-theme.light-mode input[type='checkbox'] {
     accent-color: #dfe300;
 }
 
-.geek95-theme input[type='range'] {
+.geek-theme.light-mode input[type='range'] {
     accent-color: #dfe300;
 }
 
-.geek95-theme .setting-item--disabled,
-.geek95-theme .nav-btn:disabled {
+.geek-theme.light-mode .setting-item--disabled,
+.geek-theme.light-mode .nav-btn:disabled {
     color: #6c6c6c;
     opacity: 1;
 }
 
-.geek95-theme .error {
+.geek-theme.light-mode .error {
     background: #e35f5f;
     color: #ffffff;
     border-radius: 0;
 }
 
-.geek95-theme .success,
-.geek95-theme .toast.success {
+.geek-theme.light-mode .success,
+.geek-theme.light-mode .toast.success {
     background: #208c71;
     color: #ffffff;
 }
 
-.geek95-theme #build-info {
+.geek-theme.light-mode #build-info {
     background: #e35f5f;
     color: #ffffff;
     border-radius: 0;
@@ -341,18 +338,18 @@ body.geek95-theme {
 }
 
 @media (max-width: 600px) {
-    .geek95-theme .passage-container {
+    .geek-theme.light-mode .passage-container {
         border-left-width: 2px;
         border-right-width: 2px;
         box-shadow: 2px 2px 0 #000000;
     }
 
-    .geek95-theme .passage-header {
+    .geek-theme.light-mode .passage-header {
         margin-left: calc(-1 * var(--spacing-lg));
         margin-right: calc(-1 * var(--spacing-lg));
     }
 
-    .geek95-theme .book-grid {
+    .geek-theme.light-mode .book-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
