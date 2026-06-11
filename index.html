@@ -24,7 +24,7 @@
 			var el = document.documentElement;
 			var theme = 'basic';
 			try { theme = localStorage.getItem('colorTheme') || 'basic'; } catch (_) {}
-			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1 };
+			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1, lux: 1, vespers: 1, vigil: 1 };
 			if (!valid[theme]) theme = 'basic';
 			el.classList.add(theme + '-theme', 'no-color-transition');
 
@@ -305,14 +305,16 @@
 							<div class="setting-item">
 								<label for="themeSelector">Color Theme</label>
 								<select id="themeSelector" class="input-field">
-				    	<option value="dracula">Dracula</option>
-								 <option value="onyx">Gold (OLED)</option>
-									<option value="sage">Sage</option>
-									<option value="ember">Ember</option>
-									<option value="perplexity">Perplexitude</option>
-									<option value="basic">Basic (Black OLED &amp; White)</option>
-									<option value="geek">The Geek Shall Inherit The Earth (OLED)</option>
-									<option value="gnome">Adwaitish</option>
+									<option value="vespers">Lux (Light) | Vespers (Dark)</option>
+									<option value="vigil">Lux (Light) | Vigil (Dark OLED)</option>
+									<option value="dracula">Dracula (Dark) | Alucard (Light)</option>
+									<option value="onyx">Gold (Light | Dark OLED)</option>
+									<option value="sage">Sage (Light | Dark)</option>
+									<option value="ember">Ember (Light | Dark)</option>
+									<option value="perplexity">Perplexitude (Light | Dark)</option>
+									<option value="basic">Basic Black (Dark) | Basic White (Light)</option>
+									<option value="geek">The Geek Shall Inherit The Earth (Dark OLED)</option>
+									<option value="gnome">Adwaitish (Light | Dark)</option>
 								</select>
 								<small class="help-text">Choose your preferred color scheme.</small>
 							</div>
