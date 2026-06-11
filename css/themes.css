@@ -665,7 +665,7 @@ body.gnome-theme {
     --highlight-border: #484848;
 
     /* Blue accent — HIG Blue 3; reserved for interactive controls only */
-    --primary-color:   #618DF2; /* changed from #3584e4
+    --primary-color:   #618DF2; /* changed from #3584e4 */
     --primary-dark:    #1a6fc4;
     --primary-light:   #62a0ea;
     /* brand-secondary and section-heading-color drive pericope/book-category headings;
@@ -801,16 +801,15 @@ body.gnome-theme.light-mode .modal-header h2 {
 }
 
 /* ================================
-   Parchment — warm sienna-brown light theme.
-   The reading mode anchor: single warm hue family throughout.
-   No purple, no cool tones. Designed for extended daylight reading.
-   Dark mode uses Vespers (a separate theme key).
+   Parchment — warm cream light theme.
+   Single warm sienna hue family throughout. No purple, no cool tones.
+   Designed for extended daylight reading.
+   Dark mode uses Vespers values.
    ================================ */
 :root.parchment-theme,
 html.parchment-theme,
 body.parchment-theme {
-    /* Dark mode surfaces — uses Vespers values so the theme
-       is usable if the user has dark mode set as system default */
+    /* Dark mode surfaces — Vespers values */
     --bg-base:   hsl(0, 0%, 10%);
     --bg-card:   hsl(0, 0%, 14%);
     --bg-raised: hsl(0, 0%, 19%);
@@ -840,22 +839,22 @@ body.parchment-theme {
     --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
 }
 
-/* Parchment: the true light mode — warm off-white, sienna accent */
+/* Parchment: true light mode — warm cream surfaces, sienna accent */
 :root.parchment-theme.light-mode,
 html.parchment-theme.light-mode,
 body.parchment-theme.light-mode {
-    --bg-base:   hsl(38, 18%, 96%);
-    --bg-card:   hsl(38, 14%, 93%);
-    --bg-raised: hsl(36, 12%, 88%);
+    --bg-base:   hsl(38, 32%, 94%);
+    --bg-card:   hsl(38, 28%, 91%);
+    --bg-raised: hsl(36, 24%, 86%);
 
     --text-heading: hsl(30, 8%, 22%);
     --text-body:    hsl(30, 8%, 22%);
     --text-muted:   hsl(30, 6%, 52%);
 
-    --border-neutral:   hsl(34, 12%, 82%);
-    --highlight-border: hsl(36, 16%, 90%);
+    --border-neutral:   hsl(34, 16%, 78%);
+    --highlight-border: hsl(36, 20%, 86%);
 
-    /* Sienna — authoritative, warm, verified 4.5:1 on hsl(38,18%,96%) */
+    /* Sienna — authoritative, warm, verified 4.5:1 on hsl(38,32%,94%) */
     --primary-color:   hsl(24, 55%, 36%);
     --primary-dark:    hsl(22, 56%, 28%);
     --primary-light:   hsl(28, 52%, 46%);
@@ -869,9 +868,9 @@ body.parchment-theme.light-mode {
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 14%, transparent);
 
-    --shadow-sm: 0 1px 2px hsla(28, 20%, 20%, 0.10);
-    --shadow-md: 0 4px 6px hsla(28, 20%, 20%, 0.12);
-    --shadow-lg: 0 10px 15px hsla(28, 20%, 20%, 0.16);
+    --shadow-sm: 0 1px 2px hsla(28, 24%, 18%, 0.12);
+    --shadow-md: 0 4px 6px hsla(28, 24%, 18%, 0.14);
+    --shadow-lg: 0 10px 15px hsla(28, 24%, 18%, 0.18);
 }
 
 /* ================================
@@ -911,20 +910,20 @@ body.vespers-theme {
     --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
 }
 
-/* Vespers light mode — same Parchment values, full warm light palette */
+/* Vespers light mode — warm cream, same as Parchment light */
 :root.vespers-theme.light-mode,
 html.vespers-theme.light-mode,
 body.vespers-theme.light-mode {
-    --bg-base:   hsl(38, 18%, 96%);
-    --bg-card:   hsl(38, 14%, 93%);
-    --bg-raised: hsl(36, 12%, 88%);
+    --bg-base:   hsl(38, 32%, 94%);
+    --bg-card:   hsl(38, 28%, 91%);
+    --bg-raised: hsl(36, 24%, 86%);
 
     --text-heading: hsl(30, 8%, 22%);
     --text-body:    hsl(30, 8%, 22%);
     --text-muted:   hsl(30, 6%, 52%);
 
-    --border-neutral:   hsl(34, 12%, 82%);
-    --highlight-border: hsl(36, 16%, 90%);
+    --border-neutral:   hsl(34, 16%, 78%);
+    --highlight-border: hsl(36, 20%, 86%);
 
     --primary-color:   hsl(24, 55%, 36%);
     --primary-dark:    hsl(22, 56%, 28%);
@@ -939,9 +938,9 @@ body.vespers-theme.light-mode {
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 14%, transparent);
 
-    --shadow-sm: 0 1px 2px hsla(28, 20%, 20%, 0.10);
-    --shadow-md: 0 4px 6px hsla(28, 20%, 20%, 0.12);
-    --shadow-lg: 0 10px 15px hsla(28, 20%, 20%, 0.16);
+    --shadow-sm: 0 1px 2px hsla(28, 24%, 18%, 0.12);
+    --shadow-md: 0 4px 6px hsla(28, 24%, 18%, 0.14);
+    --shadow-lg: 0 10px 15px hsla(28, 24%, 18%, 0.18);
 }
 
 /* ================================
@@ -989,20 +988,20 @@ body.vigil-theme:not(.light-mode) .passage-container {
     background-color: #000;
 }
 
-/* Vigil light mode — same Parchment values */
+/* Vigil light mode — warm cream, same as Parchment light */
 :root.vigil-theme.light-mode,
 html.vigil-theme.light-mode,
 body.vigil-theme.light-mode {
-    --bg-base:   hsl(38, 18%, 96%);
-    --bg-card:   hsl(38, 14%, 93%);
-    --bg-raised: hsl(36, 12%, 88%);
+    --bg-base:   hsl(38, 32%, 94%);
+    --bg-card:   hsl(38, 28%, 91%);
+    --bg-raised: hsl(36, 24%, 86%);
 
     --text-heading: hsl(30, 8%, 22%);
     --text-body:    hsl(30, 8%, 22%);
     --text-muted:   hsl(30, 6%, 52%);
 
-    --border-neutral:   hsl(34, 12%, 82%);
-    --highlight-border: hsl(36, 16%, 90%);
+    --border-neutral:   hsl(34, 16%, 78%);
+    --highlight-border: hsl(36, 20%, 86%);
 
     --primary-color:   hsl(24, 55%, 36%);
     --primary-dark:    hsl(22, 56%, 28%);
@@ -1017,7 +1016,7 @@ body.vigil-theme.light-mode {
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 14%, transparent);
 
-    --shadow-sm: 0 1px 2px hsla(28, 20%, 20%, 0.10);
-    --shadow-md: 0 4px 6px hsla(28, 20%, 20%, 0.12);
-    --shadow-lg: 0 10px 15px hsla(28, 20%, 20%, 0.16);
+    --shadow-sm: 0 1px 2px hsla(28, 24%, 18%, 0.12);
+    --shadow-md: 0 4px 6px hsla(28, 24%, 18%, 0.14);
+    --shadow-lg: 0 10px 15px hsla(28, 24%, 18%, 0.18);
 }
