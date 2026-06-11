@@ -75,7 +75,7 @@
         justify-self: end;
     }
 
-    html.hide-chapter-arrows .passage-selector,
+    html.hide-chapter-arrows:not(:has(body[data-app-ready="true"])) .passage-selector,
     body.hide-chapter-arrows .passage-selector {
         grid-column: 1 / -1;
         justify-self: center;
@@ -230,25 +230,27 @@
 
 .hidden { display: none !important; }
 
-html.hide-chapter-arrows #prevChapter,
-html.hide-chapter-arrows #nextChapter,
+html.hide-chapter-arrows:not(:has(body[data-app-ready="true"])) #prevChapter,
+html.hide-chapter-arrows:not(:has(body[data-app-ready="true"])) #nextChapter,
 body.hide-chapter-arrows #prevChapter,
 body.hide-chapter-arrows #nextChapter {
     display: none !important;
 }
 
-html.hide-verse-numbers .passage-text .verse-num,
+html.hide-verse-numbers:not(:has(body[data-app-ready="true"])) .passage-text .verse-num,
 body.hide-verse-numbers .passage-text .verse-num {
     display: none !important;
 }
 
-html.verse-by-verse-enabled .passage-text .verse,
+html.verse-by-verse-enabled:not(:has(body[data-app-ready="true"])) .passage-text .verse,
+body.verse-by-verse-mode .passage-text .verse,
 .verse-by-verse .verse {
-    display: block;
+    display: block !important;
     margin-bottom: 0.75rem;
 }
 
-html.verse-by-verse-enabled .passage-text .verse-num,
+html.verse-by-verse-enabled:not(:has(body[data-app-ready="true"])) .passage-text .verse-num,
+body.verse-by-verse-mode .passage-text .verse-num,
 .verse-by-verse .verse-num {
     display: inline;
     font-weight: 600;
@@ -256,12 +258,14 @@ html.verse-by-verse-enabled .passage-text .verse-num,
     margin-right: 0.5em;
 }
 
-html.verse-by-verse-enabled .passage-text p,
+html.verse-by-verse-enabled:not(:has(body[data-app-ready="true"])) .passage-text p,
+body.verse-by-verse-mode .passage-text p,
 .verse-by-verse p {
     margin: 0.5rem 0;
 }
 
-html.verse-by-verse-enabled .passage-text h3,
+html.verse-by-verse-enabled:not(:has(body[data-app-ready="true"])) .passage-text h3,
+body.verse-by-verse-mode .passage-text h3,
 .verse-by-verse h3 {
     margin-top: 1.5rem;
     margin-bottom: 0.75rem;
