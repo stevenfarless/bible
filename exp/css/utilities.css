@@ -16,8 +16,9 @@
     }
 
     .selector-btn {
-        flex: 1 1 0;
+        flex: 0 0 auto;
         justify-content: center;
+        height: 30px;
         padding: 0.25rem 0.35rem;
         min-width: 0;
         font-size: 0.8rem;
@@ -25,7 +26,8 @@
 
     .nav-content {
         display: grid;
-        grid-template-columns: 44px minmax(0, 1fr) 44px;
+        grid-template-columns: auto auto auto;
+        justify-content: center;
         gap: var(--spacing-xs);
         padding-left: var(--spacing-sm);
         padding-right: var(--spacing-sm);
@@ -37,8 +39,9 @@
 
     .passage-selector {
         grid-column: 2;
+        flex: 0 1 auto;
         min-width: 0;
-        width: 100%;
+        width: auto;
         justify-content: center;
         gap: var(--spacing-xs);
     }
@@ -49,11 +52,13 @@
 
     body.hide-chapter-arrows .passage-selector {
         grid-column: 1 / -1;
+        justify-self: center;
     }
 
     .nav-btn {
         width: 44px;
         min-width: 44px;
+        height: 30px;
         padding: 0.35rem;
         justify-content: center;
     }
