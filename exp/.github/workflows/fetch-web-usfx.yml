@@ -1,0 +1,28 @@
+name: Fetch WEB Translation (USFX)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fetch-web:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Fetch, convert, and push WEB translation
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+          TARGET_BRANCH: main-book-update
+        run: python dev-scripts/.github/scripts/fetch_web_usfx.py
