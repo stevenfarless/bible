@@ -51,8 +51,8 @@
 
     .nav-content {
         display: grid;
-        grid-template-columns: auto auto auto;
-        justify-content: center;
+        grid-template-columns: 44px minmax(0, 1fr) 44px;
+        width: 100%;
         gap: var(--spacing-xs);
         padding-left: var(--spacing-sm);
         padding-right: var(--spacing-sm);
@@ -60,19 +60,21 @@
 
     #prevChapter {
         grid-column: 1;
+        justify-self: start;
     }
 
     .passage-selector {
         grid-column: 2;
+        justify-self: center;
         flex: 0 1 auto;
         min-width: 0;
         width: auto;
-        justify-content: center;
         gap: var(--spacing-xs);
     }
 
     #nextChapter {
         grid-column: 3;
+        justify-self: end;
     }
 
     body.hide-chapter-arrows .passage-selector {
@@ -133,6 +135,34 @@
     }
 }
 
+@media (max-width: 480px) {
+    .selector-btn {
+        flex-direction: column;
+        justify-content: center;
+        gap: 1px;
+        padding: 3px 7px 2px;
+    }
+
+    .selector-btn > span {
+        flex: 0 0 auto;
+        line-height: 1;
+    }
+
+    .selector-btn > svg {
+        width: 14px;
+        height: 14px;
+        flex-basis: 14px;
+    }
+
+    .passage-title {
+        font-size: 1.25rem;
+    }
+
+    .book-grid {
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    }
+}
+
 @media (max-width: 380px) {
     .nav-content,
     .passage-selector {
@@ -140,7 +170,8 @@
     }
 
     .selector-btn {
-        padding: 0 6px;
+        padding-left: 6px;
+        padding-right: 6px;
     }
 
     #bookSelector {
@@ -154,16 +185,6 @@
 
     #translationSelectorBtn {
         min-width: 74px;
-    }
-}
-
-@media (max-width: 480px) {
-    .passage-title {
-        font-size: 1.25rem;
-    }
-
-    .book-grid {
-        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
     }
 }
 
