@@ -39,7 +39,6 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--border-neutral);
 }
 
 .modal-header h2 {
@@ -84,6 +83,7 @@
 }
 
 #settingsModal .modal-content {
+    position: relative;
     width: 100%;
     max-width: var(--max-width);
     height: 75vh;
@@ -111,6 +111,34 @@
     user-select: none;
 }
 
+.modal-drag-resizable > .modal-header {
+    touch-action: none;
+    user-select: none;
+}
+
+.modal-drag-zone {
+    position: absolute;
+    top: 3rem;
+    bottom: 8px;
+    width: 18px;
+    z-index: 3;
+    touch-action: none;
+    cursor: ns-resize;
+}
+
+.modal-drag-zone--left {
+    left: 6px;
+}
+
+.modal-drag-zone--right {
+    right: 6px;
+}
+
+.modal-drag-resizable.dismiss-armed > .modal-header::before {
+    width: 56px;
+    opacity: 0.9;
+}
+
 #settingsModal .modal-header {
     padding: 0.75rem 0.75rem 0.5rem;
     position: relative;
@@ -127,6 +155,7 @@
     background-color: var(--text-muted);
     border-radius: 2px;
     opacity: 0.5;
+    transition: width 120ms ease, opacity 120ms ease;
 }
 
 /* Translation modal — small centered dialog */
@@ -490,6 +519,7 @@
     background-color: var(--text-muted);
     border-radius: 2px;
     opacity: 0.5;
+    transition: width 120ms ease, opacity 120ms ease;
 }
 
 #referencesModal .modal-header {
