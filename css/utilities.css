@@ -30,20 +30,8 @@
         text-align: center;
     }
 
-    #bookSelector > svg,
-    #chapterSelector > svg,
-    #verseSelector > svg {
+    .selector-btn > svg {
         display: none;
-    }
-
-    #translationSelectorBtn {
-        justify-content: space-between;
-    }
-
-    #translationSelectorBtn > svg {
-        width: 16px;
-        height: 16px;
-        flex: 0 0 16px;
     }
 
     #bookSelector {
