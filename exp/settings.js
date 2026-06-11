@@ -4,7 +4,7 @@
 import { changeColorTheme, applyLightMode } from './ui.js';
 
 const DEFAULTS = {
-    fontSize:            18,
+    fontSize:            20,
     showVerseNumbers:    true,
     showHeadings:        true,
     showFootnotes:       false,
@@ -12,7 +12,7 @@ const DEFAULTS = {
     verseByVerse:        false,
     showChapterArrows:   false,
     lightMode:           'system',
-    colorTheme:          'basic',
+    colorTheme:          'vespers',
     translation:         'KJV',
     readingFont:         'gentium',
 };
