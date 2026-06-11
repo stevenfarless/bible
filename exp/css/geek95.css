@@ -365,3 +365,8 @@ body.geek-theme.light-mode {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
+
+.geek-theme.light-mode .logo {
+    font-size: 0.55em;
+    line-height: 1;
+}
