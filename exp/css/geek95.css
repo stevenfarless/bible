@@ -19,8 +19,8 @@ body.geek-theme.light-mode {
     --warning-color: #dfe300;
     --error-color: #e35f5f;
     --footnote-hover-bg: rgba(223, 227, 0, 0.18);
-    --font-sans: 'iA Writer Mono S', 'Courier New', monospace;
-    --font-serif: 'iA Writer Mono S', 'Courier New', monospace;
+    --font-sans: 'IBM VGA 9x16', 'Courier New', monospace;
+    --font-serif: 'IBM VGA 9x16', 'Courier New', monospace;
     --border-radius: 0;
     --border-radius-lg: 0;
     --shadow-sm: 1px 1px 0 #000000;
@@ -352,4 +352,10 @@ body.geek-theme.light-mode {
     .geek-theme.light-mode .book-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
+}
+
+@font-face {
+    font-family: 'IBM VGA 9x16';
+    src: url('../fonts/Web437_IBM_VGA_9x16-2x.woff') format('woff');
+    font-display: swap;
 }
