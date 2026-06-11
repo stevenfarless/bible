@@ -118,15 +118,15 @@ body.light-mode .verse-tools-tray {
 /* ── Tool action rows ── */
 
 .verse-tools-actions {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     align-items: center;
-    justify-content: space-around;
+    justify-items: center;
     padding: 10px 0 12px;
     gap: 4px;
 }
 
 .verse-tools-actions--top {
-    justify-content: flex-start;
     padding-bottom: 6px;
     border-bottom: 1px solid rgba(255, 215, 0, 0.1);
     margin-bottom: 2px;
@@ -237,5 +237,3 @@ body.light-mode .verse-tool-letter {
     50% { box-shadow: 0 0 24px rgba(255, 165, 0, 0.6); background-color: rgba(255, 165, 0, 0.15); }
     100% { box-shadow: 0 0 12px rgba(255, 165, 0, 0.4), 0 0 20px rgba(255, 165, 0, 0.2); background-color: rgba(255, 165, 0, 0.08); }
 }
-
-
