@@ -6,6 +6,23 @@
 .verse {
     touch-action: manipulation;
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+button,
+[role='button'],
+.verse-tools-trigger,
+.verse-tool-btn {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+
+.verse-number,
+.verse-tools-trigger,
+.verse-tool-btn,
+.verse-tool-letter {
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .selected-verse-glow {
@@ -174,7 +191,6 @@ body.light-mode .verse-tools-actions--top {
     font-weight: 600;
     color: rgba(255, 215, 0, 0.75);
     line-height: 1;
-    user-select: none;
 }
 
 body.light-mode .verse-tool-btn {
