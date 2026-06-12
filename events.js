@@ -223,7 +223,13 @@ export function attachEventListeners(app) {
 
         verseSelectionTarget.addEventListener('click', (event) => {
             const verse = event.target.closest('.verse');
-            if (!verse) return;
+            if (!verse && app.state.selectedVerse != null) {
+                app.state.selectedVerse = null;
+                app.applyVerseGlow();
+            return;
+}
+
+if (!verse) return;
             if (event.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
 
             event.preventDefault();
