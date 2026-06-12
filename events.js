@@ -142,20 +142,120 @@ export function attachEventListeners(app) {
     app.translationSelectorBtn?.addEventListener('click', () => app.openTranslationModal());
     document.getElementById('copyPassage')?.addEventListener('click', () => app.copyPassage());
 
-    const verseClickTarget = document.getElementById('swipeViewport') ?? app.passageText;
-    verseClickTarget?.addEventListener('click', (e) => {
-        const verse = e.target.closest('.verse');
-        if (!verse) return;
-        if (e.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
-        const num = parseInt(verse.dataset.verse, 10);
-        if (!num) return;
-        if (app.state.selectedVerse === num) {
+    const verseSelectionTarget = document.getElementById('swipeViewport') ?? app.passageText;
+
+    if (verseSelectionTarget) {
+        const HOLD_MS = 500;
+        const MOVE_LIMIT = 12;
+
+        let holdTimer = null;
+        let pointerId = null;
+        let startX = 0;
+        let startY = 0;
+        let pressedVerse = null;
+        let holdActivated = false;
+
+        const selectVerse = (verse) => {
+            const num = parseInt(verse?.dataset.verse, 10);
+            if (!num) return;
+
+            if (app.state.selectedVerse === num) {
+                app.state.selectedVerse = null;
+                app.applyVerseGlow();
+            } else {
+                app.scrollToVerse(num);
+            }
+        };
+
+        const clearSelectedVerse = () => {
+            if (app.state.selectedVerse == null) return;
             app.state.selectedVerse = null;
             app.applyVerseGlow();
-        } else {
-            app.scrollToVerse(num);
-        }
-    });
+        };
+
+        const cancelVersePress = () => {
+            clearTimeout(holdTimer);
+            holdTimer = null;
+            pointerId = null;
+            pressedVerse = null;
+        };
+
+        verseSelectionTarget.addEventListener('pointerdown', (event) => {
+            if (event.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
+
+            const verse = event.target.closest('.verse');
+            if (!verse) return;
+
+            if (app.state.verseSelectionGesture !== 'hold') return;
+            if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+            cancelVersePress();
+
+            pointerId = event.pointerId;
+            startX = event.clientX;
+            startY = event.clientY;
+            pressedVerse = verse;
+            holdActivated = false;
+
+            holdTimer = setTimeout(() => {
+                if (!pressedVerse) return;
+                holdActivated = true;
+                navigator.vibrate?.(20);
+                selectVerse(pressedVerse);
+            }, HOLD_MS);
+        });
+
+        verseSelectionTarget.addEventListener('pointermove', (event) => {
+            if (event.pointerId !== pointerId) return;
+
+            const movedX = Math.abs(event.clientX - startX);
+            const movedY = Math.abs(event.clientY - startY);
+
+            if (movedX > MOVE_LIMIT || movedY > MOVE_LIMIT) cancelVersePress();
+        });
+
+        const finishVersePress = (event) => {
+            if (event.pointerId !== pointerId) return;
+
+            if (holdActivated) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            cancelVersePress();
+        };
+
+        verseSelectionTarget.addEventListener('pointerup', finishVersePress);
+        verseSelectionTarget.addEventListener('pointercancel', finishVersePress);
+
+        verseSelectionTarget.addEventListener('click', (event) => {
+            if (event.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
+
+            const verse = event.target.closest('.verse');
+            if (!verse) return;
+
+            event.preventDefault();
+
+            if (app.state.verseSelectionGesture === 'tap') {
+                selectVerse(verse);
+                return;
+            }
+
+            if (app.state.selectedVerse != null) {
+                clearSelectedVerse();
+            }
+        });
+
+        document.addEventListener('pointerdown', (event) => {
+            if (app.state.selectedVerse == null) return;
+            if (event.target.closest('.selected-verse-glow, .verse-tools-tray, .verse-tools-trigger')) return;
+            clearSelectedVerse();
+        });
+
+        verseSelectionTarget.addEventListener('contextmenu', (event) => {
+            if (event.target.closest('.verse')) event.preventDefault();
+        });
+    }
 
     app.referencesModal        = document.getElementById('referencesModal');
     app.closeReferencesModal   = document.getElementById('closeReferencesModal');
@@ -218,6 +318,18 @@ export function attachEventListeners(app) {
     app.verseByVerseToggle?.addEventListener('change', () => app.toggleVerseByVerse());
     app.fontSizeSlider?.addEventListener('input', (e) => app.updateFontSize(e.target.value));
 
+    app.verseSelectionGestureSelect?.addEventListener('change', async (event) => {
+        const gesture = event.currentTarget.value === 'tap' ? 'tap' : 'hold';
+        app.state.verseSelectionGesture = gesture;
+        localStorage.setItem('verseSelectionGesture', gesture);
+
+        if (app.currentUser) {
+            await app.database
+                .ref(`users/${app.currentUser.uid}/settings/verseSelectionGesture`)
+                .set(gesture);
+        }
+    });
+
     const readingFontSelector = document.getElementById('readingFontSelector');
     if (readingFontSelector) {
         readingFontSelector.addEventListener('change', async () => {
@@ -234,39 +346,56 @@ export function attachEventListeners(app) {
         });
     }
 
-    app.translationSelector?.addEventListener('change', async (e) => app.changeTranslation(e.target.value));
-
-    document.getElementById('themeSelector')?.addEventListener('change', (e) => changeColorTheme(app, e.target.value));
-    document.getElementById('lightModeSelect')?.addEventListener('change', (e) => setLightMode(app, e.target.value));
-
-    document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
-    document.getElementById('changeEmailBtn')?.addEventListener('click', () => { app.closeModal(app.userMenuModal); openChangeEmailModal(app); });
-    document.getElementById('changePasswordBtn')?.addEventListener('click', () => { app.closeModal(app.userMenuModal); openChangePasswordModal(app); });
-
-    document.getElementById('showSignupLink')?.addEventListener('click', (e) => {
-    document.getElementById('forgotPasswordLink')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        app.closeModal(app.loginModal);
-        app.openModal(document.getElementById('forgotPasswordModal'));
+    document.getElementById('lightModeSelect')?.addEventListener('change', (event) => {
+        app._dbgUserAction?.(`changeAppearance: ${event.currentTarget.value}`);
+        setLightMode(app, event.currentTarget.value);
     });
-    document.getElementById('closeForgotPasswordModal')?.addEventListener('click', () => app.closeModal(document.getElementById('forgotPasswordModal')));
-    document.getElementById('forgotPasswordForm')?.addEventListener('submit', (e) => { e.preventDefault(); handleForgotPassword(app); });
-        e.preventDefault();
+
+    const themeSelector = document.getElementById('themeSelector');
+    let lastAppliedTheme = app.state.colorTheme;
+
+    const applyThemeSelection = async (event) => {
+        const theme = event.currentTarget.value;
+        if (!theme || theme === lastAppliedTheme) return;
+
+        lastAppliedTheme = theme;
+        app._dbgUserAction?.(`changeTheme: ${theme}`);
+        app.state.colorTheme = theme;
+        localStorage.setItem('colorTheme', theme);
+        await changeColorTheme(app, theme);
+    };
+
+    themeSelector?.addEventListener('input', applyThemeSelection);
+    themeSelector?.addEventListener('change', applyThemeSelection);
+
+        document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
+    document.getElementById('changeEmailBtn')?.addEventListener('click', () => openChangeEmailModal(app));
+    document.getElementById('changePasswordBtn')?.addEventListener('click', () => openChangePasswordModal(app));
+    document.getElementById('forgotPasswordBtn')?.addEventListener('click', () => handleForgotPassword(app));
+
+    document.getElementById('showSignupLink')?.addEventListener('click', (event) => {
+        event.preventDefault();
         app.closeModal(app.loginModal);
         app.openModal(app.signupModal);
     });
-    document.getElementById('showLoginLink')?.addEventListener('click', (e) => {
-        e.preventDefault();
+
+    document.getElementById('showLoginLink')?.addEventListener('click', (event) => {
+        event.preventDefault();
         app.closeModal(app.signupModal);
         app.openModal(app.loginModal);
     });
-    document.getElementById('loginForm')?.addEventListener('submit',  (e) => { e.preventDefault(); app.handleLogin(); });
-    document.getElementById('signupForm')?.addEventListener('submit', (e) => { e.preventDefault(); app.handleSignup(); });
-    document.getElementById('logoutBtn')?.addEventListener('click',   () => app.handleLogout());
 
-    app.closeLoginModal?.addEventListener('click',    () => app.closeModal(app.loginModal));
-    app.closeSignupModal?.addEventListener('click',   () => app.closeModal(app.signupModal));
-    app.closeUserMenuModal?.addEventListener('click', () => app.closeModal(app.userMenuModal));
+    document.getElementById('loginForm')?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        app.handleLogin();
+    });
+
+    document.getElementById('signupForm')?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        app.handleSignup();
+    });
+
+    document.getElementById('logoutBtn')?.addEventListener('click', () => app.handleLogout());
 
     window.addEventListener('scroll', () => {
         app.handleChromeScroll();
@@ -274,9 +403,5 @@ export function attachEventListeners(app) {
         app.scrollTimeout = setTimeout(() => app.saveReadingPosition(), 500);
     }, { passive: true });
 
-    document.addEventListener('keydown', (e) => app.handleKeyboardShortcuts(e));
-    window.matchMedia('(prefers-color-scheme: light)')
-        .addEventListener('change', () => {
-            if (app.state.lightMode === 'system') applyLightMode('system');
-        });
+    document.addEventListener('keydown', (event) => app.handleKeyboardShortcuts(event));
 }

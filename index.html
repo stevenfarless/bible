@@ -15,7 +15,7 @@
 	<meta name="build-id" content="__BUILD_ID__" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
-	     (document.documentElement — always available in <head>) before the
+	     (document.documentElement - - always available in <head>) before the
 	     browser paints, preventing a theme flash on cold load.
 	     document.body is null at this point; do NOT use it here.
 	     ES modules are deferred and cannot achieve this. -->
@@ -383,6 +383,14 @@
 									<input type="checkbox" id="verseByVerseToggle" />
 									<span>Verse-by-verse display</span>
 								</label>
+							</div>
+							<div class="setting-item">
+								<label for="verseSelectionGestureSelect">Verse selection gesture</label>
+								<select id="verseSelectionGestureSelect" class="input-field">
+									<option value="hold">Tap and hold</option>
+									<option value="tap">Single tap</option>
+								</select>
+								<small class="help-text">Choose how verses are selected.</small>
 							</div>
 							<div class="setting-item">
 								<label class="checkbox-label">
