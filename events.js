@@ -25,7 +25,7 @@ const CHANGE_EMAIL_HTML = `
                                         </div>
                                         <div class="setting-item">
                                                 <label for="changeEmailNew">New Email</label>
-                                                <input type="email" id="changeEmailNew" class="input-field" placeholder="Enter new email" autocomplete="email">
+                                                <input type="email" id="changeEmailNew" class="input-field" placeholder="Enter current email" autocomplete="email">
                                         </div>
                                         <button type="submit" class="primary-btn" style="width:100%;margin-top:var(--spacing-md)">Update Email</button>
                                 </form>
@@ -101,11 +101,6 @@ function openChangePasswordModal(app) {
 
 function syncReadingDisplay(app) {
     document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
-    document.body.classList.toggle('muted-verse-numbers', !app.state.coloredVerseNumbers);
-    document.body.classList.toggle(
-    'muted-verse-numbers',
-    !app.state.coloredVerseNumbers
-);
     document.body.classList.toggle('muted-verse-numbers', !app.state.coloredVerseNumbers);
     document.body.classList.toggle('hide-chapter-arrows', !app.state.showChapterArrows);
     document.body.classList.toggle('verse-by-verse-mode', !!app.state.verseByVerse);
@@ -195,22 +190,14 @@ export function attachEventListeners(app) {
         syncReadingDisplay(app);
     });
     app.verseNumbersToggle?.addEventListener('change', () => app.toggleSetting('showVerseNumbers'));
-    app.coloredVerseNumbersToggle?.addEventListener('input', (e) => {
-    app.state.coloredVerseNumbers = e.currentTarget.checked;
-    syncReadingDisplay(app);
-});
 
+    app.coloredVerseNumbersToggle?.addEventListener('input', (e) => {
+        app.state.coloredVerseNumbers = e.currentTarget.checked;
+        syncReadingDisplay(app);
+    });
     app.coloredVerseNumbersToggle?.addEventListener('change', () => {
-    app.toggleSetting('coloredVerseNumbers');
-});
-    app.coloredVerseNumbersToggle?.addEventListener('input', (e) => {
-    app.state.coloredVerseNumbers = e.currentTarget.checked;
-    syncReadingDisplay(app);
-});
-
-app.coloredVerseNumbersToggle?.addEventListener('change', () => {
-    app.toggleSetting('coloredVerseNumbers');
-});
+        app.toggleSetting('coloredVerseNumbers');
+    });
 
     app.headingsToggle?.addEventListener('change', () => app.toggleSetting('showHeadings'));
     app.footnotesToggle?.addEventListener('change', () => app.toggleSetting('showFootnotes'));
