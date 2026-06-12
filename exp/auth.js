@@ -3,19 +3,12 @@
 
 import { loadUserData as loadUserDataFromFirebase } from './config/firebase-config.js';
 
-const MIN_RESTORED_SCROLL_Y = 96;
-
 function lsSet(key, value) {
     try { localStorage.setItem(key, String(value)); } catch (_) {}
 }
 
 function lsSetJSON(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) {}
-}
-
-function normalizeSavedScrollY(value) {
-    const scrollY = parseInt(value, 10) || 0;
-    return scrollY >= MIN_RESTORED_SCROLL_Y ? scrollY : 0;
 }
 
 export async function loadSavedPositionIfChanged(app, withTimeout) {
@@ -36,7 +29,7 @@ export async function loadSavedPositionIfChanged(app, withTimeout) {
             if (pos && pos.book && pos.chapter) {
                 targetBook = pos.book;
                 targetChapter = pos.chapter;
-                targetScrollY = normalizeSavedScrollY(pos.scrollY);
+                targetScrollY = pos.scrollY || 0;
             }
         } else {
             console.warn('_loadSavedPositionIfChanged: timed out, keeping current passage');
@@ -51,6 +44,8 @@ export async function loadSavedPositionIfChanged(app, withTimeout) {
         app.lastScrollPosition = targetScrollY;
         lsSetJSON('readingPosition', { book: targetBook, chapter: targetChapter, scrollY: targetScrollY });
         await app.loadPassage(targetBook, targetChapter, !!targetScrollY);
+    } else if (targetScrollY) {
+        window.scrollTo(0, targetScrollY);
     }
 }
 
@@ -72,7 +67,7 @@ export async function loadSavedReadingPosition(app, withTimeout) {
             if (pos && pos.book && pos.chapter) {
                 app.state.currentBook = pos.book;
                 app.state.currentChapter = pos.chapter;
-                app.lastScrollPosition = normalizeSavedScrollY(pos.scrollY);
+                app.lastScrollPosition = pos.scrollY || 0;
             }
         } else {
             console.warn('loadSavedReadingPosition: timed out, loading from local state');
@@ -88,7 +83,7 @@ export function saveReadingPosition(app) {
     const pos = {
         book:    app.state.currentBook,
         chapter: app.state.currentChapter,
-        scrollY: normalizeSavedScrollY(window.scrollY),
+        scrollY: window.scrollY || 0,
     };
 
     // Always write locally — this is what _restorePassageCache matches against
@@ -197,7 +192,7 @@ export async function handleSignup(app) {
         });
 
         app.showToast('Account created successfully!');
-        app.closeModal(app.loginModal);
+        app.closeModal(app.signupModal);
     } catch (error) {
         console.error('Signup error:', error);
         if (error.code === 'auth/email-already-in-use') {
