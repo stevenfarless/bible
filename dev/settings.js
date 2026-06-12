@@ -16,6 +16,7 @@ const DEFAULTS = {
     colorTheme:          'vespers',
     translation:         'KJV',
     readingFont:         'gentium',
+    verseSelectionGesture: 'hold',
 };
 
 const RECAPTCHA_STYLE_ID = 'recaptcha-badge-style';
@@ -79,6 +80,13 @@ export function loadLocalSettings(app) {
     try { app.state.readingFont = localStorage.getItem('readingFont') || DEFAULTS.readingFont; }
     catch (_) { app.state.readingFont = DEFAULTS.readingFont; }
 
+    try {
+        const storedGesture = localStorage.getItem('verseSelectionGesture');
+        app.state.verseSelectionGesture = storedGesture === 'tap' ? 'tap' : DEFAULTS.verseSelectionGesture;
+    } catch (_) {
+        app.state.verseSelectionGesture = DEFAULTS.verseSelectionGesture;
+    }
+
     try { app.state.translation = app._normalizeTranslation(localStorage.getItem('translation') || DEFAULTS.translation); }
     catch (_) { app.state.translation = DEFAULTS.translation; }
 
@@ -131,6 +139,10 @@ export function applySettings(app) {
     if (app.passageText)    app.passageText.style.fontSize = `${fontSize}px`;
     const readingFont = app.state.readingFont || DEFAULTS.readingFont;
     applyReadingFont(app, readingFont);
+
+    if (app.verseSelectionGestureSelect) {
+        app.verseSelectionGestureSelect.value = app.state.verseSelectionGesture || DEFAULTS.verseSelectionGesture;
+    }
 
     updateCopyright(app);
 }

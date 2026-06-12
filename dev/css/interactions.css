@@ -2,10 +2,41 @@
    8. INTERACTIVE STATES & EFFECTS
    ================================ */
 
+html,
+body,
+#topChrome,
+.main-content,
+.passage-container,
+.passage-text,
+.verse,
+.selected-verse-glow,
+button,
+[role='button'] {
+    -webkit-tap-highlight-color: transparent;
+}
+
+button,
+[role='button'],
+.verse-tools-trigger,
+.verse-tool-btn {
+    -webkit-touch-callout: none;
+}
+
 /* Eliminate 300ms tap delay on verses; scroll is unaffected. */
 .verse {
     touch-action: manipulation;
     cursor: pointer;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.verse-number,
+.verse-tools-trigger,
+.verse-tool-btn,
+.verse-tool-letter {
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .selected-verse-glow {
@@ -174,7 +205,6 @@ body.light-mode .verse-tools-actions--top {
     font-weight: 600;
     color: rgba(255, 215, 0, 0.75);
     line-height: 1;
-    user-select: none;
 }
 
 body.light-mode .verse-tool-btn {

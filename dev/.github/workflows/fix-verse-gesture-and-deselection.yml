@@ -1,0 +1,39 @@
+name: Fix Verse Gesture and Deselection
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-verse-selection:
+    name: Repair verse gesture state and deselection
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Patch verse gesture and deselection
+        run: python3 .github/scripts/fix_verse_gesture_and_deselection.py
+
+      - name: Verify changes
+        run: |
+          git diff --check
+          git diff -- events.js settings.js
+
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add events.js settings.js
+          git commit -m "fix: initialize verse gesture and repair deselection handler"
+          git push origin exp

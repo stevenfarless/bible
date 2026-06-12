@@ -1,4 +1,91 @@
-const COMPACT_HEIGHT_RATIO = 0.46;
+from pathlib import Path
+
+
+def replace_once(path, old, new, label):
+    file_path = Path(path)
+    text = file_path.read_text()
+    count = text.count(old)
+    if count != 1:
+        raise SystemExit(f'{label}: expected 1 match, found {count}')
+    file_path.write_text(text.replace(old, new, 1))
+
+
+replace_once(
+    'css/modals.css',
+    """#settingsModal .modal-content {
+    position: relative;
+    width: 100%;
+    max-width: var(--max-width);
+    height: 75vh;
+    max-height: 90vh;
+    min-height: 200px;
+    border-radius: 12px 12px 0 0;
+    margin: 0 auto;
+    animation: none;
+    transform: translateY(100%);
+    transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1) 320ms;
+    will-change: transform;
+}
+""",
+    """#settingsModal .modal-content {
+    position: relative;
+    width: 100%;
+    max-width: var(--max-width);
+    height: clamp(360px, 46dvh, 440px);
+    max-height: 90dvh;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 12px 12px 0 0;
+    margin: 0 auto;
+    animation: none;
+    transform: translateY(100%);
+    transition:
+        transform 320ms cubic-bezier(0.32, 0.72, 0, 1) 320ms,
+        height 280ms cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: transform, height;
+}
+
+#settingsModal .modal-content.settings-sheet--compact {
+    height: clamp(360px, 46dvh, 440px);
+}
+
+#settingsModal .modal-content.settings-sheet--expanded {
+    height: 82dvh;
+}
+
+#settingsModal .modal-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+""",
+    'settings modal sizing',
+)
+
+replace_once(
+    'css/modals.css',
+    """#settingsModal .modal-content.dragging {
+    transition: none !important;
+    user-select: none;
+}
+""",
+    """#settingsModal .modal-content.dragging {
+    transition: none !important;
+    user-select: none;
+}
+
+#settingsModal .modal-content.settings-sheet--snapping {
+    transition:
+        transform 320ms cubic-bezier(0.32, 0.72, 0, 1),
+        height 280ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+""",
+    'settings snapping transition',
+)
+
+Path('bottom-sheet-drag.js').write_text("""const COMPACT_HEIGHT_RATIO = 0.46;
 const COMPACT_MIN_HEIGHT = 360;
 const COMPACT_MAX_HEIGHT = 440;
 const EXPANDED_HEIGHT_RATIO = 0.82;
@@ -175,3 +262,4 @@ function attachBottomSheetDrag(app, modal) {
 export function attachDragToResize(app) {
     if (app.settingsModal) attachBottomSheetDrag(app, app.settingsModal);
 }
+""")
