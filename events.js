@@ -3,7 +3,7 @@
 // New feature bindings go here — app.js does not need to change.
 
 import { setLightMode, changeColorTheme, applyLightMode } from './ui.js';
-import { attachDragToResize } from './modals.js';
+import { attachDragToResize } from './bottom-sheet-drag.js';
 import { runMegasearch, performKeywordSearch } from './search.js';
 import { applyReadingFont } from './settings.js';
 import { initSwipe } from './swipe.js';
@@ -25,7 +25,7 @@ const CHANGE_EMAIL_HTML = `
                                         </div>
                                         <div class="setting-item">
                                                 <label for="changeEmailNew">New Email</label>
-                                                <input type="email" id="changeEmailNew" class="input-field" placeholder="Enter new email" autocomplete="email">
+                                                <input type="email" id="changeEmailNew" class="input-field" placeholder="Enter current email" autocomplete="email">
                                         </div>
                                         <button type="submit" class="primary-btn" style="width:100%;margin-top:var(--spacing-md)">Update Email</button>
                                 </form>
@@ -67,9 +67,7 @@ function injectModal(html) {
 
 function teardown(modal, app) {
     app.closeModal(modal);
-    // Let the closing animation finish before removing
     modal.addEventListener('transitionend', () => modal.remove(), { once: true });
-    // Fallback if no transition fires
     setTimeout(() => { if (modal.isConnected) modal.remove(); }, 400);
 }
 
@@ -101,55 +99,164 @@ function openChangePasswordModal(app) {
     });
 }
 
+function syncReadingDisplay(app) {
+    document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
+    document.body.classList.toggle('muted-verse-numbers', !app.state.coloredVerseNumbers);
+    document.body.classList.toggle('hide-chapter-arrows', !app.state.showChapterArrows);
+    document.body.classList.toggle('verse-by-verse-mode', !!app.state.verseByVerse);
+
+    for (const panel of document.querySelectorAll('#passageText, #swipePrev, #swipeNext')) {
+        panel.classList.toggle('verse-by-verse', !!app.state.verseByVerse);
+    }
+}
+
 /**
  * @param {object} app - BibleApp instance
  */
 export function attachEventListeners(app) {
-    // ── Search ───────────────────────────────────────────────────
     app.searchToggleBtn?.addEventListener('click', () => app.toggleSearch());
     app.closeSearchBtn?.addEventListener('click',  () => app.closeSearch());
     app.searchInput?.addEventListener('input',     (e) => app.handleSearch(e.target.value, 'type'));
     app.searchInput?.addEventListener('keydown',   (e) => app.handleSearchKeydown(e));
-    // iOS/Android: paste does not reliably fire `input`; read value after DOM settles.
     app.searchInput?.addEventListener('paste',     ()  => setTimeout(() => app.handleSearch(app.searchInput.value, 'paste'), 0));
 
-    // Megasearch toggle:
-    // ON  — run a supplemental pass against cached translations immediately.
-    // OFF — re-run the active-translation-only search to strip supplemental results.
     document.getElementById('megasearchToggle')?.addEventListener('change', (e) => {
         const query = app.searchLastQuery || '';
         if (e.target.checked) {
             if (query.trim().length >= 3 && app.currentSearchResults?.length > 0) {
                 runMegasearch(app, query);
             }
-        } else {
-            if (query.trim().length > 0) {
-                performKeywordSearch(app, query);
-            }
+        } else if (query.trim().length > 0) {
+            performKeywordSearch(app, query);
         }
     });
 
-    // ── Navigation ──────────────────────────────────────────────
     app.prevChapterBtn?.addEventListener('click',  () => app.navigateChapter(-1));
     app.nextChapterBtn?.addEventListener('click',  () => app.navigateChapter(1));
     app.bookSelector?.addEventListener('click',    () => app.openBookModal());
     app.chapterSelector?.addEventListener('click', () => app.openChapterModal());
     app.verseSelector?.addEventListener('click',   () => app.openVerseModal());
 
-    // Phase 3 three-panel drag-follow swipe navigation.
-    // Replaces the Phase 1/2 touchstart+touchend handler that was inline here.
-    // initSwipe() wraps #passageText in a clipping viewport and pre-renders
-    // adjacent panels after every loadPassage() resolves via
-    // app.swipe.syncAdjacentPanels() (called from app.loadPassage).
     initSwipe(app);
 
-    // ── Translation badge (nav) ──────────────────────────────────
     app.translationSelectorBtn?.addEventListener('click', () => app.openTranslationModal());
-
-    // ── Copy passage ─────────────────────────────────────────────
     document.getElementById('copyPassage')?.addEventListener('click', () => app.copyPassage());
 
-    // ── Modals: late-cached elements ─────────────────────────────────
+    const verseSelectionTarget = document.getElementById('swipeViewport') ?? app.passageText;
+
+    if (verseSelectionTarget) {
+        const HOLD_MS = 500;
+        const MOVE_LIMIT = 12;
+
+        let holdTimer = null;
+        let pointerId = null;
+        let startX = 0;
+        let startY = 0;
+        let pressedVerse = null;
+        let holdActivated = false;
+
+        const selectVerse = (verse) => {
+            const num = parseInt(verse?.dataset.verse, 10);
+            if (!num) return;
+
+            if (app.state.selectedVerse === num) {
+                app.state.selectedVerse = null;
+                app.applyVerseGlow();
+            } else {
+                app.scrollToVerse(num);
+            }
+        };
+
+        const clearSelectedVerse = () => {
+            if (app.state.selectedVerse == null) return;
+            app.state.selectedVerse = null;
+            app.applyVerseGlow();
+        };
+
+        const cancelVersePress = () => {
+            clearTimeout(holdTimer);
+            holdTimer = null;
+            pointerId = null;
+            pressedVerse = null;
+        };
+
+        verseSelectionTarget.addEventListener('pointerdown', (event) => {
+            if (event.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
+
+            const verse = event.target.closest('.verse');
+            if (!verse) return;
+
+            if (app.state.verseSelectionGesture !== 'hold') return;
+            if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+            cancelVersePress();
+
+            pointerId = event.pointerId;
+            startX = event.clientX;
+            startY = event.clientY;
+            pressedVerse = verse;
+            holdActivated = false;
+
+            holdTimer = setTimeout(() => {
+                if (!pressedVerse) return;
+                holdActivated = true;
+                navigator.vibrate?.(20);
+                selectVerse(pressedVerse);
+            }, HOLD_MS);
+        });
+
+        verseSelectionTarget.addEventListener('pointermove', (event) => {
+            if (event.pointerId !== pointerId) return;
+
+            const movedX = Math.abs(event.clientX - startX);
+            const movedY = Math.abs(event.clientY - startY);
+
+            if (movedX > MOVE_LIMIT || movedY > MOVE_LIMIT) cancelVersePress();
+        });
+
+        const finishVersePress = (event) => {
+            if (event.pointerId !== pointerId) return;
+
+            if (holdActivated) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            cancelVersePress();
+        };
+
+        verseSelectionTarget.addEventListener('pointerup', finishVersePress);
+        verseSelectionTarget.addEventListener('pointercancel', finishVersePress);
+
+        verseSelectionTarget.addEventListener('click', (event) => {
+            if (event.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
+
+            const verse = event.target.closest('.verse');
+            if (!verse) return;
+
+            event.preventDefault();
+
+            if (app.state.verseSelectionGesture === 'tap') {
+                selectVerse(verse);
+                return;
+            }
+
+            if (app.state.selectedVerse != null) {
+                clearSelectedVerse();
+            }
+        });
+
+        document.addEventListener('pointerdown', (event) => {
+            if (app.state.selectedVerse == null) return;
+            if (event.target.closest('.selected-verse-glow, .verse-tools-tray, .verse-tools-trigger')) return;
+            clearSelectedVerse();
+        });
+
+        verseSelectionTarget.addEventListener('contextmenu', (event) => {
+            if (event.target.closest('.verse')) event.preventDefault();
+        });
+    }
+
     app.referencesModal        = document.getElementById('referencesModal');
     app.closeReferencesModal   = document.getElementById('closeReferencesModal');
     app.footnotesSection       = document.getElementById('footnotesSection');
@@ -157,7 +264,6 @@ export function attachEventListeners(app) {
     app.crossReferencesSection = document.getElementById('crossReferencesSection');
     app.crossReferencesContent = document.getElementById('crossReferencesContent');
 
-    // Backdrop-click closes any modal
     [
         app.bookModal, app.chapterModal, app.verseModal,
         app.settingsModal, app.loginModal,
@@ -179,17 +285,50 @@ export function attachEventListeners(app) {
 
     attachDragToResize(app);
 
-    // ── Settings toggles ────────────────────────────────────────────
+    app.verseNumbersToggle?.addEventListener('input', (e) => {
+        app.state.showVerseNumbers = e.currentTarget.checked;
+        syncReadingDisplay(app);
+    });
     app.verseNumbersToggle?.addEventListener('change', () => app.toggleSetting('showVerseNumbers'));
-    app.headingsToggle?.addEventListener('change',     () => app.toggleSetting('showHeadings'));
-    app.footnotesToggle?.addEventListener('change',    () => app.toggleSetting('showFootnotes'));
-    app.chapterArrowsToggle?.addEventListener('change',() => app.toggleSetting('showChapterArrows'));
+
+    app.coloredVerseNumbersToggle?.addEventListener('input', (e) => {
+        app.state.coloredVerseNumbers = e.currentTarget.checked;
+        syncReadingDisplay(app);
+    });
+    app.coloredVerseNumbersToggle?.addEventListener('change', () => {
+        app.toggleSetting('coloredVerseNumbers');
+    });
+
+    app.headingsToggle?.addEventListener('change', () => app.toggleSetting('showHeadings'));
+    app.footnotesToggle?.addEventListener('change', () => app.toggleSetting('showFootnotes'));
+
+    app.chapterArrowsToggle?.addEventListener('input', (e) => {
+        app.state.showChapterArrows = e.currentTarget.checked;
+        syncReadingDisplay(app);
+    });
+    app.chapterArrowsToggle?.addEventListener('change', () => app.toggleSetting('showChapterArrows'));
 
     app.crossReferencesToggle = document.getElementById('crossReferencesToggle');
     app.crossReferencesToggle?.addEventListener('change', () => app.toggleSetting('showCrossReferences'));
 
-    app.verseByVerseToggle?.addEventListener('change',  () => app.toggleVerseByVerse());
-    app.fontSizeSlider?.addEventListener('input',  (e) => app.updateFontSize(e.target.value));
+    app.verseByVerseToggle?.addEventListener('input', (e) => {
+        app.state.verseByVerse = e.currentTarget.checked;
+        syncReadingDisplay(app);
+    });
+    app.verseByVerseToggle?.addEventListener('change', () => app.toggleVerseByVerse());
+    app.fontSizeSlider?.addEventListener('input', (e) => app.updateFontSize(e.target.value));
+
+    app.verseSelectionGestureSelect?.addEventListener('change', async (event) => {
+        const gesture = event.currentTarget.value === 'tap' ? 'tap' : 'hold';
+        app.state.verseSelectionGesture = gesture;
+        localStorage.setItem('verseSelectionGesture', gesture);
+
+        if (app.currentUser) {
+            await app.database
+                .ref(`users/${app.currentUser.uid}/settings/verseSelectionGesture`)
+                .set(gesture);
+        }
+    });
 
     const readingFontSelector = document.getElementById('readingFontSelector');
     if (readingFontSelector) {
@@ -207,56 +346,62 @@ export function attachEventListeners(app) {
         });
     }
 
-    // Settings <select> still works as a secondary route
-    app.translationSelector?.addEventListener('change', async (e) => app.changeTranslation(e.target.value));
-
-    // ── Theme ────────────────────────────────────────────────────
-    document.getElementById('themeSelector')?.addEventListener('change', (e) => changeColorTheme(app, e.target.value));
-    document.getElementById('lightModeSelect')?.addEventListener('change', (e) => setLightMode(app, e.target.value));
-
-    // ── Auth ─────────────────────────────────────────────────────
-    document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
-    document.getElementById('changeEmailBtn')?.addEventListener('click', () => { app.closeModal(app.userMenuModal); openChangeEmailModal(app); });
-    document.getElementById('changePasswordBtn')?.addEventListener('click', () => { app.closeModal(app.userMenuModal); openChangePasswordModal(app); });
-
-    document.getElementById('showSignupLink')?.addEventListener('click', (e) => {
-    document.getElementById('forgotPasswordLink')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        app.closeModal(app.loginModal);
-        app.openModal(document.getElementById('forgotPasswordModal'));
+    document.getElementById('lightModeSelect')?.addEventListener('change', (event) => {
+        app._dbgUserAction?.(`changeAppearance: ${event.currentTarget.value}`);
+        setLightMode(app, event.currentTarget.value);
     });
-    document.getElementById('closeForgotPasswordModal')?.addEventListener('click', () => app.closeModal(document.getElementById('forgotPasswordModal')));
-    document.getElementById('forgotPasswordForm')?.addEventListener('submit', (e) => { e.preventDefault(); handleForgotPassword(app); });
-        e.preventDefault();
+
+    const themeSelector = document.getElementById('themeSelector');
+    let lastAppliedTheme = app.state.colorTheme;
+
+    const applyThemeSelection = async (event) => {
+        const theme = event.currentTarget.value;
+        if (!theme || theme === lastAppliedTheme) return;
+
+        lastAppliedTheme = theme;
+        app._dbgUserAction?.(`changeTheme: ${theme}`);
+        app.state.colorTheme = theme;
+        localStorage.setItem('colorTheme', theme);
+        await changeColorTheme(app, theme);
+    };
+
+    themeSelector?.addEventListener('input', applyThemeSelection);
+    themeSelector?.addEventListener('change', applyThemeSelection);
+
+        document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
+    document.getElementById('changeEmailBtn')?.addEventListener('click', () => openChangeEmailModal(app));
+    document.getElementById('changePasswordBtn')?.addEventListener('click', () => openChangePasswordModal(app));
+    document.getElementById('forgotPasswordBtn')?.addEventListener('click', () => handleForgotPassword(app));
+
+    document.getElementById('showSignupLink')?.addEventListener('click', (event) => {
+        event.preventDefault();
         app.closeModal(app.loginModal);
         app.openModal(app.signupModal);
     });
-    document.getElementById('showLoginLink')?.addEventListener('click', (e) => {
-        e.preventDefault();
+
+    document.getElementById('showLoginLink')?.addEventListener('click', (event) => {
+        event.preventDefault();
         app.closeModal(app.signupModal);
         app.openModal(app.loginModal);
     });
-    document.getElementById('loginForm')?.addEventListener('submit',  (e) => { e.preventDefault(); app.handleLogin(); });
-    document.getElementById('signupForm')?.addEventListener('submit', (e) => { e.preventDefault(); app.handleSignup(); });
-    document.getElementById('logoutBtn')?.addEventListener('click',   () => app.handleLogout());
 
-    app.closeLoginModal?.addEventListener('click',    () => app.closeModal(app.loginModal));
-    app.closeSignupModal?.addEventListener('click',   () => app.closeModal(app.signupModal));
-    app.closeUserMenuModal?.addEventListener('click', () => app.closeModal(app.userMenuModal));
+    document.getElementById('loginForm')?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        app.handleLogin();
+    });
 
-    // ── Scroll (chrome hide/show + position save) ───────────────────
+    document.getElementById('signupForm')?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        app.handleSignup();
+    });
+
+    document.getElementById('logoutBtn')?.addEventListener('click', () => app.handleLogout());
+
     window.addEventListener('scroll', () => {
         app.handleChromeScroll();
         clearTimeout(app.scrollTimeout);
         app.scrollTimeout = setTimeout(() => app.saveReadingPosition(), 500);
     }, { passive: true });
 
-    // ── Keyboard ────────────────────────────────────────────────
-    document.addEventListener('keydown', (e) => app.handleKeyboardShortcuts(e));
-    // Live-update appearance when OS dark/light mode changes
-    window.matchMedia('(prefers-color-scheme: light)')
-        .addEventListener('change', () => {
-            if (app.state.lightMode === 'system') applyLightMode('system');
-        });
-
+    document.addEventListener('keydown', (event) => app.handleKeyboardShortcuts(event));
 }

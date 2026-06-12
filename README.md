@@ -3,7 +3,7 @@
 A fast, offline-capable Bible reading web app built with HTML, vanilla CSS, and vanilla JavaScript.
 Served via GitHub Pages. Firebase handles auth and sync for user settings.
 
-Live app: [stevenfarless.github.io/bible](https://stevenfarless.github.io/bible)
+Live app: [stevenfarless.github.io/lege-lux](https://stevenfarless.github.io/lege-lux)
 
 ---
 

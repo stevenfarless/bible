@@ -12,7 +12,7 @@ For every translation folder on the target branch:
 All changes are pushed as a single commit.
 
 Usage (local):
-    GITHUB_TOKEN=<pat> GITHUB_REPO=stevenfarless/bible TARGET_BRANCH=main-book-update python fix_meta.py
+    GITHUB_TOKEN=<pat> GITHUB_REPO=stevenfarless/lege-lux TARGET_BRANCH=main-book-update python fix_meta.py
 
 Usage (GitHub Actions):
     env:
@@ -31,7 +31,7 @@ import urllib.request
 import urllib.error
 
 BRANCH = os.environ.get("TARGET_BRANCH", "main-book-update")
-REPO   = os.environ.get("GITHUB_REPO", "stevenfarless/bible")
+REPO   = os.environ.get("GITHUB_REPO", "stevenfarless/lege-lux")
 TOKEN  = os.environ.get("GITHUB_TOKEN", "")
 API    = "https://api.github.com"
 
