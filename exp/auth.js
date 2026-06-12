@@ -3,12 +3,19 @@
 
 import { loadUserData as loadUserDataFromFirebase } from './config/firebase-config.js';
 
+const MIN_RESTORED_SCROLL_Y = 96;
+
 function lsSet(key, value) {
     try { localStorage.setItem(key, String(value)); } catch (_) {}
 }
 
 function lsSetJSON(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) {}
+}
+
+function normalizeSavedScrollY(value) {
+    const scrollY = parseInt(value, 10) || 0;
+    return scrollY >= MIN_RESTORED_SCROLL_Y ? scrollY : 0;
 }
 
 export async function loadSavedPositionIfChanged(app, withTimeout) {
@@ -29,7 +36,7 @@ export async function loadSavedPositionIfChanged(app, withTimeout) {
             if (pos && pos.book && pos.chapter) {
                 targetBook = pos.book;
                 targetChapter = pos.chapter;
-                targetScrollY = pos.scrollY || 0;
+                targetScrollY = normalizeSavedScrollY(pos.scrollY);
             }
         } else {
             console.warn('_loadSavedPositionIfChanged: timed out, keeping current passage');
@@ -67,7 +74,7 @@ export async function loadSavedReadingPosition(app, withTimeout) {
             if (pos && pos.book && pos.chapter) {
                 app.state.currentBook = pos.book;
                 app.state.currentChapter = pos.chapter;
-                app.lastScrollPosition = pos.scrollY || 0;
+                app.lastScrollPosition = normalizeSavedScrollY(pos.scrollY);
             }
         } else {
             console.warn('loadSavedReadingPosition: timed out, loading from local state');
@@ -83,7 +90,7 @@ export function saveReadingPosition(app) {
     const pos = {
         book:    app.state.currentBook,
         chapter: app.state.currentChapter,
-        scrollY: window.scrollY || 0,
+        scrollY: normalizeSavedScrollY(window.scrollY),
     };
 
     // Always write locally — this is what _restorePassageCache matches against

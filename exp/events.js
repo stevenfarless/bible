@@ -184,10 +184,7 @@ export function attachEventListeners(app) {
             if (event.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
 
             const verse = event.target.closest('.verse');
-            if (!verse) {
-                clearSelectedVerse();
-                return;
-            }
+            if (!verse) return;
 
             if (app.state.verseSelectionGesture !== 'hold') return;
             if (event.pointerType === 'mouse' && event.button !== 0) return;
@@ -235,17 +232,19 @@ export function attachEventListeners(app) {
             if (event.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
 
             const verse = event.target.closest('.verse');
-
-            if (!verse) {
-                clearSelectedVerse();
-                return;
-            }
+            if (!verse) return;
 
             event.preventDefault();
 
             if (app.state.verseSelectionGesture === 'tap') {
                 selectVerse(verse);
             }
+        });
+
+        document.addEventListener('pointerdown', (event) => {
+            if (app.state.selectedVerse == null) return;
+            if (event.target.closest('.verse, .selected-verse-glow, .verse-tools-tray, .verse-tools-trigger')) return;
+            clearSelectedVerse();
         });
 
         verseSelectionTarget.addEventListener('contextmenu', (event) => {
