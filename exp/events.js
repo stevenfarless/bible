@@ -167,6 +167,12 @@ export function attachEventListeners(app) {
             }
         };
 
+        const clearSelectedVerse = () => {
+            if (app.state.selectedVerse == null) return;
+            app.state.selectedVerse = null;
+            app.applyVerseGlow();
+        };
+
         const cancelVersePress = () => {
             clearTimeout(holdTimer);
             holdTimer = null;
@@ -175,12 +181,16 @@ export function attachEventListeners(app) {
         };
 
         verseSelectionTarget.addEventListener('pointerdown', (event) => {
-            if (app.state.verseSelectionGesture !== 'hold') return;
-            if (event.pointerType === 'mouse' && event.button !== 0) return;
+            if (event.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
 
             const verse = event.target.closest('.verse');
-            if (!verse) return;
-            if (event.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
+            if (!verse) {
+                clearSelectedVerse();
+                return;
+            }
+
+            if (app.state.verseSelectionGesture !== 'hold') return;
+            if (event.pointerType === 'mouse' && event.button !== 0) return;
 
             cancelVersePress();
 
@@ -227,10 +237,7 @@ export function attachEventListeners(app) {
             const verse = event.target.closest('.verse');
 
             if (!verse) {
-                if (app.state.selectedVerse != null) {
-                    app.state.selectedVerse = null;
-                    app.applyVerseGlow();
-                }
+                clearSelectedVerse();
                 return;
             }
 
