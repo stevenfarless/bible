@@ -368,13 +368,40 @@ export function attachEventListeners(app) {
     themeSelector?.addEventListener('input', applyThemeSelection);
     themeSelector?.addEventListener('change', applyThemeSelection);
 
+        document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
     document.getElementById('changeEmailBtn')?.addEventListener('click', () => openChangeEmailModal(app));
     document.getElementById('changePasswordBtn')?.addEventListener('click', () => openChangePasswordModal(app));
     document.getElementById('forgotPasswordBtn')?.addEventListener('click', () => handleForgotPassword(app));
-        
+
+    document.getElementById('showSignupLink')?.addEventListener('click', (event) => {
+        event.preventDefault();
+        app.closeModal(app.loginModal);
+        app.openModal(app.signupModal);
+    });
+
+    document.getElementById('showLoginLink')?.addEventListener('click', (event) => {
+        event.preventDefault();
+        app.closeModal(app.signupModal);
+        app.openModal(app.loginModal);
+    });
+
+    document.getElementById('loginForm')?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        app.handleLogin();
+    });
+
+    document.getElementById('signupForm')?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        app.handleSignup();
+    });
+
+    document.getElementById('logoutBtn')?.addEventListener('click', () => app.handleLogout());
+
     window.addEventListener('scroll', () => {
         app.handleChromeScroll();
         clearTimeout(app.scrollTimeout);
         app.scrollTimeout = setTimeout(() => app.saveReadingPosition(), 500);
     }, { passive: true });
+
+    document.addEventListener('keydown', (event) => app.handleKeyboardShortcuts(event));
 }
