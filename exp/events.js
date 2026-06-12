@@ -101,6 +101,11 @@ function openChangePasswordModal(app) {
 
 function syncReadingDisplay(app) {
     document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
+    document.body.classList.toggle(
+    'muted-verse-numbers',
+    !app.state.coloredVerseNumbers
+);
+    document.body.classList.toggle('muted-verse-numbers', !app.state.coloredVerseNumbers);
     document.body.classList.toggle('hide-chapter-arrows', !app.state.showChapterArrows);
     document.body.classList.toggle('verse-by-verse-mode', !!app.state.verseByVerse);
 
@@ -189,6 +194,14 @@ export function attachEventListeners(app) {
         syncReadingDisplay(app);
     });
     app.verseNumbersToggle?.addEventListener('change', () => app.toggleSetting('showVerseNumbers'));
+    app.coloredVerseNumbersToggle?.addEventListener('input', (e) => {
+    app.state.coloredVerseNumbers = e.currentTarget.checked;
+    syncReadingDisplay(app);
+});
+
+app.coloredVerseNumbersToggle?.addEventListener('change', () => {
+    app.toggleSetting('coloredVerseNumbers');
+});
 
     app.headingsToggle?.addEventListener('change', () => app.toggleSetting('showHeadings'));
     app.footnotesToggle?.addEventListener('change', () => app.toggleSetting('showFootnotes'));
