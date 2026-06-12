@@ -142,9 +142,9 @@ export function attachEventListeners(app) {
     app.translationSelectorBtn?.addEventListener('click', () => app.openTranslationModal());
     document.getElementById('copyPassage')?.addEventListener('click', () => app.copyPassage());
 
-    const versePressTarget = document.getElementById('swipeViewport') ?? app.passageText;
+    const verseSelectionTarget = document.getElementById('swipeViewport') ?? app.passageText;
 
-    if (versePressTarget) {
+    if (verseSelectionTarget) {
         const HOLD_MS = 500;
         const MOVE_LIMIT = 12;
 
@@ -153,7 +153,19 @@ export function attachEventListeners(app) {
         let startX = 0;
         let startY = 0;
         let pressedVerse = null;
-        let activated = false;
+        let holdActivated = false;
+
+        const selectVerse = (verse) => {
+            const num = parseInt(verse?.dataset.verse, 10);
+            if (!num) return;
+
+            if (app.state.selectedVerse === num) {
+                app.state.selectedVerse = null;
+                app.applyVerseGlow();
+            } else {
+                app.scrollToVerse(num);
+            }
+        };
 
         const cancelVersePress = () => {
             clearTimeout(holdTimer);
@@ -162,7 +174,8 @@ export function attachEventListeners(app) {
             pressedVerse = null;
         };
 
-        versePressTarget.addEventListener('pointerdown', (event) => {
+        verseSelectionTarget.addEventListener('pointerdown', (event) => {
+            if (app.state.verseSelectionGesture !== 'hold') return;
             if (event.pointerType === 'mouse' && event.button !== 0) return;
 
             const verse = event.target.closest('.verse');
@@ -175,39 +188,29 @@ export function attachEventListeners(app) {
             startX = event.clientX;
             startY = event.clientY;
             pressedVerse = verse;
-            activated = false;
+            holdActivated = false;
 
             holdTimer = setTimeout(() => {
-                const num = parseInt(pressedVerse?.dataset.verse, 10);
-                if (!num) return;
-
-                activated = true;
+                if (!pressedVerse) return;
+                holdActivated = true;
                 navigator.vibrate?.(20);
-
-                if (app.state.selectedVerse === num) {
-                    app.state.selectedVerse = null;
-                    app.applyVerseGlow();
-                } else {
-                    app.scrollToVerse(num);
-                }
+                selectVerse(pressedVerse);
             }, HOLD_MS);
         });
 
-        versePressTarget.addEventListener('pointermove', (event) => {
+        verseSelectionTarget.addEventListener('pointermove', (event) => {
             if (event.pointerId !== pointerId) return;
 
             const movedX = Math.abs(event.clientX - startX);
             const movedY = Math.abs(event.clientY - startY);
 
-            if (movedX > MOVE_LIMIT || movedY > MOVE_LIMIT) {
-                cancelVersePress();
-            }
+            if (movedX > MOVE_LIMIT || movedY > MOVE_LIMIT) cancelVersePress();
         });
 
         const finishVersePress = (event) => {
             if (event.pointerId !== pointerId) return;
 
-            if (activated) {
+            if (holdActivated) {
                 event.preventDefault();
                 event.stopPropagation();
             }
@@ -215,10 +218,21 @@ export function attachEventListeners(app) {
             cancelVersePress();
         };
 
-        versePressTarget.addEventListener('pointerup', finishVersePress);
-        versePressTarget.addEventListener('pointercancel', finishVersePress);
+        verseSelectionTarget.addEventListener('pointerup', finishVersePress);
+        verseSelectionTarget.addEventListener('pointercancel', finishVersePress);
 
-        versePressTarget.addEventListener('contextmenu', (event) => {
+        verseSelectionTarget.addEventListener('click', (event) => {
+            const verse = event.target.closest('.verse');
+            if (!verse) return;
+            if (event.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (app.state.verseSelectionGesture === 'tap') selectVerse(verse);
+        }, true);
+
+        verseSelectionTarget.addEventListener('contextmenu', (event) => {
             if (event.target.closest('.verse')) event.preventDefault();
         });
     }
@@ -283,6 +297,18 @@ export function attachEventListeners(app) {
     });
     app.verseByVerseToggle?.addEventListener('change', () => app.toggleVerseByVerse());
     app.fontSizeSlider?.addEventListener('input', (e) => app.updateFontSize(e.target.value));
+
+    app.verseSelectionGestureSelect?.addEventListener('change', async (event) => {
+        const gesture = event.currentTarget.value === 'tap' ? 'tap' : 'hold';
+        app.state.verseSelectionGesture = gesture;
+        localStorage.setItem('verseSelectionGesture', gesture);
+
+        if (app.currentUser) {
+            await app.database
+                .ref(`users/${app.currentUser.uid}/settings/verseSelectionGesture`)
+                .set(gesture);
+        }
+    });
 
     const readingFontSelector = document.getElementById('readingFontSelector');
     if (readingFontSelector) {
