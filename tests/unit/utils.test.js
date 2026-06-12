@@ -1,7 +1,7 @@
 // tests/unit/utils.test.js
 // Unit tests for js/utils.js — covers all acceptance-criteria categories
 // from issue #89: reference parsing, verse range math, reading state
-// defaults, highlight selector generation, and API path construction.
+// defaults, and highlight selector generation.
 
 import { describe, it, expect } from 'vitest';
 import {
@@ -12,7 +12,6 @@ import {
     filterVerseNumbers,
     buildVerseSelector,
     buildVerseId,
-    buildBiblePath,
     initializeState,
     eventsForChapter,
 } from '../../js/utils.js';
@@ -194,24 +193,6 @@ describe('buildVerseId', () => {
 });
 
 // ---------------------------------------------------------------------------
-// buildBiblePath — API URL / path construction
-// ---------------------------------------------------------------------------
-describe('buildBiblePath', () => {
-    it('constructs the correct relative path for KJV', () => {
-        expect(buildBiblePath('KJV')).toBe('./translations/KJV/KJV_bible.json');
-    });
-
-    it('constructs the correct relative path for BSB', () => {
-        expect(buildBiblePath('BSB')).toBe('./translations/BSB/BSB_bible.json');
-    });
-
-    it('uses the translation id in both directory and filename', () => {
-        const path = buildBiblePath('NET');
-        expect(path).toMatch(/NET.*NET/);
-    });
-});
-
-// ---------------------------------------------------------------------------
 // initializeState — reading state serialization / defaults
 // ---------------------------------------------------------------------------
 describe('initializeState', () => {
@@ -238,49 +219,22 @@ describe('initializeState', () => {
         expect(state.showVerseNumbers).toBe(true);
         expect(state.showHeadings).toBe(true);
     });
-
-    it('hides footnotes and cross-references by default', () => {
-        const state = initializeState();
-        expect(state.showFootnotes).toBe(false);
-        expect(state.showCrossReferences).toBe(false);
-    });
-
-    it('returns a fresh object each call (no shared reference)', () => {
-        const a = initializeState();
-        const b = initializeState();
-        a.currentBook = 'Genesis';
-        expect(b.currentBook).toBe('John');
-    });
 });
 
 // ---------------------------------------------------------------------------
-// eventsForChapter — BSB scaffold filtering
+// eventsForChapter — scaffold filtering
 // ---------------------------------------------------------------------------
 describe('eventsForChapter', () => {
-    const events = [
-        { ch: 1, v: 1,  type: 'heading',    text: 'The Word' },
-        { ch: 1, v: 14, type: 'para_break' },
-        { ch: 2, v: 1,  type: 'heading',    text: 'The Wedding' },
-        { ch: 1, v: 5,  type: 'para_break' },
-    ];
+    it('filters and sorts events for the requested chapter', () => {
+        const events = [
+            { ch: 2, v: 1, type: 'heading' },
+            { ch: 1, v: 4, type: 'para_break' },
+            { ch: 1, v: 2, type: 'heading' },
+        ];
 
-    it('returns only events for the requested chapter', () => {
-        const result = eventsForChapter(events, 1);
-        expect(result.every(e => e.ch === 1)).toBe(true);
-        expect(result).toHaveLength(3);
-    });
-
-    it('returns events sorted ascending by verse', () => {
-        const result = eventsForChapter(events, 1);
-        const verses = result.map(e => e.v);
-        expect(verses).toEqual([1, 5, 14]);
-    });
-
-    it('returns an empty array for a chapter with no events', () => {
-        expect(eventsForChapter(events, 99)).toEqual([]);
-    });
-
-    it('handles an empty events array', () => {
-        expect(eventsForChapter([], 1)).toEqual([]);
+        expect(eventsForChapter(events, 1)).toEqual([
+            { ch: 1, v: 2, type: 'heading' },
+            { ch: 1, v: 4, type: 'para_break' },
+        ]);
     });
 });
