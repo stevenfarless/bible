@@ -101,6 +101,7 @@ function openChangePasswordModal(app) {
 
 function syncReadingDisplay(app) {
     document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
+    document.body.classList.toggle('muted-verse-numbers', !app.state.coloredVerseNumbers);
     document.body.classList.toggle(
     'muted-verse-numbers',
     !app.state.coloredVerseNumbers
@@ -194,6 +195,14 @@ export function attachEventListeners(app) {
         syncReadingDisplay(app);
     });
     app.verseNumbersToggle?.addEventListener('change', () => app.toggleSetting('showVerseNumbers'));
+    app.coloredVerseNumbersToggle?.addEventListener('input', (e) => {
+    app.state.coloredVerseNumbers = e.currentTarget.checked;
+    syncReadingDisplay(app);
+});
+
+    app.coloredVerseNumbersToggle?.addEventListener('change', () => {
+    app.toggleSetting('coloredVerseNumbers');
+});
     app.coloredVerseNumbersToggle?.addEventListener('input', (e) => {
     app.state.coloredVerseNumbers = e.currentTarget.checked;
     syncReadingDisplay(app);
