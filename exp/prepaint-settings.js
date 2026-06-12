@@ -13,6 +13,7 @@
     }
 
     if (!readBool('showVerseNumbers', true)) root.classList.add('hide-verse-numbers');
+    if (!readBool('coloredVerseNumbers', true)) root.classList.add('muted-verse-numbers');
     if (!readBool('showChapterArrows', false)) root.classList.add('hide-chapter-arrows');
     if (readBool('verseByVerse', false)) root.classList.add('verse-by-verse-enabled');
 
