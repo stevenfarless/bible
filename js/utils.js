@@ -143,20 +143,6 @@ export function buildVerseId(chapter, verse) {
 }
 
 // ---------------------------------------------------------------------------
-// API path construction
-// ---------------------------------------------------------------------------
-
-/**
- * Build the relative path to a translation's JSON bible file.
- *
- * @param {string} translation  - e.g. 'KJV'
- * @returns {string}  e.g. `./translations/KJV/KJV_bible.json`
- */
-export function buildBiblePath(translation) {
-    return `./translations/${translation}/${translation}_bible.json`;
-}
-
-// ---------------------------------------------------------------------------
 // Reading state defaults
 // ---------------------------------------------------------------------------
 
