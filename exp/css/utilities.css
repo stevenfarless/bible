@@ -258,6 +258,10 @@ body.verse-by-verse-mode .passage-text .verse-num,
     margin-right: 0.5em;
 }
 
+body:not(.hide-verse-numbers) .passage-container {
+    padding-left: calc(var(--spacing-lg) - 12px);
+}
+
 /*
 body:not(.hide-verse-numbers) .passage-text .verse-num {
     display: inline-block;
