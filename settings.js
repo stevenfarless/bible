@@ -6,6 +6,7 @@ import { changeColorTheme, applyLightMode } from './ui.js';
 const DEFAULTS = {
     fontSize:            20,
     showVerseNumbers:    true,
+    coloredVerseNumbers: true,
     showHeadings:        true,
     showFootnotes:       false,
     showCrossReferences: false,
@@ -58,6 +59,7 @@ export function loadLocalSettings(app) {
 
     app.state.showVerseNumbers    = readBool('showVerseNumbers',    DEFAULTS.showVerseNumbers);
     app.state.showHeadings        = readBool('showHeadings',        DEFAULTS.showHeadings);
+    app.state.coloredVerseNumbers = readBool('coloredVerseNumbers', DEFAULTS.coloredVerseNumbers);
     app.state.showFootnotes       = readBool('showFootnotes',       DEFAULTS.showFootnotes);
     app.state.showCrossReferences = readBool('showCrossReferences', DEFAULTS.showCrossReferences);
     app.state.verseByVerse        = readBool('verseByVerse',        DEFAULTS.verseByVerse);
@@ -113,8 +115,10 @@ export function applySettings(app) {
     if (lightModeSelect) lightModeSelect.value = app.state.lightMode;
 
     document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
+    document.body.classList.toggle('muted-verse-numbers', !app.state.coloredVerseNumbers);
     document.body.classList.toggle('hide-chapter-arrows', !app.state.showChapterArrows);
     if (app.verseNumbersToggle)    app.verseNumbersToggle.checked    = !!app.state.showVerseNumbers;
+    if (app.coloredVerseNumbersToggle) app.coloredVerseNumbersToggle.checked = !!app.state.coloredVerseNumbers;
     if (app.headingsToggle)        app.headingsToggle.checked        = !!app.state.showHeadings;
     if (app.chapterArrowsToggle)   app.chapterArrowsToggle.checked   = !!app.state.showChapterArrows;
 
@@ -133,6 +137,7 @@ export function applySettings(app) {
 
 const TOGGLE_MAP = {
     showVerseNumbers:  'verseNumbersToggle',
+    coloredVerseNumbers: 'coloredVerseNumbersToggle',
     showHeadings:      'headingsToggle',
     showChapterArrows: 'chapterArrowsToggle',
 };
@@ -158,6 +163,11 @@ export async function toggleSetting(app, setting) {
     if (setting === 'showVerseNumbers') {
         document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
         return;
+    }
+    
+    if (setting === 'coloredVerseNumbers') {
+    document.body.classList.toggle('muted-verse-numbers', !app.state.coloredVerseNumbers);
+    return;
     }
 
     if (setting === 'showChapterArrows') {
