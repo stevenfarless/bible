@@ -51,8 +51,6 @@ export async function loadSavedPositionIfChanged(app, withTimeout) {
         app.lastScrollPosition = targetScrollY;
         lsSetJSON('readingPosition', { book: targetBook, chapter: targetChapter, scrollY: targetScrollY });
         await app.loadPassage(targetBook, targetChapter, !!targetScrollY);
-    } else if (targetScrollY) {
-        window.scrollTo(0, targetScrollY);
     }
 }
 
@@ -127,7 +125,7 @@ export function handleUserButtonClick(app) {
             perplexity: 'Perplexity (Teal/Minimal)',
             basic:      'Basic (Black & White)',
             geek:       'The Geek Shall Inherit The Earth',
-            gnome:      'GNOME 3 (Adwaita)',
+            gnome:       'GNOME 3 (Adwaita)',
         };
         document.getElementById('userTheme').textContent =
             themeNameMap[colorTheme] || colorTheme;
@@ -199,7 +197,7 @@ export async function handleSignup(app) {
         });
 
         app.showToast('Account created successfully!');
-        app.closeModal(app.signupModal);
+        app.closeModal(app.loginModal);
     } catch (error) {
         console.error('Signup error:', error);
         if (error.code === 'auth/email-already-in-use') {
@@ -265,7 +263,7 @@ export async function handleChangeEmail(app) {
 
     try {
         const credential = app.auth.createCredential(app.currentUser.email, currentPassword);
-        await app.auth.reauthenticateWithCredential(app.currentUser, credential);
+        await app.auth.reauthenticateWithCredential(app.currentUser, currentPassword);
         await app.auth.verifyBeforeUpdateEmail(app.currentUser, newEmail);
         app.showToast('Verification sent — check your inbox to confirm the new email');
         // modal teardown and field clearing handled by credential-modals.js
