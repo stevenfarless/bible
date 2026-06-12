@@ -223,19 +223,23 @@ export function attachEventListeners(app) {
 
         verseSelectionTarget.addEventListener('click', (event) => {
             const verse = event.target.closest('.verse');
-            if (!verse && app.state.selectedVerse != null) {
-                app.state.selectedVerse = null;
-                app.applyVerseGlow();
-            return;
-}
 
-if (!verse) return;
+            if (!verse) {
+                if (app.state.selectedVerse != null) {
+                    app.state.selectedVerse = null;
+                    app.applyVerseGlow();
+                }
+                return;
+            }
+
             if (event.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
 
             event.preventDefault();
             event.stopPropagation();
 
-            if (app.state.verseSelectionGesture === 'tap') selectVerse(verse);
+            if (app.state.verseSelectionGesture === 'tap') {
+                selectVerse(verse);
+            }
         }, true);
 
         verseSelectionTarget.addEventListener('contextmenu', (event) => {
