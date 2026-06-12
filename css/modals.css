@@ -86,15 +86,34 @@
     position: relative;
     width: 100%;
     max-width: var(--max-width);
-    height: 75vh;
-    max-height: 90vh;
-    min-height: 200px;
+    height: clamp(360px, 46dvh, 440px);
+    max-height: 90dvh;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     border-radius: 12px 12px 0 0;
     margin: 0 auto;
     animation: none;
     transform: translateY(100%);
-    transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1) 320ms;
-    will-change: transform;
+    transition:
+        transform 320ms cubic-bezier(0.32, 0.72, 0, 1) 320ms,
+        height 280ms cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: transform, height;
+}
+
+#settingsModal .modal-content.settings-sheet--compact {
+    height: clamp(360px, 46dvh, 440px);
+}
+
+#settingsModal .modal-content.settings-sheet--expanded {
+    height: 82dvh;
+}
+
+#settingsModal .modal-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 #settingsModal.active .modal-content {
@@ -109,6 +128,12 @@
 #settingsModal .modal-content.dragging {
     transition: none !important;
     user-select: none;
+}
+
+#settingsModal .modal-content.settings-sheet--snapping {
+    transition:
+        transform 320ms cubic-bezier(0.32, 0.72, 0, 1),
+        height 280ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .modal-drag-resizable > .modal-header {

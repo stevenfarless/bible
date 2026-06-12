@@ -1,7 +1,11 @@
-const MIN_HEIGHT = 200;
+const COMPACT_HEIGHT_RATIO = 0.46;
+const COMPACT_MIN_HEIGHT = 360;
+const COMPACT_MAX_HEIGHT = 440;
+const EXPANDED_HEIGHT_RATIO = 0.82;
 const MAX_HEIGHT_RATIO = 0.9;
 const AXIS_THRESHOLD = 8;
 const DISMISS_PULL = 90;
+const FLICK_VELOCITY = 0.45;
 
 function addDragZone(content, side) {
     const zone = document.createElement('div');
@@ -11,6 +15,27 @@ function addDragZone(content, side) {
     return zone;
 }
 
+function compactHeight() {
+    return Math.min(
+        COMPACT_MAX_HEIGHT,
+        Math.max(COMPACT_MIN_HEIGHT, window.innerHeight * COMPACT_HEIGHT_RATIO),
+    );
+}
+
+function expandedHeight() {
+    return Math.min(window.innerHeight * MAX_HEIGHT_RATIO, window.innerHeight * EXPANDED_HEIGHT_RATIO);
+}
+
+function setSnapState(content, state, animate = true) {
+    content.classList.toggle('settings-sheet--compact', state === 'compact');
+    content.classList.toggle('settings-sheet--expanded', state === 'expanded');
+    content.classList.toggle('settings-sheet--snapping', animate);
+    content.style.height = `${state === 'expanded' ? expandedHeight() : compactHeight()}px`;
+    if (animate) {
+        window.setTimeout(() => content.classList.remove('settings-sheet--snapping'), 300);
+    }
+}
+
 function attachBottomSheetDrag(app, modal) {
     const content = modal.querySelector('.modal-content');
     const header = modal.querySelector('.modal-header');
@@ -18,6 +43,7 @@ function attachBottomSheetDrag(app, modal) {
     if (!content || !header) return;
 
     content.classList.add('modal-drag-resizable');
+    setSnapState(content, 'compact', false);
 
     const dragSources = [
         header,
@@ -33,6 +59,9 @@ function attachBottomSheetDrag(app, modal) {
         startHeight: 0,
         axis: null,
         dismissArmed: false,
+        lastY: 0,
+        lastTime: 0,
+        velocityY: 0,
     };
 
     function resetDrag() {
@@ -41,12 +70,18 @@ function attachBottomSheetDrag(app, modal) {
         drag.source = null;
         drag.axis = null;
         drag.dismissArmed = false;
+        drag.velocityY = 0;
     }
 
     function finishDrag(event, allowDismiss) {
         if (event.pointerId !== drag.pointerId) return;
 
-        const shouldDismiss = allowDismiss && drag.dismissArmed;
+        const shouldDismiss = allowDismiss && drag.dismissArmed && drag.velocityY > 0;
+        const currentHeight = content.offsetHeight;
+        const compact = compactHeight();
+        const expanded = expandedHeight();
+        const midpoint = (compact + expanded) / 2;
+
         if (drag.source?.hasPointerCapture(event.pointerId)) {
             drag.source.releasePointerCapture(event.pointerId);
         }
@@ -54,10 +89,21 @@ function attachBottomSheetDrag(app, modal) {
 
         if (shouldDismiss) {
             app.closeModal(modal);
-            setTimeout(() => {
-                content.style.height = '';
-            }, 320);
+            window.setTimeout(() => setSnapState(content, 'compact', false), 320);
+            return;
         }
+
+        if (drag.velocityY <= -FLICK_VELOCITY) {
+            setSnapState(content, 'expanded');
+            return;
+        }
+
+        if (drag.velocityY >= FLICK_VELOCITY) {
+            setSnapState(content, 'compact');
+            return;
+        }
+
+        setSnapState(content, currentHeight >= midpoint ? 'expanded' : 'compact');
     }
 
     function startDrag(event) {
@@ -71,8 +117,12 @@ function attachBottomSheetDrag(app, modal) {
         drag.startHeight = content.offsetHeight;
         drag.axis = null;
         drag.dismissArmed = false;
+        drag.lastY = event.clientY;
+        drag.lastTime = performance.now();
+        drag.velocityY = 0;
 
         drag.source.setPointerCapture(event.pointerId);
+        content.classList.remove('settings-sheet--snapping');
         content.classList.add('dragging');
         event.preventDefault();
     }
@@ -92,16 +142,27 @@ function attachBottomSheetDrag(app, modal) {
             }
         }
 
+        const now = performance.now();
+        const elapsed = Math.max(1, now - drag.lastTime);
+        drag.velocityY = (event.clientY - drag.lastY) / elapsed;
+        drag.lastY = event.clientY;
+        drag.lastTime = now;
+
         const maxHeight = window.innerHeight * MAX_HEIGHT_RATIO;
+        const compact = compactHeight();
         const requestedHeight = drag.startHeight - dy;
-        const resizedHeight = Math.max(MIN_HEIGHT, Math.min(maxHeight, requestedHeight));
-        const pullPastMinimum = Math.max(0, MIN_HEIGHT - requestedHeight);
+        const resizedHeight = Math.max(compact, Math.min(maxHeight, requestedHeight));
+        const pullPastCompact = Math.max(0, compact - requestedHeight);
 
         content.style.height = `${resizedHeight}px`;
-        drag.dismissArmed = pullPastMinimum >= DISMISS_PULL;
+        drag.dismissArmed = pullPastCompact >= DISMISS_PULL;
         content.classList.toggle('dismiss-armed', drag.dismissArmed);
         event.preventDefault();
     }
+
+    modal.addEventListener('transitionend', () => {
+        if (!modal.classList.contains('active')) setSnapState(content, 'compact', false);
+    });
 
     for (const source of dragSources) {
         source.addEventListener('pointerdown', startDrag);
