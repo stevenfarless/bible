@@ -51,8 +51,6 @@ export async function loadSavedPositionIfChanged(app, withTimeout) {
         app.lastScrollPosition = targetScrollY;
         lsSetJSON('readingPosition', { book: targetBook, chapter: targetChapter, scrollY: targetScrollY });
         await app.loadPassage(targetBook, targetChapter, !!targetScrollY);
-    } else if (targetScrollY) {
-        window.scrollTo(0, targetScrollY);
     }
 }
 
@@ -199,7 +197,7 @@ export async function handleSignup(app) {
         });
 
         app.showToast('Account created successfully!');
-        app.closeModal(app.signupModal);
+        app.closeModal(app.loginModal);
     } catch (error) {
         console.error('Signup error:', error);
         if (error.code === 'auth/email-already-in-use') {
