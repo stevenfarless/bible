@@ -506,7 +506,8 @@ export class BibleApi {
                 const text = chapterData[String(v)] || '';
                 spans.push(
                     `<span class="verse" data-verse="${v}" id="v${chapter}-${v}">` +
-                    `<sup class="verse-num">${v}</sup> ${escapeHtml(text)} ` +
+                    `<sup class="verse-num">${v}</sup>` +
+                    `<span class="verse-text">${escapeHtml(text)}</span> ` +
                     `</span>`
                 );
             }
@@ -538,7 +539,8 @@ export class BibleApi {
             const text = chapterData[String(v)] || '';
             parts.push(
                 `<span class="verse" data-verse="${v}" id="v${chapter}-${v}">` +
-                `<sup class="verse-num">${v}</sup> ${escapeHtml(text)} ` +
+                `<sup class="verse-num">${v}</sup>` +
+                `<span class="verse-text">${escapeHtml(text)}</span> ` +
                 `</span>`
             );
         }

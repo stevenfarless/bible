@@ -15,8 +15,8 @@
 	<meta name="build-id" content="__BUILD_ID__" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
-	     (document.documentElement — always available in <head>) before the
-	     browser paints, preventing a Dracula-flash on cold load.
+	     (document.documentElement - - always available in <head>) before the
+	     browser paints, preventing a theme flash on cold load.
 	     document.body is null at this point; do NOT use it here.
 	     ES modules are deferred and cannot achieve this. -->
 	<script>
@@ -24,7 +24,7 @@
 			var el = document.documentElement;
 			var theme = 'basic';
 			try { theme = localStorage.getItem('colorTheme') || 'basic'; } catch (_) {}
-			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1 };
+			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1, lux: 1, vespers: 1, vigil: 1 };
 			if (!valid[theme]) theme = 'basic';
 			el.classList.add(theme + '-theme', 'no-color-transition');
 
@@ -38,12 +38,12 @@
 			if (isLight) el.classList.add('light-mode');
 		}());
 	</script>
+	<script src="prepaint-settings.js"></script>
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
 	<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
 	<link rel="icon" href="./favicon.ico" />
-	<!-- Preconnect to external hosts used on first load -->
 	<link rel="preconnect" href="https://esv-bible-6dffb-default-rtdb.firebaseio.com" />
 	<link rel="preconnect" href="https://www.gstatic.com" />
 	<link rel="preconnect" href="https://www.google.com" />
@@ -73,6 +73,7 @@
 	<link rel="preload" href="./fonts/OpenDyslexic3-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<link rel="preload" href="./fonts/Ubuntu-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<link rel="preload" href="./fonts/iAWriterQuattroS-Regular.woff2" as="font" type="font/woff2" crossorigin />
+	<link rel="preload" href="./fonts/AdwaitaSans-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<!-- CSS loaded as parallel <link> tags — @import chains are render-blocking
 	     and sequential; <link> tags are fetched in parallel by the browser. -->
 	<link rel="stylesheet" href="css/fonts.css" />
@@ -85,6 +86,7 @@
 	<link rel="stylesheet" href="css/interactions.css" />
 	<link rel="stylesheet" href="css/utilities.css" />
 	<link rel="stylesheet" href="css/pericope.css" />
+	<link rel="stylesheet" href="css/geek95.css">
 	<!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
 	<script src="https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
@@ -214,13 +216,11 @@
 				<div class="loading">Loading passage...</div>
 			</div>
 
-			<!-- Footnotes section (below passage text, shown when showFootnotes is on) -->
 			<div id="footnotesSection" class="passage-extras-section hidden">
 				<h4 class="passage-extras-heading">Footnotes</h4>
 				<div id="footnotesContent" class="passage-extras-content"></div>
 			</div>
 
-			<!-- Cross-references section (below passage text, shown when showCrossReferences is on) -->
 			<div id="crossReferencesSection" class="passage-extras-section hidden">
 				<h4 class="passage-extras-heading">Cross-References</h4>
 				<div id="crossReferencesContent" class="passage-extras-content"></div>
@@ -275,7 +275,6 @@
 		</div>
 	</div>
 
-	<!-- Translation picker modal -->
 	<div id="translationModal" class="modal">
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
@@ -308,15 +307,16 @@
 							<div class="setting-item">
 								<label for="themeSelector">Color Theme</label>
 								<select id="themeSelector" class="input-field">
-				    	<option value="dracula">Dracula</option>
-								<!--	<option value="dracula2test">Dracula 2 Test (Purple/Pink)</option> -->
-								 <option value="onyx">Gold (OLED)</option>
-									<option value="sage">Sage</option>
-									<option value="ember">Ember</option>
-									<option value="perplexity">Perplexitude</option>
-									<option value="basic">Basic (Black OLED &amp; White)</option>
-									<option value="geek">The Geek Shall Inherit The Earth (OLED)</option>
-									<option value="gnome">Adwaitish</option>
+									<option value="vespers">Lux (Light) | Vespers (Dark)</option>
+									<option value="vigil">Lux (Light) | Vigil (Dark OLED)</option>
+									<option value="dracula">Dracula (Dark) | Alucard (Light)</option>
+									<option value="onyx">Gold (Light | Dark OLED)</option>
+									<option value="sage">Sage (Light | Dark)</option>
+									<option value="ember">Ember (Light | Dark)</option>
+									<option value="perplexity">Perplexitude (Light | Dark)</option>
+									<option value="basic">Basic Black (Dark) | Basic White (Light)</option>
+									<option value="geek">The Geek Shall Inherit The Earth (Dark OLED)</option>
+									<option value="gnome">Adwaitish (Light | Dark)</option>
 								</select>
 								<small class="help-text">Choose your preferred color scheme.</small>
 							</div>
@@ -337,11 +337,12 @@
 							<div class="setting-item">
 								<label for="readingFontSelector">Reading Font</label>
 								<select id="readingFontSelector" class="input-field">
-									<option value="gentium">Gentium Book Plus (Serif)</option>
-									<option value="andika">Andika (Sans Serif)</option>
+									<option value="gentium">Gentium Book Plus</option>
+									<option value="andika">Andika</option>
 									<option value="ubuntu">Ubuntu</option>
 									<option value="opendyslexic3">Open Dyslexic 3</option>
 									<option value="ia-quattro">iA Writer Quattro S</option>
+									<option value="adwaitasans">Adwaita Sans</option>
 								</select>
 								<small class="help-text" id="readingFontHelpText">Choose the typeface used for passage text.</small>
 							</div>
@@ -351,6 +352,12 @@
 									<span>Show verse numbers</span>
 								</label>
 							</div>
+							<div class="setting-item">
+    <label class="checkbox-label">
+        <input type="checkbox" id="coloredVerseNumbersToggle" checked />
+        <span>Colored verse numbers</span>
+    </label>
+			</div>
 							<div class="setting-item">
 								<label class="checkbox-label">
 									<input type="checkbox" id="headingsToggle" checked />
@@ -376,6 +383,14 @@
 									<input type="checkbox" id="verseByVerseToggle" />
 									<span>Verse-by-verse display</span>
 								</label>
+							</div>
+							<div class="setting-item">
+								<label for="verseSelectionGestureSelect">Verse selection gesture</label>
+								<select id="verseSelectionGestureSelect" class="input-field">
+									<option value="hold">Tap and hold</option>
+									<option value="tap">Single tap</option>
+								</select>
+								<small class="help-text">Choose how verses are selected.</small>
 							</div>
 							<div class="setting-item">
 								<label class="checkbox-label">
@@ -635,7 +650,6 @@
 		</div>
 	</div>
 
-	<!-- References bottom-sheet modal -->
 	<div id="referencesModal" class="modal modal--bottom-sheet">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -646,7 +660,6 @@
 		</div>
 	</div>
 
-	<!-- Deuterocanon info modal -->
 	<div id="deuterocanonInfoModal" class="modal">
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
@@ -679,7 +692,6 @@
 		</div>
 	</div>
 
-	<!-- Toast notification -->
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 	<script type="module" src="app.js"></script>

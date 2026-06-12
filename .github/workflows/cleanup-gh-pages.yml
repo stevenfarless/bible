@@ -22,12 +22,16 @@ jobs:
         run: |
           DEST="${{ github.event.ref }}"
           DEST="${DEST//\//-}"
-          if [ -d "$DEST" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git rm -rf "$DEST"
-            git commit -m "chore(gh-pages): remove preview for deleted branch $DEST"
-            git push
-          else
+          if [ ! -d "$DEST" ]; then
             echo "No preview folder found for $DEST, nothing to do."
+            exit 0
           fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git rm -rf "$DEST"
+          git commit -m "chore(gh-pages): remove preview for deleted branch $DEST"
+          for i in 1 2 3 4 5; do
+            git push && break
+            echo "Push attempt $i failed, pulling and retrying..."
+            git pull --rebase
+          done

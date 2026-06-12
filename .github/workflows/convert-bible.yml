@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       source_url:
-        description: 'raw.githubusercontent.com URL to a bible-database flat-array JSON file (e.g. https://raw.githubusercontent.com/stevenfarless/bible-database/refs/heads/main/data/json/en/NRSVUE.json)'
+        description: 'raw.githubusercontent.com URL to a bible-database flat-array JSON file (e.g. https://raw.githubusercontent.com/stevenfarless/lege-lux-database/refs/heads/main/data/json/en/NRSVUE.json)'
         required: true
         type: string
       translation_abbrev:
@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Checkout json-ver
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: json-ver
 

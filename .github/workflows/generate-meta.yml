@@ -1,16 +1,6 @@
 name: Generate Translation Metadata
 
 on:
-  push:
-    branches:
-      - dev
-      - main
-    paths:
-      - 'translations/**/info.json'
-      - 'translations/**/*.json'
-      - 'scripts/canon-registry.json'
-      - 'scripts/generate-meta.js'
-      - 'scripts/generate-index.js'
   workflow_dispatch:
 
 jobs:
@@ -21,12 +11,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.PAT_TOKEN }}
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
 

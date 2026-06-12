@@ -4,17 +4,19 @@
 import { changeColorTheme, applyLightMode } from './ui.js';
 
 const DEFAULTS = {
-    fontSize:            18,
+    fontSize:            20,
     showVerseNumbers:    true,
+    coloredVerseNumbers: true,
     showHeadings:        true,
     showFootnotes:       false,
     showCrossReferences: false,
     verseByVerse:        false,
     showChapterArrows:   false,
     lightMode:           'system',
-    colorTheme:          'basic',
+    colorTheme:          'vespers',
     translation:         'KJV',
     readingFont:         'gentium',
+    verseSelectionGesture: 'hold',
 };
 
 const RECAPTCHA_STYLE_ID = 'recaptcha-badge-style';
@@ -58,6 +60,7 @@ export function loadLocalSettings(app) {
 
     app.state.showVerseNumbers    = readBool('showVerseNumbers',    DEFAULTS.showVerseNumbers);
     app.state.showHeadings        = readBool('showHeadings',        DEFAULTS.showHeadings);
+    app.state.coloredVerseNumbers = readBool('coloredVerseNumbers', DEFAULTS.coloredVerseNumbers);
     app.state.showFootnotes       = readBool('showFootnotes',       DEFAULTS.showFootnotes);
     app.state.showCrossReferences = readBool('showCrossReferences', DEFAULTS.showCrossReferences);
     app.state.verseByVerse        = readBool('verseByVerse',        DEFAULTS.verseByVerse);
@@ -76,6 +79,13 @@ export function loadLocalSettings(app) {
 
     try { app.state.readingFont = localStorage.getItem('readingFont') || DEFAULTS.readingFont; }
     catch (_) { app.state.readingFont = DEFAULTS.readingFont; }
+
+    try {
+        const storedGesture = localStorage.getItem('verseSelectionGesture');
+        app.state.verseSelectionGesture = storedGesture === 'tap' ? 'tap' : DEFAULTS.verseSelectionGesture;
+    } catch (_) {
+        app.state.verseSelectionGesture = DEFAULTS.verseSelectionGesture;
+    }
 
     try { app.state.translation = app._normalizeTranslation(localStorage.getItem('translation') || DEFAULTS.translation); }
     catch (_) { app.state.translation = DEFAULTS.translation; }
@@ -113,8 +123,10 @@ export function applySettings(app) {
     if (lightModeSelect) lightModeSelect.value = app.state.lightMode;
 
     document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
+    document.body.classList.toggle('muted-verse-numbers', !app.state.coloredVerseNumbers);
     document.body.classList.toggle('hide-chapter-arrows', !app.state.showChapterArrows);
     if (app.verseNumbersToggle)    app.verseNumbersToggle.checked    = !!app.state.showVerseNumbers;
+    if (app.coloredVerseNumbersToggle) app.coloredVerseNumbersToggle.checked = !!app.state.coloredVerseNumbers;
     if (app.headingsToggle)        app.headingsToggle.checked        = !!app.state.showHeadings;
     if (app.chapterArrowsToggle)   app.chapterArrowsToggle.checked   = !!app.state.showChapterArrows;
 
@@ -128,11 +140,16 @@ export function applySettings(app) {
     const readingFont = app.state.readingFont || DEFAULTS.readingFont;
     applyReadingFont(app, readingFont);
 
+    if (app.verseSelectionGestureSelect) {
+        app.verseSelectionGestureSelect.value = app.state.verseSelectionGesture || DEFAULTS.verseSelectionGesture;
+    }
+
     updateCopyright(app);
 }
 
 const TOGGLE_MAP = {
     showVerseNumbers:  'verseNumbersToggle',
+    coloredVerseNumbers: 'coloredVerseNumbersToggle',
     showHeadings:      'headingsToggle',
     showChapterArrows: 'chapterArrowsToggle',
 };
@@ -159,6 +176,11 @@ export async function toggleSetting(app, setting) {
         document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
         return;
     }
+    
+    if (setting === 'coloredVerseNumbers') {
+    document.body.classList.toggle('muted-verse-numbers', !app.state.coloredVerseNumbers);
+    return;
+    }
 
     if (setting === 'showChapterArrows') {
         document.body.classList.toggle('hide-chapter-arrows', !app.state.showChapterArrows);
@@ -181,13 +203,14 @@ export async function toggleVerseByVerse(app) {
 }
 
 export function applyReadingFont(app, font) {
-    document.body.classList.remove('font-andika', 'font-ubuntu', 'font-opendyslexic3', 'font-retrocide', 'font-ia-quattro');
+    document.body.classList.remove('font-andika', 'font-ubuntu', 'font-opendyslexic3', 'font-retrocide', 'font-ia-quattro', 'font-adwaitasans');
 
     if (font === 'andika')        document.body.classList.add('font-andika');
     if (font === 'ubuntu')        document.body.classList.add('font-ubuntu');
     if (font === 'opendyslexic3') document.body.classList.add('font-opendyslexic3');
     if (font === 'retrocide')     document.body.classList.add('font-retrocide');
     if (font === 'ia-quattro')    document.body.classList.add('font-ia-quattro');
+    if (font === 'adwaitasans')   document.body.classList.add('font-adwaitasans');
 
     const selector = document.getElementById('readingFontSelector');
     const helpText = document.getElementById('readingFontHelpText');
@@ -307,7 +330,7 @@ export async function populateAboutVersion() {
 
     try {
         const res = await fetch(
-            'https://api.github.com/repos/stevenfarless/bible/releases/latest',
+            'https://api.github.com/repos/stevenfarless/lege-lux/releases/latest',
             { headers: { Accept: 'application/vnd.github+json' } }
         );
         if (!res.ok) { await _fallbackToBuildSha(); return; }
@@ -342,7 +365,7 @@ async function _populateComingSoon() {
     if (!el) return;
     try {
         const res = await fetch(
-            'https://api.github.com/repos/stevenfarless/bible/releases?per_page=10',
+            'https://api.github.com/repos/stevenfarless/lege-lux/releases?per_page=10',
             { headers: { Accept: 'application/vnd.github+json' } }
         );
         if (!res.ok) return;

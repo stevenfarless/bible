@@ -39,7 +39,6 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--border-neutral);
 }
 
 .modal-header h2 {
@@ -84,17 +83,37 @@
 }
 
 #settingsModal .modal-content {
+    position: relative;
     width: 100%;
     max-width: var(--max-width);
-    height: 75vh;
-    max-height: 90vh;
-    min-height: 200px;
+    height: clamp(360px, 46dvh, 440px);
+    max-height: 90dvh;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     border-radius: 12px 12px 0 0;
     margin: 0 auto;
     animation: none;
     transform: translateY(100%);
-    transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1) 320ms;
-    will-change: transform;
+    transition:
+        transform 320ms cubic-bezier(0.32, 0.72, 0, 1) 320ms,
+        height 280ms cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: transform, height;
+}
+
+#settingsModal .modal-content.settings-sheet--compact {
+    height: clamp(360px, 46dvh, 440px);
+}
+
+#settingsModal .modal-content.settings-sheet--expanded {
+    height: 82dvh;
+}
+
+#settingsModal .modal-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 #settingsModal.active .modal-content {
@@ -109,6 +128,40 @@
 #settingsModal .modal-content.dragging {
     transition: none !important;
     user-select: none;
+}
+
+#settingsModal .modal-content.settings-sheet--snapping {
+    transition:
+        transform 320ms cubic-bezier(0.32, 0.72, 0, 1),
+        height 280ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.modal-drag-resizable > .modal-header {
+    touch-action: none;
+    user-select: none;
+}
+
+.modal-drag-zone {
+    position: absolute;
+    top: 3rem;
+    bottom: 8px;
+    width: 18px;
+    z-index: 3;
+    touch-action: none;
+    cursor: ns-resize;
+}
+
+.modal-drag-zone--left {
+    left: 6px;
+}
+
+.modal-drag-zone--right {
+    right: 6px;
+}
+
+.modal-drag-resizable.dismiss-armed > .modal-header::before {
+    width: 56px;
+    opacity: 0.9;
 }
 
 #settingsModal .modal-header {
@@ -127,6 +180,7 @@
     background-color: var(--text-muted);
     border-radius: 2px;
     opacity: 0.5;
+    transition: width 120ms ease, opacity 120ms ease;
 }
 
 /* Translation modal — small centered dialog */
@@ -490,6 +544,7 @@
     background-color: var(--text-muted);
     border-radius: 2px;
     opacity: 0.5;
+    transition: width 120ms ease, opacity 120ms ease;
 }
 
 #referencesModal .modal-header {

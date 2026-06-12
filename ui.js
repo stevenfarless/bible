@@ -15,8 +15,9 @@ const REQUIRED_IDS = [
 	'closeSignupModal', 'closeUserMenuModal',
 	'oldTestamentBooks', 'newTestamentBooks',
 	'chapterModalBook', 'chapterGrid', 'verseModalBook', 'verseGrid',
-	'verseNumbersToggle', 'headingsToggle', 'footnotesToggle',
+	'themeSelector', 'verseNumbersToggle', 'coloredVerseNumbersToggle', 'headingsToggle', 'footnotesToggle',
 	'crossReferencesToggle', 'verseByVerseToggle', 'chapterArrowsToggle',
+	'verseSelectionGestureSelect',
 	'fontSizeSlider', 'fontSizeValue',
 	'referencesModal', 'closeReferencesModal',
 	'deuterocanonInfoModal', 'closeDeuterocanonInfoModal',
@@ -116,12 +117,15 @@ export function cacheElements(app) {
 	app.verseGrid = document.getElementById('verseGrid');
 
 	// Settings
+	app.themeSelector = document.getElementById('themeSelector');
 	app.verseNumbersToggle = document.getElementById('verseNumbersToggle');
+	app.coloredVerseNumbersToggle = document.getElementById('coloredVerseNumbersToggle');
 	app.headingsToggle = document.getElementById('headingsToggle');
 	app.footnotesToggle = document.getElementById('footnotesToggle');
 	app.crossReferencesToggle = document.getElementById('crossReferencesToggle');
 	app.verseByVerseToggle = document.getElementById('verseByVerseToggle');
 	app.chapterArrowsToggle = document.getElementById('chapterArrowsToggle');
+	app.verseSelectionGestureSelect = document.getElementById('verseSelectionGestureSelect');
 	app.fontSizeSlider = document.getElementById('fontSizeSlider');
 	app.fontSizeValue = document.getElementById('fontSizeValue');
 	// translationSelector (<select>) was removed from the settings modal;
@@ -221,7 +225,7 @@ export function updateThemeIcon(isLightMode) {
 	}
 }
 
-const ALL_THEME_CLASSES = ['dracula-theme', 'dracula2test-theme', 'onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme', 'gnome-theme'];
+const ALL_THEME_CLASSES = ['lux-theme', 'vespers-theme', 'vigil-theme', 'dracula-theme', 'dracula2test-theme', 'onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme', 'gnome-theme'];
 
 // bg-base values sourced from css/tokens.css (Dracula/Alucard) and css/themes.css (all others).
 // dark = the theme's dark-mode --bg-base; light = the theme's light-mode --bg-base.
@@ -235,6 +239,9 @@ const THEME_BG = {
 	'perplexity-theme':   { dark: '#0A1616', light: '#f5f5f5' },
 	'geek-theme':         { dark: '#000000', light: '#000000' },
 	'gnome-theme':        { dark: '#1e1e1e', light: '#f6f5f4' },
+	'lux-theme':		  { dark: '#1a1614', light: '#f5f2ec' },
+	'vespers-theme':      { dark: '#1a1714', light: '#f5f2ec' },
+	'vigil-theme':        { dark: '#000000', light: '#f5f2ec' },
 };
 
 export function updateThemeColor() {
