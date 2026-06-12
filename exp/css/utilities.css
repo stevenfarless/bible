@@ -254,6 +254,10 @@ body.hide-verse-numbers.verse-by-verse-mode .passage-text .verse-num {
     color: var(--primary-color);
 }
 
+body.muted-verse-numbers .passage-text .verse-num {
+    color: var(--text-muted);
+}
+
 html:not(.verse-by-verse-enabled):not(:has(body[data-app-ready="true"])) .passage-text .verse-num,
 body:not(.verse-by-verse-mode) .passage-text .verse-num,
 .passage-text:not(.verse-by-verse) .verse-num {
