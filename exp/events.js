@@ -222,21 +222,24 @@ export function attachEventListeners(app) {
         verseSelectionTarget.addEventListener('pointercancel', finishVersePress);
 
         verseSelectionTarget.addEventListener('click', (event) => {
-            const verse = event.target.closest('.verse');
-            if (!verse && app.state.selectedVerse != null) {
-                app.state.selectedVerse = null;
-                app.applyVerseGlow();
-            return;
-}
-
-if (!verse) return;
             if (event.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
 
-            event.preventDefault();
-            event.stopPropagation();
+            const verse = event.target.closest('.verse');
 
-            if (app.state.verseSelectionGesture === 'tap') selectVerse(verse);
-        }, true);
+            if (!verse) {
+                if (app.state.selectedVerse != null) {
+                    app.state.selectedVerse = null;
+                    app.applyVerseGlow();
+                }
+                return;
+            }
+
+            event.preventDefault();
+
+            if (app.state.verseSelectionGesture === 'tap') {
+                selectVerse(verse);
+            }
+        });
 
         verseSelectionTarget.addEventListener('contextmenu', (event) => {
             if (event.target.closest('.verse')) event.preventDefault();
@@ -332,49 +335,34 @@ if (!verse) return;
         });
     }
 
-    app.translationSelector?.addEventListener('change', async (e) => app.changeTranslation(e.target.value));
+    document.getElementById('lightModeSelect')?.addEventListener('change', async (e) => {
+        const mode = e.target.value;
+        app.state.lightMode = mode;
+        localStorage.setItem('lightMode', mode);
+        setLightMode(app, mode);
+        applyLightMode(app);
 
-    document.getElementById('themeSelector')?.addEventListener('change', (e) => changeColorTheme(app, e.target.value));
-    document.getElementById('lightModeSelect')?.addEventListener('change', (e) => setLightMode(app, e.target.value));
-
-    document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
-    document.getElementById('changeEmailBtn')?.addEventListener('click', () => { app.closeModal(app.userMenuModal); openChangeEmailModal(app); });
-    document.getElementById('changePasswordBtn')?.addEventListener('click', () => { app.closeModal(app.userMenuModal); openChangePasswordModal(app); });
-
-    document.getElementById('showSignupLink')?.addEventListener('click', (e) => {
-    document.getElementById('forgotPasswordLink')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        app.closeModal(app.loginModal);
-        app.openModal(document.getElementById('forgotPasswordModal'));
+        if (app.currentUser) {
+            await app.database
+                .ref(`users/${app.currentUser.uid}/settings/lightMode`)
+                .set(mode);
+        }
     });
-    document.getElementById('closeForgotPasswordModal')?.addEventListener('click', () => app.closeModal(document.getElementById('forgotPasswordModal')));
-    document.getElementById('forgotPasswordForm')?.addEventListener('submit', (e) => { e.preventDefault(); handleForgotPassword(app); });
-        e.preventDefault();
-        app.closeModal(app.loginModal);
-        app.openModal(app.signupModal);
+
+    app.themeSelector?.addEventListener('change', async (e) => {
+        const theme = e.target.value;
+        app.state.colorTheme = theme;
+        localStorage.setItem('colorTheme', theme);
+        changeColorTheme(app, theme);
+
+        if (app.currentUser) {
+            await app.database
+                .ref(`users/${app.currentUser.uid}/settings/colorTheme`)
+                .set(theme);
+        }
     });
-    document.getElementById('showLoginLink')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        app.closeModal(app.signupModal);
-        app.openModal(app.loginModal);
-    });
-    document.getElementById('loginForm')?.addEventListener('submit',  (e) => { e.preventDefault(); app.handleLogin(); });
-    document.getElementById('signupForm')?.addEventListener('submit', (e) => { e.preventDefault(); app.handleSignup(); });
-    document.getElementById('logoutBtn')?.addEventListener('click',   () => app.handleLogout());
 
-    app.closeLoginModal?.addEventListener('click',    () => app.closeModal(app.loginModal));
-    app.closeSignupModal?.addEventListener('click',   () => app.closeModal(app.signupModal));
-    app.closeUserMenuModal?.addEventListener('click', () => app.closeModal(app.userMenuModal));
-
-    window.addEventListener('scroll', () => {
-        app.handleChromeScroll();
-        clearTimeout(app.scrollTimeout);
-        app.scrollTimeout = setTimeout(() => app.saveReadingPosition(), 500);
-    }, { passive: true });
-
-    document.addEventListener('keydown', (e) => app.handleKeyboardShortcuts(e));
-    window.matchMedia('(prefers-color-scheme: light)')
-        .addEventListener('change', () => {
-            if (app.state.lightMode === 'system') applyLightMode('system');
-        });
+    document.getElementById('changeEmailBtn')?.addEventListener('click', () => openChangeEmailModal(app));
+    document.getElementById('changePasswordBtn')?.addEventListener('click', () => openChangePasswordModal(app));
+    document.getElementById('forgotPasswordBtn')?.addEventListener('click', () => handleForgotPassword(app));
 }
