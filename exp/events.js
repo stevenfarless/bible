@@ -355,18 +355,22 @@ export function attachEventListeners(app) {
         }
     });
 
-    app.themeSelector?.addEventListener('change', async (e) => {
-        const theme = e.target.value;
+    const themeSelector = document.getElementById('themeSelector');
+    let lastAppliedTheme = app.state.colorTheme;
+
+    const applyThemeSelection = async (event) => {
+        const theme = event.currentTarget.value;
+        if (!theme || theme === lastAppliedTheme) return;
+
+        lastAppliedTheme = theme;
+        app._dbgUserAction?.(`changeTheme: ${theme}`);
         app.state.colorTheme = theme;
         localStorage.setItem('colorTheme', theme);
-        changeColorTheme(app, theme);
+        await changeColorTheme(app, theme);
+    };
 
-        if (app.currentUser) {
-            await app.database
-                .ref(`users/${app.currentUser.uid}/settings/colorTheme`)
-                .set(theme);
-        }
-    });
+    themeSelector?.addEventListener('input', applyThemeSelection);
+    themeSelector?.addEventListener('change', applyThemeSelection);
 
     document.getElementById('changeEmailBtn')?.addEventListener('click', () => openChangeEmailModal(app));
     document.getElementById('changePasswordBtn')?.addEventListener('click', () => openChangePasswordModal(app));
