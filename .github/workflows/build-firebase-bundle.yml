@@ -1,20 +1,6 @@
 name: Build Firebase Bundle
 
-# Runs on every push to dev (and any non-main branch).
-# 1. Uses esbuild to bundle config/firebase-config.js into
-#    config/firebase-config.bundle.js (no external imports).
-# 2. Patches app.js to import the bundle instead of the source,
-#    so Brave never makes cross-origin requests to gstatic.com.
-
 on:
-  push:
-    branches:
-      - '**'
-      - '!main'
-    paths:
-      - 'config/firebase-config.js'
-      - 'app.js'
-      - '.github/workflows/build-firebase-bundle.yml'
   workflow_dispatch:
 
 jobs:

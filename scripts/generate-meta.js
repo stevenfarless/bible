@@ -2,10 +2,7 @@
 // scripts/generate-meta.js
 // Generates translations/{ID}/meta.json for every translation folder.
 // Reads info.json for metadata and canon, looks up testament assignments
-// from canon-registry.json, then counts chapters from the book JSON files.
-//
-// Run: node scripts/generate-meta.js
-// Or target one translation: node scripts/generate-meta.js ASV
+// from canon-registry.json, then counts chapters from canonical book files.
 
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
 import { join, basename, dirname } from 'path';
@@ -18,7 +15,6 @@ const REGISTRY_PATH = join(__dirname, 'canon-registry.json');
 
 const registry = JSON.parse(readFileSync(REGISTRY_PATH, 'utf8'));
 
-// Build a flat lookup: { bookName -> testament } for each canon.
 function buildTestamentLookup(canonKey) {
     const canon = registry.canons[canonKey];
     if (!canon) return null;
@@ -31,12 +27,10 @@ function buildTestamentLookup(canonKey) {
     return lookup;
 }
 
-// Build ordered book list from registry for a given canon so output order
-// matches canonical order, not filesystem alphabetical order.
 function buildCanonOrder(canonKey) {
     const canon = registry.canons[canonKey];
     if (!canon) return [];
-    return canon.sections.flatMap(s => s.books);
+    return canon.sections.flatMap(section => section.books);
 }
 
 function processTranslation(translationId) {
@@ -60,67 +54,35 @@ function processTranslation(translationId) {
         return;
     }
 
-    // Collect all book JSON files in this folder.
-    const files = readdirSync(dir).filter(f =>
-        f.endsWith('.json') &&
-        f !== 'info.json' &&
-        f !== 'meta.json' &&
-        !f.endsWith('_search_index.json')
+    const canonicalFiles = new Map(
+        readdirSync(dir)
+            .filter(file => file.endsWith('.json'))
+            .map(file => [basename(file, '.json'), file])
     );
 
-    // Map filename -> chapter count.
-    const bookData = {};
-    for (const file of files) {
-        const bookName = basename(file, '.json');
+    const ordered = [];
+    for (const bookName of canonOrder) {
+        const file = canonicalFiles.get(bookName);
+        if (!file) continue;
+
         try {
             const content = JSON.parse(readFileSync(join(dir, file), 'utf8'));
-            const chapters = Object.keys(content).length;
-            bookData[bookName] = chapters;
+            ordered.push({
+                name: bookName,
+                testament: testamentLookup[bookName],
+                chapters: Object.keys(content).length
+            });
         } catch {
             console.warn(`  [WARN] ${translationId}/${file}: could not parse — skipping book`);
         }
     }
 
-    // Build the books array in canonical order. Books present in the
-    // translation but not in the registry go into an "Other" testament
-    // at the end so nothing is silently dropped.
-    const ordered = [];
-    const seen = new Set();
-
-    for (const bookName of canonOrder) {
-        if (bookData[bookName] !== undefined) {
-            ordered.push({
-                name: bookName,
-                testament: testamentLookup[bookName],
-                chapters: bookData[bookName]
-            });
-            seen.add(bookName);
-        }
-    }
-
-    // Any books in the folder not accounted for by the registry.
-    for (const bookName of Object.keys(bookData)) {
-        if (!seen.has(bookName)) {
-            console.warn(`  [WARN] ${translationId}: "${bookName}" not in "${canonKey}" canon — assigned to "Other"`);
-            ordered.push({
-                name: bookName,
-                testament: 'Other',
-                chapters: bookData[bookName]
-            });
-        }
-    }
-
-    const meta = {
-        info,
-        books: ordered
-    };
-
+    const meta = { info, books: ordered };
     const outPath = join(dir, 'meta.json');
     writeFileSync(outPath, JSON.stringify(meta, null, 2) + '\n');
     console.log(`  [OK]   ${translationId}: ${ordered.length} books written to meta.json`);
 }
 
-// Determine which translations to process.
 const target = process.argv[2];
 let translationIds;
 
