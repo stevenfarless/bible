@@ -260,12 +260,10 @@ body.verse-by-verse-mode .passage-text .verse-num,
 
 body:not(.hide-verse-numbers) .passage-text .verse-num {
     display: inline-block;
-    width: 1.5em;
-    margin-left: -1.5em;
+    width: 1em;
+    margin-left: -1em;
     margin-right: 0;
-    padding-right: 0.35em; /* padding between verse nimber and verse text. changed frkm 0.15 */
     text-align: right;
-    box-sizing: border-box;
 }
 
 html.verse-by-verse-enabled:not(:has(body[data-app-ready="true"])) .passage-text p,
