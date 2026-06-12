@@ -12,10 +12,10 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="a657fdc" />
+	<meta name="build-id" content="d359ca4" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
-	     (document.documentElement — always available in <head>) before the
+	     (document.documentElement - - always available in <head>) before the
 	     browser paints, preventing a theme flash on cold load.
 	     document.body is null at this point; do NOT use it here.
 	     ES modules are deferred and cannot achieve this. -->
@@ -38,7 +38,7 @@
 			if (isLight) el.classList.add('light-mode');
 		}());
 	</script>
-	<script src="prepaint-settings.js?v=a657fdc"></script>
+	<script src="prepaint-settings.js?v=d359ca4"></script>
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -51,7 +51,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=a657fdc">.
+	     before the parser reaches <script type="module" src="app.js?v=d359ca4">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -76,20 +76,20 @@
 	<link rel="preload" href="./fonts/AdwaitaSans-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<!-- CSS loaded as parallel <link> tags — @import chains are render-blocking
 	     and sequential; <link> tags are fetched in parallel by the browser. -->
-	<link rel="stylesheet" href="css/fonts.css?v=a657fdc" />
-	<link rel="stylesheet" href="css/base.css?v=a657fdc" />
-	<link rel="stylesheet" href="css/tokens.css?v=a657fdc" />
-	<link rel="stylesheet" href="css/themes.css?v=a657fdc" />
-	<link rel="stylesheet" href="css/layout.css?v=a657fdc" />
-	<link rel="stylesheet" href="css/components.css?v=a657fdc" />
-	<link rel="stylesheet" href="css/modals.css?v=a657fdc" />
-	<link rel="stylesheet" href="css/interactions.css?v=a657fdc" />
-	<link rel="stylesheet" href="css/utilities.css?v=a657fdc" />
-	<link rel="stylesheet" href="css/pericope.css?v=a657fdc" />
-	<link rel="stylesheet" href="css/geek95.css?v=a657fdc">
+	<link rel="stylesheet" href="css/fonts.css?v=d359ca4" />
+	<link rel="stylesheet" href="css/base.css?v=d359ca4" />
+	<link rel="stylesheet" href="css/tokens.css?v=d359ca4" />
+	<link rel="stylesheet" href="css/themes.css?v=d359ca4" />
+	<link rel="stylesheet" href="css/layout.css?v=d359ca4" />
+	<link rel="stylesheet" href="css/components.css?v=d359ca4" />
+	<link rel="stylesheet" href="css/modals.css?v=d359ca4" />
+	<link rel="stylesheet" href="css/interactions.css?v=d359ca4" />
+	<link rel="stylesheet" href="css/utilities.css?v=d359ca4" />
+	<link rel="stylesheet" href="css/pericope.css?v=d359ca4" />
+	<link rel="stylesheet" href="css/geek95.css?v=d359ca4">
 	<!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
 	<script src="https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV" async defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js?v=a657fdc"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js?v=d359ca4"></script>
 </head>
 
 <body class="initializing">
@@ -97,7 +97,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">a657fdc</span>
+				<span id="build-info">d359ca4</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -686,7 +686,7 @@
 
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=a657fdc"></script>
+	<script type="module" src="app.js?v=d359ca4"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');
