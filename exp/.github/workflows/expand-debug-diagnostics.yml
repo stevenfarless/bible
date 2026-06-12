@@ -17,8 +17,9 @@ jobs:
           fetch-depth: 0
 
       - name: Patch app.js
-        shell: python
+        shell: bash
         run: |
+          python3 <<'PY'
           from pathlib import Path
 
           path = Path('app.js')
@@ -186,6 +187,7 @@ jobs:
           )
 
           path.write_text(text)
+          PY
 
       - name: Verify changes
         run: |
