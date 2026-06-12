@@ -96,8 +96,13 @@
 }
 
 .passage-para {
-    margin: 0 0 0.3em 0;
+    margin: 0 0 0.3em;
     padding: 0;
+    text-indent: 1.5em;
+}
+
+.verse-by-verse .passage-para {
+    text-indent: 0;
 }
 
 /* Update-toast action buttons */
