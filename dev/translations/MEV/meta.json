@@ -345,11 +345,6 @@
       "name": "Revelation",
       "testament": "New Testament",
       "chapters": 22
-    },
-    {
-      "name": "MEV_bible",
-      "testament": "Other",
-      "chapters": 66
     }
   ]
 }
