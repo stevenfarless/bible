@@ -163,6 +163,7 @@ function buildDebugReport(app) {
     const connType  = navigator.connection?.effectiveType ?? 'unknown';
     const connDown  = navigator.connection?.downlink != null ? `${navigator.connection.downlink} Mbps` : 'unknown';
     const buildId   = document.querySelector('meta[name="build-id"]')?.content || '__BUILD_ID__';
+    const swController = navigator.serviceWorker?.controller?.scriptURL ?? 'none';
 
     // ── Firebase connectivity ─────────────────────────────────────────────
     const fbConnected = dbg.firebaseConnected === true  ? 'connected ✓'
@@ -172,8 +173,10 @@ function buildDebugReport(app) {
     const LS_KEYS = [
         'readingPosition', 'passageCache',
         'translation', 'colorTheme', 'lightMode',
-        'fontSize', 'showVerseNumbers', 'showHeadings',
+        'fontSize', 'readingFont',
+        'showVerseNumbers', 'coloredVerseNumbers', 'showHeadings',
         'showFootnotes', 'showCrossReferences', 'verseByVerse',
+        'showChapterArrows',
     ];
     const ls = {};
     for (const k of LS_KEYS) {
@@ -216,8 +219,14 @@ function buildDebugReport(app) {
         translation: app?.state?.translation,
         colorTheme:  app?.state?.colorTheme,
         lightMode:   app?.state?.lightMode,
-        fontSize:    app?.state?.fontSize,
-        scrollY:     window.scrollY,
+        fontSize:            app?.state?.fontSize,
+        readingFont:         app?.state?.readingFont,
+        showVerseNumbers:    app?.state?.showVerseNumbers,
+        coloredVerseNumbers: app?.state?.coloredVerseNumbers,
+        showHeadings:        app?.state?.showHeadings,
+        verseByVerse:        app?.state?.verseByVerse,
+        showChapterArrows:   app?.state?.showChapterArrows,
+        scrollY:             window.scrollY,
     };
     for (const [k, v] of Object.entries(cur)) {
         const was = snap[k];
@@ -253,9 +262,40 @@ function buildDebugReport(app) {
         ? getComputedStyle(passageEl).fontFamily
         : getComputedStyle(document.body).fontFamily;
     const storedFont = (() => {
-        try { return localStorage.getItem('font') ?? '(not set)'; } catch (_) { return '(error)'; }
+        try { return localStorage.getItem('readingFont') ?? '(not set)'; } catch (_) { return '(error)'; }
     })();
     const bodyFont = getComputedStyle(document.body).fontFamily;
+    const verseNumberEl = app?.passageText?.querySelector('.verse-num');
+    const verseTextEl = app?.passageText?.querySelector('.verse-text');
+    const verseNumberStyle = verseNumberEl ? getComputedStyle(verseNumberEl) : null;
+
+    const readingToggleState = {
+        showVerseNumbers: {
+            state: app?.state?.showVerseNumbers,
+            checked: app?.verseNumbersToggle?.checked,
+            stored: ls.showVerseNumbers,
+        },
+        coloredVerseNumbers: {
+            state: app?.state?.coloredVerseNumbers,
+            checked: app?.coloredVerseNumbersToggle?.checked,
+            stored: ls.coloredVerseNumbers,
+        },
+        showHeadings: {
+            state: app?.state?.showHeadings,
+            checked: app?.headingsToggle?.checked,
+            stored: ls.showHeadings,
+        },
+        verseByVerse: {
+            state: app?.state?.verseByVerse,
+            checked: app?.verseByVerseToggle?.checked,
+            stored: ls.verseByVerse,
+        },
+        showChapterArrows: {
+            state: app?.state?.showChapterArrows,
+            checked: app?.chapterArrowsToggle?.checked,
+            stored: ls.showChapterArrows,
+        },
+    };
 
     const timings = [
         `  scriptStart:          ${ts(dbg.t_script_start)}`,
@@ -281,6 +321,7 @@ function buildDebugReport(app) {
         `  viewport: ${vw}x${vh}  dpr: ${dpr}  touch: ${touchDev}`,
         `  network: ${online}  type: ${connType}  downlink: ${connDown}`,
         `  firebase: ${fbConnected}`,
+        `  serviceWorker controller: ${swController}`,
         '',
         '=== timings (ms since navigation start) ===',
         ...timings,
@@ -336,8 +377,31 @@ function buildDebugReport(app) {
         `  colorTheme: ${app?.state?.colorTheme}`,
         `  lightMode: ${app?.state?.lightMode}`,
         `  fontSize: ${app?.state?.fontSize}`,
+        `  readingFont: ${app?.state?.readingFont}`,
+        `  showVerseNumbers: ${app?.state?.showVerseNumbers}`,
+        `  coloredVerseNumbers: ${app?.state?.coloredVerseNumbers}`,
+        `  showHeadings: ${app?.state?.showHeadings}`,
+        `  verseByVerse: ${app?.state?.verseByVerse}`,
+        `  showChapterArrows: ${app?.state?.showChapterArrows}`,
         `  scrollY: ${window.scrollY}`,
         `  currentUser: ${app?.currentUser?.email ?? 'not signed in'}`,
+        '',
+        '=== reading display diagnostics ===',
+        `  body classes: ${document.body.className || '(none)'}`,
+        `  html classes: ${document.documentElement.className || '(none)'}`,
+        `  passage classes: ${app?.passageText?.className || '(none)'}`,
+        `  verse-text wrapper present: ${verseTextEl ? 'yes' : 'no'}`,
+        `  verse number color: ${verseNumberStyle?.color ?? 'n/a'}`,
+        `  verse number display: ${verseNumberStyle?.display ?? 'n/a'}`,
+        `  verse number visibility: ${verseNumberStyle?.visibility ?? 'n/a'}`,
+        `  showVerseNumbers: state=${readingToggleState.showVerseNumbers.state} checked=${readingToggleState.showVerseNumbers.checked} stored=${readingToggleState.showVerseNumbers.stored}`,
+        `  coloredVerseNumbers: state=${readingToggleState.coloredVerseNumbers.state} checked=${readingToggleState.coloredVerseNumbers.checked} stored=${readingToggleState.coloredVerseNumbers.stored}`,
+        `  showHeadings: state=${readingToggleState.showHeadings.state} checked=${readingToggleState.showHeadings.checked} stored=${readingToggleState.showHeadings.stored}`,
+        `  verseByVerse: state=${readingToggleState.verseByVerse.state} checked=${readingToggleState.verseByVerse.checked} stored=${readingToggleState.verseByVerse.stored}`,
+        `  showChapterArrows: state=${readingToggleState.showChapterArrows.state} checked=${readingToggleState.showChapterArrows.checked} stored=${readingToggleState.showChapterArrows.stored}`,
+        `  selectedVerse: ${app?.state?.selectedVerse ?? '(none)'}`,
+        `  viewport height: ${window.innerHeight}`,
+        `  document height: ${document.documentElement.scrollHeight}`,
         '',
         '=== active font ===',
         `  localStorage font: ${storedFont}`,
@@ -455,6 +519,73 @@ function initDebugTrigger(app) {
             showDebugPanel(app);
         }
     });
+}
+
+async function hardRefreshApp() {
+    if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+
+    if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((name) => caches.delete(name)));
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('_refresh', Date.now().toString());
+    window.location.replace(url.toString());
+}
+
+function initLogoLongPressRefresh() {
+    const logo = document.querySelector('.logo');
+    if (!logo) return;
+
+    const HOLD_MS = 1000;
+    const MOVE_LIMIT = 12;
+
+    let holdTimer = null;
+    let startX = 0;
+    let startY = 0;
+    let activated = false;
+
+    const cancel = () => {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+    };
+
+    logo.addEventListener('touchstart', (event) => {
+        const touch = event.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        activated = false;
+
+        cancel();
+        holdTimer = setTimeout(async () => {
+            activated = true;
+            navigator.vibrate?.(30);
+            await hardRefreshApp();
+        }, HOLD_MS);
+    }, { passive: true });
+
+    logo.addEventListener('touchmove', (event) => {
+        const touch = event.touches[0];
+        const movedX = Math.abs(touch.clientX - startX);
+        const movedY = Math.abs(touch.clientY - startY);
+
+        if (movedX > MOVE_LIMIT || movedY > MOVE_LIMIT) cancel();
+    }, { passive: true });
+
+    logo.addEventListener('touchend', (event) => {
+        cancel();
+
+        if (activated) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    }, { passive: false });
+
+    logo.addEventListener('touchcancel', cancel, { passive: true });
 }
 
 // Read readingPosition from localStorage without mutating app state.
@@ -745,8 +876,14 @@ class BibleApp {
                 translation: this.state.translation,
                 colorTheme:  this.state.colorTheme,
                 lightMode:   this.state.lightMode,
-                fontSize:    this.state.fontSize,
-                scrollY:     window.scrollY,
+                fontSize:            this.state.fontSize,
+                readingFont:         this.state.readingFont,
+                showVerseNumbers:    this.state.showVerseNumbers,
+                coloredVerseNumbers: this.state.coloredVerseNumbers,
+                showHeadings:        this.state.showHeadings,
+                verseByVerse:        this.state.verseByVerse,
+                showChapterArrows:   this.state.showChapterArrows,
+                scrollY:             window.scrollY,
             };
 
             if (!this.auth || !this.database) {
@@ -775,6 +912,7 @@ class BibleApp {
             if (cacheHit) this._dbgEvent('cache restore: HIT');
 
             initDebugTrigger(this);
+            initLogoLongPressRefresh();
             // Expose debug report builder for Playwright test attachment — REMOVE BEFORE MERGING TO MAIN.
             window._buildDebugReport = () => buildDebugReport(window._bibleApp).text;
 
