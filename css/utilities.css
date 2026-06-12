@@ -237,25 +237,56 @@ body.hide-chapter-arrows #nextChapter {
     display: none !important;
 }
 
-html.hide-verse-numbers:not(:has(body[data-app-ready="true"])) .passage-text .verse-num,
-body.hide-verse-numbers .passage-text .verse-num {
+html.hide-verse-numbers:not(.verse-by-verse-enabled):not(:has(body[data-app-ready="true"])) .passage-text .verse-num,
+body.hide-verse-numbers:not(.verse-by-verse-mode) .passage-text .verse-num {
     display: none !important;
+}
+
+html.hide-verse-numbers.verse-by-verse-enabled:not(:has(body[data-app-ready="true"])) .passage-text .verse-num,
+body.hide-verse-numbers.verse-by-verse-mode .passage-text .verse-num {
+    visibility: hidden;
+}
+
+.passage-text .verse-num {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+html:not(.verse-by-verse-enabled):not(:has(body[data-app-ready="true"])) .passage-text .verse-num,
+body:not(.verse-by-verse-mode) .passage-text .verse-num,
+.passage-text:not(.verse-by-verse) .verse-num {
+    margin-right: 0.18em;
+    font-size: 0.58em;
+    line-height: 0;
+    vertical-align: super;
 }
 
 html.verse-by-verse-enabled:not(:has(body[data-app-ready="true"])) .passage-text .verse,
 body.verse-by-verse-mode .passage-text .verse,
 .verse-by-verse .verse {
-    display: block !important;
+    display: grid !important;
+    grid-template-columns: 1.5em minmax(0, 1fr);
+    column-gap: 0.4em;
+    align-items: start;
     margin-bottom: 0.75rem;
 }
 
 html.verse-by-verse-enabled:not(:has(body[data-app-ready="true"])) .passage-text .verse-num,
 body.verse-by-verse-mode .passage-text .verse-num,
 .verse-by-verse .verse-num {
-    display: inline;
-    font-weight: 600;
-    color: var(--primary-color);
-    margin-right: 0.5em;
+    grid-column: 1;
+    margin: 0;
+    text-align: right;
+    font-size: 0.62em;
+    line-height: inherit;
+    vertical-align: baseline;
+}
+
+html.verse-by-verse-enabled:not(:has(body[data-app-ready="true"])) .passage-text .verse-text,
+body.verse-by-verse-mode .passage-text .verse-text,
+.verse-by-verse .verse-text {
+    grid-column: 2;
+    min-width: 0;
 }
 
 html.verse-by-verse-enabled:not(:has(body[data-app-ready="true"])) .passage-text p,
