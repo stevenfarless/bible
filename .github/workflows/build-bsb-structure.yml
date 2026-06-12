@@ -2,13 +2,6 @@ name: Build BSB Structure Scaffold
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - json-ver
-    paths:
-      - 'scripts/build-structure.js'
-      - '.github/workflows/build-bsb-structure.yml'
-      - 'data/bsb-usfm/**'
 
 permissions:
   contents: write
