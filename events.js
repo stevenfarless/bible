@@ -238,12 +238,17 @@ export function attachEventListeners(app) {
 
             if (app.state.verseSelectionGesture === 'tap') {
                 selectVerse(verse);
+                return;
+            }
+
+            if (app.state.selectedVerse != null) {
+                clearSelectedVerse();
             }
         });
 
         document.addEventListener('pointerdown', (event) => {
             if (app.state.selectedVerse == null) return;
-            if (event.target.closest('.verse, .selected-verse-glow, .verse-tools-tray, .verse-tools-trigger')) return;
+            if (event.target.closest('.selected-verse-glow, .verse-tools-tray, .verse-tools-trigger')) return;
             clearSelectedVerse();
         });
 
@@ -341,18 +346,9 @@ export function attachEventListeners(app) {
         });
     }
 
-    document.getElementById('lightModeSelect')?.addEventListener('change', async (e) => {
-        const mode = e.target.value;
-        app.state.lightMode = mode;
-        localStorage.setItem('lightMode', mode);
-        setLightMode(app, mode);
-        applyLightMode(app);
-
-        if (app.currentUser) {
-            await app.database
-                .ref(`users/${app.currentUser.uid}/settings/lightMode`)
-                .set(mode);
-        }
+    document.getElementById('lightModeSelect')?.addEventListener('change', (event) => {
+        app._dbgUserAction?.(`changeAppearance: ${event.currentTarget.value}`);
+        setLightMode(app, event.currentTarget.value);
     });
 
     const themeSelector = document.getElementById('themeSelector');
