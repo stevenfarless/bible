@@ -125,7 +125,7 @@ export function handleUserButtonClick(app) {
             perplexity: 'Perplexity (Teal/Minimal)',
             basic:      'Basic (Black & White)',
             geek:       'The Geek Shall Inherit The Earth',
-            gnome:       'GNOME 3 (Adwaita)',
+            gnome:      'GNOME 3 (Adwaita)',
         };
         document.getElementById('userTheme').textContent =
             themeNameMap[colorTheme] || colorTheme;
@@ -263,7 +263,7 @@ export async function handleChangeEmail(app) {
 
     try {
         const credential = app.auth.createCredential(app.currentUser.email, currentPassword);
-        await app.auth.reauthenticateWithCredential(app.currentUser, currentPassword);
+        await app.auth.reauthenticateWithCredential(app.currentUser, credential);
         await app.auth.verifyBeforeUpdateEmail(app.currentUser, newEmail);
         app.showToast('Verification sent — check your inbox to confirm the new email');
         // modal teardown and field clearing handled by credential-modals.js
