@@ -371,4 +371,10 @@ export function attachEventListeners(app) {
     document.getElementById('changeEmailBtn')?.addEventListener('click', () => openChangeEmailModal(app));
     document.getElementById('changePasswordBtn')?.addEventListener('click', () => openChangePasswordModal(app));
     document.getElementById('forgotPasswordBtn')?.addEventListener('click', () => handleForgotPassword(app));
+        
+    window.addEventListener('scroll', () => {
+        app.handleChromeScroll();
+        clearTimeout(app.scrollTimeout);
+        app.scrollTimeout = setTimeout(() => app.saveReadingPosition(), 500);
+    }, { passive: true });
 }
