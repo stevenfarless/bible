@@ -1,4 +1,4 @@
-name: Fix mobile interaction regressions
+name: Fix Mobile Interaction Regressions
 
 on:
   workflow_dispatch:
@@ -7,128 +7,37 @@ permissions:
   contents: write
 
 jobs:
-  repair:
+  repair-mobile-interactions:
+    name: Repair appearance and verse interactions
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v6
         with:
           ref: exp
+          fetch-depth: 0
 
-      - name: Repair appearance and verse interactions
-        shell: python
-        run: |
-          from pathlib import Path
+      - name: Apply repairs
+        run: python3 .github/scripts/fix_mobile_interactions.py
 
-          events = Path('events.js')
-          text = events.read_text()
-
-          old_light = """    document.getElementById('lightModeSelect')?.addEventListener('change', async (e) => {
-        const mode = e.target.value;
-        app.state.lightMode = mode;
-        localStorage.setItem('lightMode', mode);
-        setLightMode(app, mode);
-        applyLightMode(app);
-
-        if (app.currentUser) {
-            await app.database
-                .ref(`users/${app.currentUser.uid}/settings/lightMode`)
-                .set(mode);
-        }
-    });
-"""
-          new_light = """    document.getElementById('lightModeSelect')?.addEventListener('change', (event) => {
-        app._dbgUserAction?.(`changeAppearance: ${event.currentTarget.value}`);
-        setLightMode(app, event.currentTarget.value);
-    });
-"""
-          if old_light not in text:
-              raise SystemExit('Expected appearance handler was not found; aborting without changes.')
-          text = text.replace(old_light, new_light)
-
-          old_click = """        verseSelectionTarget.addEventListener('click', (event) => {
-            if (event.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
-
-            const verse = event.target.closest('.verse');
-            if (!verse) return;
-
-            event.preventDefault();
-
-            if (app.state.verseSelectionGesture === 'tap') {
-                selectVerse(verse);
-            }
-        });
-"""
-          new_click = """        verseSelectionTarget.addEventListener('click', (event) => {
-            if (event.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
-
-            const verse = event.target.closest('.verse');
-            if (!verse) return;
-
-            event.preventDefault();
-
-            if (app.state.verseSelectionGesture === 'tap') {
-                selectVerse(verse);
-                return;
-            }
-
-            if (app.state.selectedVerse != null) {
-                clearSelectedVerse();
-            }
-        });
-"""
-          if old_click not in text:
-              raise SystemExit('Expected verse click handler was not found; aborting without changes.')
-          text = text.replace(old_click, new_click)
-
-          old_outside = """        document.addEventListener('pointerdown', (event) => {
-            if (app.state.selectedVerse == null) return;
-            if (event.target.closest('.verse, .selected-verse-glow, .verse-tools-tray, .verse-tools-trigger')) return;
-            clearSelectedVerse();
-        });
-"""
-          new_outside = """        document.addEventListener('pointerdown', (event) => {
-            if (app.state.selectedVerse == null) return;
-            if (event.target.closest('.selected-verse-glow, .verse-tools-tray, .verse-tools-trigger')) return;
-            clearSelectedVerse();
-        });
-"""
-          if old_outside not in text:
-              raise SystemExit('Expected outside deselect handler was not found; aborting without changes.')
-          text = text.replace(old_outside, new_outside)
-          events.write_text(text)
-
-          css = Path('css/interactions.css')
-          styles = css.read_text()
-          old_verse = """.verse {
-    touch-action: manipulation;
-    cursor: pointer;
-}
-"""
-          new_verse = """.verse {
-    touch-action: manipulation;
-    cursor: pointer;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
-}
-"""
-          if old_verse not in styles:
-              raise SystemExit('Expected verse interaction rule was not found; aborting without changes.')
-          css.write_text(styles.replace(old_verse, new_verse))
-
-      - name: Validate repaired files
+      - name: Verify changes
         run: |
           node --check events.js
+          git diff --check
           grep -F "setLightMode(app, event.currentTarget.value);" events.js
-          grep -F "changeColorTheme(app, theme);" events.js
           grep -F "if (event.target.closest('.selected-verse-glow, .verse-tools-tray, .verse-tools-trigger')) return;" events.js
           grep -F -- "-webkit-user-select: none;" css/interactions.css
+          git diff -- events.js css/interactions.css
 
-      - name: Commit repairs
+      - name: Commit changes
         run: |
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add events.js css/interactions.css
-          git diff --cached --quiet && exit 0
           git commit -m "fix: repair appearance and verse interactions"
           git push origin exp
