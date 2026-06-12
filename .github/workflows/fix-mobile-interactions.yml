@@ -14,7 +14,7 @@ jobs:
         with:
           ref: exp
 
-      - name: Repair settings and verse interaction handlers
+      - name: Repair appearance and verse interactions
         shell: python
         run: |
           from pathlib import Path
@@ -44,19 +44,6 @@ jobs:
           if old_light not in text:
               raise SystemExit('Expected appearance handler was not found; aborting without changes.')
           text = text.replace(old_light, new_light)
-
-          start = text.index("    const themeSelector = document.getElementById('themeSelector');")
-          end = text.index("    document.getElementById('changeEmailBtn')", start)
-          new_theme = """    const themeSelector = document.getElementById('themeSelector');
-    themeSelector?.addEventListener('change', (event) => {
-        const theme = event.currentTarget.value;
-        app._dbgUserAction?.(`changeTheme: ${theme}`);
-        app.state.colorTheme = theme;
-        changeColorTheme(app, theme);
-    });
-
-"""
-          text = text[:start] + new_theme + text[end:]
 
           old_click = """        verseSelectionTarget.addEventListener('click', (event) => {
             if (event.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
@@ -92,6 +79,22 @@ jobs:
           if old_click not in text:
               raise SystemExit('Expected verse click handler was not found; aborting without changes.')
           text = text.replace(old_click, new_click)
+
+          old_outside = """        document.addEventListener('pointerdown', (event) => {
+            if (app.state.selectedVerse == null) return;
+            if (event.target.closest('.verse, .selected-verse-glow, .verse-tools-tray, .verse-tools-trigger')) return;
+            clearSelectedVerse();
+        });
+"""
+          new_outside = """        document.addEventListener('pointerdown', (event) => {
+            if (app.state.selectedVerse == null) return;
+            if (event.target.closest('.selected-verse-glow, .verse-tools-tray, .verse-tools-trigger')) return;
+            clearSelectedVerse();
+        });
+"""
+          if old_outside not in text:
+              raise SystemExit('Expected outside deselect handler was not found; aborting without changes.')
+          text = text.replace(old_outside, new_outside)
           events.write_text(text)
 
           css = Path('css/interactions.css')
@@ -118,7 +121,7 @@ jobs:
           node --check events.js
           grep -F "setLightMode(app, event.currentTarget.value);" events.js
           grep -F "changeColorTheme(app, theme);" events.js
-          grep -F "clearSelectedVerse();" events.js
+          grep -F "if (event.target.closest('.selected-verse-glow, .verse-tools-tray, .verse-tools-trigger')) return;" events.js
           grep -F -- "-webkit-user-select: none;" css/interactions.css
 
       - name: Commit repairs
@@ -127,5 +130,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add events.js css/interactions.css
           git diff --cached --quiet && exit 0
-          git commit -m "fix: repair mobile settings and verse interactions"
+          git commit -m "fix: repair appearance and verse interactions"
           git push origin exp
