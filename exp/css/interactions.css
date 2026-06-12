@@ -26,6 +26,9 @@ button,
 .verse {
     touch-action: manipulation;
     cursor: pointer;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .verse-number,
