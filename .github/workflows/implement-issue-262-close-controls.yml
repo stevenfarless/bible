@@ -1,0 +1,172 @@
+name: Implement issue 262 close controls
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out exp
+        uses: actions/checkout@v4
+        with:
+          ref: exp
+
+      - name: Apply shared close control markup and styles
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          root = Path('.')
+          index = root / 'index.html'
+          components = root / 'css' / 'components.css'
+          modals = root / 'css' / 'modals.css'
+
+          html = index.read_text(encoding='utf-8')
+
+          svg = '''<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M7 7L17 17M17 7L7 17"></path>
+          </svg>'''
+
+          def replace_button(match):
+            attrs = match.group('attrs')
+            if 'close-control' not in attrs:
+              class_match = re.search(r'class="([^"]*)"', attrs)
+              if class_match:
+                classes = class_match.group(1).split()
+                classes = [c for c in classes if c not in {'close-btn', 'modal-close', 'close-button'}]
+                classes.append('close-control')
+                attrs = attrs[:class_match.start()] + f'class="{" ".join(classes)}"' + attrs[class_match.end():]
+              else:
+                attrs += ' class="close-control"'
+            if 'type=' not in attrs:
+              attrs += ' type="button"'
+            return f'<button{attrs}>\n  {svg}\n</button>'
+
+          patterns = [
+            r'<button(?P<attrs>[^>]*)>\s*(?:&#xD7;|&times;|×|x|X)\s*</button>',
+          ]
+
+          for pattern in patterns:
+            html = re.sub(pattern, replace_button, html, flags=re.IGNORECASE)
+
+          index.write_text(html, encoding='utf-8')
+
+          css_block = r'''
+.close-control {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  color: var(--text-muted);
+  background: transparent;
+  appearance: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.close-control svg {
+  width: 25px;
+  height: 25px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  .close-control:hover {
+    color: var(--text-primary);
+    background: color-mix(in srgb, currentColor 8%, transparent);
+  }
+}
+
+.close-control:active {
+  color: var(--text-primary);
+  background: color-mix(in srgb, currentColor 13%, transparent);
+  transform: scale(0.96);
+}
+
+.close-control:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .close-control:active {
+    transform: none;
+  }
+}
+'''
+
+          css = components.read_text(encoding='utf-8')
+          if '.close-control {' not in css:
+            components.write_text(css.rstrip() + '\n\n' + css_block.lstrip(), encoding='utf-8')
+
+          modal_css = modals.read_text(encoding='utf-8')
+          modal_layout = r'''
+.modal-header {
+  display: flex;
+  align-items: center;
+  min-height: 68px;
+  padding: 8px 12px 8px 24px;
+}
+
+.modal-header .close-control {
+  margin-left: auto;
+}
+'''
+          if '.modal-header .close-control' not in modal_css:
+            modals.write_text(modal_css.rstrip() + '\n\n' + modal_layout.lstrip(), encoding='utf-8')
+
+      - name: Verify implementation
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          html = Path('index.html').read_text(encoding='utf-8')
+          components = Path('css/components.css').read_text(encoding='utf-8')
+
+          remaining = re.findall(r'<button[^>]*>\s*(?:&#xD7;|&times;|×|x|X)\s*</button>', html, flags=re.IGNORECASE)
+          if remaining:
+            raise SystemExit(f'Found {len(remaining)} typographic close controls still in index.html')
+
+          required = [
+            'width: 44px;',
+            'height: 44px;',
+            'stroke: currentColor;',
+            'stroke-width: 3;',
+            'stroke-linecap: round;',
+          ]
+          missing = [entry for entry in required if entry not in components]
+          if missing:
+            raise SystemExit(f'Missing close-control CSS: {missing}')
+
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes were needed."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html css/components.css css/modals.css
+          git commit -m "Standardize modal close controls"
+          git push origin exp
