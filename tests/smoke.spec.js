@@ -139,6 +139,78 @@ test('book navigation: selecting a book loads its first chapter', async ({ page 
         await expect(page.locator('#passageText')).not.toBeEmpty();
 });
 
+
+test('book selector: testament filters toggle sections from canon data', async ({ page }) => {
+        await page.goto('/');
+        await waitForPassage(page);
+
+        await page.locator('#bookSelector').click();
+        await expect(page.locator('#bookModal')).toBeVisible();
+
+        const oldSection = page.locator('.book-category[data-testament="Old Testament"]');
+        const newSection = page.locator('.book-category[data-testament="New Testament"]');
+        const deuterocanonSection = page.locator('.book-category[data-testament="Deuterocanon"]');
+        const oldFilter = page.getByRole('button', { name: 'Old Testament' });
+        const newFilter = page.getByRole('button', { name: 'New Testament' });
+        const apocryphaFilter = page.getByRole('button', { name: 'Apocrypha' });
+
+        await expect(page.locator('.book-testament-filter')).toHaveCount(2);
+        await expect(page.locator('.book-testament-filter--active')).toHaveCount(0);
+        await expect(apocryphaFilter).toHaveCount(0);
+        await expect(oldSection).toBeVisible();
+        await expect(newSection).toBeVisible();
+
+        await newFilter.click();
+
+        await expect(oldSection).toBeHidden();
+        await expect(newSection).toBeVisible();
+        await expect(newFilter).toHaveAttribute('aria-pressed', 'true');
+        await expect(newFilter).toHaveClass(/book-testament-filter--active/);
+
+        await oldFilter.click();
+
+        await expect(oldSection).toBeVisible();
+        await expect(newSection).toBeHidden();
+        await expect(oldFilter).toHaveAttribute('aria-pressed', 'true');
+        await expect(newFilter).toHaveAttribute('aria-pressed', 'false');
+
+        await oldFilter.click();
+
+        await expect(oldSection).toBeVisible();
+        await expect(newSection).toBeVisible();
+        await expect(oldFilter).toHaveAttribute('aria-pressed', 'false');
+
+        await page.evaluate(async () => {
+                const app = window._bibleApp;
+                app.bibleBooks = {
+                        'Old Testament': app.bibleBooks['Old Testament'],
+                        Deuterocanon: { Tobit: 14 },
+                        'New Testament': app.bibleBooks['New Testament'],
+                };
+
+                const { populateBookModal } = await import('./modals.js');
+                populateBookModal(app);
+        });
+
+        await expect(page.locator('.book-testament-filter')).toHaveCount(3);
+        await expect(apocryphaFilter).toBeVisible();
+        await expect(deuterocanonSection).toBeVisible();
+
+        await apocryphaFilter.click();
+
+        await expect(oldSection).toBeHidden();
+        await expect(newSection).toBeHidden();
+        await expect(deuterocanonSection).toBeVisible();
+        await expect(apocryphaFilter).toHaveAttribute('aria-pressed', 'true');
+
+        await apocryphaFilter.click();
+
+        await expect(oldSection).toBeVisible();
+        await expect(deuterocanonSection).toBeVisible();
+        await expect(newSection).toBeVisible();
+        await expect(apocryphaFilter).toHaveAttribute('aria-pressed', 'false');
+});
+
 // ---------------------------------------------------------------------------
 // 3. Chapter navigation — open chapter modal, pick a chapter, content loads
 // ---------------------------------------------------------------------------
