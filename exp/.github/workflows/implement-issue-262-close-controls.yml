@@ -25,8 +25,10 @@ jobs:
         run: |
           node --check modals.js
           node --check app.js
+          node --check events.js
           git diff --check
           grep -F 'close-control' index.html
+          grep -F "app.closeUserMenuModal?.addEventListener('click', () => app.closeModal(app.userMenuModal));" events.js
           grep -F '.close-control {' css/components.css
           grep -F 'stroke: currentColor;' css/components.css
           grep -F 'stroke-width: 3;' css/components.css
@@ -43,7 +45,7 @@ jobs:
           if pattern.search(html):
               raise SystemExit('Typographic close button remains in index.html')
           PY
-          git diff -- index.html modals.js css/components.css css/modals.css
+          git diff -- index.html events.js modals.js css/components.css css/modals.css
 
       - name: Commit changes
         run: |
@@ -53,7 +55,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html modals.js css/components.css css/modals.css
+          git add index.html events.js modals.js css/components.css css/modals.css
           git commit -m "fix: standardize modal close controls"
           git pull --rebase origin exp
           git push origin exp
