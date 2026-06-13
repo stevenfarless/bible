@@ -74,7 +74,11 @@ export function populateBookModal(app) {
     const modalBody = app.bookModal?.querySelector('.modal-body');
     if (!modalBody) return;
 
+    app.bookFilterResizeObserver?.disconnect();
+    app.bookFilterResizeObserver = null;
+
     modalBody.innerHTML = '';
+    modalBody.classList.remove('book-testament-filter-active');
 
     const sections = new Map();
     const filterButtons = new Map();
@@ -99,6 +103,10 @@ export function populateBookModal(app) {
             button.setAttribute('aria-pressed', String(isActive));
         }
 
+        modalBody.classList.toggle(
+            'book-testament-filter-active',
+            activeTestament !== null
+        );
         modalBody.scrollTop = 0;
     };
 
@@ -118,6 +126,20 @@ export function populateBookModal(app) {
     }
 
     modalBody.appendChild(filterBar);
+
+    const updateFilterHeight = () => {
+        modalBody.style.setProperty(
+            '--book-filter-height',
+            `${filterBar.offsetHeight}px`
+        );
+    };
+
+    requestAnimationFrame(updateFilterHeight);
+
+    if (typeof ResizeObserver !== 'undefined') {
+        app.bookFilterResizeObserver = new ResizeObserver(updateFilterHeight);
+        app.bookFilterResizeObserver.observe(filterBar);
+    }
 
     const createBookButton = (book) => {
         const button = document.createElement('button');
