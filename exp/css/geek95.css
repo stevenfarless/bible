@@ -90,6 +90,7 @@ body.geek-theme.light-mode {
 .geek-theme.light-mode .secondary-btn,
 .geek-theme.light-mode .book-item,
 .geek-theme.light-mode .chapter-item,
+.geek-theme.light-mode .book-testament-filter,
 .geek-theme.light-mode .toast-action,
 .geek-theme.light-mode .input-field {
     border-radius: 0;
@@ -113,6 +114,7 @@ body.geek-theme.light-mode {
 .geek-theme.light-mode .nav-btn:hover:not(:disabled),
 .geek-theme.light-mode .book-item:hover,
 .geek-theme.light-mode .chapter-item:hover,
+.geek-theme.light-mode .book-testament-filter:hover,
 .geek-theme.light-mode .primary-btn:hover,
 .geek-theme.light-mode .secondary-btn:hover {
     background: #dfe300;
@@ -127,11 +129,19 @@ body.geek-theme.light-mode {
 .geek-theme.light-mode .nav-btn:active,
 .geek-theme.light-mode .book-item:active,
 .geek-theme.light-mode .chapter-item:active,
+.geek-theme.light-mode .book-testament-filter:active,
 .geek-theme.light-mode .primary-btn:active,
 .geek-theme.light-mode .secondary-btn:active {
     border-color: #6c6c6c #ffffff #ffffff #6c6c6c;
     box-shadow: none;
     transform: translate(1px, 1px);
+}
+
+.geek-theme.light-mode .book-testament-filter--active,
+.geek-theme.light-mode .book-testament-filter--active:hover {
+    background: #dfe300;
+    color: #000055;
+    border-color: #ffffff #6c6c6c #6c6c6c #ffffff;
 }
 
 .geek-theme.light-mode .selector-btn svg,
