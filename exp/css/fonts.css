@@ -104,13 +104,13 @@
     font-display: swap;
 }
 
-@font-face {
+/* @font-face {
     font-family: 'OpenDyslexic3';
     src: url('../fonts/OpenDyslexic3-Bold.woff2') format('woff2');
     font-weight: 700;
     font-style: normal;
     font-display: swap;
-}
+} */
 
 /* Ubuntu */
 
@@ -143,16 +143,6 @@
     src: url('../fonts/Ubuntu-BoldItalic.woff2') format('woff2');
     font-weight: 700;
     font-style: italic;
-    font-display: swap;
-}
-
-/* Retrocide */
-
-@font-face {
-    font-family: 'Retrocide';
-    src: url('../fonts/Retrocide.woff2') format('woff2');
-    font-weight: 400;
-    font-style: normal;
     font-display: swap;
 }
 
