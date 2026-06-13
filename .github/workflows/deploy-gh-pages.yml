@@ -10,8 +10,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  build-test-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: write
       pages: write
@@ -23,6 +24,20 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install test and build dependencies
+        run: |
+          npm ci
+          npm install --no-save --package-lock=false \
+            @playwright/test@1.52.0 \
+            esbuild@0.25.5 \
+            marked@9.1.6
 
       - name: Derive destination directory
         id: dest
@@ -52,7 +67,7 @@ jobs:
             sed -i "s|__BUILD_COLOR__|${BUILD_COLOR}|g" css/pericope.css
           fi
           sed -i "s/__BUILD_ID__/${SHA7}/g" sw.js index.html
-          sed -i "s|\(<script[^>]* src=\"\)\([^?\"]*\)\(\.js\)\(\"\\)|\1\2\3?v=${SHA7}\4|g" index.html
+          sed -i "s|\(<script[^>]* src=\"\)\([^?\"]*\)\(\.js\)\(\"\\\)|\1\2\3?v=${SHA7}\4|g" index.html
           sed -i "s|\(<link[^>]* href=\"css/[^?\"]*\)\(\.css\)\(\"\)|\1\2?v=${SHA7}\3|g" index.html
           echo "${GITHUB_SHA}" > version.txt
 
@@ -68,14 +83,65 @@ jobs:
             sed -i "s|__FIREBASE_MESSAGING_SENDER_ID__|${FIREBASE_MESSAGING_SENDER_ID}|g" "$f"
           done
 
+      - name: Run unit tests
+        if: github.ref_name == 'exp'
+        run: npm test
+
+      - name: Prepare offline-first site
+        env:
+          INITIAL_OFFLINE_TRANSLATIONS: KJV,BSB
+        run: node scripts/prepare-offline-build.mjs
+
+      - name: Install Chromium
+        if: github.ref_name == 'exp'
+        run: npx playwright install chromium --with-deps
+
+      - name: Start built site
+        if: github.ref_name == 'exp'
+        run: |
+          python3 -m http.server 8080 --directory _site > /tmp/lege-lux-http.log 2>&1 &
+          echo $! > /tmp/lege-lux-http.pid
+          for i in $(seq 1 30); do
+            curl --fail --silent http://127.0.0.1:8080/ > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/lege-lux-http.log
+          exit 1
+
+      - name: Run built-site smoke tests
+        if: github.ref_name == 'exp'
+        env:
+          BASE_URL: http://127.0.0.1:8080
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+        run: npx playwright test --project=chromium
+
+      - name: Verify cold offline startup
+        if: github.ref_name == 'exp'
+        env:
+          BASE_URL: http://127.0.0.1:8080
+        run: npx playwright test --config=playwright.offline.config.js --project=chromium
+
+      - name: Upload test reports
+        if: failure() && github.ref_name == 'exp'
+        uses: actions/upload-artifact@v7
+        with:
+          name: exp-deployment-test-reports
+          path: |
+            playwright-report/
+            test-results/
+            offline-test-results/
+            /tmp/lege-lux-http.log
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: ./
+          publish_dir: ./_site
           destination_dir: ${{ steps.dest.outputs.dir }}
           keep_files: true
           force_orphan: false
           enable_jekyll: false
-          exclude_assets: 'tests/**,package.json,package-lock.json,vitest.config.*,playwright.config.*'
