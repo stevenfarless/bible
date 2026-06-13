@@ -92,13 +92,18 @@
 .book-testament-filters {
     position: sticky;
     top: 0;
-    z-index: 3;
+    z-index: 4;
     display: flex;
     gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-lg);
-    padding-bottom: var(--spacing-md);
+    margin: 0;
+    padding: 0 0 var(--spacing-md);
     background-color: var(--bg-card);
     border-bottom: 1px solid var(--border-neutral);
+    isolation: isolate;
+}
+
+.book-testament-filters + .book-category {
+    padding-top: var(--spacing-lg);
 }
 
 .book-testament-filter {
@@ -145,12 +150,29 @@
 }
 
 .book-category h4 {
+    position: relative;
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--section-heading-color);
-    margin-bottom: var(--spacing-md);
-    padding-bottom: var(--spacing-sm);
+    margin: 0 0 var(--spacing-md);
+    padding: var(--spacing-sm) 0;
+    background-color: var(--bg-card);
     border-bottom: 2px solid var(--border-neutral);
+}
+
+#bookModal .modal-body:not(.book-testament-filter-active) .book-category h4 {
+    position: sticky;
+    top: var(--book-filter-height, 0px);
+    z-index: 3;
+}
+
+.book-testament-filters::before,
+#bookModal .modal-body:not(.book-testament-filter-active) .book-category h4::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-color: var(--bg-card);
 }
 
 .book-grid {
