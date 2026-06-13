@@ -58,8 +58,16 @@ const BOOK_TESTAMENT_FILTERS = [
 ];
 
 export function openBookModal(app) {
+    const content = app.bookModal?.querySelector('.modal-content');
+    if (content) content.style.height = '';
+
     populateBookModal(app);
     openModal(app, app.bookModal);
+
+    requestAnimationFrame(() => {
+        if (!content || !app.bookModal?.classList.contains('active')) return;
+        content.style.height = `${content.offsetHeight}px`;
+    });
 }
 
 export function populateBookModal(app) {

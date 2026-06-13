@@ -147,6 +147,12 @@ test('book selector: testament filters toggle sections from canon data', async (
         await page.locator('#bookSelector').click();
         await expect(page.locator('#bookModal')).toBeVisible();
 
+        const modalContent = page.locator('#bookModal .modal-content');
+        await expect.poll(() => modalContent.evaluate((element) => element.style.height)).not.toBe('');
+        const initialBookModalHeight = await modalContent.evaluate(
+                (element) => Math.round(element.getBoundingClientRect().height)
+        );
+
         const oldSection = page.locator('.book-category[data-testament="Old Testament"]');
         const newSection = page.locator('.book-category[data-testament="New Testament"]');
         const deuterocanonSection = page.locator('.book-category[data-testament="Deuterocanon"]');
@@ -166,6 +172,9 @@ test('book selector: testament filters toggle sections from canon data', async (
         await expect(newSection).toBeVisible();
         await expect(newFilter).toHaveAttribute('aria-pressed', 'true');
         await expect(newFilter).toHaveClass(/book-testament-filter--active/);
+        await expect.poll(() => modalContent.evaluate(
+                (element) => Math.round(element.getBoundingClientRect().height)
+        )).toBe(initialBookModalHeight);
 
         await oldFilter.click();
 
@@ -202,6 +211,9 @@ test('book selector: testament filters toggle sections from canon data', async (
         await expect(newSection).toBeHidden();
         await expect(deuterocanonSection).toBeVisible();
         await expect(apocryphaFilter).toHaveAttribute('aria-pressed', 'true');
+        await expect.poll(() => modalContent.evaluate(
+                (element) => Math.round(element.getBoundingClientRect().height)
+        )).toBe(initialBookModalHeight);
 
         await apocryphaFilter.click();
 
