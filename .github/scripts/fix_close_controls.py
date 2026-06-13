@@ -10,11 +10,13 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 
 index_path = Path("index.html")
 modals_path = Path("modals.js")
+events_path = Path("events.js")
 components_path = Path("css/components.css")
 modal_css_path = Path("css/modals.css")
 
 index = index_path.read_text(encoding="utf-8")
 modals = modals_path.read_text(encoding="utf-8")
+events = events_path.read_text(encoding="utf-8")
 components = components_path.read_text(encoding="utf-8")
 modal_css = modal_css_path.read_text(encoding="utf-8")
 
@@ -52,6 +54,25 @@ index = button_pattern.sub(convert_button, index)
 
 if index == original_index and 'class="close-control"' not in index:
     raise SystemExit("No typographic close controls were found in index.html.")
+
+old_close_bindings = """    app.closeSettingsModal?.addEventListener('click', () => app.closeModal(app.settingsModal));
+    app.closeReferencesModal?.addEventListener('click', () => app.closeModal(app.referencesModal));
+    app.closeTranslationModal?.addEventListener('click', () => app.closeModal(app.translationModal));
+"""
+new_close_bindings = """    app.closeSettingsModal?.addEventListener('click', () => app.closeModal(app.settingsModal));
+    app.closeLoginModal?.addEventListener('click', () => app.closeModal(app.loginModal));
+    app.closeSignupModal?.addEventListener('click', () => app.closeModal(app.signupModal));
+    app.closeUserMenuModal?.addEventListener('click', () => app.closeModal(app.userMenuModal));
+    app.closeReferencesModal?.addEventListener('click', () => app.closeModal(app.referencesModal));
+    app.closeTranslationModal?.addEventListener('click', () => app.closeModal(app.translationModal));
+"""
+if "app.closeUserMenuModal?.addEventListener('click'" not in events:
+    events = replace_once(
+        events,
+        old_close_bindings,
+        new_close_bindings,
+        "auth modal close button bindings",
+    )
 
 if ".close-control {" not in components:
     components += '''
@@ -126,6 +147,7 @@ if remaining:
 
 index_path.write_text(index, encoding="utf-8")
 modals_path.write_text(modals, encoding="utf-8")
+events_path.write_text(events, encoding="utf-8")
 components_path.write_text(components, encoding="utf-8")
 modal_css_path.write_text(modal_css, encoding="utf-8")
 
