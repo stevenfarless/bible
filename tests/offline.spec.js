@@ -39,7 +39,7 @@ test('installed build opens offline with every bundled theme and font', async ({
         if (!response.ok) throw new Error(`Offline manifest returned ${response.status}.`);
         const manifest = await response.json();
         const buildId = document.querySelector('meta[name="build-id"]')?.content;
-        const cacheName = buildId ? `bible-${buildId}` : null;
+        const cacheName = buildId ? `lege-lux-offline-${buildId}` : null;
         if (!cacheName || !(await caches.keys()).includes(cacheName)) {
             throw new Error(`Expected service-worker cache is missing: ${cacheName || 'unknown build'}.`);
         }
