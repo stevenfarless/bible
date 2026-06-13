@@ -19,6 +19,15 @@ const DEFAULTS = {
     verseSelectionGesture: 'hold',
 };
 
+const READING_FONT_FAMILIES = {
+    gentium: 'Gentium Book Plus',
+    andika: 'Andika',
+    ubuntu: 'Ubuntu',
+    opendyslexic3: 'OpenDyslexic3',
+    'ia-quattro': 'iA Writer Quattro S',
+    adwaitasans: 'Adwaita Sans',
+};
+
 const RECAPTCHA_STYLE_ID = 'recaptcha-badge-style';
 const RECAPTCHA_DISCLOSURE_HTML = '<div style="margin-top: 1rem; font-size: 0.875rem;">This site is protected by reCAPTCHA and the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a> apply.</div>';
 
@@ -202,7 +211,13 @@ export async function toggleVerseByVerse(app) {
     app.passageText.classList.toggle('verse-by-verse', app.state.verseByVerse);
 }
 
-export function applyReadingFont(app, font) {
+export async function applyReadingFont(app, font) {
+    const family = READING_FONT_FAMILIES[font];
+    if (!family) throw new Error(`Unknown reading font: ${font}`);
+
+    const loaded = await document.fonts.load(`1em "${family}"`);
+    if (loaded.length === 0) throw new Error(`Reading font failed to load: ${family}`);
+
     document.body.classList.remove('font-andika', 'font-ubuntu', 'font-opendyslexic3', 'font-retrocide', 'font-ia-quattro', 'font-adwaitasans');
 
     if (font === 'andika')        document.body.classList.add('font-andika');
