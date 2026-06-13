@@ -13,17 +13,33 @@ export function handleKeyboardShortcuts(app, e) {
         return;
     }
 
-    // Dismiss any open modal or search
-    if (e.key === 'Escape') {
-        [
-            app.bookModal, app.chapterModal, app.helpModal,
-            app.settingsModal, app.loginModal, app.signupModal,
-            app.userMenuModal, app.verseModal, app.referencesModal,
-            app.translationModal,
-        ].forEach((m) => { if (m?.classList.contains('active')) app.closeModal(m); });
-        if (app.searchContainer?.classList.contains('active')) app.closeSearch();
+    // Dismiss the active overlay, then clear verse selection when none is open.
+if (e.key === 'Escape') {
+    const activeModal = [
+        app.bookModal, app.chapterModal, app.helpModal,
+        app.settingsModal, app.loginModal, app.signupModal,
+        app.userMenuModal, app.verseModal, app.referencesModal,
+        app.translationModal,
+    ].find((modal) => modal?.classList.contains('active'));
+
+    if (activeModal) {
+        app.closeModal(activeModal);
         return;
     }
+
+    if (app.searchContainer?.classList.contains('active')) {
+        app.closeSearch();
+        return;
+    }
+
+    if (app.state.selectedVerse !== null) {
+        e.preventDefault();
+        app.state.selectedVerse = null;
+        app.applyVerseGlow();
+    }
+
+    return;
+}
 
     // Translation modal keyboard navigation — runs before the generic modal guard
     if (app.translationModal?.classList.contains('active')) {

@@ -51,51 +51,115 @@ function _maybeRemoveModalOpen() {
 
 // ── Book modal ────────────────────────────────────────────────────────────────
 
+const BOOK_TESTAMENT_FILTERS = [
+    { testament: 'Old Testament', label: 'Old Testament' },
+    { testament: 'Deuterocanon', label: 'Apocrypha' },
+    { testament: 'New Testament', label: 'New Testament' },
+];
+
 export function openBookModal(app) {
+    const content = app.bookModal?.querySelector('.modal-content');
+    if (content) content.style.height = '';
+
     populateBookModal(app);
     openModal(app, app.bookModal);
+
+    requestAnimationFrame(() => {
+        if (!content || !app.bookModal?.classList.contains('active')) return;
+        content.style.height = `${content.offsetHeight}px`;
+    });
 }
 
 export function populateBookModal(app) {
     const modalBody = app.bookModal?.querySelector('.modal-body');
-    if (!modalBody) return;
+    const filterBar = app.bookModal?.querySelector('.book-testament-filters');
+    if (!modalBody || !filterBar) return;
 
     modalBody.innerHTML = '';
+    filterBar.innerHTML = '';
+    modalBody.classList.remove('book-testament-filter-active');
+
+    const sections = new Map();
+    const filterButtons = new Map();
+    let activeTestament = null;
+
+    const applyFilter = (testament) => {
+        activeTestament = activeTestament === testament ? null : testament;
+
+        for (const [sectionTestament, section] of sections) {
+            section.hidden = activeTestament !== null
+                && sectionTestament !== activeTestament;
+        }
+
+        for (const [buttonTestament, button] of filterButtons) {
+            const isActive = buttonTestament === activeTestament;
+            button.classList.toggle('book-testament-filter--active', isActive);
+            button.setAttribute('aria-pressed', String(isActive));
+        }
+
+        modalBody.classList.toggle(
+            'book-testament-filter-active',
+            activeTestament !== null
+        );
+        modalBody.scrollTop = 0;
+    };
+
+    for (const { testament, label } of BOOK_TESTAMENT_FILTERS) {
+        const books = app.bibleBooks[testament];
+        if (!books || Object.keys(books).length === 0) continue;
+
+        const button = document.createElement('button');
+        button.className = 'book-testament-filter';
+        button.type = 'button';
+        button.textContent = label;
+        button.setAttribute('aria-pressed', 'false');
+        button.addEventListener('click', () => applyFilter(testament));
+
+        filterButtons.set(testament, button);
+        filterBar.appendChild(button);
+    }
 
     const createBookButton = (book) => {
-        const btn = document.createElement('button');
-        btn.className = 'book-item';
-        btn.textContent = app.bookAbbreviations[book] || book;
-        btn.addEventListener('click', () => {
+        const button = document.createElement('button');
+        button.className = 'book-item';
+        button.type = 'button';
+        button.textContent = app.bookAbbreviations[book] || book;
+        button.addEventListener('click', () => {
             app.state.selectedVerse = null;
             app.loadPassage(book, 1);
             app.closeModal(app.bookModal);
         });
-        return btn;
+        return button;
     };
 
     for (const [testament, books] of Object.entries(app.bibleBooks)) {
         const section = document.createElement('div');
         section.className = 'book-category';
+        section.dataset.testament = testament;
 
         const heading = document.createElement('h4');
-        heading.textContent = testament === 'Deuterocanon' ? 'Apocrypha / Deuterocanon' : testament;
+        heading.textContent = testament === 'Deuterocanon'
+            ? 'Apocrypha / Deuterocanon'
+            : testament;
+
         if (testament === 'Deuterocanon') {
-            const infoBtn = document.createElement('button');
-            infoBtn.className = 'deuterocanon-info-btn';
-            infoBtn.setAttribute('aria-label', 'About the Deuterocanon');
-            infoBtn.innerHTML = '?';
-            infoBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
+            const infoButton = document.createElement('button');
+            infoButton.className = 'deuterocanon-info-btn';
+            infoButton.type = 'button';
+            infoButton.setAttribute('aria-label', 'About the Deuterocanon');
+            infoButton.textContent = '?';
+            infoButton.addEventListener('click', (event) => {
+                event.stopPropagation();
                 openDeuterocanonInfoModal(app);
             });
-            heading.appendChild(infoBtn);
+            heading.appendChild(infoButton);
         }
         section.appendChild(heading);
 
         const grid = document.createElement('div');
         grid.className = 'book-grid';
         if (testament === 'Old Testament') grid.id = 'oldTestamentBooks';
+        if (testament === 'Deuterocanon') grid.id = 'deuterocanonBooks';
         if (testament === 'New Testament') grid.id = 'newTestamentBooks';
 
         for (const book of Object.keys(books)) {
@@ -103,6 +167,7 @@ export function populateBookModal(app) {
         }
 
         section.appendChild(grid);
+        sections.set(testament, section);
         modalBody.appendChild(section);
     }
 }
