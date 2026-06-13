@@ -67,8 +67,26 @@ jobs:
             sed -i "s|__BUILD_COLOR__|${BUILD_COLOR}|g" css/pericope.css
           fi
           sed -i "s/__BUILD_ID__/${SHA7}/g" sw.js index.html
-          sed -i "s|\(<script[^>]* src=\"\)\([^?\"]*\)\(\.js\)\(\"\\\)|\1\2\3?v=${SHA7}\4|g" index.html
-          sed -i "s|\(<link[^>]* href=\"css/[^?\"]*\)\(\.css\)\(\"\)|\1\2?v=${SHA7}\3|g" index.html
+          python3 - "$SHA7" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          sha = sys.argv[1]
+          path = Path('index.html')
+          html = path.read_text()
+          html = re.sub(
+              r'(<script[^>]*\ssrc=")([^"?]+\.js)(")',
+              lambda match: f'{match.group(1)}{match.group(2)}?v={sha}{match.group(3)}',
+              html,
+          )
+          html = re.sub(
+              r'(<link[^>]*\shref=")(css/[^"?]+\.css)(")',
+              lambda match: f'{match.group(1)}{match.group(2)}?v={sha}{match.group(3)}',
+              html,
+          )
+          path.write_text(html)
+          PY
           echo "${GITHUB_SHA}" > version.txt
 
       - name: Inject Firebase config
