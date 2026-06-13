@@ -72,19 +72,16 @@ export function openBookModal(app) {
 
 export function populateBookModal(app) {
     const modalBody = app.bookModal?.querySelector('.modal-body');
-    if (!modalBody) return;
+    const filterBar = app.bookModal?.querySelector('.book-testament-filters');
+    if (!modalBody || !filterBar) return;
 
     modalBody.innerHTML = '';
+    filterBar.innerHTML = '';
     modalBody.classList.remove('book-testament-filter-active');
 
     const sections = new Map();
     const filterButtons = new Map();
     let activeTestament = null;
-
-    const filterBar = document.createElement('div');
-    filterBar.className = 'book-testament-filters';
-    filterBar.setAttribute('role', 'group');
-    filterBar.setAttribute('aria-label', 'Filter books by testament');
 
     const applyFilter = (testament) => {
         activeTestament = activeTestament === testament ? null : testament;
@@ -121,8 +118,6 @@ export function populateBookModal(app) {
         filterButtons.set(testament, button);
         filterBar.appendChild(button);
     }
-
-    modalBody.appendChild(filterBar);
 
     const createBookButton = (book) => {
         const button = document.createElement('button');
