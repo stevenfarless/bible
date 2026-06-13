@@ -1,6 +1,20 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
 
+const cssFiles = [
+    './css/fonts.css',
+    './css/base.css',
+    './css/tokens.css',
+    './css/themes.css',
+    './css/layout.css',
+    './css/components.css',
+    './css/modals.css',
+    './css/interactions.css',
+    './css/utilities.css',
+    './css/pericope.css',
+    './css/geek95.css',
+];
+
 const readingFonts = {
     gentium: 'Gentium Book Plus',
     andika: 'Andika',
@@ -16,7 +30,7 @@ test.beforeEach(async ({ page }) => {
     });
 });
 
-test('installed build opens offline with every bundled theme and font', async ({ page, context }) => {
+test('installed build opens offline with every stylesheet, theme, and font', async ({ page, context }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('body[data-app-ready="true"]', { timeout: 30000 });
 
@@ -62,19 +76,7 @@ test('installed build opens offline with every bundled theme and font', async ({
     await expect(page.locator('#passageTitle')).toBeVisible();
     await expect(page.locator('#passageText')).not.toBeEmpty();
 
-    const requiredFetches = await page.evaluate(async () => {
-        const urls = [
-            './css/app.min.css',
-            './translations/KJV/Genesis.json',
-            './translations/BSB/Genesis.json',
-            './fonts/GentiumBookPlus-Regular.woff2',
-            './fonts/Andika-Regular.woff2',
-            './fonts/OpenDyslexic3-Regular.woff2',
-            './fonts/Ubuntu-Regular.woff2',
-            './fonts/iAWriterQuattroS-Regular.woff2',
-            './fonts/AdwaitaSans-Regular.woff2',
-            './vendor/marked/marked.min.js',
-        ];
+    const requiredFetches = await page.evaluate(async urls => {
         return Promise.all(urls.map(async url => {
             try {
                 const response = await fetch(url);
@@ -83,7 +85,18 @@ test('installed build opens offline with every bundled theme and font', async ({
                 return { url, status: 0, error: String(error) };
             }
         }));
-    });
+    }, [
+        ...cssFiles,
+        './translations/KJV/Genesis.json',
+        './translations/BSB/Genesis.json',
+        './fonts/GentiumBookPlus-Regular.woff2',
+        './fonts/Andika-Regular.woff2',
+        './fonts/OpenDyslexic3-Regular.woff2',
+        './fonts/Ubuntu-Regular.woff2',
+        './fonts/iAWriterQuattroS-Regular.woff2',
+        './fonts/AdwaitaSans-Regular.woff2',
+        './vendor/marked/marked.min.js',
+    ]);
     expect(requiredFetches.filter(result => result.status !== 200)).toEqual([]);
 
     const themeValues = await page.locator('#themeSelector option').evaluateAll(options =>
