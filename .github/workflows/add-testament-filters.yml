@@ -1,0 +1,46 @@
+name: Add Testament Filters
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  add-testament-filters:
+    name: Add book selector testament filters
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Apply testament filters
+        run: python3 .github/scripts/add_testament_filters.py
+
+      - name: Verify changes
+        run: |
+          node --check modals.js
+          node --check tests/smoke.spec.js
+          git diff --check
+          grep -F "const BOOK_TESTAMENT_FILTERS = [" modals.js
+          grep -F ".book-testament-filters {" css/components.css
+          grep -F ".geek-theme.light-mode .book-testament-filter--active" css/geek95.css
+          grep -F "book selector: testament filters toggle sections from canon data" tests/smoke.spec.js
+          git diff -- modals.js css/components.css css/geek95.css tests/smoke.spec.js
+
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add modals.js css/components.css css/geek95.css tests/smoke.spec.js
+          git commit -m "feat: add toggleable testament filters"
+          git pull --rebase origin exp
+          git push origin exp
