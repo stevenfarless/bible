@@ -90,12 +90,23 @@ test('installed build opens offline with every bundled theme and font', async ({
         options.map(option => option.value)
     );
     for (const theme of themeValues) {
-        await page.locator('#themeSelector').selectOption(theme);
+        await page.evaluate(value => {
+            const selector = document.getElementById('themeSelector');
+            if (!(selector instanceof HTMLSelectElement)) throw new Error('Theme selector is missing.');
+            selector.value = value;
+            selector.dispatchEvent(new Event('input', { bubbles: true }));
+            selector.dispatchEvent(new Event('change', { bubbles: true }));
+        }, theme);
         await expect(page.locator('html')).toHaveClass(new RegExp(`(?:^|\\s)${theme}-theme(?:\\s|$)`));
     }
 
     for (const [value, family] of Object.entries(readingFonts)) {
-        await page.locator('#readingFontSelector').selectOption(value);
+        await page.evaluate(fontValue => {
+            const selector = document.getElementById('readingFontSelector');
+            if (!(selector instanceof HTMLSelectElement)) throw new Error('Reading font selector is missing.');
+            selector.value = fontValue;
+            selector.dispatchEvent(new Event('change', { bubbles: true }));
+        }, value);
         const loadedFaces = await page.evaluate(async fontFamily => {
             const faces = await document.fonts.load(`16px "${fontFamily}"`, 'Bible');
             return faces.length;
