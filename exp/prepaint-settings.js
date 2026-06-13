@@ -10,6 +10,26 @@
         try { localStorage.setItem(key, String(value)); } catch (_) {}
     }
 
+    var fontFiles = {
+        gentium: ['./fonts/GentiumBookPlus-Regular.woff2', 'font/woff2'],
+        andika: ['./fonts/Andika-Regular.woff2', 'font/woff2'],
+        ubuntu: ['./fonts/Ubuntu-Regular.woff2', 'font/woff2'],
+        opendyslexic3: ['./fonts/OpenDyslexic3-Regular.woff2', 'font/woff2'],
+        'ia-quattro': ['./fonts/iAWriterQuattroS-Regular.woff2', 'font/woff2'],
+        adwaitasans: ['./fonts/AdwaitaSans-Regular.woff2', 'font/woff2']
+    };
+    var activeFont = get('readingFont') || 'gentium';
+    var activeFontFile = fontFiles[activeFont];
+    if (activeFontFile) {
+        var fontPreload = document.createElement('link');
+        fontPreload.rel = 'preload';
+        fontPreload.as = 'font';
+        fontPreload.href = activeFontFile[0];
+        fontPreload.type = activeFontFile[1];
+        fontPreload.crossOrigin = 'anonymous';
+        document.head.appendChild(fontPreload);
+    }
+
     function readBool(key, fallback) {
         var value = get(key);
         if (value === 'true') return true;

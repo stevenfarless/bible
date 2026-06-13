@@ -334,9 +334,9 @@ export function attachEventListeners(app) {
     if (readingFontSelector) {
         readingFontSelector.addEventListener('change', async () => {
             const font = readingFontSelector.value;
+            await applyReadingFont(app, font);
             app.state.readingFont = font;
             localStorage.setItem('readingFont', font);
-            applyReadingFont(app, font);
 
             if (app.currentUser) {
                 await app.database

@@ -1,5 +1,5 @@
 // BUILD_ID is injected at deploy time by the CI workflow:
-//   sed -i "s/d28fc9e/$GITHUB_SHA/g" sw.js
+//   sed -i "s/00aa553/$GITHUB_SHA/g" sw.js
 // The placeholder below is replaced with the full commit SHA before
 // the file is published to GitHub Pages. Never edit the placeholder
 // directly — changes here are overwritten on every deploy.
@@ -92,6 +92,22 @@ const APP_SHELL = [
   './fonts/GentiumBookPlus-Italic.woff2',
   './fonts/GentiumBookPlus-Bold.woff2',
   './fonts/GentiumBookPlus-BoldItalic.woff2',
+  './fonts/Andika-Regular.woff2',
+  './fonts/Andika-Italic.woff2',
+  './fonts/Andika-Bold.woff2',
+  './fonts/OpenDyslexic3-Regular.woff2',
+  './fonts/Ubuntu-Regular.woff2',
+  './fonts/Ubuntu-Italic.woff2',
+  './fonts/Ubuntu-Bold.woff2',
+  './fonts/Ubuntu-BoldItalic.woff2',
+  './fonts/iAWriterQuattroS-Regular.woff2',
+  './fonts/iAWriterQuattroS-Italic.woff2',
+  './fonts/iAWriterQuattroS-Bold.woff2',
+  './fonts/iAWriterQuattroS-BoldItalic.woff2',
+  './fonts/iAWriterMonoS-Regular.woff',
+  './fonts/AdwaitaSans-Regular.woff2',
+  './fonts/AdwaitaSans-Italic.woff2',
+  './fonts/Web437_IBM_VGA_9x16-2x.woff',
 ];
 
 function isFirebaseCacheable(url) {
@@ -110,7 +126,7 @@ function translationFromUrl(pathname) {
 }
 
 function resolveBuildId() {
-  return 'd28fc9e';
+  return '00aa553';
 }
 
 async function precacheFiles() {
