@@ -1,0 +1,53 @@
+name: Fix Book Modal Sticky Layers
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-book-modal-sticky-layers:
+    name: Correct book modal sticky layers
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Apply sticky layer fix
+        run: python3 .github/scripts/fix_book_modal_sticky_layers.py
+
+      - name: Verify changes
+        run: |
+          node --check modals.js
+          git diff --check
+          grep -F -- "--book-filter-row-height: 65px;" css/components.css
+          grep -F "top: calc(-1 * var(--spacing-lg));" css/components.css
+          grep -F "height: 48px;" css/components.css
+          grep -F "book-testament-filter-active" modals.js
+          if grep -Fq -- "--book-filter-height" modals.js; then
+            echo "Dynamic filter height measurement still present"
+            exit 1
+          fi
+          if grep -Fq "bookFilterResizeObserver" modals.js; then
+            echo "Book filter ResizeObserver still present"
+            exit 1
+          fi
+          git diff -- modals.js css/components.css
+
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add modals.js css/components.css
+          git commit -m "fix: correct book modal sticky layers"
+          git pull --rebase origin exp
+          git push origin exp
