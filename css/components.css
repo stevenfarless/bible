@@ -89,34 +89,18 @@
 }
 
 /* Book & Chapter Selectors */
-#bookModal .modal-body {
-    --book-filter-row-height: 65px;
-}
-
-.book-testament-filters {
-    position: sticky;
-    top: calc(-1 * var(--spacing-lg));
-    z-index: 4;
+#bookModal .book-testament-filters {
+    flex-shrink: 0;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     gap: var(--spacing-sm);
-    height: calc(
-        var(--book-filter-row-height) + var(--spacing-lg)
-    );
-    margin:
-        calc(-1 * var(--spacing-lg))
-        0
-        0;
-    padding:
-        var(--spacing-lg)
-        0
-        var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
     background-color: var(--bg-card);
     border-bottom: 1px solid var(--border-neutral);
 }
 
-.book-testament-filters + .book-category {
-    padding-top: var(--spacing-lg);
+#bookModal .modal-body {
+    padding: 0 var(--spacing-lg) var(--spacing-lg);
 }
 
 .book-testament-filter {
@@ -165,6 +149,10 @@
     margin-bottom: var(--spacing-xl);
 }
 
+.book-category:first-child {
+    padding-top: var(--spacing-lg);
+}
+
 .book-category h4 {
     position: relative;
     font-size: 1.1rem;
@@ -178,11 +166,8 @@
 
 #bookModal .modal-body:not(.book-testament-filter-active) .book-category h4 {
     position: sticky;
-    top: calc(
-        var(--book-filter-row-height)
-        - var(--spacing-lg)
-    );
-    z-index: 3;
+    top: 0;
+    z-index: 2;
 }
 
 .book-grid {
