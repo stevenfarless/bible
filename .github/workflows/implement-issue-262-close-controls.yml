@@ -1,10 +1,11 @@
-name: Implement issue 262 close controls
+name: Standardize Close Controls
 
 on:
   workflow_dispatch:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   implement:
@@ -15,49 +16,111 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: exp
+          fetch-depth: 0
 
-      - name: Apply shared close control markup and styles
+      - name: Create implementation branch
+        run: |
+          branch="issue-262-close-controls"
+          git checkout -B "$branch"
+
+      - name: Audit close controls and theme tokens
         shell: python
         run: |
           from pathlib import Path
           import re
 
-          root = Path('.')
-          index = root / 'index.html'
-          components = root / 'css' / 'components.css'
-          modals = root / 'css' / 'modals.css'
+          text_extensions = {'.html', '.js', '.css'}
+          files = [
+              path for path in Path('.').rglob('*')
+              if path.is_file()
+              and path.suffix in text_extensions
+              and '.git' not in path.parts
+              and 'node_modules' not in path.parts
+          ]
 
-          html = index.read_text(encoding='utf-8')
+          close_matches = []
+          token_text = ''
+          for path in files:
+              text = path.read_text(encoding='utf-8')
+              token_text += '\n' + text
+              for line_number, line in enumerate(text.splitlines(), 1):
+                  if re.search(r'(close|dismiss|modal|sheet)', line, re.IGNORECASE) and re.search(
+                      r'(<button|createElement\(["\']button["\']\)|innerHTML|classList|class=)',
+                      line,
+                      re.IGNORECASE,
+                  ):
+                      close_matches.append(f'{path}:{line_number}: {line.strip()}')
+
+          required_tokens = ['--text-muted', '--text-primary', '--accent-color']
+          missing_tokens = [token for token in required_tokens if token not in token_text]
+
+          Path('close-control-audit.txt').write_text(
+              'Close-control candidates:\n'
+              + ('\n'.join(close_matches) or '(none found)')
+              + '\n\nMissing proposed theme tokens:\n'
+              + ('\n'.join(missing_tokens) or '(none)'),
+              encoding='utf-8',
+          )
+
+          if not close_matches:
+              raise SystemExit('No close-control candidates were found. Review repository structure before implementing.')
+
+      - name: Apply targeted close-control implementation
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
 
           svg = '''<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M7 7L17 17M17 7L7 17"></path>
           </svg>'''
 
+          target_files = []
+          for path in Path('.').rglob('*'):
+              if not path.is_file() or path.suffix not in {'.html', '.js'}:
+                  continue
+              if '.git' in path.parts or 'node_modules' in path.parts:
+                  continue
+              text = path.read_text(encoding='utf-8')
+              if re.search(r'(close|dismiss)', text, re.IGNORECASE):
+                  target_files.append(path)
+
+          changed = []
+
+          button_pattern = re.compile(
+              r'<button(?P<attrs>[^>]*)>\s*(?:&#xD7;|&times;|×)\s*</button>',
+              re.IGNORECASE,
+          )
+
           def replace_button(match):
-            attrs = match.group('attrs')
-            if 'close-control' not in attrs:
+              attrs = match.group('attrs')
               class_match = re.search(r'class="([^"]*)"', attrs)
               if class_match:
-                classes = class_match.group(1).split()
-                classes = [c for c in classes if c not in {'close-btn', 'modal-close', 'close-button'}]
-                classes.append('close-control')
-                attrs = attrs[:class_match.start()] + f'class="{" ".join(classes)}"' + attrs[class_match.end():]
+                  classes = class_match.group(1).split()
+                  if 'close-control' not in classes:
+                      classes.append('close-control')
+                  attrs = attrs[:class_match.start()] + f'class="{" ".join(classes)}"' + attrs[class_match.end():]
               else:
-                attrs += ' class="close-control"'
-            if 'type=' not in attrs:
-              attrs += ' type="button"'
-            return f'<button{attrs}>\n  {svg}\n</button>'
+                  attrs += ' class="close-control"'
+              if 'type=' not in attrs:
+                  attrs += ' type="button"'
+              return f'<button{attrs}>\n  {svg}\n</button>'
 
-          patterns = [
-            r'<button(?P<attrs>[^>]*)>\s*(?:&#xD7;|&times;|×|x|X)\s*</button>',
-          ]
+          for path in target_files:
+              original = path.read_text(encoding='utf-8')
+              updated = button_pattern.sub(replace_button, original)
+              if updated != original:
+                  path.write_text(updated, encoding='utf-8')
+                  changed.append(str(path))
 
-          for pattern in patterns:
-            html = re.sub(pattern, replace_button, html, flags=re.IGNORECASE)
+          style_path = Path('css/components.css')
+          if not style_path.exists():
+              raise SystemExit('css/components.css was not found.')
 
-          index.write_text(html, encoding='utf-8')
+          css = style_path.read_text(encoding='utf-8')
+          if '.close-control {' not in css:
+              css += '''
 
-          css_block = r'''
 .close-control {
   width: 44px;
   height: 44px;
@@ -69,7 +132,7 @@ jobs:
   padding: 0;
   border: 0;
   border-radius: 12px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   background: transparent;
   appearance: none;
   cursor: pointer;
@@ -103,7 +166,7 @@ jobs:
 }
 
 .close-control:focus-visible {
-  outline: 2px solid var(--accent-color);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -113,60 +176,81 @@ jobs:
   }
 }
 '''
+              style_path.write_text(css, encoding='utf-8')
+              changed.append(str(style_path))
 
-          css = components.read_text(encoding='utf-8')
-          if '.close-control {' not in css:
-            components.write_text(css.rstrip() + '\n\n' + css_block.lstrip(), encoding='utf-8')
+          if not changed:
+              raise SystemExit('No implementation changes were made. Review close-control-audit.txt before retrying.')
 
-          modal_css = modals.read_text(encoding='utf-8')
-          modal_layout = r'''
-.modal-header {
-  display: flex;
-  align-items: center;
-  min-height: 68px;
-  padding: 8px 12px 8px 24px;
-}
+          Path('close-control-changes.txt').write_text('\n'.join(sorted(set(changed))) + '\n', encoding='utf-8')
 
-.modal-header .close-control {
-  margin-left: auto;
-}
-'''
-          if '.modal-header .close-control' not in modal_css:
-            modals.write_text(modal_css.rstrip() + '\n\n' + modal_layout.lstrip(), encoding='utf-8')
-
-      - name: Verify implementation
+      - name: Verify targeted changes
         shell: python
         run: |
           from pathlib import Path
           import re
 
-          html = Path('index.html').read_text(encoding='utf-8')
-          components = Path('css/components.css').read_text(encoding='utf-8')
+          changed = Path('close-control-changes.txt').read_text(encoding='utf-8').splitlines()
+          if not changed:
+              raise SystemExit('The change manifest is empty.')
 
-          remaining = re.findall(r'<button[^>]*>\s*(?:&#xD7;|&times;|×|x|X)\s*</button>', html, flags=re.IGNORECASE)
-          if remaining:
-            raise SystemExit(f'Found {len(remaining)} typographic close controls still in index.html')
-
-          required = [
-            'width: 44px;',
-            'height: 44px;',
-            'stroke: currentColor;',
-            'stroke-width: 3;',
-            'stroke-linecap: round;',
+          css = Path('css/components.css').read_text(encoding='utf-8')
+          required_css = [
+              'width: 44px;',
+              'height: 44px;',
+              'width: 25px;',
+              'height: 25px;',
+              'stroke: currentColor;',
+              'stroke-width: 3;',
+              'stroke-linecap: round;',
           ]
-          missing = [entry for entry in required if entry not in components]
+          missing = [value for value in required_css if value not in css]
           if missing:
-            raise SystemExit(f'Missing close-control CSS: {missing}')
+              raise SystemExit(f'Missing close-control CSS values: {missing}')
 
-      - name: Commit changes
+          remaining = []
+          for path in Path('.').rglob('*'):
+              if not path.is_file() or path.suffix not in {'.html', '.js'}:
+                  continue
+              if '.git' in path.parts or 'node_modules' in path.parts:
+                  continue
+              text = path.read_text(encoding='utf-8')
+              if re.search(r'<button[^>]*>\s*(?:&#xD7;|&times;|×)\s*</button>', text, re.IGNORECASE):
+                  remaining.append(str(path))
+
+          if remaining:
+              raise SystemExit(f'Typographic close controls remain in: {remaining}')
+
+      - name: Commit implementation
+        id: commit
         run: |
-          if git diff --quiet; then
-            echo "No changes were needed."
+          git add -A
+          git reset close-control-audit.txt close-control-changes.txt
+
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html css/components.css css/modals.css
           git commit -m "Standardize modal close controls"
-          git push origin exp
+          git push --force-with-lease origin issue-262-close-controls
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Open pull request
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          existing=$(gh pr list --head issue-262-close-controls --base exp --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Pull request #$existing already exists."
+            exit 0
+          fi
+
+          gh pr create \
+            --base exp \
+            --head issue-262-close-controls \
+            --title "Standardize modal close controls" \
+            --body $'Closes #262\n\n- replaces typographic close glyphs with a shared rounded inline SVG\n- applies a 44×44 px touch target\n- keeps icon color theme-driven through `currentColor`\n- preserves existing close handlers and modal behavior\n\nReview the changed files before merging.'
