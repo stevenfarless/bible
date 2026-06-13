@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { transform } from 'esbuild';
+import { build, transform } from 'esbuild';
 
 const root = process.cwd();
 const outputRoot = path.join(root, '_site');
@@ -146,6 +146,41 @@ async function bundleCss(sourceIndex) {
     }
 }
 
+async function bundleFirebase() {
+    const sourcePath = path.join(root, 'config/firebase-config.js');
+    let source = await fs.readFile(sourcePath, 'utf8');
+    const replacements = new Map([
+        ['https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js', 'firebase/app'],
+        ['https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js', 'firebase/auth'],
+        ['https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js', 'firebase/database'],
+        ['https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check.js', 'firebase/app-check'],
+    ]);
+
+    for (const [remote, local] of replacements) {
+        if (!source.includes(remote)) throw new Error(`Firebase source no longer imports ${remote}.`);
+        source = source.replaceAll(remote, local);
+    }
+
+    const outputPath = path.join(outputRoot, 'config/firebase-config.js');
+    await fs.mkdir(path.dirname(outputPath), { recursive: true });
+    await build({
+        stdin: {
+            contents: source,
+            loader: 'js',
+            resolveDir: root,
+            sourcefile: 'config/firebase-config.js',
+        },
+        bundle: true,
+        format: 'esm',
+        minify: true,
+        outfile: outputPath,
+        platform: 'browser',
+        target: ['chrome109', 'firefox115', 'safari16.4'],
+    });
+
+    await fs.rm(path.join(outputRoot, 'config/firebase-config.bundle.js'), { force: true });
+}
+
 async function localizeMarked() {
     const candidates = [
         path.join(root, 'node_modules/marked/marked.min.js'),
@@ -281,6 +316,7 @@ async function main() {
     const sourceIndex = await fs.readFile(path.join(root, 'index.html'), 'utf8');
     await copyRuntimeTree();
     await bundleCss(sourceIndex);
+    await bundleFirebase();
     await localizeMarked();
     await fs.writeFile(path.join(outputRoot, 'index.html'), rewriteIndex(sourceIndex));
     await validateInitialTranslations();
