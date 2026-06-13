@@ -49,11 +49,7 @@ button_pattern = re.compile(
     re.IGNORECASE,
 )
 
-original_index = index
 index = button_pattern.sub(convert_button, index)
-
-if index == original_index and 'class="close-control"' not in index:
-    raise SystemExit("No typographic close controls were found in index.html.")
 
 old_close_bindings = """    app.closeSettingsModal?.addEventListener('click', () => app.closeModal(app.settingsModal));
     app.closeReferencesModal?.addEventListener('click', () => app.closeModal(app.referencesModal));
@@ -144,6 +140,27 @@ if ".modal-header .close-control" not in modal_css:
 remaining = button_pattern.findall(index)
 if remaining:
     raise SystemExit("One or more typographic close controls remain after replacement.")
+
+required_close_ids = [
+    "closeLoginModal",
+    "closeSignupModal",
+    "closeUserMenuModal",
+]
+missing_close_controls = [
+    close_id for close_id in required_close_ids
+    if close_id in index and "close-control" not in index[index.find(close_id):index.find(close_id) + 180]
+]
+if missing_close_controls:
+    raise SystemExit(f"Missing close-control class near: {', '.join(missing_close_controls)}")
+
+required_event_bindings = [
+    "app.closeLoginModal?.addEventListener('click', () => app.closeModal(app.loginModal));",
+    "app.closeSignupModal?.addEventListener('click', () => app.closeModal(app.signupModal));",
+    "app.closeUserMenuModal?.addEventListener('click', () => app.closeModal(app.userMenuModal));",
+]
+missing_bindings = [binding for binding in required_event_bindings if binding not in events]
+if missing_bindings:
+    raise SystemExit(f"Missing auth close bindings: {missing_bindings}")
 
 index_path.write_text(index, encoding="utf-8")
 modals_path.write_text(modals, encoding="utf-8")
