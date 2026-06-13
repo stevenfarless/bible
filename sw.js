@@ -3,13 +3,13 @@
 // The placeholder below is replaced with the full commit SHA before
 // the file is published to GitHub Pages. Never edit the placeholder
 // directly — changes here are overwritten on every deploy.
-const BUILD_ID = '__BUILD_ID__';
-const CACHE_NAME = `bible-${BUILD_ID}`;
+let BUILD_ID = 'pending';
+let CACHE_NAME = 'bible-pending';
 
 const APP_SHELL_PATTERN = /\.(js|mjs|css)$/;
-const OFFLINE_MANIFEST_URL = './offline-assets.json';
 
 const PRECACHED_TRANSLATIONS = new Set(['KJV', 'BSB']);
+
 const installedTranslations = new Set(PRECACHED_TRANSLATIONS);
 
 const CANONICAL_BOOKS = [
@@ -48,6 +48,7 @@ const BSB_STRUCTURE_FILES = [
 const APP_SHELL = [
   './',
   './index.html',
+  './styles.css',
   './css/base.css',
   './css/tokens.css',
   './css/fonts.css',
@@ -58,7 +59,6 @@ const APP_SHELL = [
   './css/interactions.css',
   './css/utilities.css',
   './css/pericope.css',
-  './css/geek95.css',
   './app.js',
   './bible-api.js',
   './bible-structure.js',
@@ -75,11 +75,7 @@ const APP_SHELL = [
   './keyboard.js',
   './events.js',
   './swipe.js',
-  './bottom-sheet-drag.js',
-  './prepaint-settings.js',
-  './js/utils.js',
-  './config/firebase-config.js',
-  './config/firebase-config.bundle.js',
+  './firebase-config.js',
   './translations/index.json',
   './translations/KJV/KJV_search_index.json',
   './translations/BSB/BSB_search_index.json',
@@ -96,25 +92,6 @@ const APP_SHELL = [
   './fonts/GentiumBookPlus-Italic.woff2',
   './fonts/GentiumBookPlus-Bold.woff2',
   './fonts/GentiumBookPlus-BoldItalic.woff2',
-  './fonts/Andika-Regular.woff2',
-  './fonts/Andika-Italic.woff2',
-  './fonts/Andika-Bold.woff2',
-  './fonts/OpenDyslexic3-Regular.woff2',
-  './fonts/OpenDyslexic3-Bold.woff2',
-  './fonts/Ubuntu-Regular.woff2',
-  './fonts/Ubuntu-Italic.woff2',
-  './fonts/Ubuntu-Bold.woff2',
-  './fonts/Ubuntu-BoldItalic.woff2',
-  './fonts/Retrocide.woff2',
-  './fonts/iAWriterQuattroS-Regular.woff2',
-  './fonts/iAWriterQuattroS-Italic.woff2',
-  './fonts/iAWriterQuattroS-Bold.woff2',
-  './fonts/iAWriterQuattroS-BoldItalic.woff2',
-  './fonts/iAWriterMonoS-Regular.woff',
-  './fonts/AdwaitaSans-Regular.woff2',
-  './fonts/AdwaitaSans-Italic.woff2',
-  './fonts/Web437_IBM_VGA_9x16-2x.woff',
-  './fonts/Web437_IBM_CGAThin-2y.woff2',
 ];
 
 function isFirebaseCacheable(url) {
@@ -132,28 +109,35 @@ function translationFromUrl(pathname) {
   return m ? m[1] : null;
 }
 
-async function loadRequiredOfflineAssets() {
-  const response = await fetch(OFFLINE_MANIFEST_URL, { cache: 'no-store' });
-  if (response.status === 404) {
-    return [...new Set([...APP_SHELL, ...PER_BOOK_PRECACHE, ...BSB_STRUCTURE_FILES])];
-  }
-  if (!response.ok) {
-    throw new Error(`Offline manifest request failed with ${response.status}.`);
-  }
+function resolveBuildId() {
+  return '__BUILD_ID__';
+}
 
-  const manifest = await response.json();
-  if (!Array.isArray(manifest) || manifest.some(asset => typeof asset !== 'string')) {
-    throw new Error('Offline manifest must be an array of asset paths.');
-  }
-  return [...new Set([OFFLINE_MANIFEST_URL, ...manifest])];
+async function precacheFiles() {
+  const cache = await caches.open(CACHE_NAME);
+  await Promise.allSettled(
+    [...PER_BOOK_PRECACHE, ...BSB_STRUCTURE_FILES].map(async (url) => {
+      try {
+        const cached = await cache.match(url);
+        if (cached) return;
+        const resp = await fetch(url);
+        if (resp && resp.status === 200) {
+          await cache.put(url, resp);
+        }
+      } catch {
+        // Network unavailable — skip silently.
+      }
+    })
+  );
 }
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil((async () => {
+    BUILD_ID = resolveBuildId();
+    CACHE_NAME = `bible-${BUILD_ID}`;
     const cache = await caches.open(CACHE_NAME);
-    const assets = await loadRequiredOfflineAssets();
-    await cache.addAll(assets);
+    await cache.addAll(APP_SHELL);
   })());
 });
 
@@ -167,6 +151,8 @@ self.addEventListener('activate', (event) => {
     for (const client of allClients) {
       client.postMessage({ type: 'NEW_BUILD', buildId: BUILD_ID });
     }
+
+    precacheFiles();
   })());
 });
 
@@ -216,19 +202,26 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (APP_SHELL_PATTERN.test(url.pathname)) {
-    const networkFetch = fetch(event.request).then((response) => {
-      if (response.ok) {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-      }
-      return response;
-    });
-
-    event.waitUntil(networkFetch.then(() => undefined).catch(() => undefined));
+    // Stale-while-revalidate for app shell JS/CSS:
+    // Serve from cache immediately, revalidate in the background.
     event.respondWith(
-      caches.match(event.request, { ignoreSearch: true }).then(cached =>
-        cached || networkFetch.catch(() => new Response('Offline', { status: 503 }))
-      )
+      caches.match(event.request).then((cached) => {
+        // Start background fetch to keep cache fresh
+        const networkFetch = fetch(event.request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, clone);
+            });
+          }
+          return response;
+        }).catch(() => {
+          // Network fetch failed; that's okay, we already returned cached version
+        });
+        
+        // Return cached version immediately, or wait for network if not cached
+        return cached || networkFetch;
+      })
     );
     return;
   }
@@ -243,7 +236,7 @@ self.addEventListener('fetch', (event) => {
         cache.put(event.request, resp.clone());
         return resp;
       } catch {
-        const cached = await caches.match(event.request, { ignoreSearch: true });
+        const cached = await caches.match(event.request);
         return cached || new Response('Offline', { status: 503 });
       }
     })());
@@ -252,7 +245,7 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
-    const cached = await cache.match(event.request, { ignoreSearch: true });
+    const cached = await cache.match(event.request);
     if (cached) return cached;
     try {
       const resp = await fetch(event.request);
