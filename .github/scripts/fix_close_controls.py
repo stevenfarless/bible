@@ -146,10 +146,14 @@ required_close_ids = [
     "closeSignupModal",
     "closeUserMenuModal",
 ]
-missing_close_controls = [
-    close_id for close_id in required_close_ids
-    if close_id in index and "close-control" not in index[index.find(close_id):index.find(close_id) + 180]
-]
+missing_close_controls = []
+for close_id in required_close_ids:
+    button_match = re.search(
+        rf'<button\b(?=[^>]*\bid="{re.escape(close_id)}")(?=[^>]*\bclass="[^"]*\bclose-control\b)[^>]*>',
+        index,
+    )
+    if not button_match:
+        missing_close_controls.append(close_id)
 if missing_close_controls:
     raise SystemExit(f"Missing close-control class near: {', '.join(missing_close_controls)}")
 
