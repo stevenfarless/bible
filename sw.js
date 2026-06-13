@@ -3,8 +3,8 @@
 // The placeholder below is replaced with the full commit SHA before
 // the file is published to GitHub Pages. Never edit the placeholder
 // directly — changes here are overwritten on every deploy.
-let BUILD_ID = 'pending';
-let CACHE_NAME = 'bible-pending';
+const BUILD_ID = '__BUILD_ID__';
+const CACHE_NAME = `bible-${BUILD_ID}`;
 
 const APP_SHELL_PATTERN = /\.(js|mjs|css)$/;
 const OFFLINE_MANIFEST_URL = './offline-assets.json';
@@ -132,10 +132,6 @@ function translationFromUrl(pathname) {
   return m ? m[1] : null;
 }
 
-function resolveBuildId() {
-  return '__BUILD_ID__';
-}
-
 async function loadRequiredOfflineAssets() {
   const response = await fetch(OFFLINE_MANIFEST_URL, { cache: 'no-store' });
   if (response.status === 404) {
@@ -155,8 +151,6 @@ async function loadRequiredOfflineAssets() {
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil((async () => {
-    BUILD_ID = resolveBuildId();
-    CACHE_NAME = `bible-${BUILD_ID}`;
     const cache = await caches.open(CACHE_NAME);
     const assets = await loadRequiredOfflineAssets();
     await cache.addAll(assets);
