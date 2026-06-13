@@ -74,9 +74,6 @@ export function populateBookModal(app) {
     const modalBody = app.bookModal?.querySelector('.modal-body');
     if (!modalBody) return;
 
-    app.bookFilterResizeObserver?.disconnect();
-    app.bookFilterResizeObserver = null;
-
     modalBody.innerHTML = '';
     modalBody.classList.remove('book-testament-filter-active');
 
@@ -126,20 +123,6 @@ export function populateBookModal(app) {
     }
 
     modalBody.appendChild(filterBar);
-
-    const updateFilterHeight = () => {
-        modalBody.style.setProperty(
-            '--book-filter-height',
-            `${filterBar.offsetHeight}px`
-        );
-    };
-
-    requestAnimationFrame(updateFilterHeight);
-
-    if (typeof ResizeObserver !== 'undefined') {
-        app.bookFilterResizeObserver = new ResizeObserver(updateFilterHeight);
-        app.bookFilterResizeObserver.observe(filterBar);
-    }
 
     const createBookButton = (book) => {
         const button = document.createElement('button');
