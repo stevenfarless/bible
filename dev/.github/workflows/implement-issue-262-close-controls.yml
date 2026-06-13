@@ -1,0 +1,61 @@
+name: Fix Close Controls
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-close-controls:
+    name: Standardize close controls
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Apply close control fix
+        run: python3 .github/scripts/fix_close_controls.py
+
+      - name: Verify changes
+        run: |
+          node --check modals.js
+          node --check app.js
+          node --check events.js
+          git diff --check
+          grep -F 'close-control' index.html
+          grep -F "app.closeUserMenuModal?.addEventListener('click', () => app.closeModal(app.userMenuModal));" events.js
+          grep -F '.close-control {' css/components.css
+          grep -F 'stroke: currentColor;' css/components.css
+          grep -F 'stroke-width: 3;' css/components.css
+          grep -F 'stroke-linecap: round;' css/components.css
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          html = Path('index.html').read_text(encoding='utf-8')
+          pattern = re.compile(
+              r'<button[^>]*>\s*(?:&#xD7;|&times;|×)\s*</button>',
+              re.IGNORECASE,
+          )
+          if pattern.search(html):
+              raise SystemExit('Typographic close button remains in index.html')
+          PY
+          git diff -- index.html events.js modals.js css/components.css css/modals.css
+
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html events.js modals.js css/components.css css/modals.css
+          git commit -m "fix: standardize modal close controls"
+          git pull --rebase origin exp
+          git push origin exp

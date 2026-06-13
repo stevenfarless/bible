@@ -1457,3 +1457,59 @@ body.hide-verse-numbers .verse .verse-num {
     color: var(--text-muted);
     font-style: italic;
 }
+
+
+.close-control {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    flex: 0 0 44px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    color: var(--text-muted);
+    background: transparent;
+    appearance: none;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.close-control svg {
+    width: 25px;
+    height: 25px;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+@media (hover: hover) {
+    .close-control:hover {
+        color: var(--text-body);
+        background: color-mix(in srgb, currentColor 8%, transparent);
+    }
+}
+
+.close-control:active {
+    color: var(--text-body);
+    background: color-mix(in srgb, currentColor 13%, transparent);
+    transform: scale(0.96);
+}
+
+.close-control:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .close-control:active {
+        transform: none;
+    }
+}

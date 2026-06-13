@@ -567,3 +567,8 @@
     gap: var(--spacing-sm);
     word-break: break-all;
 }
+
+
+.modal-header .close-control {
+    margin-left: auto;
+}

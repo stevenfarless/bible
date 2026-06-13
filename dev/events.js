@@ -280,6 +280,9 @@ export function attachEventListeners(app) {
     app.closeDeuterocanonInfoModal?.addEventListener('click', () => app.closeModal(app.deuterocanonInfoModal));
     app.closeChapterModal?.addEventListener('click',  () => app.closeModal(app.chapterModal));
     app.closeSettingsModal?.addEventListener('click', () => app.closeModal(app.settingsModal));
+    app.closeLoginModal?.addEventListener('click', () => app.closeModal(app.loginModal));
+    app.closeSignupModal?.addEventListener('click', () => app.closeModal(app.signupModal));
+    app.closeUserMenuModal?.addEventListener('click', () => app.closeModal(app.userMenuModal));
     app.closeReferencesModal?.addEventListener('click', () => app.closeModal(app.referencesModal));
     app.closeTranslationModal?.addEventListener('click', () => app.closeModal(app.translationModal));
 
