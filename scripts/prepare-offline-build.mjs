@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { build, transform } from 'esbuild';
+import { build } from 'esbuild';
 
 const root = process.cwd();
 const outputRoot = path.join(root, '_site');
@@ -84,8 +84,19 @@ async function copyRuntimeTree() {
     }
 }
 
-async function validateCssSources(sourceIndex, combinedCss) {
+function stylesheetPaths(indexHtml) {
+    return [...indexHtml.matchAll(/<link\s+rel="stylesheet"\s+href="([^"]+)"/g)]
+        .map(match => match[1].split(/[?#]/, 1)[0]);
+}
+
+async function validateCssSources(sourceIndex) {
+    const linkedCss = stylesheetPaths(sourceIndex);
+    if (linkedCss.length !== cssSources.length || linkedCss.some((source, index) => source !== cssSources[index])) {
+        throw new Error(`Expected separate CSS links in this order:\n${cssSources.join('\n')}\nFound:\n${linkedCss.join('\n')}`);
+    }
+
     const missingUrls = [];
+    const chunks = [];
 
     for (const source of cssSources) {
         const absoluteSource = path.join(root, source);
@@ -94,6 +105,8 @@ async function validateCssSources(sourceIndex, combinedCss) {
         }
 
         const css = await fs.readFile(absoluteSource, 'utf8');
+        chunks.push(css);
+
         const urlPattern = /url\(\s*['"]?([^'"\)]+)['"]?\s*\)/g;
         for (const match of css.matchAll(urlPattern)) {
             const url = match[1];
@@ -113,6 +126,7 @@ async function validateCssSources(sourceIndex, combinedCss) {
         throw new Error(`CSS references missing files:\n${missingUrls.join('\n')}`);
     }
 
+    const combinedCss = chunks.join('\n');
     const themeSelect = sourceIndex.match(/<select\s+id="themeSelector"[\s\S]*?<\/select>/);
     if (!themeSelect) throw new Error('Could not find #themeSelector in index.html.');
 
@@ -120,29 +134,6 @@ async function validateCssSources(sourceIndex, combinedCss) {
     const missingThemes = themeValues.filter(theme => !combinedCss.includes(`.${theme}-theme`));
     if (missingThemes.length) {
         throw new Error(`Theme options missing CSS selectors: ${missingThemes.join(', ')}`);
-    }
-}
-
-async function bundleCss(sourceIndex) {
-    const chunks = [];
-    for (const source of cssSources) {
-        chunks.push(await fs.readFile(path.join(root, source), 'utf8'));
-    }
-    const combinedCss = chunks.join('\n');
-    await validateCssSources(sourceIndex, combinedCss);
-
-    const result = await transform(combinedCss, {
-        loader: 'css',
-        minify: true,
-        target: ['chrome109', 'firefox115', 'safari16.4'],
-    });
-
-    const outputCssDirectory = path.join(outputRoot, 'css');
-    await fs.mkdir(outputCssDirectory, { recursive: true });
-    await fs.writeFile(path.join(outputCssDirectory, 'app.min.css'), result.code);
-
-    for (const source of cssSources) {
-        await fs.rm(path.join(outputRoot, source), { force: true });
     }
 }
 
@@ -201,31 +192,11 @@ async function localizeMarked() {
 }
 
 function rewriteIndex(sourceIndex) {
-    const cssNames = cssSources.map(source => path.basename(source).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-    const cssLinkPattern = new RegExp(
-        `^[\\t ]*<link\\s+rel="stylesheet"\\s+href="css\\/(?:${cssNames.join('|')})(\\?[^\"]*)?"\\s*\\/?>(?:\\r?\\n)?`,
-        'gm'
-    );
-    const cssLinks = [...sourceIndex.matchAll(cssLinkPattern)];
-    if (cssLinks.length !== cssSources.length) {
-        throw new Error(`Expected ${cssSources.length} source CSS links, found ${cssLinks.length}.`);
-    }
-
-    const versionSuffix = cssLinks[0][1] || '';
-    let insertedBundle = false;
-    let rewritten = sourceIndex.replace(cssLinkPattern, match => {
-        if (insertedBundle) return '';
-        insertedBundle = true;
-        const indentation = match.match(/^[\t ]*/)?.[0] || '';
-        return `${indentation}<link rel="stylesheet" href="css/app.min.css${versionSuffix}" />\n`;
-    });
-
     const markedPattern = /https:\/\/cdn\.jsdelivr\.net\/npm\/marked@9\/marked\.min\.js(?:\?[^\"]*)?/;
-    if (!markedPattern.test(rewritten)) {
+    if (!markedPattern.test(sourceIndex)) {
         throw new Error('Could not find the hosted Marked script in index.html.');
     }
-    rewritten = rewritten.replace(markedPattern, `vendor/marked/marked.min.js${versionSuffix}`);
-    return rewritten;
+    return sourceIndex.replace(markedPattern, 'vendor/marked/marked.min.js');
 }
 
 async function validateInitialTranslations() {
@@ -257,7 +228,6 @@ async function walk(directory) {
 function shouldPrecache(relativePath) {
     if (relativePath === 'sw.js') return false;
     if (relativePath === 'offline-assets.json') return true;
-    if (relativePath === 'css/app.min.css') return true;
 
     if (relativePath.startsWith('translations/')) {
         if (relativePath === 'translations/index.json') return true;
@@ -298,9 +268,12 @@ async function writeOfflineManifest() {
 
 async function verifyOutput(assets) {
     const outputIndex = await fs.readFile(path.join(outputRoot, 'index.html'), 'utf8');
-    const cssLinks = [...outputIndex.matchAll(/<link\s+rel="stylesheet"\s+href="([^"]+)"/g)].map(match => match[1]);
-    if (cssLinks.length !== 1 || !cssLinks[0].startsWith('css/app.min.css')) {
-        throw new Error(`Built index has unexpected stylesheet links: ${cssLinks.join(', ')}`);
+    const linkedCss = stylesheetPaths(outputIndex);
+    if (linkedCss.length !== cssSources.length || linkedCss.some((source, index) => source !== cssSources[index])) {
+        throw new Error(`Offline artifact did not preserve the separate CSS files: ${linkedCss.join(', ')}`);
+    }
+    if (await exists(path.join(outputRoot, 'css/app.min.css'))) {
+        throw new Error('Offline artifact unexpectedly contains css/app.min.css.');
     }
     if (outputIndex.includes('cdn.jsdelivr.net/npm/marked')) {
         throw new Error('Built index still loads Marked from jsDelivr.');
@@ -315,7 +288,7 @@ async function main() {
 
     const sourceIndex = await fs.readFile(path.join(root, 'index.html'), 'utf8');
     await copyRuntimeTree();
-    await bundleCss(sourceIndex);
+    await validateCssSources(sourceIndex);
     await bundleFirebase();
     await localizeMarked();
     await fs.writeFile(path.join(outputRoot, 'index.html'), rewriteIndex(sourceIndex));
