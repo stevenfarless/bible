@@ -37,6 +37,7 @@ jobs:
           npm install --no-save --package-lock=false \
             @playwright/test@1.52.0 \
             esbuild@0.25.5 \
+            firebase@9.23.0 \
             marked@9.1.6
 
       - name: Derive destination directory
