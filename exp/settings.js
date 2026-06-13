@@ -216,23 +216,43 @@ export async function applyReadingFont(app, font) {
     if (!family) throw new Error(`Unknown reading font: ${font}`);
 
     const loaded = await document.fonts.load(`1em "${family}"`);
-    if (loaded.length === 0) throw new Error(`Reading font failed to load: ${family}`);
+    if (loaded.length === 0) {
+        throw new Error(`Reading font failed to load: ${family}`);
+    }
 
-    document.body.classList.remove('font-andika', 'font-ubuntu', 'font-opendyslexic3', 'font-retrocide', 'font-ia-quattro', 'font-adwaitasans');
+    const fontClasses = [
+        'font-andika',
+        'font-ubuntu',
+        'font-opendyslexic3',
+        'font-retrocide',
+        'font-ia-quattro',
+        'font-adwaitasans',
+    ];
 
-    if (font === 'andika')        document.body.classList.add('font-andika');
-    if (font === 'ubuntu')        document.body.classList.add('font-ubuntu');
-    if (font === 'opendyslexic3') document.body.classList.add('font-opendyslexic3');
-    if (font === 'retrocide')     document.body.classList.add('font-retrocide');
-    if (font === 'ia-quattro')    document.body.classList.add('font-ia-quattro');
-    if (font === 'adwaitasans')   document.body.classList.add('font-adwaitasans');
+    const fontClass = {
+        andika: 'font-andika',
+        ubuntu: 'font-ubuntu',
+        opendyslexic3: 'font-opendyslexic3',
+        retrocide: 'font-retrocide',
+        'ia-quattro': 'font-ia-quattro',
+        adwaitasans: 'font-adwaitasans',
+    }[font];
+
+    document.documentElement.classList.remove(...fontClasses);
+    document.body.classList.remove(...fontClasses);
+
+    if (fontClass) {
+        document.documentElement.classList.add(fontClass);
+    }
 
     const selector = document.getElementById('readingFontSelector');
     const helpText = document.getElementById('readingFontHelpText');
+
     if (selector) {
         selector.value = font;
         selector.disabled = false;
     }
+
     if (helpText) {
         helpText.textContent = 'Choose the typeface used for passage text.';
     }
