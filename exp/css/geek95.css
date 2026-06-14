@@ -218,6 +218,7 @@ body.geek-theme.light-mode {
 
 .geek-theme.light-mode .modal {
     background: rgba(0, 0, 0, 0.78);
+    -webkit-backdrop-filter: none;
     backdrop-filter: none;
 }
 
