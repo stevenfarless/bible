@@ -38,7 +38,6 @@ function _ensureModalSemantics(modal) {
     if (!heading.id) {
         heading.id = `${modal.id || 'modal'}Title`;
     }
-    heading.setAttribute('tabindex', '-1');
     modal.setAttribute('aria-labelledby', heading.id);
 }
 
@@ -117,15 +116,11 @@ function _getModalFocusableElements(modal) {
 }
 
 function _focusModal(modal) {
-    const heading = _getModalHeading(modal);
-    const focusable = _getModalFocusableElements(modal);
-    const target = heading || focusable[0] || modal;
-
-    if (target === modal && !modal.hasAttribute('tabindex')) {
+    if (!modal.hasAttribute('tabindex')) {
         modal.setAttribute('tabindex', '-1');
     }
 
-    target.focus({ preventScroll: true });
+    modal.focus({ preventScroll: true });
 }
 
 function _enforceModalFocus(event) {
