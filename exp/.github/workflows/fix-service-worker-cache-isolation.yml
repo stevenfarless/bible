@@ -29,10 +29,15 @@ jobs:
           from pathlib import Path
 
           def replace_exact(text: str, old: str, new: str, label: str) -> str:
-              if new in text:
-                  print(f"Already fixed: {label}")
-                  return text
               count = text.count(old)
+              if count == 0:
+                  if not new or new in text:
+                      print(f"Already fixed: {label}")
+                      return text
+                  raise SystemExit(
+                      f"Expected exactly one match for {label}; found 0. "
+                      "No files were written."
+                  )
               if count != 1:
                   raise SystemExit(
                       f"Expected exactly one match for {label}; found {count}. "
