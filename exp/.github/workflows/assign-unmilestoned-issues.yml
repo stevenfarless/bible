@@ -2,10 +2,19 @@ name: Assign Unmilestoned Issues
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - exp
+    paths:
+      - .github/workflows/assign-unmilestoned-issues.yml
 
 permissions:
   contents: read
   issues: write
+
+concurrency:
+  group: assign-unmilestoned-issues
+  cancel-in-progress: false
 
 jobs:
   assign-milestones:
