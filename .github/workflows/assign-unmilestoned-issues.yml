@@ -2,6 +2,9 @@ name: Assign Unmilestoned Issues
 
 on:
   workflow_dispatch:
+  issues:
+    types:
+      - opened
   push:
     branches:
       - exp
