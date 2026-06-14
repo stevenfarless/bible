@@ -176,27 +176,59 @@ jobs:
           node --check app.js
           git diff --check
 
-          grep -F "const BUILD_ID = '__BUILD_ID__';" sw.js
-          grep -F 'const CACHE_PREFIX = `bible-${SCOPE_KEY}-`;' sw.js
-          grep -F 'name.startsWith(CACHE_PREFIX)' sw.js
-          grep -F 'navigator.serviceWorker.getRegistration' app.js
-          grep -F 'name.startsWith(cachePrefix)' app.js
+          python3 <<'PY'
+          from pathlib import Path
 
-          if grep -Fq "bible-pending" sw.js; then
-            echo "Obsolete bible-pending cache name remains"
-            exit 1
-          fi
+          sw = Path("sw.js").read_text(encoding="utf-8")
+          app = Path("app.js").read_text(encoding="utf-8")
 
-          if grep -Fq "resolveBuildId" sw.js; then
-            echo "Obsolete resolveBuildId helper remains"
-            exit 1
-          fi
+          required_sw = {
+              "top-level build ID": "const BUILD_ID = '__BUILD_ID__';",
+              "scope key": "const SCOPE_KEY = SCOPE_PATH.split('/').pop() || 'root';",
+              "branch cache prefix": "const CACHE_PREFIX = `bible-${SCOPE_KEY}-`;",
+              "branch cache name": "const CACHE_NAME = `${CACHE_PREFIX}${BUILD_ID}`;",
+              "limited activation cleanup": "name.startsWith(CACHE_PREFIX)",
+          }
 
-          if grep -Fq "getRegistrations()" app.js; then
-            echo "Hard refresh still unregisters all service workers"
-            exit 1
-          fi
+          required_app = {
+              "single-scope registration lookup": "navigator.serviceWorker.getRegistration('./')",
+              "branch cache prefix": "const cachePrefix = `bible-${scopeKey}-`;",
+              "limited cache cleanup": "name.startsWith(cachePrefix)",
+          }
 
+          forbidden_sw = {
+              "pending cache": "bible-pending",
+              "runtime build resolver": "resolveBuildId",
+              "global cache cleanup": "keys.filter(k => k !== CACHE_NAME)",
+          }
+
+          forbidden_app = {
+              "all-registration lookup": "getRegistrations()",
+              "global cache deletion": "cacheNames.map((name) => caches.delete(name))",
+          }
+
+          for label, needle in required_sw.items():
+              if needle not in sw:
+                  raise SystemExit(f"Missing sw.js requirement: {label}: {needle}")
+              print(f"Verified sw.js: {label}")
+
+          for label, needle in required_app.items():
+              if needle not in app:
+                  raise SystemExit(f"Missing app.js requirement: {label}: {needle}")
+              print(f"Verified app.js: {label}")
+
+          for label, needle in forbidden_sw.items():
+              if needle in sw:
+                  raise SystemExit(f"Obsolete sw.js code remains: {label}: {needle}")
+
+          for label, needle in forbidden_app.items():
+              if needle in app:
+                  raise SystemExit(f"Obsolete app.js code remains: {label}: {needle}")
+
+          print("All service worker cache isolation checks passed")
+          PY
+
+          git status --short
           git diff -- sw.js app.js
 
       - name: Commit changes
