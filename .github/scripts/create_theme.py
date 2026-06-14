@@ -22,11 +22,19 @@ def optional(name):
     return os.environ.get(name, "").strip()
 
 
-def color(name):
-    value = required(name)
+def normalize_color(value, name):
     if not COLOR_PATTERN.fullmatch(value):
         raise SystemExit(f"{name} must be a six-digit hex color such as #1A2B3C or 1A2B3C")
     return f"#{value.lstrip('#').upper()}"
+
+
+def color(name):
+    return normalize_color(required(name), name)
+
+
+def optional_color(name):
+    value = optional(name)
+    return normalize_color(value, name) if value else None
 
 
 def slugify_theme_name(name):
@@ -106,23 +114,84 @@ def resolve_theme_id(initial_theme_id):
     return initial_theme_id, action
 
 
+def palette(prefix, dark):
+    names = {
+        "bg_base": f"{prefix}BG_BASE",
+        "bg_card": f"{prefix}BG_CARD",
+        "text_heading": f"{prefix}TEXT_HEADING",
+        "text_body": f"{prefix}TEXT_BODY",
+        "text_muted": f"{prefix}TEXT_MUTED",
+        "primary": f"{prefix}PRIMARY_COLOR",
+        "secondary": f"{prefix}BRAND_SECONDARY",
+        "accent": f"{prefix}ACCENT_COLOR",
+    }
+    values = {key: color(env_name) for key, env_name in names.items()}
+    values["bg_raised"] = adjust_lightness(values["bg_card"], 0.06 if dark else -0.04)
+    values["border_neutral"] = mix(values["bg_raised"], values["text_muted"], 0.72 if dark else 0.82)
+    values["highlight_border"] = mix(values["border_neutral"], values["text_heading"], 0.72)
+    values["primary_dark"] = adjust_lightness(values["primary"], -0.08)
+    values["primary_light"] = adjust_lightness(values["primary"], 0.10)
+    values["success"] = "#6FBF73" if dark else "#2E7D32"
+    values["warning"] = "#F2C14E" if dark else "#9A6700"
+    values["error"] = "#E57373" if dark else "#B3261E"
+    values["shadow_sm"] = f"0 1px 3px rgba(0, 0, 0, {'0.45' if dark else '0.10'})"
+    values["shadow_md"] = f"0 6px 16px rgba(0, 0, 0, {'0.45' if dark else '0.12'})"
+    values["shadow_lg"] = f"0 16px 40px rgba(0, 0, 0, {'0.50' if dark else '0.16'})"
+    return values
+
+
+def palette_block(selector, values):
+    return f'''{selector} {{
+    --bg-base: {values["bg_base"]};
+    --bg-card: {values["bg_card"]};
+    --bg-raised: {values["bg_raised"]};
+
+    --text-heading: {values["text_heading"]};
+    --text-body: {values["text_body"]};
+    --text-muted: {values["text_muted"]};
+
+    --border-neutral: {values["border_neutral"]};
+    --highlight-border: {values["highlight_border"]};
+
+    --primary-color: {values["primary"]};
+    --primary-dark: {values["primary_dark"]};
+    --primary-light: {values["primary_light"]};
+    --brand-secondary: {values["secondary"]};
+    --section-heading-color: var(--brand-secondary);
+    --accent-color: {values["accent"]};
+
+    --success-color: {values["success"]};
+    --warning-color: {values["warning"]};
+    --error-color: {values["error"]};
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+    --shadow-sm: {values["shadow_sm"]};
+    --shadow-md: {values["shadow_md"]};
+    --shadow-lg: {values["shadow_lg"]};
+}}'''
+
+
 def main():
     name = required("THEME_NAME")
     initial_theme_id = slugify_theme_name(name)
     mode = required("THEME_MODE")
 
-    if mode not in {"dark", "light"}:
-        raise SystemExit("THEME_MODE must be dark or light")
+    if mode not in {"dark", "light", "both"}:
+        raise SystemExit("THEME_MODE must be dark, light, or both")
 
     theme_id, action = resolve_theme_id(initial_theme_id)
-    bg_base = color("BG_BASE")
-    bg_card = color("BG_CARD")
-    text_heading = color("TEXT_HEADING")
-    text_body = color("TEXT_BODY")
-    text_muted = color("TEXT_MUTED")
-    primary = color("PRIMARY_COLOR")
-    secondary = color("BRAND_SECONDARY")
-    accent = color("ACCENT_COLOR")
+    dark_values = palette("", mode != "light")
+    light_values = None
+    if mode == "both":
+        required_light = [
+            "LIGHT_BG_BASE", "LIGHT_BG_CARD", "LIGHT_TEXT_HEADING", "LIGHT_TEXT_BODY",
+            "LIGHT_TEXT_MUTED", "LIGHT_PRIMARY_COLOR", "LIGHT_BRAND_SECONDARY", "LIGHT_ACCENT_COLOR",
+        ]
+        missing = [name for name in required_light if not optional(name)]
+        if missing:
+            raise SystemExit(f"Both mode requires: {', '.join(missing)}")
+        light_values = palette("LIGHT_", False)
 
     css = THEMES_FILE.read_text()
     index = INDEX_FILE.read_text()
@@ -139,53 +208,14 @@ def main():
     if theme_exists and action == "rename":
         raise SystemExit(f"Rename target '{theme_id}' already exists. Choose another rename ID.")
 
-    dark = mode == "dark"
-    bg_raised = adjust_lightness(bg_card, 0.06 if dark else -0.04)
-    border_neutral = mix(bg_raised, text_muted, 0.72 if dark else 0.82)
-    highlight_border = mix(border_neutral, text_heading, 0.72)
-    primary_dark = adjust_lightness(primary, -0.08)
-    primary_light = adjust_lightness(primary, 0.10)
-    success = "#6FBF73" if dark else "#2E7D32"
-    warning = "#F2C14E" if dark else "#9A6700"
-    error = "#E57373" if dark else "#B3261E"
-    shadow_sm = f"0 1px 3px rgba(0, 0, 0, {'0.45' if dark else '0.10'})"
-    shadow_md = f"0 6px 16px rgba(0, 0, 0, {'0.45' if dark else '0.12'})"
-    shadow_lg = f"0 16px 40px rgba(0, 0, 0, {'0.50' if dark else '0.16'})"
+    base_selector = f":root.{theme_id}-theme,\nhtml.{theme_id}-theme,\nbody.{theme_id}-theme"
+    theme_block = f"\n\n/* {name} theme */\n{palette_block(base_selector, dark_values)}"
 
-    theme_block = f'''
+    if mode == "both":
+        light_selector = f":root.{theme_id}-theme.light-mode,\nhtml.{theme_id}-theme.light-mode,\nbody.{theme_id}-theme.light-mode"
+        theme_block += f"\n\n{palette_block(light_selector, light_values)}"
 
-/* {name} theme */
-:root.{theme_id}-theme,
-html.{theme_id}-theme,
-body.{theme_id}-theme {{
-    --bg-base: {bg_base};
-    --bg-card: {bg_card};
-    --bg-raised: {bg_raised};
-
-    --text-heading: {text_heading};
-    --text-body: {text_body};
-    --text-muted: {text_muted};
-
-    --border-neutral: {border_neutral};
-    --highlight-border: {highlight_border};
-
-    --primary-color: {primary};
-    --primary-dark: {primary_dark};
-    --primary-light: {primary_light};
-    --brand-secondary: {secondary};
-    --section-heading-color: var(--brand-secondary);
-    --accent-color: {accent};
-
-    --success-color: {success};
-    --warning-color: {warning};
-    --error-color: {error};
-
-    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
-
-    --shadow-sm: {shadow_sm};
-    --shadow-md: {shadow_md};
-    --shadow-lg: {shadow_lg};
-}}
+    theme_block += f'''
 
 body.{theme_id}-theme,
 body.{theme_id}-theme .main-content,
@@ -231,14 +261,16 @@ body.{theme_id}-theme .verse-number {{
     THEMES_FILE.write_text(css.rstrip() + theme_block)
 
     option_value = html.escape(theme_id, quote=True)
-    option = f'\t\t\t\t\t\t\t\t\t<option value="{option_value}">{html.escape(name)} ({mode.title()})</option>\n'
+    mode_label = "Light | Dark" if mode == "both" else mode.title()
+    option = f'\t\t\t\t\t\t\t\t\t<option value="{option_value}">{html.escape(name)} ({mode_label})</option>\n'
     index = replace_once(index, '\t\t\t\t\t\t\t\t</select>', option + '\t\t\t\t\t\t\t\t</select>', "theme selector option")
     index = replace_once(index, "vigil: 1 };", f"vigil: 1, {theme_id}: 1 }};", "prepaint theme allowlist")
     INDEX_FILE.write_text(index)
 
     theme_class = f"{theme_id}-theme"
     ui = replace_once(ui, "'gnome-theme'];", f"'gnome-theme', '{theme_class}'];", "theme class list")
-    bg_entry = f"\t'{theme_class}':        {{ dark: '{bg_base}', light: '{bg_base}' }},\n"
+    light_bg = light_values["bg_base"] if light_values else dark_values["bg_base"]
+    bg_entry = f"\t'{theme_class}':        {{ dark: '{dark_values['bg_base']}', light: '{light_bg}' }},\n"
     ui = replace_once(ui, "};\n\nexport function updateThemeColor()", bg_entry + "};\n\nexport function updateThemeColor()", "theme-color background map")
     UI_FILE.write_text(ui)
 
