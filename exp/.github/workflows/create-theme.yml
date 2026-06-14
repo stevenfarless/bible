@@ -29,68 +29,12 @@ on:
           - dark
           - light
           - both
-      bg_base:
-        description: Dark base background
+      dark_palette:
+        description: Dark palette, 8 hex values
         required: true
         type: string
-      bg_card:
-        description: Dark card background
-        required: true
-        type: string
-      text_heading:
-        description: Dark heading text
-        required: true
-        type: string
-      text_body:
-        description: Dark body text
-        required: true
-        type: string
-      text_muted:
-        description: Dark muted text
-        required: true
-        type: string
-      primary_color:
-        description: Dark primary color
-        required: true
-        type: string
-      brand_secondary:
-        description: Dark secondary color
-        required: true
-        type: string
-      accent_color:
-        description: Dark accent color
-        required: true
-        type: string
-      light_bg_base:
-        description: Light base background
-        required: false
-        type: string
-      light_bg_card:
-        description: Light card background
-        required: false
-        type: string
-      light_text_heading:
-        description: Light heading text
-        required: false
-        type: string
-      light_text_body:
-        description: Light body text
-        required: false
-        type: string
-      light_text_muted:
-        description: Light muted text
-        required: false
-        type: string
-      light_primary_color:
-        description: Light primary color
-        required: false
-        type: string
-      light_brand_secondary:
-        description: Light secondary color
-        required: false
-        type: string
-      light_accent_color:
-        description: Light accent color
+      light_palette:
+        description: Light palette, 8 hex values
         required: false
         type: string
 
@@ -115,22 +59,8 @@ jobs:
           EXISTING_THEME_ACTION: ${{ inputs.existing_theme_action }}
           RENAME_THEME_ID: ${{ inputs.rename_theme_id }}
           THEME_MODE: ${{ inputs.mode }}
-          BG_BASE: ${{ inputs.bg_base }}
-          BG_CARD: ${{ inputs.bg_card }}
-          TEXT_HEADING: ${{ inputs.text_heading }}
-          TEXT_BODY: ${{ inputs.text_body }}
-          TEXT_MUTED: ${{ inputs.text_muted }}
-          PRIMARY_COLOR: ${{ inputs.primary_color }}
-          BRAND_SECONDARY: ${{ inputs.brand_secondary }}
-          ACCENT_COLOR: ${{ inputs.accent_color }}
-          LIGHT_BG_BASE: ${{ inputs.light_bg_base }}
-          LIGHT_BG_CARD: ${{ inputs.light_bg_card }}
-          LIGHT_TEXT_HEADING: ${{ inputs.light_text_heading }}
-          LIGHT_TEXT_BODY: ${{ inputs.light_text_body }}
-          LIGHT_TEXT_MUTED: ${{ inputs.light_text_muted }}
-          LIGHT_PRIMARY_COLOR: ${{ inputs.light_primary_color }}
-          LIGHT_BRAND_SECONDARY: ${{ inputs.light_brand_secondary }}
-          LIGHT_ACCENT_COLOR: ${{ inputs.light_accent_color }}
+          DARK_PALETTE: ${{ inputs.dark_palette }}
+          LIGHT_PALETTE: ${{ inputs.light_palette }}
         run: python3 .github/scripts/create_theme.py
 
       - name: Verify generated theme
