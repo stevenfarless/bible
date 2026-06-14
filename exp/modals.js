@@ -182,7 +182,19 @@ function _restoreModalFocus(modal) {
     modal.removeEventListener('keydown', _trapModalFocus);
 
     const activeModal = _getTopActiveModal();
-    if (activeModal && activeModal !== modal) return;
+
+if (activeModal && activeModal !== modal) {
+    if (
+        origin instanceof HTMLElement &&
+        origin.isConnected &&
+        activeModal.contains(origin)
+    ) {
+        _modalFocusOrigins.delete(modal);
+        origin.focus({ preventScroll: true });
+    }
+
+    return;
+}
 
     _modalFocusOrigins.delete(modal);
     const target = _resolveFocusOrigin(origin);
