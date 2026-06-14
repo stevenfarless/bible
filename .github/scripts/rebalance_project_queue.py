@@ -2,18 +2,17 @@
 """Keep Lege Lux Project 3 supplied with Now and Next work.
 
 Behavior:
-- Closed issues are moved to Done.
-- Open issues with a blank/invalid status are normalized to Someday.
-- Up to NOW_CAPACITY issues are kept in Now by promoting from Next.
-- Up to NEXT_CAPACITY issues are kept in Next by promoting from Someday.
+- Closed repository issues are moved to Done.
+- Issues moved directly to Done in the Project remain Done.
+- Reopened repository issues return to the active queue.
+- Blank or invalid open statuses are normalized to Someday.
+- Vacancies in Now are filled from Next.
+- Vacancies in Next are filled from Someday.
 - Existing excess items are never demoted automatically.
-- Promotion order favors urgent/critical work, then milestone priority,
-  then useful labels, then the oldest issue number.
 """
 
 from __future__ import annotations
 
-import json
 import os
 import re
 import subprocess
@@ -21,15 +20,19 @@ import sys
 from dataclasses import dataclass
 from typing import Any
 
+from assign_project_statuses import MUTATION, current_status, fetch_project, graphql
+
 OWNER = os.getenv("PROJECT_OWNER", "stevenfarless")
 PROJECT_NUMBER = int(os.getenv("PROJECT_NUMBER", "3"))
 REPOSITORY = os.getenv("REPOSITORY", "stevenfarless/lege-lux")
 NOW_CAPACITY = int(os.getenv("NOW_CAPACITY", "2"))
 NEXT_CAPACITY = int(os.getenv("NEXT_CAPACITY", "4"))
 DRY_RUN = os.getenv("DRY_RUN", "0") != "0"
+TRIGGER_ACTION = os.getenv("TRIGGER_ACTION", "")
+TRIGGER_ISSUE_NUMBER = os.getenv("TRIGGER_ISSUE_NUMBER", "")
 
 OPEN_STATUSES = {"Now", "Next", "Someday"}
-REQUIRED_OPTIONS = OPEN_STATUSES | {"Done"}
+ALL_STATUSES = OPEN_STATUSES | {"Done"}
 
 MILESTONE_PRIORITY = {
     "Critical Performance (CWV)": 1000,
@@ -68,91 +71,6 @@ URGENT_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-QUERY = """
-query($login: String!, $number: Int!, $cursor: String) {
-  user(login: $login) {
-    projectV2(number: $number) {
-      id
-      title
-      fields(first: 100) {
-        nodes {
-          ... on ProjectV2SingleSelectField {
-            id
-            name
-            options {
-              id
-              name
-            }
-          }
-        }
-      }
-      items(first: 100, after: $cursor) {
-        nodes {
-          id
-          fieldValues(first: 100) {
-            nodes {
-              ... on ProjectV2ItemFieldSingleSelectValue {
-                name
-                field {
-                  ... on ProjectV2SingleSelectField {
-                    name
-                  }
-                }
-              }
-            }
-          }
-          content {
-            ... on Issue {
-              number
-              title
-              url
-              state
-              repository {
-                nameWithOwner
-              }
-              milestone {
-                title
-              }
-              labels(first: 30) {
-                nodes {
-                  name
-                }
-              }
-            }
-          }
-        }
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-      }
-    }
-  }
-}
-"""
-
-MUTATION = """
-mutation(
-  $projectId: ID!,
-  $itemId: ID!,
-  $fieldId: ID!,
-  $optionId: String!
-) {
-  updateProjectV2ItemFieldValue(
-    input: {
-      projectId: $projectId,
-      itemId: $itemId,
-      fieldId: $fieldId,
-      value: {singleSelectOptionId: $optionId}
-    }
-  ) {
-    projectV2Item {
-      id
-    }
-  }
-}
-"""
-
 
 @dataclass
 class ProjectIssue:
@@ -164,69 +82,6 @@ class ProjectIssue:
     labels: set[str]
     status: str | None
     original_status: str | None
-
-
-def graphql(query: str, variables: dict[str, Any]) -> dict[str, Any]:
-    payload = json.dumps({"query": query, "variables": variables})
-    result = subprocess.run(
-        ["gh", "api", "graphql", "--input", "-"],
-        input=payload,
-        text=True,
-        capture_output=True,
-    )
-
-    if result.returncode != 0:
-        print(result.stderr.strip(), file=sys.stderr)
-        raise SystemExit(result.returncode)
-
-    response = json.loads(result.stdout)
-    if response.get("errors"):
-        print(json.dumps(response["errors"], indent=2), file=sys.stderr)
-        raise SystemExit(1)
-
-    return response["data"]
-
-
-def fetch_project() -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    cursor = None
-    project = None
-    items: list[dict[str, Any]] = []
-
-    while True:
-        data = graphql(
-            QUERY,
-            {"login": OWNER, "number": PROJECT_NUMBER, "cursor": cursor},
-        )
-        current = data.get("user", {}).get("projectV2")
-
-        if current is None:
-            raise SystemExit(
-                f"Project {OWNER}/{PROJECT_NUMBER} was not found or is not accessible."
-            )
-
-        if project is None:
-            project = current
-
-        page = current["items"]
-        items.extend(page["nodes"])
-
-        if not page["pageInfo"]["hasNextPage"]:
-            break
-
-        cursor = page["pageInfo"]["endCursor"]
-
-    assert project is not None
-    return project, items
-
-
-def current_status(item: dict[str, Any]) -> str | None:
-    for value in item.get("fieldValues", {}).get("nodes", []):
-        if not value:
-            continue
-        field = value.get("field") or {}
-        if field.get("name") == "Status":
-            return value.get("name")
-    return None
 
 
 def parse_issues(items: list[dict[str, Any]]) -> list[ProjectIssue]:
@@ -272,6 +127,14 @@ def priority_key(issue: ProjectIssue) -> tuple[int, int]:
         score += 1000
 
     return (-score, issue.number)
+
+
+def is_triggered_reopen(issue: ProjectIssue) -> bool:
+    return (
+        TRIGGER_ACTION == "reopened"
+        and TRIGGER_ISSUE_NUMBER.isdigit()
+        and issue.number == int(TRIGGER_ISSUE_NUMBER)
+    )
 
 
 def set_status(
@@ -323,7 +186,7 @@ def main() -> None:
         raise SystemExit('Project has no single-select field named "Status".')
 
     options = {option["name"]: option["id"] for option in status_field["options"]}
-    missing = REQUIRED_OPTIONS - options.keys()
+    missing = ALL_STATUSES - options.keys()
     if missing:
         raise SystemExit(
             "Missing required Status options: " + ", ".join(sorted(missing))
@@ -338,6 +201,7 @@ def main() -> None:
         f"Now capacity: {NOW_CAPACITY}\n"
         f"Next capacity: {NEXT_CAPACITY}\n"
         f"Dry run: {DRY_RUN}\n"
+        f"Trigger action: {TRIGGER_ACTION or '(none)'}\n"
     )
 
     for issue in sorted(issues, key=lambda value: value.number):
@@ -351,7 +215,17 @@ def main() -> None:
                 "issue closed",
                 changes,
             )
-        elif issue.status not in OPEN_STATUSES:
+        elif issue.status == "Done" and is_triggered_reopen(issue):
+            set_status(
+                project["id"],
+                status_field["id"],
+                options,
+                issue,
+                "Someday",
+                "issue reopened",
+                changes,
+            )
+        elif issue.status not in ALL_STATUSES:
             set_status(
                 project["id"],
                 status_field["id"],
@@ -362,15 +236,18 @@ def main() -> None:
                 changes,
             )
 
-    open_issues = [issue for issue in issues if issue.state == "OPEN"]
+    active_issues = [
+        issue
+        for issue in issues
+        if issue.state == "OPEN" and issue.status in OPEN_STATUSES
+    ]
 
-    now_items = [issue for issue in open_issues if issue.status == "Now"]
-    next_items = [issue for issue in open_issues if issue.status == "Next"]
+    now_items = [issue for issue in active_issues if issue.status == "Now"]
+    next_items = [issue for issue in active_issues if issue.status == "Next"]
 
     now_slots = max(0, NOW_CAPACITY - len(now_items))
     if now_slots:
-        candidates = sorted(next_items, key=priority_key)
-        for issue in candidates[:now_slots]:
+        for issue in sorted(next_items, key=priority_key)[:now_slots]:
             set_status(
                 project["id"],
                 status_field["id"],
@@ -381,14 +258,13 @@ def main() -> None:
                 changes,
             )
 
-    next_items = [issue for issue in open_issues if issue.status == "Next"]
+    next_items = [issue for issue in active_issues if issue.status == "Next"]
     next_slots = max(0, NEXT_CAPACITY - len(next_items))
     if next_slots:
-        candidates = sorted(
-            [issue for issue in open_issues if issue.status == "Someday"],
-            key=priority_key,
-        )
-        for issue in candidates[:next_slots]:
+        someday_candidates = [
+            issue for issue in active_issues if issue.status == "Someday"
+        ]
+        for issue in sorted(someday_candidates, key=priority_key)[:next_slots]:
             set_status(
                 project["id"],
                 status_field["id"],
@@ -426,15 +302,15 @@ def main() -> None:
 
     _, refreshed_raw_items = fetch_project()
     refreshed = parse_issues(refreshed_raw_items)
-    unresolved = [
-        issue
-        for issue in refreshed
-        if (
-            issue.state == "OPEN" and issue.status not in OPEN_STATUSES
-        ) or (
-            issue.state == "CLOSED" and issue.status != "Done"
-        )
-    ]
+    unresolved = []
+
+    for issue in refreshed:
+        if issue.state == "CLOSED" and issue.status != "Done":
+            unresolved.append(issue)
+        elif issue.state == "OPEN" and issue.status not in ALL_STATUSES:
+            unresolved.append(issue)
+        elif is_triggered_reopen(issue) and issue.status == "Done":
+            unresolved.append(issue)
 
     if unresolved:
         for issue in unresolved:
