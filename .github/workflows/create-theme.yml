@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       theme_name:
-        description: Display name, such as Midnight Blue
+        description: Theme name
         required: true
         type: string
       existing_theme_action:
-        description: What to do if the generated theme ID already exists
+        description: Existing theme
         required: true
         default: stop
         type: choice
@@ -17,11 +17,11 @@ on:
           - overwrite
           - rename
       rename_theme_id:
-        description: New lowercase ID when action is rename
+        description: Rename ID
         required: false
         type: string
       mode:
-        description: Theme mode
+        description: Mode
         required: true
         default: dark
         type: choice
@@ -29,35 +29,35 @@ on:
           - dark
           - light
       bg_base:
-        description: Base background, with or without #
+        description: Base background
         required: true
         type: string
       bg_card:
-        description: Card and panel background, with or without #
+        description: Card background
         required: true
         type: string
       text_heading:
-        description: Heading text, with or without #
+        description: Heading text
         required: true
         type: string
       text_body:
-        description: Scripture and body text, with or without #
+        description: Body text
         required: true
         type: string
       text_muted:
-        description: Muted text and verse numbers, with or without #
+        description: Muted text
         required: true
         type: string
       primary_color:
-        description: Primary interactive color, with or without #
+        description: Primary color
         required: true
         type: string
       brand_secondary:
-        description: Secondary brand and section-heading color, with or without #
+        description: Secondary color
         required: true
         type: string
       accent_color:
-        description: Supporting accent color, with or without #
+        description: Accent color
         required: true
         type: string
 
@@ -108,5 +108,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add css/themes.css index.html ui.js
           git commit -m "feat: add generated theme"
-          git pull --rebase origin exp
           git push origin exp
