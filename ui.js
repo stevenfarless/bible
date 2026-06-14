@@ -225,7 +225,7 @@ export function updateThemeIcon(isLightMode) {
 	}
 }
 
-const ALL_THEME_CLASSES = ['lux-theme', 'vespers-theme', 'vigil-theme', 'dracula-theme', 'dracula2test-theme', 'onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme', 'gnome-theme'];
+const ALL_THEME_CLASSES = ['lux-theme', 'vespers-theme', 'vigil-theme', 'dracula-theme', 'dracula2test-theme', 'onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme', 'gnome-theme', 'uxorem-amo-theme'];
 
 // bg-base values sourced from css/tokens.css (Dracula/Alucard) and css/themes.css (all others).
 // dark = the theme's dark-mode --bg-base; light = the theme's light-mode --bg-base.
@@ -242,6 +242,7 @@ const THEME_BG = {
 	'lux-theme':		  { dark: '#1a1614', light: '#f5f2ec' },
 	'vespers-theme':      { dark: '#1a1714', light: '#f5f2ec' },
 	'vigil-theme':        { dark: '#000000', light: '#f5f2ec' },
+	'uxorem-amo-theme':        { dark: '#0E0004', light: '#0E0004' },
 };
 
 export function updateThemeColor() {

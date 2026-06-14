@@ -24,7 +24,7 @@
 			var el = document.documentElement;
 			var theme = 'basic';
 			try { theme = localStorage.getItem('colorTheme') || 'basic'; } catch (_) {}
-			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1, lux: 1, vespers: 1, vigil: 1 };
+			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1, lux: 1, vespers: 1, vigil: 1, uxorem-amo: 1 };
 			if (!valid[theme]) theme = 'basic';
 			el.classList.add(theme + '-theme', 'no-color-transition');
 
@@ -338,6 +338,7 @@
 									<option value="basic">Basic Black (Dark) | Basic White (Light)</option>
 									<option value="geek">The Geek Shall Inherit The Earth (Dark OLED)</option>
 									<option value="gnome">Adwaitish (Light | Dark)</option>
+									<option value="uxorem-amo">Uxorem Amo (Dark)</option>
 								</select>
 								<small class="help-text">Choose your preferred color scheme.</small>
 							</div>
