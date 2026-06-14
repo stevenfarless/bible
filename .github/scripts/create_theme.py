@@ -29,6 +29,13 @@ def color(name):
     return f"#{value.lstrip('#').upper()}"
 
 
+def slugify_theme_name(name):
+    slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+    if not slug:
+        raise SystemExit("THEME_NAME must contain at least one letter or number")
+    return slug
+
+
 def rgb(hex_color):
     return tuple(int(hex_color[index:index + 2], 16) / 255 for index in (1, 3, 5))
 
@@ -101,10 +108,9 @@ def resolve_theme_id(initial_theme_id):
 
 def main():
     name = required("THEME_NAME")
-    initial_theme_id = required("THEME_ID")
+    initial_theme_id = slugify_theme_name(name)
     mode = required("THEME_MODE")
 
-    validate_theme_id(initial_theme_id, "THEME_ID")
     if mode not in {"dark", "light"}:
         raise SystemExit("THEME_MODE must be dark or light")
 
