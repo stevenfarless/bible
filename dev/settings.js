@@ -329,16 +329,33 @@ export function updateCopyright(app) {
  * Called once during settings init.
  */
 export function initSubAccordions() {
-    document.querySelectorAll('.sub-accordion-header').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const section = btn.closest('.sub-accordion-section');
+    const sections = Array.from(document.querySelectorAll('.sub-accordion-section'));
+
+    const syncSection = (section) => {
+        const button = section.querySelector('.sub-accordion-header');
+        const panel = section.querySelector('.sub-accordion-panel');
+        const isActive = section.classList.contains('active');
+
+        button?.setAttribute('aria-expanded', String(isActive));
+        if (panel) {
+            panel.inert = !isActive;
+            panel.setAttribute('aria-hidden', String(!isActive));
+        }
+    };
+
+    sections.forEach((section) => {
+        const button = section.querySelector('.sub-accordion-header');
+        syncSection(section);
+
+        button?.addEventListener('click', () => {
             const isActive = section.classList.contains('active');
-            // Collapse all siblings first
-            section.closest('.about-group')
-                .querySelectorAll('.sub-accordion-section')
-                .forEach(s => s.classList.remove('active'));
+            const siblings = Array.from(
+                section.closest('.about-group').querySelectorAll('.sub-accordion-section')
+            );
+
+            siblings.forEach((entry) => entry.classList.remove('active'));
             if (!isActive) section.classList.add('active');
-            btn.setAttribute('aria-expanded', (!isActive).toString());
+            siblings.forEach(syncSection);
         });
     });
 }

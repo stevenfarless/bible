@@ -1,0 +1,703 @@
+name: "fix: modal isolation and focus transitions"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fix-modal-isolation-and-focus
+  cancel-in-progress: false
+
+jobs:
+  fix-modal-isolation-and-focus:
+    name: Correct modal isolation and focus transitions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Apply modal isolation and focus fixes
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              if new in text:
+                  print(f"Already fixed: {label}")
+                  return text
+
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(
+                      f"Expected exactly one match for {label}; found {count}. "
+                      "No files were written."
+                  )
+
+              print(f"Applying: {label}")
+              return text.replace(old, new, 1)
+
+
+          index_path = Path("index.html")
+          events_path = Path("events.js")
+          modals_path = Path("modals.js")
+          app_path = Path("app.js")
+          settings_path = Path("settings.js")
+
+          index = index_path.read_text(encoding="utf-8")
+          events = events_path.read_text(encoding="utf-8")
+          modals = modals_path.read_text(encoding="utf-8")
+          app = app_path.read_text(encoding="utf-8")
+          settings = settings_path.read_text(encoding="utf-8")
+
+          static_modal_ids = [
+              "bookModal",
+              "chapterModal",
+              "verseModal",
+              "translationModal",
+              "settingsModal",
+              "loginModal",
+              "signupModal",
+              "userMenuModal",
+              "referencesModal",
+              "deuterocanonInfoModal",
+          ]
+
+          for modal_id in static_modal_ids:
+              old = f'aria-labelledby="{modal_id}Title">'
+              new = f'aria-labelledby="{modal_id}Title" aria-hidden="true" inert>'
+              index = replace_once(index, old, new, f"{modal_id} closed accessibility state")
+
+          for modal_id in ["changeEmailModal", "changePasswordModal"]:
+              old = f'aria-labelledby="{modal_id}Title">'
+              new = f'aria-labelledby="{modal_id}Title" aria-hidden="true" inert>'
+              events = replace_once(events, old, new, f"{modal_id} closed accessibility state")
+
+          events = replace_once(
+              events,
+              '<button class="close-btn" id="closeChangeEmailModal">&times;</button>',
+              '<button class="close-btn" id="closeChangeEmailModal" aria-label="Close" type="button">&times;</button>',
+              "Change Email close button name and type",
+          )
+          events = replace_once(
+              events,
+              '<button class="close-btn" id="closeChangePasswordModal">&times;</button>',
+              '<button class="close-btn" id="closeChangePasswordModal" aria-label="Close" type="button">&times;</button>',
+              "Change Password close button name and type",
+          )
+
+          section_start = modals.find("const _modalFocusableSelector = [")
+          section_end = modals.find("// ── Book modal", section_start)
+          if section_start == -1 or section_end == -1:
+              raise SystemExit("Could not locate the modal focus-management section in modals.js")
+
+          new_modal_section = """const _modalFocusableSelector = [
+              'a[href]',
+              'button:not([disabled])',
+              'input:not([disabled]):not([type="hidden"])',
+              'select:not([disabled])',
+              'textarea:not([disabled])',
+              '[contenteditable="true"]',
+              '[tabindex]:not([tabindex="-1"])',
+          ].join(',');
+
+          const _modalFocusOrigins = new WeakMap();
+          const _modalBackgroundStates = new Map();
+
+          function _getModalHeading(modal) {
+              const labelledBy = modal.getAttribute('aria-labelledby');
+              if (labelledBy) {
+                  const labelledHeading = document.getElementById(labelledBy);
+                  if (labelledHeading) return labelledHeading;
+              }
+              return modal.querySelector('h1, h2, h3, h4, h5, h6');
+          }
+
+          function _ensureModalSemantics(modal) {
+              modal.setAttribute('role', 'dialog');
+              modal.setAttribute('aria-modal', 'true');
+
+              const heading = _getModalHeading(modal);
+              if (!heading) return;
+
+              if (!heading.id) {
+                  heading.id = `${modal.id || 'modal'}Title`;
+              }
+              heading.setAttribute('tabindex', '-1');
+              modal.setAttribute('aria-labelledby', heading.id);
+          }
+
+          function _getTopActiveModal() {
+              const active = document.querySelectorAll('.modal.active:not(.closing)');
+              return active.length > 0 ? active[active.length - 1] : null;
+          }
+
+          function _rememberBackgroundState(element) {
+              if (_modalBackgroundStates.has(element)) return;
+              _modalBackgroundStates.set(element, {
+                  inert: element.inert,
+                  ariaHidden: element.getAttribute('aria-hidden'),
+              });
+          }
+
+          function _restoreBackgroundState(element) {
+              const state = _modalBackgroundStates.get(element);
+              if (!state) return;
+
+              element.inert = state.inert;
+              if (state.ariaHidden === null) {
+                  element.removeAttribute('aria-hidden');
+              } else {
+                  element.setAttribute('aria-hidden', state.ariaHidden);
+              }
+              _modalBackgroundStates.delete(element);
+          }
+
+          function _syncModalIsolation() {
+              const activeModal = _getTopActiveModal();
+
+              for (const child of document.body.children) {
+                  if (!(child instanceof HTMLElement)) continue;
+                  if (child.tagName === 'SCRIPT' || child.id === 'toast') continue;
+
+                  const isModal = child.classList.contains('modal');
+
+                  if (activeModal && child === activeModal) {
+                      if (!isModal) _restoreBackgroundState(child);
+                      child.inert = false;
+                      child.removeAttribute('aria-hidden');
+                      continue;
+                  }
+
+                  if (activeModal) {
+                      if (!isModal) _rememberBackgroundState(child);
+                      child.inert = true;
+                      child.setAttribute('aria-hidden', 'true');
+                      continue;
+                  }
+
+                  if (isModal) {
+                      child.inert = true;
+                      child.setAttribute('aria-hidden', 'true');
+                  } else {
+                      _restoreBackgroundState(child);
+                  }
+              }
+
+              if (activeModal) {
+                  document.addEventListener('focusin', _enforceModalFocus, true);
+              } else {
+                  document.removeEventListener('focusin', _enforceModalFocus, true);
+              }
+          }
+
+          function _getModalFocusableElements(modal) {
+              return Array.from(modal.querySelectorAll(_modalFocusableSelector)).filter((element) => (
+                  element instanceof HTMLElement
+                  && !element.hidden
+                  && !element.inert
+                  && element.getAttribute('aria-hidden') !== 'true'
+                  && element.getClientRects().length > 0
+              ));
+          }
+
+          function _focusModal(modal) {
+              const focusable = _getModalFocusableElements(modal);
+              const target = focusable[0] || _getModalHeading(modal) || modal;
+
+              if (target === modal && !modal.hasAttribute('tabindex')) {
+                  modal.setAttribute('tabindex', '-1');
+              }
+
+              target.focus({ preventScroll: true });
+          }
+
+          function _enforceModalFocus(event) {
+              const activeModal = _getTopActiveModal();
+              if (!activeModal || activeModal.contains(event.target)) return;
+
+              event.stopPropagation();
+              _focusModal(activeModal);
+          }
+
+          function _trapModalFocus(event) {
+              if (event.key !== 'Tab') return;
+
+              const modal = event.currentTarget;
+              const focusable = _getModalFocusableElements(modal);
+
+              if (focusable.length === 0) {
+                  event.preventDefault();
+                  _focusModal(modal);
+                  return;
+              }
+
+              const first = focusable[0];
+              const last = focusable[focusable.length - 1];
+              const active = document.activeElement;
+
+              if (event.shiftKey && (active === first || !modal.contains(active))) {
+                  event.preventDefault();
+                  last.focus({ preventScroll: true });
+                  return;
+              }
+
+              if (!event.shiftKey && (active === last || !modal.contains(active))) {
+                  event.preventDefault();
+                  first.focus({ preventScroll: true });
+              }
+          }
+
+          function _resolveFocusOrigin(origin) {
+              let target = origin;
+
+              while (target instanceof HTMLElement) {
+                  const containingModal = target.closest('.modal');
+                  if (!containingModal || containingModal.classList.contains('active')) return target;
+
+                  target = _modalFocusOrigins.get(containingModal);
+                  _modalFocusOrigins.delete(containingModal);
+              }
+
+              return null;
+          }
+
+          function _restoreModalFocus(modal) {
+              const origin = _modalFocusOrigins.get(modal);
+              modal.removeEventListener('keydown', _trapModalFocus);
+
+              const activeModal = _getTopActiveModal();
+              if (activeModal && activeModal !== modal) return;
+
+              _modalFocusOrigins.delete(modal);
+              const target = _resolveFocusOrigin(origin);
+              if (!(target instanceof HTMLElement) || !target.isConnected) return;
+
+              target.focus({ preventScroll: true });
+          }
+
+          function _finishModalClose(modal) {
+              modal.classList.remove('active', 'closing');
+              modal.inert = true;
+              modal.setAttribute('aria-hidden', 'true');
+              _maybeRemoveModalOpen();
+              _syncModalIsolation();
+              _restoreModalFocus(modal);
+          }
+
+          export function openModal(app, modal) {
+              if (!modal) return;
+
+              _ensureModalSemantics(modal);
+
+              if (!modal.classList.contains('active')) {
+                  const active = document.activeElement;
+                  _modalFocusOrigins.set(
+                      modal,
+                      active instanceof HTMLElement && active !== document.body ? active : null
+                  );
+              }
+
+              modal.classList.remove('closing');
+              modal.inert = false;
+              modal.removeAttribute('aria-hidden');
+              modal.addEventListener('keydown', _trapModalFocus);
+              modal.classList.add('active');
+              document.body.classList.add('modal-open');
+
+              _focusModal(modal);
+              _syncModalIsolation();
+          }
+
+          export function closeModal(app, modal) {
+              if (!modal || !modal.classList.contains('active')) return;
+              if (modal.classList.contains('closing')) return;
+
+              if (modal === app.translationModal) {
+                  _translationKbClear(app);
+              }
+
+              if (modal === app.settingsModal || modal === app.referencesModal) {
+                  modal.classList.add('closing');
+
+                  if (modal === app.settingsModal) {
+                      setTimeout(() => _finishModalClose(modal), 320);
+                  } else {
+                      const content = modal.querySelector('.modal-content');
+                      content.style.animation = 'slideDownToBottom 250ms ease';
+                      setTimeout(() => {
+                          _finishModalClose(modal);
+                          content.style.animation = '';
+                      }, 250);
+                  }
+              } else {
+                  _finishModalClose(modal);
+              }
+          }
+
+          function _maybeRemoveModalOpen() {
+              if (!document.querySelector('.modal.active:not(.closing)')) {
+                  document.body.classList.remove('modal-open');
+              }
+          }
+
+          """
+
+          modals = modals[:section_start] + new_modal_section + modals[section_end:]
+          print("Applying: modal isolation, focus containment, and transition-safe restoration")
+
+          old_initialize_accordion = """    initializeAccordion() {
+                  document.querySelectorAll('.accordion-header').forEach((header) => {
+                      header.addEventListener('click', () => {
+                          const section = header.closest('.accordion-section');
+                          const isActive = section.classList.contains('active');
+                          document.querySelectorAll('.accordion-section').forEach(s => s.classList.remove('active'));
+                          if (!isActive) section.classList.add('active');
+                      });
+                  });
+                  initSubAccordions();
+                  populateAboutVersion();
+                  const openAccountBtn = document.getElementById('openAccountBtn');
+                  if (openAccountBtn) {
+                      openAccountBtn.addEventListener('click', () => {
+                          this.closeModal(this.settingsModal);
+                          this.openModal(this.currentUser ? this.userMenuModal : this.loginModal);
+                      });
+                  }
+              }
+          """
+
+          new_initialize_accordion = """    initializeAccordion() {
+                  const sections = Array.from(document.querySelectorAll('.accordion-section'));
+
+                  const syncSection = (section) => {
+                      const header = section.querySelector('.accordion-header');
+                      const panel = section.querySelector('.accordion-panel');
+                      const isActive = section.classList.contains('active');
+
+                      header?.setAttribute('aria-expanded', String(isActive));
+                      if (panel) {
+                          panel.inert = !isActive;
+                          panel.setAttribute('aria-hidden', String(!isActive));
+                      }
+                  };
+
+                  sections.forEach((section) => {
+                      const header = section.querySelector('.accordion-header');
+                      syncSection(section);
+
+                      header?.addEventListener('click', () => {
+                          const isActive = section.classList.contains('active');
+                          sections.forEach((entry) => entry.classList.remove('active'));
+                          if (!isActive) section.classList.add('active');
+                          sections.forEach(syncSection);
+                      });
+                  });
+
+                  initSubAccordions();
+                  populateAboutVersion();
+                  const openAccountBtn = document.getElementById('openAccountBtn');
+                  if (openAccountBtn) {
+                      openAccountBtn.addEventListener('click', () => {
+                          this.closeModal(this.settingsModal);
+                          this.openModal(this.currentUser ? this.userMenuModal : this.loginModal);
+                      });
+                  }
+              }
+          """
+
+          app = replace_once(
+              app,
+              old_initialize_accordion,
+              new_initialize_accordion,
+              "primary accordion inert and aria-hidden state",
+          )
+
+          old_sub_accordions = """export function initSubAccordions() {
+              document.querySelectorAll('.sub-accordion-header').forEach(btn => {
+                  btn.addEventListener('click', () => {
+                      const section = btn.closest('.sub-accordion-section');
+                      const isActive = section.classList.contains('active');
+                      // Collapse all siblings first
+                      section.closest('.about-group')
+                          .querySelectorAll('.sub-accordion-section')
+                          .forEach(s => s.classList.remove('active'));
+                      if (!isActive) section.classList.add('active');
+                      btn.setAttribute('aria-expanded', (!isActive).toString());
+                  });
+              });
+          }
+          """
+
+          new_sub_accordions = """export function initSubAccordions() {
+              const sections = Array.from(document.querySelectorAll('.sub-accordion-section'));
+
+              const syncSection = (section) => {
+                  const button = section.querySelector('.sub-accordion-header');
+                  const panel = section.querySelector('.sub-accordion-panel');
+                  const isActive = section.classList.contains('active');
+
+                  button?.setAttribute('aria-expanded', String(isActive));
+                  if (panel) {
+                      panel.inert = !isActive;
+                      panel.setAttribute('aria-hidden', String(!isActive));
+                  }
+              };
+
+              sections.forEach((section) => {
+                  const button = section.querySelector('.sub-accordion-header');
+                  syncSection(section);
+
+                  button?.addEventListener('click', () => {
+                      const isActive = section.classList.contains('active');
+                      const siblings = Array.from(
+                          section.closest('.about-group').querySelectorAll('.sub-accordion-section')
+                      );
+
+                      siblings.forEach((entry) => entry.classList.remove('active'));
+                      if (!isActive) section.classList.add('active');
+                      siblings.forEach(syncSection);
+                  });
+              });
+          }
+          """
+
+          settings = replace_once(
+              settings,
+              old_sub_accordions,
+              new_sub_accordions,
+              "sub-accordion inert and aria-hidden state",
+          )
+
+          index_path.write_text(index, encoding="utf-8")
+          events_path.write_text(events, encoding="utf-8")
+          modals_path.write_text(modals, encoding="utf-8")
+          app_path.write_text(app, encoding="utf-8")
+          settings_path.write_text(settings, encoding="utf-8")
+          PY
+
+      - name: Verify source changes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          node --check modals.js
+          node --check events.js
+          node --check app.js
+          node --check settings.js
+          git diff --check
+
+          python3 <<'PY'
+          from pathlib import Path
+
+          index = Path("index.html").read_text(encoding="utf-8")
+          events = Path("events.js").read_text(encoding="utf-8")
+          modals = Path("modals.js").read_text(encoding="utf-8")
+          app = Path("app.js").read_text(encoding="utf-8")
+          settings = Path("settings.js").read_text(encoding="utf-8")
+
+          for modal_id in [
+              "bookModal",
+              "chapterModal",
+              "verseModal",
+              "translationModal",
+              "settingsModal",
+              "loginModal",
+              "signupModal",
+              "userMenuModal",
+              "referencesModal",
+              "deuterocanonInfoModal",
+          ]:
+              required = f'aria-labelledby="{modal_id}Title" aria-hidden="true" inert>'
+              if required not in index:
+                  raise SystemExit(f"Missing closed modal state: {modal_id}")
+
+          for modal_id in ["changeEmailModal", "changePasswordModal"]:
+              required = f'aria-labelledby="{modal_id}Title" aria-hidden="true" inert>'
+              if required not in events:
+                  raise SystemExit(f"Missing dynamic closed modal state: {modal_id}")
+
+          required_modal_logic = {
+              "background isolation": "function _syncModalIsolation()",
+              "focus escape guard": "function _enforceModalFocus(event)",
+              "transition focus chain": "function _resolveFocusOrigin(origin)",
+              "closed modal hiding": "modal.setAttribute('aria-hidden', 'true');",
+              "active modal exposure": "modal.removeAttribute('aria-hidden');",
+              "inert background": "child.inert = true;",
+          }
+
+          for label, needle in required_modal_logic.items():
+              if needle not in modals:
+                  raise SystemExit(f"Missing modal requirement: {label}: {needle}")
+
+          if "panel.inert = !isActive;" not in app:
+              raise SystemExit("Primary accordion panels are not made inert when collapsed")
+          if "panel.inert = !isActive;" not in settings:
+              raise SystemExit("Sub-accordion panels are not made inert when collapsed")
+
+          required_close_buttons = [
+              'id="closeChangeEmailModal" aria-label="Close" type="button"',
+              'id="closeChangePasswordModal" aria-label="Close" type="button"',
+          ]
+          for required in required_close_buttons:
+              if required not in events:
+                  raise SystemExit(f"Dynamic close button verification failed: {required}")
+
+          print("All source-level modal accessibility checks passed")
+          PY
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      - name: Install browser test dependencies
+        run: |
+          npm install
+          npm install --no-save @playwright/test
+          npx playwright install chromium --with-deps
+
+      - name: Start local server
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 > /tmp/lege-lux-server.log 2>&1 &
+          for i in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:8080 > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/lege-lux-server.log
+          exit 1
+
+      - name: Test modal behavior in Chromium
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          import { chromium } from '@playwright/test';
+
+          const browser = await chromium.launch({ headless: true });
+          const page = await browser.newPage();
+
+          try {
+            await page.goto('http://127.0.0.1:8080', { waitUntil: 'domcontentloaded' });
+            await page.waitForFunction(() => !document.body.classList.contains('initializing'));
+
+            const settings = page.locator('#settingsModal');
+            if (await settings.getAttribute('aria-hidden') !== 'true') {
+              throw new Error('Closed Settings modal is exposed to the accessibility tree');
+            }
+            if (!(await settings.evaluate((element) => element.inert))) {
+              throw new Error('Closed Settings modal is not inert');
+            }
+
+            await page.click('#settingsBtn');
+            await page.waitForSelector('#settingsModal.active');
+
+            if (await settings.getAttribute('aria-hidden') !== null) {
+              throw new Error('Open Settings modal remains aria-hidden');
+            }
+            if (await settings.evaluate((element) => element.inert)) {
+              throw new Error('Open Settings modal remains inert');
+            }
+
+            const topChrome = page.locator('#topChrome');
+            if (!(await topChrome.evaluate((element) => element.inert))) {
+              throw new Error('Background application chrome is not inert');
+            }
+            if (await topChrome.getAttribute('aria-hidden') !== 'true') {
+              throw new Error('Background application chrome is not aria-hidden');
+            }
+
+            const accountPanel = page.locator('[data-section="account"] > .accordion-panel');
+            if (!(await accountPanel.evaluate((element) => element.inert))) {
+              throw new Error('Collapsed Account accordion panel is focusable');
+            }
+
+            await page.evaluate(() => document.getElementById('settingsBtn').focus());
+            await page.waitForFunction(() => document.getElementById('settingsModal').contains(document.activeElement));
+
+            await page.click('[data-section="account"] > .accordion-header');
+            if (await accountPanel.evaluate((element) => element.inert)) {
+              throw new Error('Expanded Account accordion panel remains inert');
+            }
+
+            const appearancePanel = page.locator('[data-section="appearance"] > .accordion-panel');
+            if (!(await appearancePanel.evaluate((element) => element.inert))) {
+              throw new Error('Collapsed Appearance accordion panel remains focusable');
+            }
+
+            await page.click('#openAccountBtn');
+            await page.waitForSelector('#loginModal.active');
+            await page.waitForTimeout(450);
+
+            const login = page.locator('#loginModal');
+            if (!(await login.evaluate((element) => element.contains(document.activeElement)))) {
+              throw new Error('Focus escaped the Login modal after Settings finished closing');
+            }
+            if (await settings.getAttribute('aria-hidden') !== 'true') {
+              throw new Error('Settings modal was not hidden after its closing animation');
+            }
+            if (!(await settings.evaluate((element) => element.inert))) {
+              throw new Error('Settings modal was not made inert after closing');
+            }
+
+            const focusable = login.locator('a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+            const count = await focusable.count();
+            if (count < 2) throw new Error('Login modal does not have enough controls to test wrapping');
+
+            await focusable.first().focus();
+            await page.keyboard.press('Shift+Tab');
+            if (!(await focusable.last().evaluate((element) => element === document.activeElement))) {
+              throw new Error('Shift+Tab did not wrap to the final modal control');
+            }
+
+            await page.keyboard.press('Tab');
+            if (!(await focusable.first().evaluate((element) => element === document.activeElement))) {
+              throw new Error('Tab did not wrap to the first modal control');
+            }
+
+            await page.click('#closeLoginModal');
+            await page.waitForFunction(() => !document.getElementById('loginModal').classList.contains('active'));
+            await page.waitForFunction(() => document.activeElement?.id === 'settingsBtn');
+
+            if (await topChrome.evaluate((element) => element.inert)) {
+              throw new Error('Background application chrome remained inert after closing all modals');
+            }
+            if (await topChrome.getAttribute('aria-hidden') !== null) {
+              throw new Error('Background application chrome remained aria-hidden after closing all modals');
+            }
+
+            console.log('Modal accessibility browser checks passed');
+          } finally {
+            await browser.close();
+          }
+          JS
+
+      - name: Show changes
+        run: |
+          git status --short
+          git diff -- index.html events.js modals.js app.js settings.js
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet -- index.html events.js modals.js app.js settings.js; then
+            echo "Modal isolation and focus fixes are already applied"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index.html events.js modals.js app.js settings.js
+          git commit -m "fix: correct modal isolation and focus transitions"
+          git pull --rebase origin exp
+          git push origin exp

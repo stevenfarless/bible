@@ -6,45 +6,264 @@ import { idbIsDownloaded, idbDeleteTranslation } from './translation-store.js';
 
 // ── Open / close ─────────────────────────────────────────────────────────────
 
+const _modalFocusableSelector = [
+    'a[href]',
+    'button:not([disabled])',
+    'input:not([disabled]):not([type="hidden"])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    '[contenteditable="true"]',
+    '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
+const _modalFocusOrigins = new WeakMap();
+const _modalBackgroundStates = new Map();
+
+function _getModalHeading(modal) {
+    const labelledBy = modal.getAttribute('aria-labelledby');
+    if (labelledBy) {
+        const labelledHeading = document.getElementById(labelledBy);
+        if (labelledHeading) return labelledHeading;
+    }
+    return modal.querySelector('h1, h2, h3, h4, h5, h6');
+}
+
+function _ensureModalSemantics(modal) {
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+
+    const heading = _getModalHeading(modal);
+    if (!heading) return;
+
+    if (!heading.id) {
+        heading.id = `${modal.id || 'modal'}Title`;
+    }
+    heading.setAttribute('tabindex', '-1');
+    modal.setAttribute('aria-labelledby', heading.id);
+}
+
+function _getTopActiveModal() {
+    const active = document.querySelectorAll('.modal.active:not(.closing)');
+    return active.length > 0 ? active[active.length - 1] : null;
+}
+
+function _rememberBackgroundState(element) {
+    if (_modalBackgroundStates.has(element)) return;
+    _modalBackgroundStates.set(element, {
+        inert: element.inert,
+        ariaHidden: element.getAttribute('aria-hidden'),
+    });
+}
+
+function _restoreBackgroundState(element) {
+    const state = _modalBackgroundStates.get(element);
+    if (!state) return;
+
+    element.inert = state.inert;
+    if (state.ariaHidden === null) {
+        element.removeAttribute('aria-hidden');
+    } else {
+        element.setAttribute('aria-hidden', state.ariaHidden);
+    }
+    _modalBackgroundStates.delete(element);
+}
+
+function _syncModalIsolation() {
+    const activeModal = _getTopActiveModal();
+
+    for (const child of document.body.children) {
+        if (!(child instanceof HTMLElement)) continue;
+        if (child.tagName === 'SCRIPT' || child.id === 'toast') continue;
+
+        const isModal = child.classList.contains('modal');
+
+        if (activeModal && child === activeModal) {
+            if (!isModal) _restoreBackgroundState(child);
+            child.inert = false;
+            child.removeAttribute('aria-hidden');
+            continue;
+        }
+
+        if (activeModal) {
+            if (!isModal) _rememberBackgroundState(child);
+            child.inert = true;
+            child.setAttribute('aria-hidden', 'true');
+            continue;
+        }
+
+        if (isModal) {
+            child.inert = true;
+            child.setAttribute('aria-hidden', 'true');
+        } else {
+            _restoreBackgroundState(child);
+        }
+    }
+
+    if (activeModal) {
+        document.addEventListener('focusin', _enforceModalFocus, true);
+    } else {
+        document.removeEventListener('focusin', _enforceModalFocus, true);
+    }
+}
+
+function _getModalFocusableElements(modal) {
+    return Array.from(modal.querySelectorAll(_modalFocusableSelector)).filter((element) => (
+        element instanceof HTMLElement
+        && !element.hidden
+        && !element.inert
+        && element.getAttribute('aria-hidden') !== 'true'
+        && element.getClientRects().length > 0
+    ));
+}
+
+function _focusModal(modal) {
+    const focusable = _getModalFocusableElements(modal);
+    const target = focusable[0] || _getModalHeading(modal) || modal;
+
+    if (target === modal && !modal.hasAttribute('tabindex')) {
+        modal.setAttribute('tabindex', '-1');
+    }
+
+    target.focus({ preventScroll: true });
+}
+
+function _enforceModalFocus(event) {
+    const activeModal = _getTopActiveModal();
+    if (!activeModal || activeModal.contains(event.target)) return;
+
+    event.stopPropagation();
+    _focusModal(activeModal);
+}
+
+function _trapModalFocus(event) {
+    if (event.key !== 'Tab') return;
+
+    const modal = event.currentTarget;
+    const focusable = _getModalFocusableElements(modal);
+
+    if (focusable.length === 0) {
+        event.preventDefault();
+        _focusModal(modal);
+        return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+
+    if (event.shiftKey && (active === first || !modal.contains(active))) {
+        event.preventDefault();
+        last.focus({ preventScroll: true });
+        return;
+    }
+
+    if (!event.shiftKey && (active === last || !modal.contains(active))) {
+        event.preventDefault();
+        first.focus({ preventScroll: true });
+    }
+}
+
+function _resolveFocusOrigin(origin) {
+    let target = origin;
+
+    while (target instanceof HTMLElement) {
+        const containingModal = target.closest('.modal');
+        if (!containingModal || containingModal.classList.contains('active')) return target;
+
+        target = _modalFocusOrigins.get(containingModal);
+        _modalFocusOrigins.delete(containingModal);
+    }
+
+    return null;
+}
+
+function _restoreModalFocus(modal) {
+    const origin = _modalFocusOrigins.get(modal);
+    modal.removeEventListener('keydown', _trapModalFocus);
+
+    const activeModal = _getTopActiveModal();
+
+if (activeModal && activeModal !== modal) {
+    if (
+        origin instanceof HTMLElement &&
+        origin.isConnected &&
+        activeModal.contains(origin)
+    ) {
+        _modalFocusOrigins.delete(modal);
+        origin.focus({ preventScroll: true });
+    }
+
+    return;
+}
+
+    _modalFocusOrigins.delete(modal);
+    const target = _resolveFocusOrigin(origin);
+    if (!(target instanceof HTMLElement) || !target.isConnected) return;
+
+    target.focus({ preventScroll: true });
+}
+
+function _finishModalClose(modal) {
+    modal.classList.remove('active', 'closing');
+    modal.inert = true;
+    modal.setAttribute('aria-hidden', 'true');
+    _maybeRemoveModalOpen();
+    _syncModalIsolation();
+    _restoreModalFocus(modal);
+}
+
 export function openModal(app, modal) {
     if (!modal) return;
+
+    _ensureModalSemantics(modal);
+
+    if (!modal.classList.contains('active')) {
+        const active = document.activeElement;
+        _modalFocusOrigins.set(
+            modal,
+            active instanceof HTMLElement && active !== document.body ? active : null
+        );
+    }
+
+    modal.classList.remove('closing');
+    modal.inert = false;
+    modal.removeAttribute('aria-hidden');
+    modal.addEventListener('keydown', _trapModalFocus);
     modal.classList.add('active');
     document.body.classList.add('modal-open');
+
+    _focusModal(modal);
+    _syncModalIsolation();
 }
 
 export function closeModal(app, modal) {
-    if (!modal) return;
+    if (!modal || !modal.classList.contains('active')) return;
+    if (modal.classList.contains('closing')) return;
 
     if (modal === app.translationModal) {
         _translationKbClear(app);
     }
 
     if (modal === app.settingsModal || modal === app.referencesModal) {
-        // For bottom sheets: add .closing to trigger the CSS dismiss transition,
-        // then remove .active once the animation completes (320ms).
+        modal.classList.add('closing');
+
         if (modal === app.settingsModal) {
-            modal.classList.add('closing');
-            setTimeout(() => {
-                modal.classList.remove('active', 'closing');
-                _maybeRemoveModalOpen();
-            }, 320);
+            setTimeout(() => _finishModalClose(modal), 320);
         } else {
             const content = modal.querySelector('.modal-content');
             content.style.animation = 'slideDownToBottom 250ms ease';
             setTimeout(() => {
-                modal.classList.remove('active');
-                _maybeRemoveModalOpen();
+                _finishModalClose(modal);
                 content.style.animation = '';
             }, 250);
         }
     } else {
-        modal.classList.remove('active');
-        _maybeRemoveModalOpen();
+        _finishModalClose(modal);
     }
 }
 
 function _maybeRemoveModalOpen() {
-    if (!document.querySelector('.modal.active')) {
+    if (!document.querySelector('.modal.active:not(.closing)')) {
         document.body.classList.remove('modal-open');
     }
 }
