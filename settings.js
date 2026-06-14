@@ -147,7 +147,7 @@ export function applySettings(app) {
     if (app.headingsToggle)        app.headingsToggle.checked        = !!app.state.showHeadings;
     if (app.chapterArrowsToggle)   app.chapterArrowsToggle.checked   = !!app.state.showChapterArrows;
 
-    if (app.passageText) app.passageText.classList.toggle('verse-by-verse', !!app.state.verseByVerse);
+    syncVerseByVerseMode(app);
     if (app.verseByVerseToggle) app.verseByVerseToggle.checked = !!app.state.verseByVerse;
 
     const fontSize = app.state.fontSize || DEFAULTS.fontSize;
@@ -216,7 +216,7 @@ export async function toggleVerseByVerse(app) {
             .set(app.state.verseByVerse);
     }
 
-    app.passageText.classList.toggle('verse-by-verse', app.state.verseByVerse);
+    syncVerseByVerseMode(app);
 }
 
 export async function applyReadingFont(app, font) {
