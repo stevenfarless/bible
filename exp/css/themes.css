@@ -959,23 +959,23 @@ body.vigil-theme.light-mode {
 :root.uxorem-amo-theme,
 html.uxorem-amo-theme,
 body.uxorem-amo-theme {
-    --bg-base: #120A14;
-    --bg-card: #1B1120;
-    --bg-raised: #2C1C34;
+    --bg-base: #161018;
+    --bg-card: #211521;
+    --bg-raised: #342134;
 
-    --text-heading: #F06AAE;
-    --text-body: #E9E1E7;
-    --text-muted: #C76C9A;
+    --text-heading: #E85A9F;
+    --text-body: #E8DEE5;
+    --text-muted: #B8A2B0;
 
-    --border-neutral: #573251;
-    --highlight-border: #82426B;
+    --border-neutral: #594557;
+    --highlight-border: #814B6B;
 
-    --primary-color: #F06AAE;
-    --primary-dark: #EC459A;
-    --primary-light: #F598C7;
+    --primary-color: #E85A9F;
+    --primary-dark: #E3368A;
+    --primary-light: #EE87B9;
     --brand-secondary: #D6B36A;
     --section-heading-color: var(--brand-secondary);
-    --accent-color: #FF82BF;
+    --accent-color: #FF77B7;
 
     --success-color: #6FBF73;
     --warning-color: #F2C14E;
@@ -991,20 +991,20 @@ body.uxorem-amo-theme {
 :root.uxorem-amo-theme.light-mode,
 html.uxorem-amo-theme.light-mode,
 body.uxorem-amo-theme.light-mode {
-    --bg-base: #F8F5F7;
-    --bg-card: #F1EBEF;
-    --bg-raised: #E9DFE5;
+    --bg-base: #F9F2F6;
+    --bg-card: #F2E6EC;
+    --bg-raised: #EBD9E2;
 
-    --text-heading: #B83D78;
-    --text-body: #352B33;
-    --text-muted: #8B7080;
+    --text-heading: #B52F6F;
+    --text-body: #352A31;
+    --text-muted: #7A6670;
 
-    --border-neutral: #D8CBD3;
-    --highlight-border: #CFA3BA;
+    --border-neutral: #D7C4CD;
+    --highlight-border: #CD9AB3;
 
-    --primary-color: #C94C88;
-    --primary-dark: #B53774;
-    --primary-light: #D573A2;
+    --primary-color: #C63F81;
+    --primary-dark: #AA326D;
+    --primary-light: #D2669B;
     --brand-secondary: #B88C34;
     --section-heading-color: var(--brand-secondary);
     --accent-color: #E85A9F;
@@ -1021,9 +1021,13 @@ body.uxorem-amo-theme.light-mode {
 }
 
 body.uxorem-amo-theme,
-body.uxorem-amo-theme .main-content,
-body.uxorem-amo-theme .passage-container {
+body.uxorem-amo-theme .main-content {
     background-color: var(--bg-base);
+    color: var(--text-body);
+}
+
+body.uxorem-amo-theme .passage-container {
+    background-color: var(--bg-card);
     color: var(--text-body);
 }
 
