@@ -987,3 +987,44 @@ body.uxorem-amo-theme {
     --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.45);
     --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.50);
 }
+
+body.uxorem-amo-theme,
+body.uxorem-amo-theme .main-content,
+body.uxorem-amo-theme .passage-container {
+    background-color: var(--bg-base);
+    color: var(--text-body);
+}
+
+body.uxorem-amo-theme .passage-title,
+body.uxorem-amo-theme .passage-text,
+body.uxorem-amo-theme .verse {
+    color: var(--text-body);
+}
+
+body.uxorem-amo-theme .top-chrome,
+body.uxorem-amo-theme .header,
+body.uxorem-amo-theme .navigation,
+body.uxorem-amo-theme .modal-content,
+body.uxorem-amo-theme .accordion-section,
+body.uxorem-amo-theme .accordion-panel,
+body.uxorem-amo-theme .settings-group,
+body.uxorem-amo-theme .input-field {
+    background-color: var(--bg-card);
+    color: var(--text-body);
+    border-color: var(--border-neutral);
+}
+
+body.uxorem-amo-theme .modal-header,
+body.uxorem-amo-theme .accordion-header,
+body.uxorem-amo-theme .selector-btn,
+body.uxorem-amo-theme .nav-btn,
+body.uxorem-amo-theme .icon-btn {
+    background-color: var(--bg-raised);
+    color: var(--text-heading);
+    border-color: var(--border-neutral);
+}
+
+body.uxorem-amo-theme .help-text,
+body.uxorem-amo-theme .verse-number {
+    color: var(--text-muted);
+}
