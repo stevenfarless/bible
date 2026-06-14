@@ -242,7 +242,7 @@ const THEME_BG = {
 	'lux-theme':		  { dark: '#1a1614', light: '#f5f2ec' },
 	'vespers-theme':      { dark: '#1a1714', light: '#f5f2ec' },
 	'vigil-theme':        { dark: '#000000', light: '#f5f2ec' },
-	'uxorem-amo-theme':        { dark: '#220014', light: '#220014' },
+	'uxorem-amo-theme':        { dark: '#161018', light: '#F9F2F6' },
 };
 
 export function updateThemeColor() {

@@ -959,23 +959,23 @@ body.vigil-theme.light-mode {
 :root.uxorem-amo-theme,
 html.uxorem-amo-theme,
 body.uxorem-amo-theme {
-    --bg-base: #220014;
-    --bg-card: #32001D;
-    --bg-raised: #51002F;
+    --bg-base: #161018;
+    --bg-card: #211521;
+    --bg-raised: #342134;
 
-    --text-heading: #E13D8C;
-    --text-body: #F6E6DC;
-    --text-muted: #B97A96;
+    --text-heading: #E85A9F;
+    --text-body: #E8DEE5;
+    --text-muted: #B8A2B0;
 
-    --border-neutral: #6E224C;
-    --highlight-border: #8E2A5E;
+    --border-neutral: #594557;
+    --highlight-border: #814B6B;
 
-    --primary-color: #E13D8C;
-    --primary-dark: #D42177;
-    --primary-light: #E869A6;
-    --brand-secondary: #D9B86A;
+    --primary-color: #E85A9F;
+    --primary-dark: #E3368A;
+    --primary-light: #EE87B9;
+    --brand-secondary: #D6B36A;
     --section-heading-color: var(--brand-secondary);
-    --accent-color: #FF6FB0;
+    --accent-color: #FF77B7;
 
     --success-color: #6FBF73;
     --warning-color: #F2C14E;
@@ -986,6 +986,38 @@ body.uxorem-amo-theme {
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
     --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.45);
     --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.50);
+}
+
+:root.uxorem-amo-theme.light-mode,
+html.uxorem-amo-theme.light-mode,
+body.uxorem-amo-theme.light-mode {
+    --bg-base: #F9F2F6;
+    --bg-card: #F2E6EC;
+    --bg-raised: #EBD9E2;
+
+    --text-heading: #B52F6F;
+    --text-body: #352A31;
+    --text-muted: #7A6670;
+
+    --border-neutral: #D7C4CD;
+    --highlight-border: #CD9AB3;
+
+    --primary-color: #C63F81;
+    --primary-dark: #AA326D;
+    --primary-light: #D2669B;
+    --brand-secondary: #B88C34;
+    --section-heading-color: var(--brand-secondary);
+    --accent-color: #E85A9F;
+
+    --success-color: #2E7D32;
+    --warning-color: #9A6700;
+    --error-color: #B3261E;
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.16);
 }
 
 body.uxorem-amo-theme,
