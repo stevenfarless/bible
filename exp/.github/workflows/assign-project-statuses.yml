@@ -46,11 +46,22 @@ jobs:
 
           if [[ -z "${GH_TOKEN:-}" ]]; then
             echo "::error::Missing repository secret GH_PROJECT_TOKEN"
-            echo "Create a token with read/write access to your user Projects, then save it as the repository secret GH_PROJECT_TOKEN."
+            echo "Create a classic personal access token with the project scope, then save it as GH_PROJECT_TOKEN."
+            exit 1
+          fi
+
+          if [[ "$GH_TOKEN" == github_pat_* ]]; then
+            echo "::error::GH_PROJECT_TOKEN is a fine-grained personal access token."
+            echo "Fine-grained PATs cannot currently access Projects owned by a user account."
+            echo "Replace it with a classic personal access token that has the project scope."
             exit 1
           fi
 
           gh auth status
+
+          gh api graphql \
+            -f query='query { viewer { login } }' \
+            --jq '.data.viewer.login'
 
       - name: Assign project statuses
         shell: bash
