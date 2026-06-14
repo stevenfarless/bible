@@ -2,14 +2,6 @@ name: Assign Unmilestoned Issues
 
 on:
   workflow_dispatch:
-  issues:
-    types:
-      - opened
-  push:
-    branches:
-      - exp
-    paths:
-      - .github/workflows/assign-unmilestoned-issues.yml
 
 permissions:
   contents: write
