@@ -1,0 +1,226 @@
+name: "! Fix webhint findings"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fix-webhint-findings
+  cancel-in-progress: false
+
+jobs:
+  fix-webhint-findings:
+    name: Fix actionable webhint findings
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Apply first-party fixes
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              if new in text:
+                  print(f"Already fixed: {label}")
+                  return text
+
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(
+                      f"Expected exactly one match for {label}; found {count}. "
+                      "No files were written."
+                  )
+
+              print(f"Applying: {label}")
+              return text.replace(old, new, 1)
+
+
+          index_path = Path("index.html")
+          base_path = Path("css/base.css")
+          modals_path = Path("css/modals.css")
+          geek_path = Path("css/geek95.css")
+
+          index = index_path.read_text(encoding="utf-8")
+          base = base_path.read_text(encoding="utf-8")
+          modals = modals_path.read_text(encoding="utf-8")
+          geek = geek_path.read_text(encoding="utf-8")
+
+          modals = replace_once(
+              modals,
+              "    backdrop-filter: blur(0.5px);",
+              "    -webkit-backdrop-filter: blur(0.5px);\n    backdrop-filter: blur(0.5px);",
+              "Safari modal backdrop filter",
+          )
+
+          geek = replace_once(
+              geek,
+              "    backdrop-filter: none;",
+              "    -webkit-backdrop-filter: none;\n    backdrop-filter: none;",
+              "Safari Geek 95 backdrop override",
+          )
+
+          base = replace_once(
+              base,
+              "    text-size-adjust: 100%;",
+              "    -webkit-text-size-adjust: 100%;\n    text-size-adjust: 100%;",
+              "Safari text-size adjustment",
+          )
+
+          index = replace_once(
+              index,
+              "\t<!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->\n"
+              "\t<script src=\"https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV\" async defer></script>",
+              "\t<!-- Firebase App Check loads reCAPTCHA v3 through ReCaptchaV3Provider. -->",
+              "remove redundant reCAPTCHA script loader",
+          )
+
+          index = replace_once(
+              index,
+              '<button id="openAccountBtn" class="primary-btn" style="width: 100%; margin-top: 1rem;">',
+              '<button id="openAccountBtn" class="primary-btn account-manage-btn">',
+              "Manage Account button class",
+          )
+
+          index = replace_once(
+              index,
+              '<button type="submit" class="primary-btn" style="width: 100%">Sign In</button>',
+              '<button type="submit" class="primary-btn auth-form-submit">Sign In</button>',
+              "Sign In button class",
+          )
+
+          index = replace_once(
+              index,
+              '<button type="submit" id="signupSubmit" class="primary-btn" style="width: 100%">Create Account</button>',
+              '<button type="submit" id="signupSubmit" class="primary-btn auth-form-submit">Create Account</button>',
+              "Create Account button class",
+          )
+
+          index = replace_once(
+              index,
+              '<button id="logoutBtn" class="primary-btn" style="margin-top: var(--spacing-md)">Sign Out</button>',
+              '<button id="logoutBtn" class="primary-btn account-signout-btn">Sign Out</button>',
+              "Sign Out button class",
+          )
+
+          button_styles = """.auth-form-submit,
+          .account-manage-btn {
+              width: 100%;
+          }
+
+          .account-manage-btn {
+              margin-top: 1rem;
+          }
+
+          .account-signout-btn {
+              margin-top: var(--spacing-md);
+          }
+          """
+
+          modal_size_rule = """.modal-content--sm {
+              max-width: 380px;
+          }
+          """
+
+          if button_styles in modals:
+              print("Already fixed: account and authentication button styles")
+          else:
+              count = modals.count(modal_size_rule)
+              if count != 1:
+                  raise SystemExit(
+                      "Expected exactly one .modal-content--sm rule before adding button styles; "
+                      f"found {count}. No files were written."
+                  )
+              modals = modals.replace(
+                  modal_size_rule,
+                  f"{modal_size_rule}\n{button_styles}",
+                  1,
+              )
+              print("Applying: account and authentication button styles")
+
+          index_path.write_text(index, encoding="utf-8")
+          base_path.write_text(base, encoding="utf-8")
+          modals_path.write_text(modals, encoding="utf-8")
+          geek_path.write_text(geek, encoding="utf-8")
+          PY
+
+      - name: Verify fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git diff --check
+
+          python3 <<'PY'
+          from pathlib import Path
+
+          index = Path("index.html").read_text(encoding="utf-8")
+          base = Path("css/base.css").read_text(encoding="utf-8")
+          modals = Path("css/modals.css").read_text(encoding="utf-8")
+          geek = Path("css/geek95.css").read_text(encoding="utf-8")
+          firebase = Path("config/firebase-config.js").read_text(encoding="utf-8")
+
+          requirements = {
+              "modal Safari prefix": "-webkit-backdrop-filter: blur(0.5px);" in modals,
+              "modal standard backdrop filter": "backdrop-filter: blur(0.5px);" in modals,
+              "Geek 95 Safari override": "-webkit-backdrop-filter: none;" in geek,
+              "Geek 95 standard override": "backdrop-filter: none;" in geek,
+              "Safari text-size adjustment": "-webkit-text-size-adjust: 100%;" in base,
+              "standard text-size adjustment": "text-size-adjust: 100%;" in base,
+              "external reCAPTCHA loader removed": "google.com/recaptcha/api.js" not in index,
+              "Firebase App Check provider retained": firebase.count("new ReCaptchaV3Provider(") == 1,
+              "Manage Account class": 'class="primary-btn account-manage-btn"' in index,
+              "Sign In class": 'class="primary-btn auth-form-submit">Sign In' in index,
+              "Create Account class": 'class="primary-btn auth-form-submit">Create Account' in index,
+              "Sign Out class": 'class="primary-btn account-signout-btn"' in index,
+              "authentication button width": ".auth-form-submit,\n.account-manage-btn {\n    width: 100%;" in modals,
+              "Manage Account spacing": ".account-manage-btn {\n    margin-top: 1rem;" in modals,
+              "Sign Out spacing": ".account-signout-btn {\n    margin-top: var(--spacing-md);" in modals,
+          }
+
+          failed = [label for label, passed in requirements.items() if not passed]
+          if failed:
+              raise SystemExit("Verification failed: " + ", ".join(failed))
+
+          forbidden_inline_styles = [
+              'id="openAccountBtn" class="primary-btn" style=',
+              'class="primary-btn" style="width: 100%"',
+              'id="signupSubmit" class="primary-btn" style=',
+              'id="logoutBtn" class="primary-btn" style=',
+          ]
+          remaining = [needle for needle in forbidden_inline_styles if needle in index]
+          if remaining:
+              raise SystemExit("Inline button styles remain: " + ", ".join(remaining))
+
+          print("All actionable webhint fixes verified")
+          PY
+
+          git status --short
+          git diff -- index.html css/base.css css/modals.css css/geek95.css
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet -- index.html css/base.css css/modals.css css/geek95.css; then
+            echo "Actionable webhint fixes are already applied"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index.html css/base.css css/modals.css css/geek95.css
+          git commit -m "fix: resolve actionable webhint findings"
+          git pull --rebase origin exp
+          git push origin exp
