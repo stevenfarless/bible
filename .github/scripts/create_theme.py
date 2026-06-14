@@ -70,7 +70,7 @@ def validate_theme_id(theme_id, label):
 
 def remove_css_theme(css, theme_id):
     pattern = re.compile(
-        rf"\n\n/\* [^*]+ theme \*/\n:root\.{re.escape(theme_id)}-theme,\nhtml\.{re.escape(theme_id)}-theme,\nbody\.{re.escape(theme_id)}-theme \{{.*?\n\}}\n",
+        rf"\n\n/\* [^*]+ theme \*/\n:root\.{re.escape(theme_id)}-theme,\nhtml\.{re.escape(theme_id)}-theme,\nbody\.{re.escape(theme_id)}-theme \{{.*?(?=\n\n/\* [^*]+ theme \*/|\Z)",
         re.S,
     )
     css, count = pattern.subn("", css)
@@ -185,6 +185,47 @@ body.{theme_id}-theme {{
     --shadow-sm: {shadow_sm};
     --shadow-md: {shadow_md};
     --shadow-lg: {shadow_lg};
+}}
+
+body.{theme_id}-theme,
+body.{theme_id}-theme .main-content,
+body.{theme_id}-theme .passage-container {{
+    background-color: var(--bg-base);
+    color: var(--text-body);
+}}
+
+body.{theme_id}-theme .passage-title,
+body.{theme_id}-theme .passage-text,
+body.{theme_id}-theme .verse {{
+    color: var(--text-body);
+}}
+
+body.{theme_id}-theme .top-chrome,
+body.{theme_id}-theme .header,
+body.{theme_id}-theme .navigation,
+body.{theme_id}-theme .modal-content,
+body.{theme_id}-theme .accordion-section,
+body.{theme_id}-theme .accordion-panel,
+body.{theme_id}-theme .settings-group,
+body.{theme_id}-theme .input-field {{
+    background-color: var(--bg-card);
+    color: var(--text-body);
+    border-color: var(--border-neutral);
+}}
+
+body.{theme_id}-theme .modal-header,
+body.{theme_id}-theme .accordion-header,
+body.{theme_id}-theme .selector-btn,
+body.{theme_id}-theme .nav-btn,
+body.{theme_id}-theme .icon-btn {{
+    background-color: var(--bg-raised);
+    color: var(--text-heading);
+    border-color: var(--border-neutral);
+}}
+
+body.{theme_id}-theme .help-text,
+body.{theme_id}-theme .verse-number {{
+    color: var(--text-muted);
 }}
 '''
     THEMES_FILE.write_text(css.rstrip() + theme_block)
