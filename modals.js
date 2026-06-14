@@ -117,8 +117,9 @@ function _getModalFocusableElements(modal) {
 }
 
 function _focusModal(modal) {
+    const heading = _getModalHeading(modal);
     const focusable = _getModalFocusableElements(modal);
-    const target = focusable[0] || _getModalHeading(modal) || modal;
+    const target = heading || focusable[0] || modal;
 
     if (target === modal && !modal.hasAttribute('tabindex')) {
         modal.setAttribute('tabindex', '-1');
