@@ -18,6 +18,10 @@ def required(name):
     return value
 
 
+def optional(name):
+    return os.environ.get(name, "").strip()
+
+
 def color(name):
     value = required(name)
     if not COLOR_PATTERN.fullmatch(value):
@@ -52,16 +56,59 @@ def replace_once(text, old, new, description):
     return text.replace(old, new, 1)
 
 
+def validate_theme_id(theme_id, label):
+    if not ID_PATTERN.fullmatch(theme_id):
+        raise SystemExit(f"{label} must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens")
+
+
+def remove_css_theme(css, theme_id):
+    pattern = re.compile(
+        rf"\n\n/\* [^*]+ theme \*/\n:root\.{re.escape(theme_id)}-theme,\nhtml\.{re.escape(theme_id)}-theme,\nbody\.{re.escape(theme_id)}-theme \{{.*?\n\}}\n",
+        re.S,
+    )
+    css, count = pattern.subn("", css)
+    if count > 1:
+        raise SystemExit(f"Theme ID '{theme_id}' appears more than once in {THEMES_FILE}")
+    return css
+
+
+def remove_index_theme(index, theme_id):
+    index = re.sub(rf"\n\t+<option value=\"{re.escape(theme_id)}\">[^\n]*</option>", "", index)
+    index = index.replace(f", {theme_id}: 1", "")
+    index = index.replace(f"{theme_id}: 1, ", "")
+    return index
+
+
+def remove_ui_theme(ui, theme_id):
+    theme_class = f"{theme_id}-theme"
+    ui = ui.replace(f", '{theme_class}'", "")
+    ui = re.sub(rf"\n\t'{re.escape(theme_class)}':\s*\{{ dark: '[^']+', light: '[^']+' \}},", "", ui)
+    return ui
+
+
+def resolve_theme_id(initial_theme_id):
+    action = optional("EXISTING_THEME_ACTION") or "stop"
+    if action not in {"stop", "overwrite", "rename"}:
+        raise SystemExit("EXISTING_THEME_ACTION must be stop, overwrite, or rename")
+    if action == "rename":
+        renamed = optional("RENAME_THEME_ID")
+        if not renamed:
+            raise SystemExit("RENAME_THEME_ID is required when EXISTING_THEME_ACTION is rename")
+        validate_theme_id(renamed, "RENAME_THEME_ID")
+        return renamed, action
+    return initial_theme_id, action
+
+
 def main():
     name = required("THEME_NAME")
-    theme_id = required("THEME_ID")
+    initial_theme_id = required("THEME_ID")
     mode = required("THEME_MODE")
 
-    if not ID_PATTERN.fullmatch(theme_id):
-        raise SystemExit("THEME_ID must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens")
+    validate_theme_id(initial_theme_id, "THEME_ID")
     if mode not in {"dark", "light"}:
         raise SystemExit("THEME_MODE must be dark or light")
 
+    theme_id, action = resolve_theme_id(initial_theme_id)
     bg_base = color("BG_BASE")
     bg_card = color("BG_CARD")
     text_heading = color("TEXT_HEADING")
@@ -72,9 +119,19 @@ def main():
     accent = color("ACCENT_COLOR")
 
     css = THEMES_FILE.read_text()
+    index = INDEX_FILE.read_text()
+    ui = UI_FILE.read_text()
     selector = f":root.{theme_id}-theme"
-    if selector in css:
-        raise SystemExit(f"Theme ID '{theme_id}' already exists in {THEMES_FILE}")
+    theme_exists = selector in css or f'value="{html.escape(theme_id, quote=True)}"' in index or f"'{theme_id}-theme'" in ui
+
+    if theme_exists and action == "stop":
+        raise SystemExit(f"Theme ID '{theme_id}' already exists. Choose overwrite or rename.")
+    if theme_exists and action == "overwrite":
+        css = remove_css_theme(css, theme_id)
+        index = remove_index_theme(index, theme_id)
+        ui = remove_ui_theme(ui, theme_id)
+    if theme_exists and action == "rename":
+        raise SystemExit(f"Rename target '{theme_id}' already exists. Choose another rename ID.")
 
     dark = mode == "dark"
     bg_raised = adjust_lightness(bg_card, 0.06 if dark else -0.04)
@@ -126,16 +183,12 @@ body.{theme_id}-theme {{
 '''
     THEMES_FILE.write_text(css.rstrip() + theme_block)
 
-    index = INDEX_FILE.read_text()
     option_value = html.escape(theme_id, quote=True)
-    if f'value="{option_value}"' in index:
-        raise SystemExit(f"Theme option '{theme_id}' already exists in {INDEX_FILE}")
     option = f'\t\t\t\t\t\t\t\t\t<option value="{option_value}">{html.escape(name)} ({mode.title()})</option>\n'
     index = replace_once(index, '\t\t\t\t\t\t\t\t</select>', option + '\t\t\t\t\t\t\t\t</select>', "theme selector option")
     index = replace_once(index, "vigil: 1 };", f"vigil: 1, {theme_id}: 1 }};", "prepaint theme allowlist")
     INDEX_FILE.write_text(index)
 
-    ui = UI_FILE.read_text()
     theme_class = f"{theme_id}-theme"
     ui = replace_once(ui, "'gnome-theme'];", f"'gnome-theme', '{theme_class}'];", "theme class list")
     bg_entry = f"\t'{theme_class}':        {{ dark: '{bg_base}', light: '{bg_base}' }},\n"
