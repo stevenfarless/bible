@@ -9,7 +9,7 @@ on:
       - .github/workflows/assign-unmilestoned-issues.yml
 
 permissions:
-  contents: read
+  contents: write
   issues: write
 
 concurrency:
@@ -20,27 +20,116 @@ jobs:
   assign-milestones:
     name: Assign open issues to matching milestones
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
           ref: exp
+          fetch-depth: 0
 
       - name: Assign milestones
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const { execFileSync } = require('node:child_process');
+        run: python3 .github/scripts/assign_unmilestoned_issues.py
 
-            execFileSync(
-              'python3',
-              ['.github/scripts/assign_unmilestoned_issues.py'],
-              {
-                stdio: 'inherit',
-                env: {
-                  ...process.env,
-                  GITHUB_TOKEN: github.token,
-                },
-              }
-            );
+      - name: Verify assignments and write report
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 <<'PY'
+          import json
+          import os
+          import urllib.request
+          from collections import defaultdict
+          from pathlib import Path
+
+          repository = os.environ["GITHUB_REPOSITORY"]
+          token = os.environ["GITHUB_TOKEN"]
+          api_root = f"https://api.github.com/repos/{repository}"
+
+          def request(path):
+              req = urllib.request.Request(
+                  f"{api_root}{path}",
+                  headers={
+                      "Authorization": f"Bearer {token}",
+                      "Accept": "application/vnd.github+json",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                      "User-Agent": "lege-lux-milestone-report",
+                  },
+              )
+              with urllib.request.urlopen(req) as response:
+                  return json.loads(response.read().decode("utf-8"))
+
+          def paginate(path):
+              page = 1
+              while True:
+                  separator = "&" if "?" in path else "?"
+                  items = request(f"{path}{separator}per_page=100&page={page}")
+                  if not items:
+                      return
+                  yield from items
+                  if len(items) < 100:
+                      return
+                  page += 1
+
+          issues = [
+              issue
+              for issue in paginate("/issues?state=open")
+              if "pull_request" not in issue
+          ]
+
+          unmilestoned = [
+              {"number": issue["number"], "title": issue["title"]}
+              for issue in issues
+              if issue.get("milestone") is None
+          ]
+
+          grouped = defaultdict(list)
+          for issue in issues:
+              milestone = issue.get("milestone")
+              if milestone:
+                  grouped[milestone["title"]].append(
+                      {"number": issue["number"], "title": issue["title"]}
+                  )
+
+          report = {
+              "repository": repository,
+              "open_issue_count": len(issues),
+              "unmilestoned_open_issue_count": len(unmilestoned),
+              "unmilestoned_open_issues": unmilestoned,
+              "milestones": {
+                  title: sorted(entries, key=lambda item: item["number"])
+                  for title, entries in sorted(grouped.items())
+              },
+          }
+
+          path = Path(".github/milestone-assignment-report.json")
+          path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+
+          print(json.dumps(report, indent=2))
+
+          if unmilestoned:
+              raise SystemExit(
+                  f"{len(unmilestoned)} open issues remain without a milestone"
+              )
+          PY
+
+      - name: Commit assignment report
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet -- .github/milestone-assignment-report.json; then
+            echo "Milestone assignment report is unchanged"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/milestone-assignment-report.json
+          git commit -m "chore: record milestone assignment report"
+          git pull --rebase origin exp
+          git push origin exp
