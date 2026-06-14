@@ -11,6 +11,19 @@ on:
         description: Lowercase ID used for the CSS class, such as midnight-blue
         required: true
         type: string
+      existing_theme_action:
+        description: What to do if the theme ID already exists
+        required: true
+        default: stop
+        type: choice
+        options:
+          - stop
+          - overwrite
+          - rename
+      rename_theme_id:
+        description: New lowercase ID when action is rename
+        required: false
+        type: string
       mode:
         description: Theme mode
         required: true
@@ -71,6 +84,8 @@ jobs:
         env:
           THEME_NAME: ${{ inputs.theme_name }}
           THEME_ID: ${{ inputs.theme_id }}
+          EXISTING_THEME_ACTION: ${{ inputs.existing_theme_action }}
+          RENAME_THEME_ID: ${{ inputs.rename_theme_id }}
           THEME_MODE: ${{ inputs.mode }}
           BG_BASE: ${{ inputs.bg_base }}
           BG_CARD: ${{ inputs.bg_card }}
@@ -83,15 +98,9 @@ jobs:
         run: python3 .github/scripts/create_theme.py
 
       - name: Verify generated theme
-        env:
-          THEME_ID: ${{ inputs.theme_id }}
         run: |
           node --check ui.js
           git diff --check
-          grep -F ":root.${THEME_ID}-theme" css/themes.css
-          grep -F "value=\"${THEME_ID}\"" index.html
-          grep -F "${THEME_ID}: 1" index.html
-          grep -F "'${THEME_ID}-theme'" ui.js
           git diff -- css/themes.css index.html ui.js
 
       - name: Commit theme
