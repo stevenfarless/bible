@@ -207,12 +207,12 @@ def main():
     milestones = list(paginate("/milestones?state=open"))
     issues = [
         issue
-        for issue in paginate("/issues?state=open&milestone=none")
+        for issue in paginate("/issues?state=all&milestone=none")
         if "pull_request" not in issue
     ]
 
     if not issues:
-        print("No open unmilestoned issues found.")
+        print("No unmilestoned issues found.")
         return
 
     category_milestones = {}
