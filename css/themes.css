@@ -954,3 +954,36 @@ body.vigil-theme.light-mode {
     --shadow-md: 0 4px 6px hsla(28, 24%, 18%, 0.14);
     --shadow-lg: 0 10px 15px hsla(28, 24%, 18%, 0.18);
 }
+
+/* Uxorem Amo theme */
+:root.uxorem-amo-theme,
+html.uxorem-amo-theme,
+body.uxorem-amo-theme {
+    --bg-base: #0E0004;
+    --bg-card: #31081F;
+    --bg-raised: #4B0C30;
+
+    --text-heading: #B91372;
+    --text-body: #F2C5D8;
+    --text-muted: #9A3B5A;
+
+    --border-neutral: #61193C;
+    --highlight-border: #7A174B;
+
+    --primary-color: #B91372;
+    --primary-dark: #940F5B;
+    --primary-light: #E7188E;
+    --brand-secondary: #D4A44D;
+    --section-heading-color: var(--brand-secondary);
+    --accent-color: #FA198B;
+
+    --success-color: #6FBF73;
+    --warning-color: #F2C14E;
+    --error-color: #E57373;
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.50);
+}
