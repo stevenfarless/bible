@@ -199,9 +199,13 @@ def main():
     theme_block += f'''
 
 body.{theme_id}-theme,
-body.{theme_id}-theme .main-content,
-body.{theme_id}-theme .passage-container {{
+body.{theme_id}-theme .main-content {{
     background-color: var(--bg-base);
+    color: var(--text-body);
+}}
+
+body.{theme_id}-theme .passage-container {{
+    background-color: var(--bg-card);
     color: var(--text-body);
 }}
 
