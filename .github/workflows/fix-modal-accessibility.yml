@@ -1,0 +1,370 @@
+name: "fix: modal accessibility"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fix-modal-accessibility
+  cancel-in-progress: false
+
+jobs:
+  fix-modal-accessibility:
+    name: Fix modal dialog semantics and focus management
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Apply modal accessibility fixes
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              if new in text:
+                  print(f"Already fixed: {label}")
+                  return text
+
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(
+                      f"Expected exactly one match for {label}; found {count}. "
+                      "No files were written."
+                  )
+
+              print(f"Applying: {label}")
+              return text.replace(old, new, 1)
+
+
+          index_path = Path("index.html")
+          events_path = Path("events.js")
+          modals_path = Path("modals.js")
+
+          index = index_path.read_text(encoding="utf-8")
+          events = events_path.read_text(encoding="utf-8")
+          modals = modals_path.read_text(encoding="utf-8")
+
+          static_modals = [
+              ("bookModal", "modal", "<h2>Select a Book</h2>", "<h2 id=\"bookModalTitle\" tabindex=\"-1\">Select a Book</h2>"),
+              ("chapterModal", "modal", "<h2><span id=\"chapterModalBook\">Genesis</span></h2>", "<h2 id=\"chapterModalTitle\" tabindex=\"-1\"><span id=\"chapterModalBook\">Genesis</span></h2>"),
+              ("verseModal", "modal", "<h2><span id=\"verseModalBook\">Genesis 1</span></h2>", "<h2 id=\"verseModalTitle\" tabindex=\"-1\"><span id=\"verseModalBook\">Genesis 1</span></h2>"),
+              ("translationModal", "modal", "<h2>Translation</h2>", "<h2 id=\"translationModalTitle\" tabindex=\"-1\">Translation</h2>"),
+              ("settingsModal", "modal", "<h2>Settings</h2>", "<h2 id=\"settingsModalTitle\" tabindex=\"-1\">Settings</h2>"),
+              ("loginModal", "modal", "<h2>Sign In</h2>", "<h2 id=\"loginModalTitle\" tabindex=\"-1\">Sign In</h2>"),
+              ("signupModal", "modal", "<h2>Create Account</h2>", "<h2 id=\"signupModalTitle\" tabindex=\"-1\">Create Account</h2>"),
+              ("userMenuModal", "modal", "<h2>Account</h2>", "<h2 id=\"userMenuModalTitle\" tabindex=\"-1\">Account</h2>"),
+              ("referencesModal", "modal modal--bottom-sheet", "<h2>References</h2>", "<h2 id=\"referencesModalTitle\" tabindex=\"-1\">References</h2>"),
+              ("deuterocanonInfoModal", "modal", "<h2>About the Apocrypha</h2>", "<h2 id=\"deuterocanonInfoModalTitle\" tabindex=\"-1\">About the Apocrypha</h2>"),
+          ]
+
+          for modal_id, class_name, old_heading, new_heading in static_modals:
+              old_wrapper = f'<div id="{modal_id}" class="{class_name}">'
+              new_wrapper = (
+                  f'<div id="{modal_id}" class="{class_name}" role="dialog" '
+                  f'aria-modal="true" aria-labelledby="{modal_id}Title">'
+              )
+              index = replace_once(index, old_wrapper, new_wrapper, f"{modal_id} dialog attributes")
+              index = replace_once(index, old_heading, new_heading, f"{modal_id} accessible title")
+
+          dynamic_modals = [
+              ("changeEmailModal", "Change Email"),
+              ("changePasswordModal", "Change Password"),
+          ]
+
+          for modal_id, title in dynamic_modals:
+              old_wrapper = f'<div id="{modal_id}" class="modal">'
+              new_wrapper = (
+                  f'<div id="{modal_id}" class="modal" role="dialog" '
+                  f'aria-modal="true" aria-labelledby="{modal_id}Title">'
+              )
+              old_heading = f"<h3>{title}</h3>"
+              new_heading = f'<h3 id="{modal_id}Title" tabindex="-1">{title}</h3>'
+              events = replace_once(events, old_wrapper, new_wrapper, f"{modal_id} dialog attributes")
+              events = replace_once(events, old_heading, new_heading, f"{modal_id} accessible title")
+
+          section_start = modals.find("export function openModal(app, modal) {")
+          section_end = modals.find("// ── Book modal", section_start)
+
+          if "const _modalFocusOrigins = new WeakMap();" in modals:
+              print("Already fixed: modal focus management")
+          else:
+              if section_start == -1 or section_end == -1:
+                  raise SystemExit("Could not locate the modal open/close section in modals.js")
+
+              current_section = modals[section_start:section_end]
+              required_existing = [
+                  "modal.classList.add('active');",
+                  "document.body.classList.add('modal-open');",
+                  "modal.classList.remove('active');",
+                  "function _maybeRemoveModalOpen()",
+              ]
+              missing = [needle for needle in required_existing if needle not in current_section]
+              if missing:
+                  raise SystemExit(
+                      "The modal open/close implementation changed before this workflow ran. "
+                      f"Missing expected code: {', '.join(missing)}"
+                  )
+
+              new_section = """const _modalFocusableSelector = [
+              'a[href]',
+              'button:not([disabled])',
+              'input:not([disabled]):not([type="hidden"])',
+              'select:not([disabled])',
+              'textarea:not([disabled])',
+              '[contenteditable="true"]',
+              '[tabindex]:not([tabindex="-1"])',
+          ].join(',');
+
+          const _modalFocusOrigins = new WeakMap();
+
+          function _getModalHeading(modal) {
+              const labelledBy = modal.getAttribute('aria-labelledby');
+              if (labelledBy) {
+                  const labelledHeading = document.getElementById(labelledBy);
+                  if (labelledHeading) return labelledHeading;
+              }
+              return modal.querySelector('h1, h2, h3, h4, h5, h6');
+          }
+
+          function _ensureModalSemantics(modal) {
+              modal.setAttribute('role', 'dialog');
+              modal.setAttribute('aria-modal', 'true');
+
+              const heading = _getModalHeading(modal);
+              if (!heading) return;
+
+              if (!heading.id) {
+                  heading.id = `${modal.id || 'modal'}Title`;
+              }
+              heading.setAttribute('tabindex', '-1');
+              modal.setAttribute('aria-labelledby', heading.id);
+          }
+
+          function _getModalFocusableElements(modal) {
+              return Array.from(modal.querySelectorAll(_modalFocusableSelector)).filter((element) => (
+                  element instanceof HTMLElement
+                  && !element.hidden
+                  && element.getAttribute('aria-hidden') !== 'true'
+                  && element.getClientRects().length > 0
+              ));
+          }
+
+          function _focusModal(modal) {
+              const focusable = _getModalFocusableElements(modal);
+              const target = focusable[0] || _getModalHeading(modal) || modal;
+
+              if (target === modal && !modal.hasAttribute('tabindex')) {
+                  modal.setAttribute('tabindex', '-1');
+              }
+
+              target.focus({ preventScroll: true });
+          }
+
+          function _trapModalFocus(event) {
+              if (event.key !== 'Tab') return;
+
+              const modal = event.currentTarget;
+              const focusable = _getModalFocusableElements(modal);
+
+              if (focusable.length === 0) {
+                  event.preventDefault();
+                  _focusModal(modal);
+                  return;
+              }
+
+              const first = focusable[0];
+              const last = focusable[focusable.length - 1];
+              const active = document.activeElement;
+
+              if (event.shiftKey && (active === first || !modal.contains(active))) {
+                  event.preventDefault();
+                  last.focus({ preventScroll: true });
+                  return;
+              }
+
+              if (!event.shiftKey && (active === last || !modal.contains(active))) {
+                  event.preventDefault();
+                  first.focus({ preventScroll: true });
+              }
+          }
+
+          function _restoreModalFocus(modal) {
+              const origin = _modalFocusOrigins.get(modal);
+              _modalFocusOrigins.delete(modal);
+              modal.removeEventListener('keydown', _trapModalFocus);
+
+              if (!(origin instanceof HTMLElement) || !origin.isConnected) return;
+
+              const containingModal = origin.closest('.modal');
+              if (containingModal && !containingModal.classList.contains('active')) return;
+
+              origin.focus({ preventScroll: true });
+          }
+
+          function _finishModalClose(modal) {
+              modal.classList.remove('active', 'closing');
+              _maybeRemoveModalOpen();
+              _restoreModalFocus(modal);
+          }
+
+          export function openModal(app, modal) {
+              if (!modal) return;
+
+              _ensureModalSemantics(modal);
+
+              if (!modal.classList.contains('active')) {
+                  const active = document.activeElement;
+                  _modalFocusOrigins.set(
+                      modal,
+                      active instanceof HTMLElement && active !== document.body ? active : null
+                  );
+              }
+
+              modal.addEventListener('keydown', _trapModalFocus);
+              modal.classList.add('active');
+              document.body.classList.add('modal-open');
+
+              requestAnimationFrame(() => {
+                  if (modal.classList.contains('active')) _focusModal(modal);
+              });
+          }
+
+          export function closeModal(app, modal) {
+              if (!modal) return;
+
+              if (modal === app.translationModal) {
+                  _translationKbClear(app);
+              }
+
+              if (modal === app.settingsModal || modal === app.referencesModal) {
+                  if (modal === app.settingsModal) {
+                      modal.classList.add('closing');
+                      setTimeout(() => _finishModalClose(modal), 320);
+                  } else {
+                      const content = modal.querySelector('.modal-content');
+                      content.style.animation = 'slideDownToBottom 250ms ease';
+                      setTimeout(() => {
+                          _finishModalClose(modal);
+                          content.style.animation = '';
+                      }, 250);
+                  }
+              } else {
+                  _finishModalClose(modal);
+              }
+          }
+
+          function _maybeRemoveModalOpen() {
+              if (!document.querySelector('.modal.active')) {
+                  document.body.classList.remove('modal-open');
+              }
+          }
+
+          """
+              modals = modals[:section_start] + new_section + modals[section_end:]
+              print("Applying: modal semantics, focus entry, focus trap, and focus restoration")
+
+          index_path.write_text(index, encoding="utf-8")
+          events_path.write_text(events, encoding="utf-8")
+          modals_path.write_text(modals, encoding="utf-8")
+          PY
+
+      - name: Verify modal accessibility fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          node --check modals.js
+          node --check events.js
+          git diff --check
+
+          python3 <<'PY'
+          from pathlib import Path
+
+          index = Path("index.html").read_text(encoding="utf-8")
+          events = Path("events.js").read_text(encoding="utf-8")
+          modals = Path("modals.js").read_text(encoding="utf-8")
+
+          static_modal_ids = [
+              "bookModal",
+              "chapterModal",
+              "verseModal",
+              "translationModal",
+              "settingsModal",
+              "loginModal",
+              "signupModal",
+              "userMenuModal",
+              "referencesModal",
+              "deuterocanonInfoModal",
+          ]
+
+          for modal_id in static_modal_ids:
+              required = [
+                  f'id="{modal_id}"',
+                  'role="dialog"',
+                  'aria-modal="true"',
+                  f'aria-labelledby="{modal_id}Title"',
+                  f'id="{modal_id}Title" tabindex="-1"',
+              ]
+              if not all(needle in index for needle in required):
+                  raise SystemExit(f"Static modal accessibility verification failed: {modal_id}")
+              print(f"Verified static modal: {modal_id}")
+
+          for modal_id in ["changeEmailModal", "changePasswordModal"]:
+              required = [
+                  f'id="{modal_id}"',
+                  'role="dialog"',
+                  'aria-modal="true"',
+                  f'aria-labelledby="{modal_id}Title"',
+                  f'id="{modal_id}Title" tabindex="-1"',
+              ]
+              if not all(needle in events for needle in required):
+                  raise SystemExit(f"Dynamic modal accessibility verification failed: {modal_id}")
+              print(f"Verified dynamic modal: {modal_id}")
+
+          required_logic = {
+              "runtime dialog semantics": "function _ensureModalSemantics(modal)",
+              "focus entry": "if (modal.classList.contains('active')) _focusModal(modal);",
+              "focus trap": "function _trapModalFocus(event)",
+              "forward wrap": "active === last || !modal.contains(active)",
+              "backward wrap": "active === first || !modal.contains(active)",
+              "focus restoration": "function _restoreModalFocus(modal)",
+              "origin storage": "const _modalFocusOrigins = new WeakMap();",
+          }
+
+          for label, needle in required_logic.items():
+              if needle not in modals:
+                  raise SystemExit(f"Missing modal focus requirement: {label}: {needle}")
+              print(f"Verified focus behavior: {label}")
+
+          print("All modal accessibility checks passed")
+          PY
+
+          git status --short
+          git diff -- index.html events.js modals.js
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet -- index.html events.js modals.js; then
+            echo "Modal accessibility fixes are already applied"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index.html events.js modals.js
+          git commit -m "fix: add accessible modal semantics and focus management"
+          git pull --rebase origin exp
+          git push origin exp
