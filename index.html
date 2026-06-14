@@ -79,8 +79,7 @@
 	<link rel="stylesheet" href="css/utilities.css" />
 	<link rel="stylesheet" href="css/pericope.css" />
 	<link rel="stylesheet" href="css/geek95.css">
-	<!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
-	<script src="https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV" async defer></script>
+	<!-- Firebase App Check loads reCAPTCHA v3 through ReCaptchaV3Provider. -->
     <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
 </head>
 
@@ -437,7 +436,7 @@
 							<p class="help-text">
 								Account settings (email, theme, translation, reading position) are automatically synced via Firebase when you're signed in.
 							</p>
-							<button id="openAccountBtn" class="primary-btn" style="width: 100%; margin-top: 1rem;">
+							<button id="openAccountBtn" class="primary-btn account-manage-btn">
 								Manage Account
 							</button>
 						</div>
@@ -609,7 +608,7 @@
 						<input type="password" id="loginPassword" class="input-field" placeholder="Password"
 							autocomplete="current-password" required />
 					</div>
-					<button type="submit" class="primary-btn" style="width: 100%">Sign In</button>
+					<button type="submit" class="primary-btn auth-form-submit">Sign In</button>
 				</form>
 				<p class="auth-switch">
 					<a href="#" id="forgotPasswordLink">Forgot password?</a>
@@ -644,7 +643,7 @@
 						<input type="password" id="signupPassword" class="input-field"
 							placeholder="At least 6 characters" autocomplete="new-password" required />
 					</div>
-					<button type="submit" id="signupSubmit" class="primary-btn" style="width: 100%">Create Account</button>
+					<button type="submit" id="signupSubmit" class="primary-btn auth-form-submit">Create Account</button>
 				</form>
 				<p class="auth-switch">
 					Already have an account?
@@ -679,7 +678,7 @@
 					<button id="changeEmailBtn" class="secondary-btn">Change Email</button>
 					<button id="changePasswordBtn" class="secondary-btn">Change Password</button>
 				</div>
-				<button id="logoutBtn" class="primary-btn" style="margin-top: var(--spacing-md)">Sign Out</button>
+				<button id="logoutBtn" class="primary-btn account-signout-btn">Sign Out</button>
 			</div>
 		</div>
 	</div>
