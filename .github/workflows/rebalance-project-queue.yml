@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: rebalance-project-queue
+  group: rebalance-project-queue-${{ github.event_name == 'workflow_dispatch' && 'manual' || 'automatic' }}
   cancel-in-progress: false
 
 jobs:
