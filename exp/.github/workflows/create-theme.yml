@@ -1,0 +1,229 @@
+name: Create Theme
+
+on:
+  workflow_dispatch:
+    inputs:
+      theme_name:
+        description: Display name, such as Midnight Blue
+        required: true
+        type: string
+      theme_id:
+        description: Lowercase ID used for the CSS class, such as midnight-blue
+        required: true
+        type: string
+      mode:
+        description: Theme mode
+        required: true
+        default: dark
+        type: choice
+        options:
+          - dark
+          - light
+      bg_base:
+        description: Base background
+        required: true
+        type: string
+      bg_card:
+        description: Card and panel background
+        required: true
+        type: string
+      text_heading:
+        description: Heading text
+        required: true
+        type: string
+      text_body:
+        description: Scripture and body text
+        required: true
+        type: string
+      text_muted:
+        description: Muted text and verse numbers
+        required: true
+        type: string
+      primary_color:
+        description: Primary interactive color
+        required: true
+        type: string
+      brand_secondary:
+        description: Secondary brand and section-heading color
+        required: true
+        type: string
+      accent_color:
+        description: Supporting accent color
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  create-theme:
+    name: Create ${{ inputs.theme_name }} theme
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Generate theme
+        env:
+          THEME_NAME: ${{ inputs.theme_name }}
+          THEME_ID: ${{ inputs.theme_id }}
+          THEME_MODE: ${{ inputs.mode }}
+          BG_BASE: ${{ inputs.bg_base }}
+          BG_CARD: ${{ inputs.bg_card }}
+          TEXT_HEADING: ${{ inputs.text_heading }}
+          TEXT_BODY: ${{ inputs.text_body }}
+          TEXT_MUTED: ${{ inputs.text_muted }}
+          PRIMARY_COLOR: ${{ inputs.primary_color }}
+          BRAND_SECONDARY: ${{ inputs.brand_secondary }}
+          ACCENT_COLOR: ${{ inputs.accent_color }}
+        run: |
+          python3 <<'PY'
+          import colorsys
+          import os
+          import re
+          from pathlib import Path
+
+          THEMES_FILE = Path("css/themes.css")
+          COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{6}$")
+          ID_PATTERN = re.compile(r"^[a-z][a-z0-9-]*$")
+
+          def required(name):
+              value = os.environ[name].strip()
+              if not value:
+                  raise SystemExit(f"{name} is required")
+              return value
+
+          def color(name):
+              value = required(name)
+              if not COLOR_PATTERN.fullmatch(value):
+                  raise SystemExit(f"{name} must be a six-digit hex color such as #1A2B3C")
+              return value.upper()
+
+          def rgb(hex_color):
+              return tuple(int(hex_color[index:index + 2], 16) / 255 for index in (1, 3, 5))
+
+          def hex_color(red, green, blue):
+              return "#{:02X}{:02X}{:02X}".format(
+                  round(red * 255),
+                  round(green * 255),
+                  round(blue * 255),
+              )
+
+          def adjust_lightness(value, amount):
+              red, green, blue = rgb(value)
+              hue, lightness, saturation = colorsys.rgb_to_hls(red, green, blue)
+              lightness = max(0, min(1, lightness + amount))
+              return hex_color(*colorsys.hls_to_rgb(hue, lightness, saturation))
+
+          def mix(first, second, weight):
+              first_rgb = rgb(first)
+              second_rgb = rgb(second)
+              return hex_color(*(
+                  first_channel * weight + second_channel * (1 - weight)
+                  for first_channel, second_channel in zip(first_rgb, second_rgb)
+              ))
+
+          name = required("THEME_NAME")
+          theme_id = required("THEME_ID")
+          mode = required("THEME_MODE")
+
+          if not ID_PATTERN.fullmatch(theme_id):
+              raise SystemExit("THEME_ID must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens")
+          if mode not in {"dark", "light"}:
+              raise SystemExit("THEME_MODE must be dark or light")
+
+          bg_base = color("BG_BASE")
+          bg_card = color("BG_CARD")
+          text_heading = color("TEXT_HEADING")
+          text_body = color("TEXT_BODY")
+          text_muted = color("TEXT_MUTED")
+          primary = color("PRIMARY_COLOR")
+          secondary = color("BRAND_SECONDARY")
+          accent = color("ACCENT_COLOR")
+
+          existing = THEMES_FILE.read_text()
+          selector = f":root.{theme_id}-theme"
+          if selector in existing:
+              raise SystemExit(f"Theme ID '{theme_id}' already exists in {THEMES_FILE}")
+
+          dark = mode == "dark"
+          bg_raised = adjust_lightness(bg_card, 0.06 if dark else -0.04)
+          border_neutral = mix(bg_raised, text_muted, 0.72 if dark else 0.82)
+          highlight_border = mix(border_neutral, text_heading, 0.72)
+          primary_dark = adjust_lightness(primary, -0.08)
+          primary_light = adjust_lightness(primary, 0.10)
+          success = "#6FBF73" if dark else "#2E7D32"
+          warning = "#F2C14E" if dark else "#9A6700"
+          error = "#E57373" if dark else "#B3261E"
+          shadow_color = "0, 0, 0"
+          shadow_sm = f"0 1px 3px rgba({shadow_color}, {'0.45' if dark else '0.10'})"
+          shadow_md = f"0 6px 16px rgba({shadow_color}, {'0.45' if dark else '0.12'})"
+          shadow_lg = f"0 16px 40px rgba({shadow_color}, {'0.50' if dark else '0.16'})"
+
+          block = f'''\n\n/* {name} theme */
+          :root.{theme_id}-theme,
+          html.{theme_id}-theme,
+          body.{theme_id}-theme {{
+              --bg-base: {bg_base};
+              --bg-card: {bg_card};
+              --bg-raised: {bg_raised};
+
+              --text-heading: {text_heading};
+              --text-body: {text_body};
+              --text-muted: {text_muted};
+
+              --border-neutral: {border_neutral};
+              --highlight-border: {highlight_border};
+
+              --primary-color: {primary};
+              --primary-dark: {primary_dark};
+              --primary-light: {primary_light};
+              --brand-secondary: {secondary};
+              --section-heading-color: var(--brand-secondary);
+              --accent-color: {accent};
+
+              --success-color: {success};
+              --warning-color: {warning};
+              --error-color: {error};
+
+              --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+              --shadow-sm: {shadow_sm};
+              --shadow-md: {shadow_md};
+              --shadow-lg: {shadow_lg};
+          }}
+          '''
+
+          THEMES_FILE.write_text(existing.rstrip() + block)
+          PY
+
+      - name: Verify generated theme
+        env:
+          THEME_ID: ${{ inputs.theme_id }}
+        run: |
+          git diff --check
+          grep -F ":root.${THEME_ID}-theme" css/themes.css
+          grep -F -- "--bg-base:" css/themes.css
+          grep -F -- "--text-body:" css/themes.css
+          grep -F -- "--primary-color:" css/themes.css
+          git diff -- css/themes.css
+
+      - name: Commit theme
+        env:
+          THEME_NAME: ${{ inputs.theme_name }}
+          THEME_ID: ${{ inputs.theme_id }}
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add css/themes.css
+          git commit -m "feat: add ${THEME_NAME} theme"
+          git pull --rebase origin exp
+          git push origin exp
