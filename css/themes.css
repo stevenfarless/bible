@@ -954,3 +954,113 @@ body.vigil-theme.light-mode {
     --shadow-md: 0 4px 6px hsla(28, 24%, 18%, 0.14);
     --shadow-lg: 0 10px 15px hsla(28, 24%, 18%, 0.18);
 }
+
+/* Uxorem Amo theme */
+:root.uxorem-amo-theme,
+html.uxorem-amo-theme,
+body.uxorem-amo-theme {
+    --bg-base: #161018;
+    --bg-card: #211521;
+    --bg-raised: #342134;
+
+    --text-heading: #E85A9F;
+    --text-body: #E8DEE5;
+    --text-muted: #B8A2B0;
+
+    --border-neutral: #594557;
+    --highlight-border: #814B6B;
+
+    --primary-color: #E85A9F;
+    --primary-dark: #E3368A;
+    --primary-light: #EE87B9;
+    --brand-secondary: #D6B36A;
+    --section-heading-color: var(--brand-secondary);
+    --accent-color: #FF77B7;
+
+    --success-color: #6FBF73;
+    --warning-color: #F2C14E;
+    --error-color: #E57373;
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.50);
+}
+
+:root.uxorem-amo-theme.light-mode,
+html.uxorem-amo-theme.light-mode,
+body.uxorem-amo-theme.light-mode {
+    --bg-base: #F9F2F6;
+    --bg-card: #F2E6EC;
+    --bg-raised: #EBD9E2;
+
+    --text-heading: #B52F6F;
+    --text-body: #352A31;
+    --text-muted: #7A6670;
+
+    --border-neutral: #D7C4CD;
+    --highlight-border: #CD9AB3;
+
+    --primary-color: #C63F81;
+    --primary-dark: #AA326D;
+    --primary-light: #D2669B;
+    --brand-secondary: #B88C34;
+    --section-heading-color: var(--brand-secondary);
+    --accent-color: #E85A9F;
+
+    --success-color: #2E7D32;
+    --warning-color: #9A6700;
+    --error-color: #B3261E;
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.16);
+}
+
+body.uxorem-amo-theme,
+body.uxorem-amo-theme .main-content {
+    background-color: var(--bg-base);
+    color: var(--text-body);
+}
+
+body.uxorem-amo-theme .passage-container {
+    background-color: var(--bg-card);
+    color: var(--text-body);
+}
+
+body.uxorem-amo-theme .passage-title,
+body.uxorem-amo-theme .passage-text,
+body.uxorem-amo-theme .verse {
+    color: var(--text-body);
+}
+
+body.uxorem-amo-theme .top-chrome,
+body.uxorem-amo-theme .header,
+body.uxorem-amo-theme .navigation,
+body.uxorem-amo-theme .modal-content,
+body.uxorem-amo-theme .accordion-section,
+body.uxorem-amo-theme .accordion-panel,
+body.uxorem-amo-theme .settings-group,
+body.uxorem-amo-theme .input-field {
+    background-color: var(--bg-card);
+    color: var(--text-body);
+    border-color: var(--border-neutral);
+}
+
+body.uxorem-amo-theme .modal-header,
+body.uxorem-amo-theme .accordion-header,
+body.uxorem-amo-theme .selector-btn,
+body.uxorem-amo-theme .nav-btn,
+body.uxorem-amo-theme .icon-btn {
+    background-color: var(--bg-raised);
+    color: var(--text-heading);
+    border-color: var(--border-neutral);
+}
+
+body.uxorem-amo-theme .help-text,
+body.uxorem-amo-theme .verse-number {
+    color: var(--text-muted);
+}
