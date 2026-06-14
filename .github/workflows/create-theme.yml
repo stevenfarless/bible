@@ -7,12 +7,8 @@ on:
         description: Display name, such as Midnight Blue
         required: true
         type: string
-      theme_id:
-        description: Lowercase ID used for the CSS class, such as midnight-blue
-        required: true
-        type: string
       existing_theme_action:
-        description: What to do if the theme ID already exists
+        description: What to do if the generated theme ID already exists
         required: true
         default: stop
         type: choice
@@ -83,7 +79,6 @@ jobs:
       - name: Generate theme
         env:
           THEME_NAME: ${{ inputs.theme_name }}
-          THEME_ID: ${{ inputs.theme_id }}
           EXISTING_THEME_ACTION: ${{ inputs.existing_theme_action }}
           RENAME_THEME_ID: ${{ inputs.rename_theme_id }}
           THEME_MODE: ${{ inputs.mode }}
