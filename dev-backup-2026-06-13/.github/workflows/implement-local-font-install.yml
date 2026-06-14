@@ -1,0 +1,87 @@
+name: Implement Local Font Install
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  implement-local-font-install:
+    name: Precache fonts and load only the active reading font
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Apply font install changes
+        run: python3 .github/scripts/implement_local_font_install.py
+
+      - name: Verify changes
+        run: |
+          node --check prepaint-settings.js
+          node --check settings.js
+          node --check events.js
+          node --check sw.js
+          git diff --check
+
+          if grep -Fq '<link rel="preload" href="./fonts/' index.html; then
+            echo "Static font preload tags remain in index.html"
+            exit 1
+          fi
+
+          grep -F "fontPreload.rel = 'preload';" prepaint-settings.js
+          grep -F "await document.fonts.load" settings.js
+          grep -F "await applyReadingFont(app, font);" events.js
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          expected = [
+              'Cinzel-Regular.woff2',
+              'GentiumBookPlus-Regular.woff2',
+              'GentiumBookPlus-Italic.woff2',
+              'GentiumBookPlus-Bold.woff2',
+              'GentiumBookPlus-BoldItalic.woff2',
+              'Andika-Regular.woff2',
+              'Andika-Italic.woff2',
+              'Andika-Bold.woff2',
+              'OpenDyslexic3-Regular.woff2',
+              'Ubuntu-Regular.woff2',
+              'Ubuntu-Italic.woff2',
+              'Ubuntu-Bold.woff2',
+              'Ubuntu-BoldItalic.woff2',
+              'iAWriterQuattroS-Regular.woff2',
+              'iAWriterQuattroS-Italic.woff2',
+              'iAWriterQuattroS-Bold.woff2',
+              'iAWriterQuattroS-BoldItalic.woff2',
+              'iAWriterMonoS-Regular.woff',
+              'AdwaitaSans-Regular.woff2',
+              'AdwaitaSans-Italic.woff2',
+              'Web437_IBM_VGA_9x16-2x.woff',
+          ]
+
+          sw = Path('sw.js').read_text()
+          missing = [name for name in expected if f"./fonts/{name}" not in sw]
+          if missing:
+              raise SystemExit('Fonts missing from APP_SHELL: ' + ', '.join(missing))
+          PY
+
+          git diff -- sw.js index.html prepaint-settings.js settings.js events.js
+
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sw.js index.html prepaint-settings.js settings.js events.js
+          git commit -m "perf: install fonts locally and load the active face"
+          git pull --rebase origin exp
+          git push origin exp
