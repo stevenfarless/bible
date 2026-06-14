@@ -22,6 +22,10 @@
     animation: fadeIn var(--transition-normal);
 }
 
+.modal:focus {
+    outline: none;
+}
+
 .modal-content {
     background-color: var(--bg-card);
     border-radius: 12px;
