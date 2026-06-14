@@ -112,6 +112,14 @@ export function loadLocalSettings(app) {
     } catch (_) { /* malformed entry — leave state at defaults */ }
 }
 
+function syncVerseByVerseMode(app) {
+    const enabled = !!app.state.verseByVerse;
+
+    app.passageText?.classList.toggle('verse-by-verse', enabled);
+    document.body.classList.toggle('verse-by-verse-mode', enabled);
+    document.documentElement.classList.toggle('verse-by-verse-enabled', enabled);
+}
+
 export function applySettings(app) {
     ensureRecaptchaBadgeHidden();
 
