@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
-"""Fully rebalance Lege Lux Project 3.
+"""Fully rebalance Lege Lux Project 3 within each milestone.
 
-Behavior:
-- Closed repository issues are moved to Done.
-- Issues moved directly to Done in the Project remain Done.
-- Reopened repository issues return to the active queue.
-- Every active open issue is ranked on every run.
+For every milestone:
 - The highest-ranked 2 active issues become Now.
 - The next 4 active issues become Next.
-- All remaining active issues become Someday.
+- Remaining active issues become Someday.
 
-Ranking favors urgent/critical wording, milestone priority, useful labels,
-and then the oldest issue number.
+Closed repository issues become Done. Issues moved directly to Done in the
+Project remain Done. A repository issue reopened by the triggering event
+returns to the active queue.
 """
 
 from __future__ import annotations
@@ -20,6 +17,7 @@ import os
 import re
 import subprocess
 import sys
+from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any
 
@@ -36,29 +34,7 @@ TRIGGER_ISSUE_NUMBER = os.getenv("TRIGGER_ISSUE_NUMBER", "")
 
 OPEN_STATUSES = {"Now", "Next", "Someday"}
 ALL_STATUSES = OPEN_STATUSES | {"Done"}
-
-MILESTONE_PRIORITY = {
-    "Critical Performance (CWV)": 1000,
-    "Bug Fixes": 950,
-    "Security & Privacy": 900,
-    "Offline & PWA": 850,
-    "Accounts & Sync": 800,
-    "Performance & Search": 750,
-    "Accessibility": 700,
-    "Testing & Developer Experience": 650,
-    "UI & Responsive": 600,
-    "Bible Text & Rendering": 550,
-    "Text Layout & Display": 500,
-    "Translations & Refactoring": 450,
-    "Reading Features": 400,
-    "User Features": 350,
-    "Translation Expansion": 300,
-    "Greek & Hebrew Texts": 250,
-    "UI Overhaul & Source Texts": 200,
-    "Repo Hygiene (no tag)": 150,
-    "json-ver Stability": 100,
-    "Backlog": 0,
-}
+NO_MILESTONE = "(No Milestone)"
 
 LABEL_PRIORITY = {
     "security": 180,
@@ -69,10 +45,25 @@ LABEL_PRIORITY = {
     "offline": 100,
 }
 
+TITLE_PRIORITY = (
+    (re.compile(r"\bsecurity\b", re.IGNORECASE), 180),
+    (re.compile(r"\bbug\b", re.IGNORECASE), 160),
+    (re.compile(r"\bperf(?:ormance)?\b", re.IGNORECASE), 140),
+    (re.compile(r"\b(?:a11y|accessibility)\b", re.IGNORECASE), 120),
+    (re.compile(r"\b(?:pwa|offline)\b", re.IGNORECASE), 100),
+)
+
 URGENT_PATTERN = re.compile(
     r"\b(urgent|critical|blocker|data loss|security vulnerability|regression)\b",
     re.IGNORECASE,
 )
+
+STATUS_CONTINUITY = {
+    "Now": 40,
+    "Next": 20,
+    "Someday": 0,
+    None: 0,
+}
 
 
 @dataclass
@@ -102,7 +93,7 @@ def parse_issues(items: list[dict[str, Any]]) -> list[ProjectIssue]:
                 number=issue["number"],
                 title=issue["title"],
                 state=issue.get("state", "").upper(),
-                milestone=(issue.get("milestone") or {}).get("title", ""),
+                milestone=(issue.get("milestone") or {}).get("title") or NO_MILESTONE,
                 labels={
                     node["name"].strip().lower()
                     for node in issue.get("labels", {}).get("nodes", [])
@@ -117,8 +108,12 @@ def parse_issues(items: list[dict[str, Any]]) -> list[ProjectIssue]:
 
 def priority_key(issue: ProjectIssue) -> tuple[int, int]:
     searchable = " ".join([issue.title, *sorted(issue.labels)])
-    score = MILESTONE_PRIORITY.get(issue.milestone, 0)
-    score += sum(LABEL_PRIORITY.get(label, 0) for label in issue.labels)
+    score = sum(LABEL_PRIORITY.get(label, 0) for label in issue.labels)
+    score += STATUS_CONTINUITY.get(issue.status, 0)
+
+    for pattern, value in TITLE_PRIORITY:
+        if pattern.search(issue.title):
+            score += value
 
     if URGENT_PATTERN.search(searchable):
         score += 2000
@@ -137,16 +132,22 @@ def is_triggered_reopen(issue: ProjectIssue) -> bool:
 def desired_active_statuses(
     active_issues: list[ProjectIssue],
 ) -> dict[int, str]:
-    ranked = sorted(active_issues, key=priority_key)
+    by_milestone: dict[str, list[ProjectIssue]] = defaultdict(list)
+    for issue in active_issues:
+        by_milestone[issue.milestone].append(issue)
+
     desired: dict[int, str] = {}
 
-    for index, issue in enumerate(ranked):
-        if index < NOW_CAPACITY:
-            desired[issue.number] = "Now"
-        elif index < NOW_CAPACITY + NEXT_CAPACITY:
-            desired[issue.number] = "Next"
-        else:
-            desired[issue.number] = "Someday"
+    for milestone, milestone_issues in sorted(by_milestone.items()):
+        ranked = sorted(milestone_issues, key=priority_key)
+
+        for index, issue in enumerate(ranked):
+            if index < NOW_CAPACITY:
+                desired[issue.number] = "Now"
+            elif index < NOW_CAPACITY + NEXT_CAPACITY:
+                desired[issue.number] = "Next"
+            else:
+                desired[issue.number] = "Someday"
 
     return desired
 
@@ -167,7 +168,7 @@ def set_status(
     line = (
         f'{action:<9} #{issue.number:<4} '
         f'{issue.status or "(blank)":<9} -> {target:<7} '
-        f'[{reason}] {issue.title}'
+        f'[{issue.milestone}; {reason}] {issue.title}'
     )
     print(line)
     changes.append(line)
@@ -184,6 +185,27 @@ def set_status(
         )
 
     issue.status = target
+
+
+def print_milestone_totals(issues: list[ProjectIssue]) -> None:
+    grouped: dict[str, dict[str, int]] = defaultdict(
+        lambda: {"Now": 0, "Next": 0, "Someday": 0, "Done": 0}
+    )
+
+    for issue in issues:
+        if issue.status in ALL_STATUSES:
+            grouped[issue.milestone][issue.status] += 1
+
+    print("\nPer-milestone totals:")
+    for milestone in sorted(grouped):
+        counts = grouped[milestone]
+        print(
+            f"  {milestone}: "
+            f'Now={counts["Now"]}, '
+            f'Next={counts["Next"]}, '
+            f'Someday={counts["Someday"]}, '
+            f'Done={counts["Done"]}'
+        )
 
 
 def main() -> None:
@@ -212,14 +234,13 @@ def main() -> None:
     print(
         f'Project: {project["title"]} ({OWNER} project {PROJECT_NUMBER})\n'
         f"Repository: {REPOSITORY}\n"
-        f"Now capacity: {NOW_CAPACITY}\n"
-        f"Next capacity: {NEXT_CAPACITY}\n"
+        f"Now capacity per milestone: {NOW_CAPACITY}\n"
+        f"Next capacity per milestone: {NEXT_CAPACITY}\n"
         f"Dry run: {DRY_RUN}\n"
         f"Trigger action: {TRIGGER_ACTION or '(none)'}\n"
-        "Mode: full rebalance of all current active statuses\n"
+        "Mode: full rebalance inside every milestone\n"
     )
 
-    # Synchronize completion and reopening before ranking active work.
     for issue in sorted(issues, key=lambda value: value.number):
         if issue.state == "CLOSED":
             set_status(
@@ -252,7 +273,7 @@ def main() -> None:
                 changes,
             )
 
-    # Open issues intentionally marked Done remain completed and are excluded.
+    # Open items intentionally marked Done remain completed and are excluded.
     active_issues = [
         issue
         for issue in issues
@@ -260,39 +281,18 @@ def main() -> None:
     ]
     desired = desired_active_statuses(active_issues)
 
-    for issue in sorted(active_issues, key=lambda value: value.number):
-        target = desired[issue.number]
+    for issue in sorted(active_issues, key=lambda value: (value.milestone, value.number)):
         set_status(
             project["id"],
             status_field["id"],
             options,
             issue,
-            target,
-            "full queue rebalance",
+            desired[issue.number],
+            "per-milestone rebalance",
             changes,
         )
 
-    totals = {
-        name: sum(1 for issue in issues if issue.status == name)
-        for name in ("Now", "Next", "Someday", "Done")
-    }
-
-    print("\nResulting project totals:")
-    for name in ("Now", "Next", "Someday", "Done"):
-        print(f"  {name}: {totals[name]}")
-
-    expected_now = min(NOW_CAPACITY, len(active_issues))
-    expected_next = min(
-        NEXT_CAPACITY,
-        max(0, len(active_issues) - expected_now),
-    )
-
-    if totals["Now"] != expected_now or totals["Next"] != expected_next:
-        raise SystemExit(
-            "Calculated queue totals are incorrect: "
-            f'expected Now={expected_now}, Next={expected_next}; '
-            f'got Now={totals["Now"]}, Next={totals["Next"]}'
-        )
+    print_milestone_totals(issues)
 
     if DRY_RUN:
         print(f"\nPreview complete. {len(changes)} change(s) would be made.")
@@ -319,20 +319,40 @@ def main() -> None:
             if issue.status != refreshed_desired[issue.number]:
                 unresolved.append(issue)
 
-    if unresolved:
-        for issue in unresolved:
-            expected = refreshed_desired.get(issue.number, "Done")
+    grouped_active: dict[str, list[ProjectIssue]] = defaultdict(list)
+    for issue in refreshed_active:
+        grouped_active[issue.milestone].append(issue)
+
+    for milestone, milestone_issues in grouped_active.items():
+        now_count = sum(issue.status == "Now" for issue in milestone_issues)
+        next_count = sum(issue.status == "Next" for issue in milestone_issues)
+
+        if now_count > NOW_CAPACITY or next_count > NEXT_CAPACITY:
             print(
-                f'UNRESOLVED #{issue.number}: state={issue.state} '
-                f'status={issue.status!r} expected={expected!r} '
-                f'title={issue.title}',
+                f"CAPACITY ERROR {milestone}: "
+                f"Now={now_count}, Next={next_count}",
                 file=sys.stderr,
             )
-        raise SystemExit(f"{len(unresolved)} project item(s) failed verification.")
+            unresolved.extend(milestone_issues)
+
+    if unresolved:
+        seen: set[int] = set()
+        for issue in unresolved:
+            if issue.number in seen:
+                continue
+            seen.add(issue.number)
+            expected = refreshed_desired.get(issue.number, "Done")
+            print(
+                f'UNRESOLVED #{issue.number}: milestone={issue.milestone!r} '
+                f'state={issue.state} status={issue.status!r} '
+                f'expected={expected!r} title={issue.title}',
+                file=sys.stderr,
+            )
+        raise SystemExit(f"{len(seen)} project item(s) failed verification.")
 
     print(
         f"\nApplied {len(changes)} change(s). "
-        "Every current active status was fully rebalanced."
+        "Every milestone now has at most 2 Now and at most 4 Next issues."
     )
 
 
