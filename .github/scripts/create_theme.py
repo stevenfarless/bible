@@ -9,6 +9,7 @@ INDEX_FILE = Path("index.html")
 UI_FILE = Path("ui.js")
 COLOR_PATTERN = re.compile(r"^#?[0-9a-fA-F]{6}$")
 ID_PATTERN = re.compile(r"^[a-z][a-z0-9-]*$")
+PALETTE_KEYS = ("bg_base", "bg_card", "text_heading", "text_body", "text_muted", "primary", "secondary", "accent")
 
 
 def required(name):
@@ -22,19 +23,11 @@ def optional(name):
     return os.environ.get(name, "").strip()
 
 
-def normalize_color(value, name):
+def normalize_color(value, label):
+    value = value.strip()
     if not COLOR_PATTERN.fullmatch(value):
-        raise SystemExit(f"{name} must be a six-digit hex color such as #1A2B3C or 1A2B3C")
+        raise SystemExit(f"{label} must be a six-digit hex color")
     return f"#{value.lstrip('#').upper()}"
-
-
-def color(name):
-    return normalize_color(required(name), name)
-
-
-def optional_color(name):
-    value = optional(name)
-    return normalize_color(value, name) if value else None
 
 
 def slugify_theme_name(name):
@@ -63,6 +56,29 @@ def mix(first, second, weight):
     first_rgb = rgb(first)
     second_rgb = rgb(second)
     return hex_color(*(first_channel * weight + second_channel * (1 - weight) for first_channel, second_channel in zip(first_rgb, second_rgb)))
+
+
+def parse_palette(env_name, dark):
+    parts = [part.strip() for part in required(env_name).split(",")]
+    if len(parts) != len(PALETTE_KEYS):
+        raise SystemExit(f"{env_name} must contain exactly 8 comma-separated hex colors")
+
+    values = {
+        key: normalize_color(value, f"{env_name} item {index}")
+        for index, (key, value) in enumerate(zip(PALETTE_KEYS, parts), 1)
+    }
+    values["bg_raised"] = adjust_lightness(values["bg_card"], 0.06 if dark else -0.04)
+    values["border_neutral"] = mix(values["bg_raised"], values["text_muted"], 0.72 if dark else 0.82)
+    values["highlight_border"] = mix(values["border_neutral"], values["text_heading"], 0.72)
+    values["primary_dark"] = adjust_lightness(values["primary"], -0.08)
+    values["primary_light"] = adjust_lightness(values["primary"], 0.10)
+    values["success"] = "#6FBF73" if dark else "#2E7D32"
+    values["warning"] = "#F2C14E" if dark else "#9A6700"
+    values["error"] = "#E57373" if dark else "#B3261E"
+    values["shadow_sm"] = f"0 1px 3px rgba(0, 0, 0, {'0.45' if dark else '0.10'})"
+    values["shadow_md"] = f"0 6px 16px rgba(0, 0, 0, {'0.45' if dark else '0.12'})"
+    values["shadow_lg"] = f"0 16px 40px rgba(0, 0, 0, {'0.50' if dark else '0.16'})"
+    return values
 
 
 def replace_once(text, old, new, description):
@@ -114,32 +130,6 @@ def resolve_theme_id(initial_theme_id):
     return initial_theme_id, action
 
 
-def palette(prefix, dark):
-    names = {
-        "bg_base": f"{prefix}BG_BASE",
-        "bg_card": f"{prefix}BG_CARD",
-        "text_heading": f"{prefix}TEXT_HEADING",
-        "text_body": f"{prefix}TEXT_BODY",
-        "text_muted": f"{prefix}TEXT_MUTED",
-        "primary": f"{prefix}PRIMARY_COLOR",
-        "secondary": f"{prefix}BRAND_SECONDARY",
-        "accent": f"{prefix}ACCENT_COLOR",
-    }
-    values = {key: color(env_name) for key, env_name in names.items()}
-    values["bg_raised"] = adjust_lightness(values["bg_card"], 0.06 if dark else -0.04)
-    values["border_neutral"] = mix(values["bg_raised"], values["text_muted"], 0.72 if dark else 0.82)
-    values["highlight_border"] = mix(values["border_neutral"], values["text_heading"], 0.72)
-    values["primary_dark"] = adjust_lightness(values["primary"], -0.08)
-    values["primary_light"] = adjust_lightness(values["primary"], 0.10)
-    values["success"] = "#6FBF73" if dark else "#2E7D32"
-    values["warning"] = "#F2C14E" if dark else "#9A6700"
-    values["error"] = "#E57373" if dark else "#B3261E"
-    values["shadow_sm"] = f"0 1px 3px rgba(0, 0, 0, {'0.45' if dark else '0.10'})"
-    values["shadow_md"] = f"0 6px 16px rgba(0, 0, 0, {'0.45' if dark else '0.12'})"
-    values["shadow_lg"] = f"0 16px 40px rgba(0, 0, 0, {'0.50' if dark else '0.16'})"
-    return values
-
-
 def palette_block(selector, values):
     return f'''{selector} {{
     --bg-base: {values["bg_base"]};
@@ -181,17 +171,8 @@ def main():
         raise SystemExit("THEME_MODE must be dark, light, or both")
 
     theme_id, action = resolve_theme_id(initial_theme_id)
-    dark_values = palette("", mode != "light")
-    light_values = None
-    if mode == "both":
-        required_light = [
-            "LIGHT_BG_BASE", "LIGHT_BG_CARD", "LIGHT_TEXT_HEADING", "LIGHT_TEXT_BODY",
-            "LIGHT_TEXT_MUTED", "LIGHT_PRIMARY_COLOR", "LIGHT_BRAND_SECONDARY", "LIGHT_ACCENT_COLOR",
-        ]
-        missing = [name for name in required_light if not optional(name)]
-        if missing:
-            raise SystemExit(f"Both mode requires: {', '.join(missing)}")
-        light_values = palette("LIGHT_", False)
+    dark_values = parse_palette("DARK_PALETTE", mode != "light")
+    light_values = parse_palette("LIGHT_PALETTE", False) if mode == "both" else None
 
     css = THEMES_FILE.read_text()
     index = INDEX_FILE.read_text()
