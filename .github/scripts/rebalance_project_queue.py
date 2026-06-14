@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
-"""Keep Lege Lux Project 3 supplied with Now and Next work.
+"""Fully rebalance Lege Lux Project 3.
 
 Behavior:
 - Closed repository issues are moved to Done.
 - Issues moved directly to Done in the Project remain Done.
 - Reopened repository issues return to the active queue.
-- Blank or invalid open statuses are normalized to Someday.
-- Vacancies in Now are filled from Next.
-- Vacancies in Next are filled from Someday.
-- Existing excess items are never demoted automatically.
+- Every active open issue is ranked on every run.
+- The highest-ranked 2 active issues become Now.
+- The next 4 active issues become Next.
+- All remaining active issues become Someday.
+
+Ranking favors urgent/critical wording, milestone priority, useful labels,
+and then the oldest issue number.
 """
 
 from __future__ import annotations
@@ -81,7 +84,6 @@ class ProjectIssue:
     milestone: str
     labels: set[str]
     status: str | None
-    original_status: str | None
 
 
 def parse_issues(items: list[dict[str, Any]]) -> list[ProjectIssue]:
@@ -94,7 +96,6 @@ def parse_issues(items: list[dict[str, Any]]) -> list[ProjectIssue]:
         if issue.get("repository", {}).get("nameWithOwner") != REPOSITORY:
             continue
 
-        status = current_status(item)
         parsed.append(
             ProjectIssue(
                 item_id=item["id"],
@@ -107,8 +108,7 @@ def parse_issues(items: list[dict[str, Any]]) -> list[ProjectIssue]:
                     for node in issue.get("labels", {}).get("nodes", [])
                     if node and node.get("name")
                 },
-                status=status,
-                original_status=status,
+                status=current_status(item),
             )
         )
 
@@ -123,9 +123,6 @@ def priority_key(issue: ProjectIssue) -> tuple[int, int]:
     if URGENT_PATTERN.search(searchable):
         score += 2000
 
-    if issue.original_status == "Done" and issue.state == "OPEN":
-        score += 1000
-
     return (-score, issue.number)
 
 
@@ -135,6 +132,23 @@ def is_triggered_reopen(issue: ProjectIssue) -> bool:
         and TRIGGER_ISSUE_NUMBER.isdigit()
         and issue.number == int(TRIGGER_ISSUE_NUMBER)
     )
+
+
+def desired_active_statuses(
+    active_issues: list[ProjectIssue],
+) -> dict[int, str]:
+    ranked = sorted(active_issues, key=priority_key)
+    desired: dict[int, str] = {}
+
+    for index, issue in enumerate(ranked):
+        if index < NOW_CAPACITY:
+            desired[issue.number] = "Now"
+        elif index < NOW_CAPACITY + NEXT_CAPACITY:
+            desired[issue.number] = "Next"
+        else:
+            desired[issue.number] = "Someday"
+
+    return desired
 
 
 def set_status(
@@ -202,8 +216,10 @@ def main() -> None:
         f"Next capacity: {NEXT_CAPACITY}\n"
         f"Dry run: {DRY_RUN}\n"
         f"Trigger action: {TRIGGER_ACTION or '(none)'}\n"
+        "Mode: full rebalance of all current active statuses\n"
     )
 
+    # Synchronize completion and reopening before ranking active work.
     for issue in sorted(issues, key=lambda value: value.number):
         if issue.state == "CLOSED":
             set_status(
@@ -236,44 +252,25 @@ def main() -> None:
                 changes,
             )
 
+    # Open issues intentionally marked Done remain completed and are excluded.
     active_issues = [
         issue
         for issue in issues
-        if issue.state == "OPEN" and issue.status in OPEN_STATUSES
+        if issue.state == "OPEN" and issue.status != "Done"
     ]
+    desired = desired_active_statuses(active_issues)
 
-    now_items = [issue for issue in active_issues if issue.status == "Now"]
-    next_items = [issue for issue in active_issues if issue.status == "Next"]
-
-    now_slots = max(0, NOW_CAPACITY - len(now_items))
-    if now_slots:
-        for issue in sorted(next_items, key=priority_key)[:now_slots]:
-            set_status(
-                project["id"],
-                status_field["id"],
-                options,
-                issue,
-                "Now",
-                "fill Now vacancy",
-                changes,
-            )
-
-    next_items = [issue for issue in active_issues if issue.status == "Next"]
-    next_slots = max(0, NEXT_CAPACITY - len(next_items))
-    if next_slots:
-        someday_candidates = [
-            issue for issue in active_issues if issue.status == "Someday"
-        ]
-        for issue in sorted(someday_candidates, key=priority_key)[:next_slots]:
-            set_status(
-                project["id"],
-                status_field["id"],
-                options,
-                issue,
-                "Next",
-                "fill Next vacancy",
-                changes,
-            )
+    for issue in sorted(active_issues, key=lambda value: value.number):
+        target = desired[issue.number]
+        set_status(
+            project["id"],
+            status_field["id"],
+            options,
+            issue,
+            target,
+            "full queue rebalance",
+            changes,
+        )
 
     totals = {
         name: sum(1 for issue in issues if issue.status == name)
@@ -284,16 +281,17 @@ def main() -> None:
     for name in ("Now", "Next", "Someday", "Done"):
         print(f"  {name}: {totals[name]}")
 
-    if totals["Now"] > NOW_CAPACITY:
-        print(
-            f'WARNING: Now contains {totals["Now"]} items; '
-            f"capacity is {NOW_CAPACITY}. No automatic demotion was performed."
-        )
+    expected_now = min(NOW_CAPACITY, len(active_issues))
+    expected_next = min(
+        NEXT_CAPACITY,
+        max(0, len(active_issues) - expected_now),
+    )
 
-    if totals["Next"] > NEXT_CAPACITY:
-        print(
-            f'WARNING: Next contains {totals["Next"]} items; '
-            f"capacity is {NEXT_CAPACITY}. No automatic demotion was performed."
+    if totals["Now"] != expected_now or totals["Next"] != expected_next:
+        raise SystemExit(
+            "Calculated queue totals are incorrect: "
+            f'expected Now={expected_now}, Next={expected_next}; '
+            f'got Now={totals["Now"]}, Next={totals["Next"]}'
         )
 
     if DRY_RUN:
@@ -302,7 +300,13 @@ def main() -> None:
 
     _, refreshed_raw_items = fetch_project()
     refreshed = parse_issues(refreshed_raw_items)
-    unresolved = []
+    refreshed_active = [
+        issue
+        for issue in refreshed
+        if issue.state == "OPEN" and issue.status != "Done"
+    ]
+    refreshed_desired = desired_active_statuses(refreshed_active)
+    unresolved: list[ProjectIssue] = []
 
     for issue in refreshed:
         if issue.state == "CLOSED" and issue.status != "Done":
@@ -311,17 +315,25 @@ def main() -> None:
             unresolved.append(issue)
         elif is_triggered_reopen(issue) and issue.status == "Done":
             unresolved.append(issue)
+        elif issue.number in refreshed_desired:
+            if issue.status != refreshed_desired[issue.number]:
+                unresolved.append(issue)
 
     if unresolved:
         for issue in unresolved:
+            expected = refreshed_desired.get(issue.number, "Done")
             print(
                 f'UNRESOLVED #{issue.number}: state={issue.state} '
-                f'status={issue.status!r} title={issue.title}',
+                f'status={issue.status!r} expected={expected!r} '
+                f'title={issue.title}',
                 file=sys.stderr,
             )
         raise SystemExit(f"{len(unresolved)} project item(s) failed verification.")
 
-    print(f"\nApplied {len(changes)} change(s). Queue verification passed.")
+    print(
+        f"\nApplied {len(changes)} change(s). "
+        "Every current active status was fully rebalanced."
+    )
 
 
 if __name__ == "__main__":
