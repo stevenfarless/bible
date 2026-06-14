@@ -1046,14 +1046,32 @@ class BibleApp {
     }
 
     initializeAccordion() {
-        document.querySelectorAll('.accordion-header').forEach((header) => {
-            header.addEventListener('click', () => {
-                const section = header.closest('.accordion-section');
+        const sections = Array.from(document.querySelectorAll('.accordion-section'));
+
+        const syncSection = (section) => {
+            const header = section.querySelector('.accordion-header');
+            const panel = section.querySelector('.accordion-panel');
+            const isActive = section.classList.contains('active');
+
+            header?.setAttribute('aria-expanded', String(isActive));
+            if (panel) {
+                panel.inert = !isActive;
+                panel.setAttribute('aria-hidden', String(!isActive));
+            }
+        };
+
+        sections.forEach((section) => {
+            const header = section.querySelector('.accordion-header');
+            syncSection(section);
+
+            header?.addEventListener('click', () => {
                 const isActive = section.classList.contains('active');
-                document.querySelectorAll('.accordion-section').forEach(s => s.classList.remove('active'));
+                sections.forEach((entry) => entry.classList.remove('active'));
                 if (!isActive) section.classList.add('active');
+                sections.forEach(syncSection);
             });
         });
+
         initSubAccordions();
         populateAboutVersion();
         const openAccountBtn = document.getElementById('openAccountBtn');

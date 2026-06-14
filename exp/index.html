@@ -12,7 +12,7 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="71f1193" />
+	<meta name="build-id" content="6bdac06" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement - always available in <head>) before the
@@ -38,7 +38,7 @@
 			if (isLight) el.classList.add('light-mode');
 		}());
 	</script>
-	<script src="prepaint-settings.js?v=71f1193"></script>
+	<script src="prepaint-settings.js?v=6bdac06"></script>
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -51,7 +51,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=71f1193">.
+	     before the parser reaches <script type="module" src="app.js?v=6bdac06">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -68,20 +68,20 @@
 	<link rel="modulepreload" href="events.js" />
 	<!-- CSS loaded as parallel <link> tags — @import chains are render-blocking
 	     and sequential; <link> tags are fetched in parallel by the browser. -->
-	<link rel="stylesheet" href="css/fonts.css?v=71f1193" />
-	<link rel="stylesheet" href="css/base.css?v=71f1193" />
-	<link rel="stylesheet" href="css/tokens.css?v=71f1193" />
-	<link rel="stylesheet" href="css/themes.css?v=71f1193" />
-	<link rel="stylesheet" href="css/layout.css?v=71f1193" />
-	<link rel="stylesheet" href="css/components.css?v=71f1193" />
-	<link rel="stylesheet" href="css/modals.css?v=71f1193" />
-	<link rel="stylesheet" href="css/interactions.css?v=71f1193" />
-	<link rel="stylesheet" href="css/utilities.css?v=71f1193" />
-	<link rel="stylesheet" href="css/pericope.css?v=71f1193" />
-	<link rel="stylesheet" href="css/geek95.css?v=71f1193">
+	<link rel="stylesheet" href="css/fonts.css?v=6bdac06" />
+	<link rel="stylesheet" href="css/base.css?v=6bdac06" />
+	<link rel="stylesheet" href="css/tokens.css?v=6bdac06" />
+	<link rel="stylesheet" href="css/themes.css?v=6bdac06" />
+	<link rel="stylesheet" href="css/layout.css?v=6bdac06" />
+	<link rel="stylesheet" href="css/components.css?v=6bdac06" />
+	<link rel="stylesheet" href="css/modals.css?v=6bdac06" />
+	<link rel="stylesheet" href="css/interactions.css?v=6bdac06" />
+	<link rel="stylesheet" href="css/utilities.css?v=6bdac06" />
+	<link rel="stylesheet" href="css/pericope.css?v=6bdac06" />
+	<link rel="stylesheet" href="css/geek95.css?v=6bdac06">
 	<!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
 	<script src="https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV" async defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js?v=71f1193"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js?v=6bdac06"></script>
 </head>
 
 <body class="initializing">
@@ -89,7 +89,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">71f1193</span>
+				<span id="build-info">6bdac06</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -228,7 +228,7 @@
 		</div>
 	</main>
 
-	<div id="bookModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="bookModalTitle">
+	<div id="bookModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="bookModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="bookModalTitle" tabindex="-1">Select a Book</h2>
@@ -257,7 +257,7 @@
 		</div>
 	</div>
 
-	<div id="chapterModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="chapterModalTitle">
+	<div id="chapterModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="chapterModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="chapterModalTitle" tabindex="-1"><span id="chapterModalBook">Genesis</span></h2>
@@ -273,7 +273,7 @@
 		</div>
 	</div>
 
-	<div id="verseModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="verseModalTitle">
+	<div id="verseModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="verseModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="verseModalTitle" tabindex="-1"><span id="verseModalBook">Genesis 1</span></h2>
@@ -289,7 +289,7 @@
 		</div>
 	</div>
 
-	<div id="translationModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="translationModalTitle">
+	<div id="translationModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="translationModalTitle" aria-hidden="true" inert>
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
 				<h2 id="translationModalTitle" tabindex="-1">Translation</h2>
@@ -305,7 +305,7 @@
 		</div>
 	</div>
 
-	<div id="settingsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+	<div id="settingsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="settingsModalTitle" tabindex="-1">Settings</h2>
@@ -587,7 +587,7 @@
 		</div>
 	</div>
 
-	<div id="loginModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+	<div id="loginModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="loginModalTitle" tabindex="-1">Sign In</h2>
@@ -622,7 +622,7 @@
 		</div>
 	</div>
 
-	<div id="signupModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="signupModalTitle">
+	<div id="signupModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="signupModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="signupModalTitle" tabindex="-1">Create Account</h2>
@@ -654,7 +654,7 @@
 		</div>
 	</div>
 
-	<div id="userMenuModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="userMenuModalTitle">
+	<div id="userMenuModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="userMenuModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="userMenuModalTitle" tabindex="-1">Account</h2>
@@ -684,7 +684,7 @@
 		</div>
 	</div>
 
-	<div id="referencesModal" class="modal modal--bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="referencesModalTitle">
+	<div id="referencesModal" class="modal modal--bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="referencesModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="referencesModalTitle" tabindex="-1">References</h2>
@@ -698,7 +698,7 @@
 		</div>
 	</div>
 
-	<div id="deuterocanonInfoModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="deuterocanonInfoModalTitle">
+	<div id="deuterocanonInfoModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="deuterocanonInfoModalTitle" aria-hidden="true" inert>
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
 				<h2 id="deuterocanonInfoModalTitle" tabindex="-1">About the Apocrypha</h2>
@@ -736,7 +736,7 @@
 
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=71f1193"></script>
+	<script type="module" src="app.js?v=6bdac06"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');
