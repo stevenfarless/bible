@@ -238,7 +238,8 @@
 
 .hidden { display: none !important; }
 
-.auth-switch a {
+.auth-switch a,
+.recaptcha-disclosure a {
     text-decoration: underline;
     text-underline-offset: 0.15em;
 }
