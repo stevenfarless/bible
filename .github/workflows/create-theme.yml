@@ -28,37 +28,70 @@ on:
         options:
           - dark
           - light
+          - both
       bg_base:
-        description: Base background
+        description: Dark base background
         required: true
         type: string
       bg_card:
-        description: Card background
+        description: Dark card background
         required: true
         type: string
       text_heading:
-        description: Heading text
+        description: Dark heading text
         required: true
         type: string
       text_body:
-        description: Body text
+        description: Dark body text
         required: true
         type: string
       text_muted:
-        description: Muted text
+        description: Dark muted text
         required: true
         type: string
       primary_color:
-        description: Primary color
+        description: Dark primary color
         required: true
         type: string
       brand_secondary:
-        description: Secondary color
+        description: Dark secondary color
         required: true
         type: string
       accent_color:
-        description: Accent color
+        description: Dark accent color
         required: true
+        type: string
+      light_bg_base:
+        description: Light base background
+        required: false
+        type: string
+      light_bg_card:
+        description: Light card background
+        required: false
+        type: string
+      light_text_heading:
+        description: Light heading text
+        required: false
+        type: string
+      light_text_body:
+        description: Light body text
+        required: false
+        type: string
+      light_text_muted:
+        description: Light muted text
+        required: false
+        type: string
+      light_primary_color:
+        description: Light primary color
+        required: false
+        type: string
+      light_brand_secondary:
+        description: Light secondary color
+        required: false
+        type: string
+      light_accent_color:
+        description: Light accent color
+        required: false
         type: string
 
 permissions:
@@ -90,6 +123,14 @@ jobs:
           PRIMARY_COLOR: ${{ inputs.primary_color }}
           BRAND_SECONDARY: ${{ inputs.brand_secondary }}
           ACCENT_COLOR: ${{ inputs.accent_color }}
+          LIGHT_BG_BASE: ${{ inputs.light_bg_base }}
+          LIGHT_BG_CARD: ${{ inputs.light_bg_card }}
+          LIGHT_TEXT_HEADING: ${{ inputs.light_text_heading }}
+          LIGHT_TEXT_BODY: ${{ inputs.light_text_body }}
+          LIGHT_TEXT_MUTED: ${{ inputs.light_text_muted }}
+          LIGHT_PRIMARY_COLOR: ${{ inputs.light_primary_color }}
+          LIGHT_BRAND_SECONDARY: ${{ inputs.light_brand_secondary }}
+          LIGHT_ACCENT_COLOR: ${{ inputs.light_accent_color }}
         run: python3 .github/scripts/create_theme.py
 
       - name: Verify generated theme
