@@ -1,0 +1,66 @@
+name: Export Milestone Titles
+
+on:
+  issues:
+    types:
+      - opened
+
+permissions:
+  contents: write
+  issues: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Export milestones
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          gh api --paginate "repos/${REPO}/milestones?state=all&per_page=100" \
+            --jq '[.[] | {number, title, state, description}]' \
+            > .github/milestone-titles.json
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('.github/milestone-titles.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+
+          # gh --paginate emits one JSON array per page. Flatten if needed.
+          if data and isinstance(data[0], list):
+              data = [item for page in data for item in page]
+
+          data.sort(key=lambda item: item['number'])
+          path.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit report
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/milestone-titles.json
+
+          if git diff --cached --quiet; then
+            echo "Milestone title report unchanged"
+            exit 0
+          fi
+
+          git commit -m "chore: export milestone titles"
+          git pull --rebase origin exp
+          git push origin exp
