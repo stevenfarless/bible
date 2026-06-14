@@ -1,0 +1,218 @@
+name: Fix Service Worker Cache Isolation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fix-service-worker-cache-isolation
+  cancel-in-progress: false
+
+jobs:
+  fix-service-worker-cache-isolation:
+    name: Isolate service worker caches by branch
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Apply service worker fixes
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          def replace_exact(text: str, old: str, new: str, label: str) -> str:
+              if new in text:
+                  print(f"Already fixed: {label}")
+                  return text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(
+                      f"Expected exactly one match for {label}; found {count}. "
+                      "No files were written."
+                  )
+              print(f"Applying: {label}")
+              return text.replace(old, new, 1)
+
+          sw_path = Path("sw.js")
+          app_path = Path("app.js")
+
+          sw = sw_path.read_text(encoding="utf-8")
+          app = app_path.read_text(encoding="utf-8")
+
+          sw = replace_exact(
+              sw,
+              """let BUILD_ID = 'pending';
+          let CACHE_NAME = 'bible-pending';""",
+              """const BUILD_ID = '__BUILD_ID__';
+
+          const SCOPE_PATH = new URL(self.registration.scope).pathname
+            .replace(/\\/+$/, '');
+
+          const SCOPE_KEY = SCOPE_PATH.split('/').pop() || 'root';
+
+          const CACHE_PREFIX = `bible-${SCOPE_KEY}-`;
+          const CACHE_NAME = `${CACHE_PREFIX}${BUILD_ID}`;""",
+              "top-level build and branch-specific cache names",
+          )
+
+          sw = replace_exact(
+              sw,
+              """function resolveBuildId() {
+            return '__BUILD_ID__';
+          }
+
+          """,
+              "",
+              "obsolete resolveBuildId helper",
+          )
+
+          sw = replace_exact(
+              sw,
+              """self.addEventListener('install', (event) => {
+            self.skipWaiting();
+            event.waitUntil((async () => {
+              BUILD_ID = resolveBuildId();
+              CACHE_NAME = `bible-${BUILD_ID}`;
+              const cache = await caches.open(CACHE_NAME);
+              await cache.addAll(APP_SHELL);
+            })());
+          });""",
+              """self.addEventListener('install', (event) => {
+            self.skipWaiting();
+
+            event.waitUntil((async () => {
+              const cache = await caches.open(CACHE_NAME);
+              await cache.addAll(APP_SHELL);
+            })());
+          });""",
+              "install handler",
+          )
+
+          sw = replace_exact(
+              sw,
+              """    await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));""",
+              """    await Promise.all(
+                keys
+                  .filter(name =>
+                    name.startsWith(CACHE_PREFIX) &&
+                    name !== CACHE_NAME
+                  )
+                  .map(name => caches.delete(name))
+              );""",
+              "scope-limited activation cleanup",
+          )
+
+          app = replace_exact(
+              app,
+              """async function hardRefreshApp() {
+              if ('serviceWorker' in navigator) {
+                  const registrations = await navigator.serviceWorker.getRegistrations();
+                  await Promise.all(registrations.map((registration) => registration.unregister()));
+              }
+
+              if ('caches' in window) {
+                  const cacheNames = await caches.keys();
+                  await Promise.all(cacheNames.map((name) => caches.delete(name)));
+              }
+
+              const url = new URL(window.location.href);
+              url.searchParams.set('_refresh', Date.now().toString());
+              window.location.replace(url.toString());
+          }""",
+              """async function hardRefreshApp() {
+              let registration = null;
+
+              if ('serviceWorker' in navigator) {
+                  registration = await navigator.serviceWorker.getRegistration('./');
+              }
+
+              const scopeUrl = registration?.scope
+                  ? new URL(registration.scope)
+                  : new URL('./', window.location.href);
+
+              const scopePath = scopeUrl.pathname.replace(/\\/+$/, '');
+              const scopeKey = scopePath.split('/').pop() || 'root';
+              const cachePrefix = `bible-${scopeKey}-`;
+
+              if (registration) {
+                  await registration.unregister();
+              }
+
+              if ('caches' in window) {
+                  const cacheNames = await caches.keys();
+
+                  await Promise.all(
+                      cacheNames
+                          .filter(name => name.startsWith(cachePrefix))
+                          .map(name => caches.delete(name))
+                  );
+              }
+
+              const url = new URL(window.location.href);
+              url.searchParams.set('_refresh', Date.now().toString());
+              window.location.replace(url.toString());
+          }""",
+              "branch-limited hard refresh",
+          )
+
+          sw_path.write_text(sw, encoding="utf-8")
+          app_path.write_text(app, encoding="utf-8")
+          PY
+
+      - name: Verify changes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          node --check sw.js
+          node --check app.js
+          git diff --check
+
+          grep -F "const BUILD_ID = '__BUILD_ID__';" sw.js
+          grep -F 'const CACHE_PREFIX = `bible-${SCOPE_KEY}-`;' sw.js
+          grep -F 'name.startsWith(CACHE_PREFIX)' sw.js
+          grep -F 'navigator.serviceWorker.getRegistration' app.js
+          grep -F 'name.startsWith(cachePrefix)' app.js
+
+          if grep -Fq "bible-pending" sw.js; then
+            echo "Obsolete bible-pending cache name remains"
+            exit 1
+          fi
+
+          if grep -Fq "resolveBuildId" sw.js; then
+            echo "Obsolete resolveBuildId helper remains"
+            exit 1
+          fi
+
+          if grep -Fq "getRegistrations()" app.js; then
+            echo "Hard refresh still unregisters all service workers"
+            exit 1
+          fi
+
+          git diff -- sw.js app.js
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet -- sw.js app.js; then
+            echo "Service worker cache isolation is already applied"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add sw.js app.js
+          git commit -m "fix: isolate service worker caches by branch"
+          git pull --rebase origin exp
+          git push origin exp
