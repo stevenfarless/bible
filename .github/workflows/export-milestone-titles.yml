@@ -1,4 +1,4 @@
-name: Export Milestone Titles
+name: Remove Version Numbers from Milestones
 
 on:
   issues:
@@ -7,10 +7,10 @@ on:
 
 permissions:
   contents: write
-  issues: read
+  issues: write
 
 jobs:
-  export:
+  rename:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
@@ -23,7 +23,43 @@ jobs:
           ref: exp
           fetch-depth: 0
 
-      - name: Export milestones
+      - name: Rename milestones
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          declare -A RENAMES=(
+            [3]='json-ver Stability'
+            [4]='UI & Responsive'
+            [5]='Repo Hygiene (no tag)'
+            [6]='Text Layout & Display'
+            [7]='Greek & Hebrew Texts'
+            [8]='Translation Expansion'
+            [9]='User Features'
+            [11]='Bug Fixes'
+            [12]='Performance & Search'
+            [13]='Translations & Refactoring'
+            [14]='UI Overhaul & Source Texts'
+            [15]='Critical Performance (CWV)'
+          )
+
+          for number in "${!RENAMES[@]}"; do
+            desired="${RENAMES[$number]}"
+            current="$(gh api "repos/${REPO}/milestones/${number}" --jq '.title')"
+
+            if [[ "$current" == "$desired" ]]; then
+              echo "Milestone #${number} already named: ${desired}"
+              continue
+            fi
+
+            gh api --method PATCH "repos/${REPO}/milestones/${number}" \
+              -f title="$desired" \
+              >/dev/null
+
+            echo "Renamed milestone #${number}: ${current} -> ${desired}"
+          done
+
+      - name: Export and verify milestone titles
         shell: bash
         run: |
           set -euo pipefail
@@ -34,17 +70,30 @@ jobs:
 
           python3 - <<'PY'
           import json
+          import re
           from pathlib import Path
 
           path = Path('.github/milestone-titles.json')
           data = json.loads(path.read_text(encoding='utf-8'))
 
-          # gh --paginate emits one JSON array per page. Flatten if needed.
           if data and isinstance(data[0], list):
               data = [item for page in data for item in page]
 
           data.sort(key=lambda item: item['number'])
           path.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+
+          versioned = [
+              item
+              for item in data
+              if re.search(r'(?i)(?:^|\s)(?:version\s+|v)\d+(?:\.\d+){0,2}(?:\s|$|[—–-])', item['title'])
+          ]
+
+          if versioned:
+              for item in versioned:
+                  print(f"Versioned milestone remains: #{item['number']} {item['title']}")
+              raise SystemExit('Version numbers remain in milestone titles')
+
+          print('All milestone titles are free of version-number prefixes')
           PY
 
       - name: Commit report
@@ -61,6 +110,6 @@ jobs:
             exit 0
           fi
 
-          git commit -m "chore: export milestone titles"
+          git commit -m "chore: record cleaned milestone titles"
           git pull --rebase origin exp
           git push origin exp
