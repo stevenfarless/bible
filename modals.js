@@ -6,10 +6,128 @@ import { idbIsDownloaded, idbDeleteTranslation } from './translation-store.js';
 
 // ── Open / close ─────────────────────────────────────────────────────────────
 
+const _modalFocusableSelector = [
+    'a[href]',
+    'button:not([disabled])',
+    'input:not([disabled]):not([type="hidden"])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    '[contenteditable="true"]',
+    '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
+const _modalFocusOrigins = new WeakMap();
+
+function _getModalHeading(modal) {
+    const labelledBy = modal.getAttribute('aria-labelledby');
+    if (labelledBy) {
+        const labelledHeading = document.getElementById(labelledBy);
+        if (labelledHeading) return labelledHeading;
+    }
+    return modal.querySelector('h1, h2, h3, h4, h5, h6');
+}
+
+function _ensureModalSemantics(modal) {
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+
+    const heading = _getModalHeading(modal);
+    if (!heading) return;
+
+    if (!heading.id) {
+        heading.id = `${modal.id || 'modal'}Title`;
+    }
+    heading.setAttribute('tabindex', '-1');
+    modal.setAttribute('aria-labelledby', heading.id);
+}
+
+function _getModalFocusableElements(modal) {
+    return Array.from(modal.querySelectorAll(_modalFocusableSelector)).filter((element) => (
+        element instanceof HTMLElement
+        && !element.hidden
+        && element.getAttribute('aria-hidden') !== 'true'
+        && element.getClientRects().length > 0
+    ));
+}
+
+function _focusModal(modal) {
+    const focusable = _getModalFocusableElements(modal);
+    const target = focusable[0] || _getModalHeading(modal) || modal;
+
+    if (target === modal && !modal.hasAttribute('tabindex')) {
+        modal.setAttribute('tabindex', '-1');
+    }
+
+    target.focus({ preventScroll: true });
+}
+
+function _trapModalFocus(event) {
+    if (event.key !== 'Tab') return;
+
+    const modal = event.currentTarget;
+    const focusable = _getModalFocusableElements(modal);
+
+    if (focusable.length === 0) {
+        event.preventDefault();
+        _focusModal(modal);
+        return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+
+    if (event.shiftKey && (active === first || !modal.contains(active))) {
+        event.preventDefault();
+        last.focus({ preventScroll: true });
+        return;
+    }
+
+    if (!event.shiftKey && (active === last || !modal.contains(active))) {
+        event.preventDefault();
+        first.focus({ preventScroll: true });
+    }
+}
+
+function _restoreModalFocus(modal) {
+    const origin = _modalFocusOrigins.get(modal);
+    _modalFocusOrigins.delete(modal);
+    modal.removeEventListener('keydown', _trapModalFocus);
+
+    if (!(origin instanceof HTMLElement) || !origin.isConnected) return;
+
+    const containingModal = origin.closest('.modal');
+    if (containingModal && !containingModal.classList.contains('active')) return;
+
+    origin.focus({ preventScroll: true });
+}
+
+function _finishModalClose(modal) {
+    modal.classList.remove('active', 'closing');
+    _maybeRemoveModalOpen();
+    _restoreModalFocus(modal);
+}
+
 export function openModal(app, modal) {
     if (!modal) return;
+
+    _ensureModalSemantics(modal);
+
+    if (!modal.classList.contains('active')) {
+        const active = document.activeElement;
+        _modalFocusOrigins.set(
+            modal,
+            active instanceof HTMLElement && active !== document.body ? active : null
+        );
+    }
+
+    modal.addEventListener('keydown', _trapModalFocus);
     modal.classList.add('active');
     document.body.classList.add('modal-open');
+
+    requestAnimationFrame(() => {
+        if (modal.classList.contains('active')) _focusModal(modal);
+    });
 }
 
 export function closeModal(app, modal) {
@@ -20,26 +138,19 @@ export function closeModal(app, modal) {
     }
 
     if (modal === app.settingsModal || modal === app.referencesModal) {
-        // For bottom sheets: add .closing to trigger the CSS dismiss transition,
-        // then remove .active once the animation completes (320ms).
         if (modal === app.settingsModal) {
             modal.classList.add('closing');
-            setTimeout(() => {
-                modal.classList.remove('active', 'closing');
-                _maybeRemoveModalOpen();
-            }, 320);
+            setTimeout(() => _finishModalClose(modal), 320);
         } else {
             const content = modal.querySelector('.modal-content');
             content.style.animation = 'slideDownToBottom 250ms ease';
             setTimeout(() => {
-                modal.classList.remove('active');
-                _maybeRemoveModalOpen();
+                _finishModalClose(modal);
                 content.style.animation = '';
             }, 250);
         }
     } else {
-        modal.classList.remove('active');
-        _maybeRemoveModalOpen();
+        _finishModalClose(modal);
     }
 }
 

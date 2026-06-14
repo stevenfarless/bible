@@ -10,10 +10,10 @@ import { initSwipe } from './swipe.js';
 import { handleChangeEmail, handleChangePassword, handleForgotPassword } from './auth.js';
 
 const CHANGE_EMAIL_HTML = `
-<div id="changeEmailModal" class="modal">
+<div id="changeEmailModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="changeEmailModalTitle">
                 <div class="modal-content">
                         <div class="modal-header">
-                                <h3>Change Email</h3>
+                                <h3 id="changeEmailModalTitle" tabindex="-1">Change Email</h3>
                                 <button class="close-btn" id="closeChangeEmailModal">&times;</button>
                         </div>
                         <div class="modal-body">
@@ -34,10 +34,10 @@ const CHANGE_EMAIL_HTML = `
         </div>`;
 
 const CHANGE_PASSWORD_HTML = `
-<div id="changePasswordModal" class="modal">
+<div id="changePasswordModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="changePasswordModalTitle">
                 <div class="modal-content">
                         <div class="modal-header">
-                                <h3>Change Password</h3>
+                                <h3 id="changePasswordModalTitle" tabindex="-1">Change Password</h3>
                                 <button class="close-btn" id="closeChangePasswordModal">&times;</button>
                         </div>
                         <div class="modal-body">

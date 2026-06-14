@@ -228,10 +228,10 @@
 		</div>
 	</main>
 
-	<div id="bookModal" class="modal">
+	<div id="bookModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="bookModalTitle">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2>Select a Book</h2>
+				<h2 id="bookModalTitle" tabindex="-1">Select a Book</h2>
 				<button class="close-btn close-control" id="closeBookModal" aria-label="Close" type="button">
 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M7 7L17 17M17 7L7 17"></path>
@@ -257,10 +257,10 @@
 		</div>
 	</div>
 
-	<div id="chapterModal" class="modal">
+	<div id="chapterModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="chapterModalTitle">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2><span id="chapterModalBook">Genesis</span></h2>
+				<h2 id="chapterModalTitle" tabindex="-1"><span id="chapterModalBook">Genesis</span></h2>
 				<button class="close-btn close-control" id="closeChapterModal" aria-label="Close" type="button">
 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M7 7L17 17M17 7L7 17"></path>
@@ -273,10 +273,10 @@
 		</div>
 	</div>
 
-	<div id="verseModal" class="modal">
+	<div id="verseModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="verseModalTitle">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2><span id="verseModalBook">Genesis 1</span></h2>
+				<h2 id="verseModalTitle" tabindex="-1"><span id="verseModalBook">Genesis 1</span></h2>
 				<button class="close-btn close-control" id="closeVerseModal" aria-label="Close" type="button">
 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M7 7L17 17M17 7L7 17"></path>
@@ -289,10 +289,10 @@
 		</div>
 	</div>
 
-	<div id="translationModal" class="modal">
+	<div id="translationModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="translationModalTitle">
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
-				<h2>Translation</h2>
+				<h2 id="translationModalTitle" tabindex="-1">Translation</h2>
 				<button class="close-btn close-control" id="closeTranslationModal" aria-label="Close" type="button">
 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M7 7L17 17M17 7L7 17"></path>
@@ -305,10 +305,10 @@
 		</div>
 	</div>
 
-	<div id="settingsModal" class="modal">
+	<div id="settingsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2>Settings</h2>
+				<h2 id="settingsModalTitle" tabindex="-1">Settings</h2>
 				<button class="close-btn close-control" id="closeSettingsModal" aria-label="Close" type="button">
 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M7 7L17 17M17 7L7 17"></path>
@@ -587,10 +587,10 @@
 		</div>
 	</div>
 
-	<div id="loginModal" class="modal">
+	<div id="loginModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2>Sign In</h2>
+				<h2 id="loginModalTitle" tabindex="-1">Sign In</h2>
 				<button class="close-btn close-control" id="closeLoginModal" aria-label="Close" type="button">
 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M7 7L17 17M17 7L7 17"></path>
@@ -622,10 +622,10 @@
 		</div>
 	</div>
 
-	<div id="signupModal" class="modal">
+	<div id="signupModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="signupModalTitle">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2>Create Account</h2>
+				<h2 id="signupModalTitle" tabindex="-1">Create Account</h2>
 				<button class="close-btn close-control" id="closeSignupModal" aria-label="Close" type="button">
 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M7 7L17 17M17 7L7 17"></path>
@@ -654,10 +654,10 @@
 		</div>
 	</div>
 
-	<div id="userMenuModal" class="modal">
+	<div id="userMenuModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="userMenuModalTitle">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2>Account</h2>
+				<h2 id="userMenuModalTitle" tabindex="-1">Account</h2>
 				<button class="close-btn close-control" id="closeUserMenuModal" aria-label="Close" type="button">
 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M7 7L17 17M17 7L7 17"></path>
@@ -684,10 +684,10 @@
 		</div>
 	</div>
 
-	<div id="referencesModal" class="modal modal--bottom-sheet">
+	<div id="referencesModal" class="modal modal--bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="referencesModalTitle">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2>References</h2>
+				<h2 id="referencesModalTitle" tabindex="-1">References</h2>
 				<button class="close-btn close-control" id="closeReferencesModal" aria-label="Close" type="button">
 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M7 7L17 17M17 7L7 17"></path>
@@ -698,10 +698,10 @@
 		</div>
 	</div>
 
-	<div id="deuterocanonInfoModal" class="modal">
+	<div id="deuterocanonInfoModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="deuterocanonInfoModalTitle">
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
-				<h2>About the Apocrypha</h2>
+				<h2 id="deuterocanonInfoModalTitle" tabindex="-1">About the Apocrypha</h2>
 				<button class="close-btn close-control" id="closeDeuterocanonInfoModal" aria-label="Close" type="button">
 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M7 7L17 17M17 7L7 17"></path>
