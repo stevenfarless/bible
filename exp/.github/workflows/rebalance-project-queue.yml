@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: Preview the queue changes without updating Project 3
+        description: Preview a full rebalance without updating Project 3
         required: true
         type: boolean
         default: false
@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   rebalance:
-    name: Keep Now and Next supplied
+    name: Fully rebalance Now, Next, and Someday
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -67,7 +67,7 @@ jobs:
             -f query='query { viewer { login } }' \
             --jq '.data.viewer.login'
 
-      - name: Rebalance queue
+      - name: Fully rebalance current statuses
         shell: bash
         run: |
           set -euo pipefail
@@ -83,8 +83,10 @@ jobs:
             echo "## Lege Lux project queue"
             echo
             echo "- Project: stevenfarless Project 3"
+            echo "- Mode: full recalculation of all active statuses"
             echo "- Now capacity: 2"
             echo "- Next capacity: 4"
+            echo "- Remaining active issues: Someday"
             echo "- Dry run: ${DRY_RUN}"
             echo "- Trigger: ${GITHUB_EVENT_NAME}"
             echo "- Trigger action: ${TRIGGER_ACTION:-none}"
