@@ -35,6 +35,8 @@ jobs:
       NOW_CAPACITY: "2"
       NEXT_CAPACITY: "4"
       DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
+      TRIGGER_ACTION: ${{ github.event.action || '' }}
+      TRIGGER_ISSUE_NUMBER: ${{ github.event.issue.number || '' }}
 
     steps:
       - name: Checkout exp
@@ -85,6 +87,7 @@ jobs:
             echo "- Next capacity: 4"
             echo "- Dry run: ${DRY_RUN}"
             echo "- Trigger: ${GITHUB_EVENT_NAME}"
+            echo "- Trigger action: ${TRIGGER_ACTION:-none}"
             echo
 
             if [[ -f project-queue-rebalance.log ]]; then
