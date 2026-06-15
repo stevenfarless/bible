@@ -27,10 +27,9 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: '20'
-          cache: npm
 
       - name: Install repository dependencies
-        run: npm ci
+        run: npm install --package-lock=false
 
       - name: Apply focused implementation
         run: |
@@ -43,6 +42,9 @@ jobs:
 
               if new and new in text:
                   print(f'Already applied: {path_name}')
+                  return
+              if not new and old not in text:
+                  print(f'Already removed: {path_name}')
                   return
 
               count = text.count(old)
