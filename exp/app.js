@@ -1310,7 +1310,6 @@ class BibleApp {
     async loadUserData()    { await loadUserData(this, normalizeTranslation); }
 }
 
-
 /* ─── PWA Install Prompt ─── */
 
 let _deferredInstallPrompt = null;
