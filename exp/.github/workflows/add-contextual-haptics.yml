@@ -38,12 +38,109 @@ jobs:
 
           base64 --decode /tmp/contextual-haptics.py.gz.b64 \
             | gzip --decompress \
-            > /tmp/contextual-haptics.py
+            > /tmp/contextual-haptics-reviewed.py
 
-          echo '63f1e9da30bea1ad0937ffb167b59cf82306256aa0a1fdeff3a74274378299f0  /tmp/contextual-haptics.py' \
+          echo '63f1e9da30bea1ad0937ffb167b59cf82306256aa0a1fdeff3a74274378299f0  /tmp/contextual-haptics-reviewed.py' \
             | sha256sum --check --strict
 
+          python3 -m py_compile /tmp/contextual-haptics-reviewed.py
+
+          # index.html has changed since the reviewed patcher was generated.
+          # Remove only its two index.html replacement calls, then patch that
+          # file separately against the current markup in the next step.
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+
+          source = Path('/tmp/contextual-haptics-reviewed.py')
+          tree = ast.parse(source.read_text(encoding='utf-8'))
+          kept = []
+          removed = 0
+
+          for node in tree.body:
+              if (
+                  isinstance(node, ast.Expr)
+                  and isinstance(node.value, ast.Call)
+                  and node.value.args
+                  and isinstance(node.value.args[0], ast.Constant)
+                  and node.value.args[0].value == 'index.html'
+              ):
+                  removed += 1
+                  continue
+
+              kept.append(node)
+
+          if removed != 2:
+              raise SystemExit(
+                  f'Expected to remove 2 index.html patch calls, removed {removed}'
+              )
+
+          tree.body = kept
+          ast.fix_missing_locations(tree)
+          Path('/tmp/contextual-haptics.py').write_text(
+              ast.unparse(tree) + '\n',
+              encoding='utf-8',
+          )
+          PY
+
           python3 -m py_compile /tmp/contextual-haptics.py
+
+      - name: Patch current index markup
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+
+          preload = '\t<link rel="modulepreload" href="haptics.js" />'
+          preload_anchor = '\t<link rel="modulepreload" href="settings.js" />\n'
+
+          if preload not in text:
+              if text.count(preload_anchor) != 1:
+                  raise SystemExit(
+                      'Expected one settings.js modulepreload anchor in index.html'
+                  )
+              text = text.replace(
+                  preload_anchor,
+                  preload_anchor + preload + '\n',
+                  1,
+              )
+
+          setting_marker = 'id="hapticsSetting"'
+          chapter_arrows_block = '''\t\t\t\t\t\t\t<div class="setting-item">
+          \t\t\t\t\t\t\t\t<label class="checkbox-label">
+          \t\t\t\t\t\t\t\t\t<input type="checkbox" id="chapterArrowsToggle" />
+          \t\t\t\t\t\t\t\t\t<span>Show chapter arrows</span>
+          \t\t\t\t\t\t\t\t</label>
+          \t\t\t\t\t\t\t</div>'''
+          haptics_block = '''\t\t\t\t\t\t\t<div class="setting-item" id="hapticsSetting">
+          \t\t\t\t\t\t\t\t<label class="checkbox-label">
+          \t\t\t\t\t\t\t\t\t<input type="checkbox" id="hapticsToggle" checked />
+          \t\t\t\t\t\t\t\t\t<span>Haptic feedback</span>
+          \t\t\t\t\t\t\t\t</label>
+          \t\t\t\t\t\t\t</div>'''
+
+          if setting_marker not in text:
+              if text.count(chapter_arrows_block) != 1:
+                  raise SystemExit(
+                      'Expected one chapter-arrows settings block in index.html'
+                  )
+              text = text.replace(
+                  chapter_arrows_block,
+                  haptics_block + '\n' + chapter_arrows_block,
+                  1,
+              )
+
+          if text.count(preload) != 1:
+              raise SystemExit('haptics.js preload must appear exactly once')
+          if text.count(setting_marker) != 1:
+              raise SystemExit('hapticsSetting must appear exactly once')
+          if text.count('id="hapticsToggle"') != 1:
+              raise SystemExit('hapticsToggle must appear exactly once')
+
+          path.write_text(text, encoding='utf-8')
+          PY
 
       - name: Apply contextual haptics
         run: python3 /tmp/contextual-haptics.py
