@@ -70,6 +70,7 @@ const APP_SHELL = [
   './navigation.js',
   './search.js',
   './auth.js',
+  './sync-prompt.js',
   './modals.js',
   './settings.js',
   './keyboard.js',
