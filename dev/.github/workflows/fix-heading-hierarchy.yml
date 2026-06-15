@@ -6,10 +6,15 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: fix-heading-hierarchy-exp
+  cancel-in-progress: false
+
 jobs:
   fix-heading-hierarchy:
     name: Fix heading hierarchy
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
@@ -45,6 +50,24 @@ jobs:
                       '<h4 class="passage-extras-heading">Cross-References</h4>',
                       '<h3 class="passage-extras-heading">Cross-References</h3>',
                   ),
+                  ("<h4>Navigation</h4>", "<h3>Navigation</h3>"),
+                  ("<h4>General</h4>", "<h3>General</h3>"),
+                  (
+                      "<h4>What is the Deuterocanon?</h4>",
+                      "<h3>What is the Deuterocanon?</h3>",
+                  ),
+                  (
+                      "<h4>Who accepts them as Scripture?</h4>",
+                      "<h3>Who accepts them as Scripture?</h3>",
+                  ),
+                  (
+                      "<h4>What did the Protestant Reformers say?</h4>",
+                      "<h3>What did the Protestant Reformers say?</h3>",
+                  ),
+                  (
+                      "<h4>Why are they here?</h4>",
+                      "<h3>Why are they here?</h3>",
+                  ),
               ],
               "modals.js": [
                   (
@@ -57,6 +80,17 @@ jobs:
                   (
                       "\n#bookModal .modal-body:not(.book-testament-filter-active) .book-category h4 {\n",
                       "\n#bookModal .modal-body:not(.book-testament-filter-active) .book-category h3 {\n",
+                  ),
+                  ("\n.settings-group h4 {\n", "\n.settings-group h3 {\n"),
+              ],
+              "css/pericope.css": [
+                  (
+                      "\n.deuterocanon-info-content h4 {\n",
+                      "\n.deuterocanon-info-content h3 {\n",
+                  ),
+                  (
+                      "\n.deuterocanon-info-content h4:first-child {\n",
+                      "\n.deuterocanon-info-content h3:first-child {\n",
                   ),
               ],
               "css/geek95.css": [
@@ -97,6 +131,7 @@ jobs:
           index = Path("index.html").read_text(encoding="utf-8")
           modals = Path("modals.js").read_text(encoding="utf-8")
           components = Path("css/components.css").read_text(encoding="utf-8")
+          pericope = Path("css/pericope.css").read_text(encoding="utf-8")
           geek = Path("css/geek95.css").read_text(encoding="utf-8")
 
           required_events = [
@@ -110,6 +145,12 @@ jobs:
               "<h3>New Testament</h3>",
               '<h3 class="passage-extras-heading">Footnotes</h3>',
               '<h3 class="passage-extras-heading">Cross-References</h3>',
+              "<h3>Navigation</h3>",
+              "<h3>General</h3>",
+              "<h3>What is the Deuterocanon?</h3>",
+              "<h3>Who accepts them as Scripture?</h3>",
+              "<h3>What did the Protestant Reformers say?</h3>",
+              "<h3>Why are they here?</h3>",
           ]
           required_modals = [
               "const heading = document.createElement('h3');",
@@ -117,6 +158,11 @@ jobs:
           required_components = [
               "\n.book-category h3 {\n",
               "\n#bookModal .modal-body:not(.book-testament-filter-active) .book-category h3 {\n",
+              "\n.settings-group h3 {\n",
+          ]
+          required_pericope = [
+              "\n.deuterocanon-info-content h3 {\n",
+              "\n.deuterocanon-info-content h3:first-child {\n",
           ]
           required_geek = ["\n.geek-theme.light-mode .book-category h3,\n"]
 
@@ -128,6 +174,8 @@ jobs:
               assert modals.count(value) == 1, value
           for value in required_components:
               assert components.count(value) == 1, value.strip()
+          for value in required_pericope:
+              assert pericope.count(value) == 1, value.strip()
           for value in required_geek:
               assert geek.count(value) == 1, value.strip()
 
@@ -140,6 +188,12 @@ jobs:
                   "<h4>Old Testament</h4>",
                   "<h4>New Testament</h4>",
                   '<h4 class="passage-extras-heading">',
+                  "<h4>Navigation</h4>",
+                  "<h4>General</h4>",
+                  "<h4>What is the Deuterocanon?</h4>",
+                  "<h4>Who accepts them as Scripture?</h4>",
+                  "<h4>What did the Protestant Reformers say?</h4>",
+                  "<h4>Why are they here?</h4>",
               ],
               "modals.js": [
                   "const heading = document.createElement('h4');",
@@ -147,6 +201,11 @@ jobs:
               "css/components.css": [
                   "\n.book-category h4 {\n",
                   "\n#bookModal .modal-body:not(.book-testament-filter-active) .book-category h4 {\n",
+                  "\n.settings-group h4 {\n",
+              ],
+              "css/pericope.css": [
+                  "\n.deuterocanon-info-content h4 {\n",
+                  "\n.deuterocanon-info-content h4:first-child {\n",
               ],
               "css/geek95.css": ["\n.geek-theme.light-mode .book-category h4,\n"],
           }
@@ -156,6 +215,7 @@ jobs:
               "index.html": index,
               "modals.js": modals,
               "css/components.css": components,
+              "css/pericope.css": pericope,
               "css/geek95.css": geek,
           }
           for filename, values in forbidden.items():
@@ -166,23 +226,74 @@ jobs:
           node --check events.js
           node --check modals.js
           git diff --check
-          git diff -- events.js index.html modals.js css/components.css css/geek95.css
+          git diff -- events.js index.html modals.js css/components.css css/pericope.css css/geek95.css
+
+      - name: Search for stale heading references
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          ignored_parts = {'.git', 'node_modules'}
+
+          def source_files(pattern):
+              for path in Path('.').rglob(pattern):
+                  if any(part in ignored_parts for part in path.parts):
+                      continue
+                  if path.parts[:2] == ('.github', 'workflows'):
+                      continue
+                  yield path
+
+          stale = []
+
+          for path in source_files('*.html'):
+              text = path.read_text(encoding='utf-8')
+              if '<h4' in text:
+                  stale.append(f'{path}: contains a static <h4> heading')
+
+          for path in source_files('*.js'):
+              text = path.read_text(encoding='utf-8')
+              if "createElement('h4')" in text or 'createElement("h4")' in text:
+                  stale.append(f'{path}: creates an h4 heading at runtime')
+
+          for path in source_files('*.css'):
+              text = path.read_text(encoding='utf-8')
+              if '.settings-group h4' in text:
+                  stale.append(f'{path}: contains .settings-group h4')
+              if '.deuterocanon-info-content h4' in text:
+                  stale.append(f'{path}: contains .deuterocanon-info-content h4')
+
+          if stale:
+              raise SystemExit('Stale heading references remain:\n' + '\n'.join(stale))
+
+          print('No stale static h4 headings, runtime h4 creation, or targeted h4 selectors remain.')
+          print('Legitimate .passage-text h4 selectors were intentionally left unchanged.')
+          PY
 
       - name: Commit fixes
         run: |
-          if git diff --quiet -- events.js index.html modals.js css/components.css css/geek95.css; then
+          files=(
+            events.js
+            index.html
+            modals.js
+            css/components.css
+            css/pericope.css
+            css/geek95.css
+          )
+
+          if [ -z "$(git status --porcelain -- "${files[@]}")" ]; then
             echo "Heading hierarchy is already fixed"
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add events.js index.html modals.js css/components.css css/geek95.css
+          git add -- "${files[@]}"
           git commit -F - <<'EOF'
-          fix(a11y): correct remaining heading hierarchy
+          fix(a11y): remove remaining heading-level skips
 
-          Use h2 for account dialog titles and h3 for book and passage
-          subsections. Update heading-specific selectors to preserve styling.
+          Use h2 for account dialog titles and h3 for book, passage,
+          Settings, and Apocrypha subsections. Update heading-specific
+          selectors to preserve the existing visual appearance.
 
           Refs #303
           EOF

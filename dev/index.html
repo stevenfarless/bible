@@ -12,7 +12,7 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="7a02fd4" />
+	<meta name="build-id" content="61c82f5" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement - always available in <head>) before the
@@ -38,7 +38,7 @@
 			if (isLight) el.classList.add('light-mode');
 		}());
 	</script>
-	<script src="prepaint-settings.js?v=7a02fd4"></script>
+	<script src="prepaint-settings.js?v=61c82f5"></script>
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -51,7 +51,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=7a02fd4">.
+	     before the parser reaches <script type="module" src="app.js?v=61c82f5">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -68,19 +68,19 @@
 	<link rel="modulepreload" href="events.js" />
 	<!-- CSS loaded as parallel <link> tags — @import chains are render-blocking
 	     and sequential; <link> tags are fetched in parallel by the browser. -->
-	<link rel="stylesheet" href="css/fonts.css?v=7a02fd4" />
-	<link rel="stylesheet" href="css/base.css?v=7a02fd4" />
-	<link rel="stylesheet" href="css/tokens.css?v=7a02fd4" />
-	<link rel="stylesheet" href="css/themes.css?v=7a02fd4" />
-	<link rel="stylesheet" href="css/layout.css?v=7a02fd4" />
-	<link rel="stylesheet" href="css/components.css?v=7a02fd4" />
-	<link rel="stylesheet" href="css/modals.css?v=7a02fd4" />
-	<link rel="stylesheet" href="css/interactions.css?v=7a02fd4" />
-	<link rel="stylesheet" href="css/utilities.css?v=7a02fd4" />
-	<link rel="stylesheet" href="css/pericope.css?v=7a02fd4" />
-	<link rel="stylesheet" href="css/geek95.css?v=7a02fd4">
+	<link rel="stylesheet" href="css/fonts.css?v=61c82f5" />
+	<link rel="stylesheet" href="css/base.css?v=61c82f5" />
+	<link rel="stylesheet" href="css/tokens.css?v=61c82f5" />
+	<link rel="stylesheet" href="css/themes.css?v=61c82f5" />
+	<link rel="stylesheet" href="css/layout.css?v=61c82f5" />
+	<link rel="stylesheet" href="css/components.css?v=61c82f5" />
+	<link rel="stylesheet" href="css/modals.css?v=61c82f5" />
+	<link rel="stylesheet" href="css/interactions.css?v=61c82f5" />
+	<link rel="stylesheet" href="css/utilities.css?v=61c82f5" />
+	<link rel="stylesheet" href="css/pericope.css?v=61c82f5" />
+	<link rel="stylesheet" href="css/geek95.css?v=61c82f5">
 	<!-- Firebase App Check loads reCAPTCHA v3 through ReCaptchaV3Provider. -->
-    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js?v=7a02fd4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js?v=61c82f5"></script>
 </head>
 
 <body class="initializing">
@@ -88,7 +88,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">7a02fd4</span>
+				<span id="build-info">61c82f5</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -528,7 +528,7 @@
 								</button>
 								<div class="sub-accordion-panel" data-panel="shortcuts">
 									<div class="settings-group">
-										<h4>Navigation</h4>
+										<h3>Navigation</h3>
 										<div class="shortcut-list">
 											<div class="shortcut-item">
 												<kbd>H</kbd> or <kbd>&#x2190;</kbd>
@@ -549,7 +549,7 @@
 										</div>
 									</div>
 									<div class="settings-group">
-										<h4>General</h4>
+										<h3>General</h3>
 										<div class="shortcut-list">
 											<div class="shortcut-item">
 												<kbd>Ctrl</kbd> + <kbd>K</kbd> or <kbd>/</kbd>
@@ -733,13 +733,13 @@
 			</div>
 			<div class="modal-body">
 				<div class="deuterocanon-info-content">
-					<h4>What is the Deuterocanon?</h4>
+					<h3>What is the Deuterocanon?</h3>
 					<p>The Deuterocanon, also called the Apocrypha, is a set of Jewish writings from roughly 400&#x2013;50 BC, the period between the Old and New Testaments. It includes books such as Tobit, Judith, 1 &amp; 2 Maccabees, Sirach, and Wisdom of Solomon.</p>
 
-					<h4>Who accepts them as Scripture?</h4>
+					<h3>Who accepts them as Scripture?</h3>
 					<p>Catholic and Orthodox Christians consider these books canonical. Most Protestants do not, following the Hebrew Bible&#x2019;s narrower canon. The books were never cited as Scripture by Jesus or the Apostles, and some passages are difficult to reconcile with the rest of Scripture, for example prayers for the dead in 2 Maccabees 12.</p>
 
-					<h4>What did the Protestant Reformers say?</h4>
+					<h3>What did the Protestant Reformers say?</h3>
 					<blockquote>
 						<strong>Martin Luther (1534):</strong> &#x201C;Apocrypha, that is, books not considered equal to Holy Scripture, but which are still useful and good to read.&#x201D;
 					</blockquote>
@@ -750,7 +750,7 @@
 						<strong>Belgic Confession (1561):</strong> &#x201C;The church may certainly read these books and learn from them as far as they agree with the canonical books.&#x201D;
 					</blockquote>
 
-					<h4>Why are they here?</h4>
+					<h3>Why are they here?</h3>
 					<p>They are included for study and historical interest. These writings shaped Jewish thought in the centuries before Christ and appear in translations used by billions of Christians worldwide.</p>
 				</div>
 			</div>
@@ -759,7 +759,7 @@
 
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=7a02fd4"></script>
+	<script type="module" src="app.js?v=61c82f5"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');
