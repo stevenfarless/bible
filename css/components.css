@@ -1217,7 +1217,7 @@ body.hide-verse-numbers .verse .verse-num {
     margin-bottom: var(--spacing-xl);
 }
 
-.settings-group h4 {
+.settings-group h3 {
     font-size: 1rem;
     font-weight: 600;
     color: var(--text-body);
