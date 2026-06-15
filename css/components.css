@@ -834,6 +834,7 @@ body.hide-verse-numbers .verse .verse-num {
 .search-container.active {
     border-bottom: 1px solid var(--border-neutral);
     max-height: 750px;
+    overscroll-behavior: contain;
 }
 
 .search-wrapper {
@@ -952,7 +953,10 @@ body.hide-verse-numbers .verse .verse-num {
     margin: 0 auto;
     max-height: 520px;
     padding: 8px;
-    overflow-y: scroll;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     scrollbar-width: none;
 }
 
