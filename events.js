@@ -110,6 +110,22 @@ function syncReadingDisplay(app) {
     }
 }
 
+function installCanonFallback(app) {
+    const loadPassage = app.loadPassage.bind(app);
+
+    app.loadPassage = async (book, chapter, restoreScroll = false) => {
+        const books = app.getAllBooks();
+        const activeBook = app.state.currentBook;
+
+        if (activeBook && !books.includes(activeBook)) {
+            app._dbgEvent?.(`loadPassage: "${activeBook}" not in canon — redirecting to Genesis 1`);
+            return loadPassage('Genesis', 1, restoreScroll);
+        }
+
+        return loadPassage(book, chapter, restoreScroll);
+    };
+}
+
 function normalizeModalMarkup() {
     const bookContent = document.querySelector('#bookModal .modal-content');
     const bookBody = document.querySelector('#bookModal .modal-body');
@@ -131,6 +147,7 @@ function normalizeModalMarkup() {
  */
 export function attachEventListeners(app) {
     normalizeModalMarkup();
+    installCanonFallback(app);
 
     app.searchToggleBtn?.addEventListener('click', () => app.toggleSearch());
     app.closeSearchBtn?.addEventListener('click',  () => app.closeSearch());
