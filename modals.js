@@ -352,7 +352,7 @@ export function populateBookModal(app) {
         section.className = 'book-category';
         section.dataset.testament = testament;
 
-        const heading = document.createElement('h4');
+        const heading = document.createElement('h3');
         heading.textContent = testament === 'Deuterocanon'
             ? 'Apocrypha / Deuterocanon'
             : testament;
