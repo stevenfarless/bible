@@ -23,95 +23,30 @@ jobs:
           ref: exp
           fetch-depth: 0
 
-      # The reviewed patcher is compressed only to keep this workflow maintainable.
-      # It is decoded into /tmp and never committed to the application.
-      - name: Apply contextual haptics
+      - name: Restore and verify reviewed patcher
         run: |
-          cat > /tmp/contextual-haptics.py.gz.b64 <<'PATCH'
-          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
-          U7oAAA==
-          PATCH
-          base64 --decode /tmp/contextual-haptics.py.gz.b64 | gzip --decompress > /tmp/contextual-haptics.py
-          python3 /tmp/contextual-haptics.py
+          source_commit=7af08f20a86233d530cf0b243291c6656fd75bc0
+
+          git show "$source_commit:.github/workflows/add-contextual-haptics.yml" \
+            | sed -n "/<<'PATCH'/,/^          PATCH$/p" \
+            | sed '1d;$d;s/^          //' \
+            > /tmp/contextual-haptics.py.gz.b64
+
+          # Correct the single transcription error in the archived payload.
+          sed -i 's/QhPLLkSbvWkwaYTCb/QhPLLkSbvWkwaaYTCb/' \
+            /tmp/contextual-haptics.py.gz.b64
+
+          base64 --decode /tmp/contextual-haptics.py.gz.b64 \
+            | gzip --decompress \
+            > /tmp/contextual-haptics.py
+
+          echo '63f1e9da30bea1ad0937ffb167b59cf82306256aa0a1fdeff3a74274378299f0  /tmp/contextual-haptics.py' \
+            | sha256sum --check --strict
+
+          python3 -m py_compile /tmp/contextual-haptics.py
+
+      - name: Apply contextual haptics
+        run: python3 /tmp/contextual-haptics.py
 
       - name: Validate focused changes
         run: |
