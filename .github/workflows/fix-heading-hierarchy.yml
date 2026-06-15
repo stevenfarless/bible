@@ -46,6 +46,12 @@ jobs:
                       '<h3 class="passage-extras-heading">Cross-References</h3>',
                   ),
               ],
+              "modals.js": [
+                  (
+                      "const heading = document.createElement('h4');",
+                      "const heading = document.createElement('h3');",
+                  ),
+              ],
               "css/components.css": [
                   ("\n.book-category h4 {\n", "\n.book-category h3 {\n"),
                   (
@@ -89,6 +95,7 @@ jobs:
 
           events = Path("events.js").read_text(encoding="utf-8")
           index = Path("index.html").read_text(encoding="utf-8")
+          modals = Path("modals.js").read_text(encoding="utf-8")
           components = Path("css/components.css").read_text(encoding="utf-8")
           geek = Path("css/geek95.css").read_text(encoding="utf-8")
 
@@ -104,6 +111,9 @@ jobs:
               '<h3 class="passage-extras-heading">Footnotes</h3>',
               '<h3 class="passage-extras-heading">Cross-References</h3>',
           ]
+          required_modals = [
+              "const heading = document.createElement('h3');",
+          ]
           required_components = [
               "\n.book-category h3 {\n",
               "\n#bookModal .modal-body:not(.book-testament-filter-active) .book-category h3 {\n",
@@ -114,6 +124,8 @@ jobs:
               assert events.count(value) == 1, value
           for value in required_index:
               assert index.count(value) == 1, value
+          for value in required_modals:
+              assert modals.count(value) == 1, value
           for value in required_components:
               assert components.count(value) == 1, value.strip()
           for value in required_geek:
@@ -129,6 +141,9 @@ jobs:
                   "<h4>New Testament</h4>",
                   '<h4 class="passage-extras-heading">',
               ],
+              "modals.js": [
+                  "const heading = document.createElement('h4');",
+              ],
               "css/components.css": [
                   "\n.book-category h4 {\n",
                   "\n#bookModal .modal-body:not(.book-testament-filter-active) .book-category h4 {\n",
@@ -139,6 +154,7 @@ jobs:
           contents = {
               "events.js": events,
               "index.html": index,
+              "modals.js": modals,
               "css/components.css": components,
               "css/geek95.css": geek,
           }
@@ -148,19 +164,20 @@ jobs:
           PY
 
           node --check events.js
+          node --check modals.js
           git diff --check
-          git diff -- events.js index.html css/components.css css/geek95.css
+          git diff -- events.js index.html modals.js css/components.css css/geek95.css
 
       - name: Commit fixes
         run: |
-          if git diff --quiet -- events.js index.html css/components.css css/geek95.css; then
+          if git diff --quiet -- events.js index.html modals.js css/components.css css/geek95.css; then
             echo "Heading hierarchy is already fixed"
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add events.js index.html css/components.css css/geek95.css
+          git add events.js index.html modals.js css/components.css css/geek95.css
           git commit -F - <<'EOF'
           fix(a11y): correct remaining heading hierarchy
 
