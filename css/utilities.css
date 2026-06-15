@@ -134,11 +134,7 @@
     }
 
     .search-container.active {
-        max-height: 80vh;
-    }
-
-    .search-results {
-        max-height: calc(80vh - 100px);
+        max-height: calc(100dvh - var(--chrome-height));
     }
 }
 

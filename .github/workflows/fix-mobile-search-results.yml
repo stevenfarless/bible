@@ -1,0 +1,356 @@
+name: Fix Mobile Search Results Viewport
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-mobile-search-results:
+    name: Fix mobile search results viewport
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Apply focused search layout fix
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_exact(path_name, old, new):
+              path = Path(path_name)
+              text = path.read_text(encoding="utf-8")
+              old_count = text.count(old)
+              new_count = text.count(new)
+
+              if old_count == 1:
+                  path.write_text(text.replace(old, new, 1), encoding="utf-8")
+                  print(f"Updated: {path_name}")
+                  return
+
+              if old_count == 0 and new_count == 1:
+                  print(f"Already fixed: {path_name}")
+                  return
+
+              raise SystemExit(
+                  f"Unexpected replacement state in {path_name}: "
+                  f"old={old_count}, new={new_count}"
+              )
+
+          replace_exact(
+              "css/components.css",
+              """    z-index: 101;
+              max-height: 0;
+              overflow: hidden;
+              transition: max-height var(--transition-normal);
+          }""",
+              """    z-index: 101;
+              display: flex;
+              flex-direction: column;
+              max-height: 0;
+              overflow: hidden;
+              transition: max-height var(--transition-normal);
+          }""",
+          )
+
+          replace_exact(
+              "css/components.css",
+              """.search-wrapper {
+              max-width: var(--max-width);
+              margin: 0 auto;
+              padding: var(--spacing-sm);
+              display: flex;
+              flex-direction: column;
+              gap: var(--spacing-xs);
+          }""",
+              """.search-wrapper {
+              width: 100%;
+              max-width: var(--max-width);
+              margin: 0 auto;
+              padding: var(--spacing-sm);
+              display: flex;
+              flex-direction: column;
+              flex: 0 0 auto;
+              gap: var(--spacing-xs);
+          }""",
+          )
+
+          replace_exact(
+              "css/components.css",
+              """.search-results {
+              max-width: var(--max-width);
+              margin: 0 auto;
+              max-height: 520px;
+              padding: 8px;
+              overflow-y: auto;
+              overscroll-behavior: contain;
+              -webkit-overflow-scrolling: touch;
+              touch-action: pan-y;
+              scrollbar-width: none;
+          }""",
+              """.search-results {
+              width: 100%;
+              max-width: var(--max-width);
+              margin: 0 auto;
+              flex: 1 1 auto;
+              min-height: 0;
+              max-height: none;
+              padding: 8px;
+              overflow-y: auto;
+              overscroll-behavior: contain;
+              -webkit-overflow-scrolling: touch;
+              touch-action: pan-y;
+              scrollbar-width: none;
+          }""",
+          )
+
+          replace_exact(
+              "css/components.css",
+              """.search-results-summary {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: var(--spacing-xs) var(--spacing-md);""",
+              """.search-results-summary {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              width: 100%;
+              flex: 0 0 auto;
+              padding: var(--spacing-xs) var(--spacing-md);""",
+          )
+
+          replace_exact(
+              "css/utilities.css",
+              """    .search-container.active {
+                  max-height: 80vh;
+              }
+
+              .search-results {
+                  max-height: calc(80vh - 100px);
+              }""",
+              """    .search-container.active {
+                  max-height: calc(100dvh - var(--chrome-height));
+              }""",
+          )
+
+          tests_path = Path("tests/smoke.spec.js")
+          tests = tests_path.read_text(encoding="utf-8")
+          test_name = "search: mobile results keep the final book visible after scroll"
+
+          if test_name in tests:
+              print("Already added: mobile search viewport regression test")
+          else:
+              anchor = """test('search: entering a keyword returns results', async ({ page }) => {
+                  await page.goto('/');
+                  await waitForPassage(page);
+
+                  await page.locator('#searchToggle').click();
+                  await page.locator('#searchInput').fill('beginning');
+                  await page.waitForTimeout(700);
+
+                  await expect(page.locator('#searchResults')).not.toBeEmpty();
+          });"""
+
+              regression_test = """test('search: mobile results keep the final book visible after scroll', async ({ page }) => {
+                  await page.setViewportSize({ width: 390, height: 844 });
+                  await page.goto('/');
+                  await waitForPassage(page);
+
+                  await page.locator('#searchToggle').click();
+                  await page.locator('#searchInput').fill('love');
+
+                  await expect(
+                          page.locator('.search-book-heading[data-book="Revelation"]')
+                  ).toBeAttached({ timeout: 15000 });
+
+                  await page.locator(
+                          '.search-expand-collapse-btn[data-action="collapse"]'
+                  ).click();
+                  await page.locator(
+                          '.search-group-heading[data-testament="Old Testament"]'
+                  ).click();
+                  await page.locator(
+                          '.search-group-heading[data-testament="New Testament"]'
+                  ).click();
+
+                  const results = page.locator('#searchResults');
+                  await results.evaluate((element) => {
+                          element.scrollTop = element.scrollHeight;
+                  });
+                  await page.waitForTimeout(200);
+
+                  const layout = await page.evaluate(() => {
+                          const container = document.getElementById('searchContainer');
+                          const results = document.getElementById('searchResults');
+                          const finalBook = document.querySelector(
+                                  '.search-book-heading[data-book="Revelation"]'
+                          );
+
+                          if (!container || !results || !finalBook) {
+                                  throw new Error('Search layout elements were not found');
+                          }
+
+                          const containerRect = container.getBoundingClientRect();
+                          const resultsRect = results.getBoundingClientRect();
+                          const finalBookRect = finalBook.getBoundingClientRect();
+
+                          return {
+                                  containerBottom: containerRect.bottom,
+                                  resultsBottom: resultsRect.bottom,
+                                  finalBookBottom: finalBookRect.bottom,
+                                  resultsClientHeight: results.clientHeight,
+                                  resultsScrollHeight: results.scrollHeight,
+                                  scrollTop: results.scrollTop,
+                          };
+                  });
+
+                  expect(layout.resultsBottom).toBeLessThanOrEqual(layout.containerBottom + 1);
+                  expect(layout.finalBookBottom).toBeLessThanOrEqual(layout.containerBottom + 1);
+                  expect(layout.resultsClientHeight).toBeGreaterThan(0);
+                  expect(layout.resultsScrollHeight).toBeGreaterThan(layout.resultsClientHeight);
+                  expect(layout.scrollTop + layout.resultsClientHeight).toBeGreaterThanOrEqual(
+                          layout.resultsScrollHeight - 1
+                  );
+          });"""
+
+              if tests.count(anchor) != 1:
+                  raise SystemExit(
+                      f"Unexpected search test anchor count: {tests.count(anchor)}"
+                  )
+
+              tests_path.write_text(
+                  tests.replace(anchor, anchor + "\n\n" + regression_test, 1),
+                  encoding="utf-8",
+              )
+              print("Added: mobile search viewport regression test")
+          PY
+
+      - name: Validate focused changes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          components = Path("css/components.css").read_text(encoding="utf-8")
+          utilities = Path("css/utilities.css").read_text(encoding="utf-8")
+          tests = Path("tests/smoke.spec.js").read_text(encoding="utf-8")
+
+          required_component_blocks = [
+              """    z-index: 101;
+              display: flex;
+              flex-direction: column;
+              max-height: 0;
+              overflow: hidden;
+              transition: max-height var(--transition-normal);
+          }""",
+              """.search-wrapper {
+              width: 100%;
+              max-width: var(--max-width);
+              margin: 0 auto;
+              padding: var(--spacing-sm);
+              display: flex;
+              flex-direction: column;
+              flex: 0 0 auto;
+              gap: var(--spacing-xs);
+          }""",
+              """.search-results {
+              width: 100%;
+              max-width: var(--max-width);
+              margin: 0 auto;
+              flex: 1 1 auto;
+              min-height: 0;
+              max-height: none;
+              padding: 8px;
+              overflow-y: auto;
+              overscroll-behavior: contain;
+              -webkit-overflow-scrolling: touch;
+              touch-action: pan-y;
+              scrollbar-width: none;
+          }""",
+              """.search-results-summary {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              width: 100%;
+              flex: 0 0 auto;
+              padding: var(--spacing-xs) var(--spacing-md);""",
+          ]
+
+          for value in required_component_blocks:
+              assert components.count(value) == 1, value
+
+          assert utilities.count(
+              "max-height: calc(100dvh - var(--chrome-height));"
+          ) == 1
+          assert "max-height: calc(80vh - 100px);" not in utilities
+          assert tests.count(
+              "search: mobile results keep the final book visible after scroll"
+          ) == 1
+
+          forbidden_component_blocks = [
+              """.search-results {
+              max-width: var(--max-width);
+              margin: 0 auto;
+              max-height: 520px;""",
+          ]
+
+          for value in forbidden_component_blocks:
+              assert value not in components, value
+          PY
+
+          git diff --check
+          git diff -- css/components.css css/utilities.css tests/smoke.spec.js
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      - name: Install repository dependencies
+        run: npm install
+
+      - name: Install Playwright
+        run: npm install --no-save @playwright/test
+
+      - name: Install Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Start local HTTP server
+        run: |
+          python3 -m http.server 8080 &
+          for i in $(seq 1 10); do
+            curl -s http://localhost:8080 > /dev/null && break || sleep 1
+          done
+
+      - name: Run search smoke tests
+        env:
+          BASE_URL: http://localhost:8080
+        run: npx playwright test tests/smoke.spec.js --project=chromium --grep="search:"
+
+      - name: Commit fix
+        run: |
+          if git diff --quiet -- css/components.css css/utilities.css tests/smoke.spec.js; then
+            echo "Mobile search results viewport is already fixed"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add css/components.css css/utilities.css tests/smoke.spec.js
+          git commit -F - <<'EOF'
+          fix(search): keep mobile results within viewport
+
+          Size the search panel as a flex column and let the results list use
+          the remaining dynamic viewport height. Remove the fixed mobile
+          subtraction that hid the final testament book after scroll snapback.
+
+          Add a regression test that reaches the final collapsed book.
+          EOF
+          git push origin exp
