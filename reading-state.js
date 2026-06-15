@@ -119,8 +119,27 @@ export function applyVerseGlow(app) {
     trigger.addEventListener('click', () => toggleVerseTray(wrapper, trigger, tray));
 }
 
-export function toggleVerseTray(wrapper, trigger, tray) {
-    const open = wrapper.classList.toggle('verse-tools-open');
-    trigger.setAttribute('aria-expanded', String(open));
-    tray.setAttribute('aria-hidden', String(!open));
+export function toggleVerseTray(wrapperOrApp, triggerArg, trayArg) {
+    let wrapper;
+    let trigger;
+    let tray;
+
+    if (wrapperOrApp && wrapperOrApp.passageText) {
+        wrapper = wrapperOrApp.passageText.querySelector('[data-verse-glow]');
+        if (!wrapper) return;
+
+        trigger = wrapper.querySelector('.verse-tools-trigger');
+        tray = wrapper.querySelector('.verse-tools-tray');
+    } else {
+        wrapper = wrapperOrApp;
+        trigger = triggerArg;
+        tray = trayArg;
+    }
+
+    if (!trigger || !tray) return;
+
+    const isOpen = tray.classList.toggle('verse-tools-tray--open');
+    trigger.classList.toggle('verse-tools-trigger--open', isOpen);
+    trigger.setAttribute('aria-expanded', String(isOpen));
+    tray.setAttribute('aria-hidden', String(!isOpen));
 }
