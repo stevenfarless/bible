@@ -59,6 +59,9 @@ export function scrollToVerse(app, verseNumber) {
     app.state.selectedVerse = verseNumber;
     app.currentVerseSpan.textContent = `${verseNumber}`;
     app.applyVerseGlow();
+
+    const target = app.passageText.querySelector('[data-verse-glow]');
+    target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 export function applyVerseGlow(app) {
