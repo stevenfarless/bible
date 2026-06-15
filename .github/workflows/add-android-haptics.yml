@@ -1,6 +1,6 @@
 name: Add Android Haptics
 
-on:
+'on':
   workflow_dispatch:
 
 permissions:
