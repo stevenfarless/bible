@@ -110,10 +110,45 @@ function syncReadingDisplay(app) {
     }
 }
 
+function installCanonFallback(app) {
+    const loadPassage = app.loadPassage.bind(app);
+
+    app.loadPassage = async (book, chapter, restoreScroll = false) => {
+        const books = app.getAllBooks();
+        const activeBook = app.state.currentBook;
+
+        if (activeBook && !books.includes(activeBook)) {
+            app._dbgEvent?.(`loadPassage: "${activeBook}" not in canon — redirecting to Genesis 1`);
+            return loadPassage('Genesis', 1, restoreScroll);
+        }
+
+        return loadPassage(book, chapter, restoreScroll);
+    };
+}
+
+function normalizeModalMarkup() {
+    const bookContent = document.querySelector('#bookModal .modal-content');
+    const bookBody = document.querySelector('#bookModal .modal-body');
+    const filterBar = document.querySelector('#bookModal .book-testament-filters');
+
+    if (bookContent && bookBody && filterBar && filterBar.parentElement !== bookContent) {
+        bookContent.insertBefore(filterBar, bookBody);
+    }
+
+    document.querySelectorAll('.accordion-section[data-settings-section]').forEach((section) => {
+        if (!section.hasAttribute('data-section')) {
+            section.setAttribute('data-section', section.getAttribute('data-settings-section'));
+        }
+    });
+}
+
 /**
  * @param {object} app - BibleApp instance
  */
 export function attachEventListeners(app) {
+    normalizeModalMarkup();
+    installCanonFallback(app);
+
     app.searchToggleBtn?.addEventListener('click', () => app.toggleSearch());
     app.closeSearchBtn?.addEventListener('click',  () => app.closeSearch());
     app.searchInput?.addEventListener('input',     (e) => app.handleSearch(e.target.value, 'type'));
@@ -371,16 +406,19 @@ export function attachEventListeners(app) {
     themeSelector?.addEventListener('input', applyThemeSelection);
     themeSelector?.addEventListener('change', applyThemeSelection);
 
-        document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
+    document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
     document.getElementById('changeEmailBtn')?.addEventListener('click', () => openChangeEmailModal(app));
     document.getElementById('changePasswordBtn')?.addEventListener('click', () => openChangePasswordModal(app));
     document.getElementById('forgotPasswordBtn')?.addEventListener('click', () => handleForgotPassword(app));
 
-    document.getElementById('showSignupLink')?.addEventListener('click', (event) => {
+    const openSignupModal = (event) => {
         event.preventDefault();
         app.closeModal(app.loginModal);
         app.openModal(app.signupModal);
-    });
+    };
+
+    document.getElementById('showSignup')?.addEventListener('click', openSignupModal);
+    document.getElementById('showSignupLink')?.addEventListener('click', openSignupModal);
 
     document.getElementById('showLoginLink')?.addEventListener('click', (event) => {
         event.preventDefault();

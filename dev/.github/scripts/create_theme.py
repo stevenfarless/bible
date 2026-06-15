@@ -105,8 +105,8 @@ def remove_css_theme(css, theme_id):
 
 def remove_index_theme(index, theme_id):
     index = re.sub(rf"\n\t+<option value=\"{re.escape(theme_id)}\">[^\n]*</option>", "", index)
-    index = index.replace(f", {theme_id}: 1", "")
-    index = index.replace(f"{theme_id}: 1, ", "")
+    index = index.replace(f", '{theme_id}': 1", "")
+    index = index.replace(f"'{theme_id}': 1, ", "")
     return index
 
 
@@ -249,7 +249,7 @@ body.{theme_id}-theme .verse-number {{
     mode_label = "Light | Dark" if mode == "both" else mode.title()
     option = f'\t\t\t\t\t\t\t\t\t<option value="{option_value}">{html.escape(name)} ({mode_label})</option>\n'
     index = replace_once(index, '\t\t\t\t\t\t\t\t</select>', option + '\t\t\t\t\t\t\t\t</select>', "theme selector option")
-    index = replace_once(index, "vigil: 1 };", f"vigil: 1, {theme_id}: 1 }};", "prepaint theme allowlist")
+    index = replace_once(index, "vigil: 1 };", f"vigil: 1, '{theme_id}': 1 }};", "prepaint theme allowlist")
     INDEX_FILE.write_text(index)
 
     theme_class = f"{theme_id}-theme"
