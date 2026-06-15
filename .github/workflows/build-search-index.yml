@@ -8,7 +8,7 @@ on:
         required: true
         default: 'BSB'
   workflow_run:
-    workflows: ['Upload Translations to Firebase']
+    workflows: ['Upload All to Firebase']
     types:
       - completed
 
