@@ -29,7 +29,7 @@ const READING_FONT_FAMILIES = {
 };
 
 const RECAPTCHA_STYLE_ID = 'recaptcha-badge-style';
-const RECAPTCHA_DISCLOSURE_HTML = '<div style="margin-top: 1rem; font-size: 0.875rem;">This site is protected by reCAPTCHA and the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a> apply.</div>';
+// const RECAPTCHA_DISCLOSURE_HTML = '<div style="margin-top: 1rem; font-size: 0.875rem;">This site is protected by reCAPTCHA and the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a> apply.</div>';
 
 function readBool(key, defaultValue) {
     try {
@@ -324,12 +324,11 @@ export function updateCopyright(app) {
     if (!app.copyright) return;
 
     const copyrightText = app._copyrightMap[app.state.translation] || '';
-    const copyrightHtml = copyrightText ? `<span class="copyright-text">${escapeHtml(copyrightText)}</span>` : '';
+    const copyrightHtml = copyrightText
+        ? `<span class="copyright-text">${escapeHtml(copyrightText)}</span>`
+        : '';
 
-    app.copyright.innerHTML = [
-        copyrightHtml,
-        `<span class="recaptcha-disclosure">${RECAPTCHA_DISCLOSURE_HTML}</span>`,
-    ].filter(Boolean).join('<br />');
+    app.copyright.innerHTML = copyrightHtml;
 }
 
 /**
