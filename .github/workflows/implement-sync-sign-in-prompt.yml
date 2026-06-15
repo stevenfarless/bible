@@ -41,7 +41,7 @@ jobs:
               path = Path(path_name)
               text = path.read_text(encoding='utf-8')
 
-              if new in text:
+              if new and new in text:
                   print(f'Already applied: {path_name}')
                   return
 
