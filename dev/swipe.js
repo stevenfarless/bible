@@ -319,6 +319,19 @@ export function initSwipe(app) {
             viewport.style.height = app.passageText.offsetHeight + 'px';
         }
 
+        if (!e.cancelable) {
+            _cleanupDrag();
+
+            const W = vw();
+            _setTranslateX(app.passageText, 0);
+            _setTranslateX(app.swipe.prevPanel, -W);
+            _setTranslateX(app.swipe.nextPanel, W);
+
+            _tracking = false;
+            _vetoed = true;
+            return;
+        }
+
         e.preventDefault();
 
         const W         = vw();

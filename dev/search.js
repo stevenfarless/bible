@@ -7,24 +7,24 @@ import { normaliseBookAlias } from './book-aliases.js';
 // Canonical book order for cross-book sort — must stay in sync with
 // BOOK_LOAD_ORDER in bible-api.js.
 const CANON_BOOK_ORDER = [
-    'Genesis','Exodus','Leviticus','Numbers','Deuteronomy',
-    'Joshua','Judges','Ruth','1 Samuel','2 Samuel',
-    '1 Kings','2 Kings','1 Chronicles','2 Chronicles',
-    'Ezra','Nehemiah','Esther','Job','Psalm','Proverbs',
-    'Ecclesiastes','Song of Solomon','Isaiah','Jeremiah',
-    'Lamentations','Ezekiel','Daniel','Hosea','Joel','Amos',
-    'Obadiah','Jonah','Micah','Nahum','Habakkuk','Zephaniah',
-    'Haggai','Zechariah','Malachi','Matthew','Mark','Luke',
-    'John','Acts','Romans','1 Corinthians','2 Corinthians',
-    'Galatians','Ephesians','Philippians','Colossians',
-    '1 Thessalonians','2 Thessalonians','1 Timothy','2 Timothy',
-    'Titus','Philemon','Hebrews','James','1 Peter','2 Peter',
-    '1 John','2 John','3 John','Jude','Revelation',
-    'Additions to Esther','Bel and the Dragon','Prayer of Manasseh','Letter of Jeremiah',
-    'Prayer of Azariah','Wisdom of Solomon','2 Maccabees','4 Maccabees',
-    '3 Maccabees','1 Maccabees','Psalm 151','1 Esdras',
-    '2 Esdras','Susanna','Sirach','Baruch',
-    'Judith','Tobit',
+    'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
+    'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
+    '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles',
+    'Ezra', 'Nehemiah', 'Esther', 'Job', 'Psalm', 'Proverbs',
+    'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah',
+    'Lamentations', 'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos',
+    'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk', 'Zephaniah',
+    'Haggai', 'Zechariah', 'Malachi', 'Matthew', 'Mark', 'Luke',
+    'John', 'Acts', 'Romans', '1 Corinthians', '2 Corinthians',
+    'Galatians', 'Ephesians', 'Philippians', 'Colossians',
+    '1 Thessalonians', '2 Thessalonians', '1 Timothy', '2 Timothy',
+    'Titus', 'Philemon', 'Hebrews', 'James', '1 Peter', '2 Peter',
+    '1 John', '2 John', '3 John', 'Jude', 'Revelation',
+    'Additions to Esther', 'Bel and the Dragon', 'Prayer of Manasseh', 'Letter of Jeremiah',
+    'Prayer of Azariah', 'Wisdom of Solomon', '2 Maccabees', '4 Maccabees',
+    '3 Maccabees', '1 Maccabees', 'Psalm 151', '1 Esdras',
+    '2 Esdras', 'Susanna', 'Sirach', 'Baruch',
+    'Judith', 'Tobit',
 ];
 const CANON_BOOK_INDEX = new Map(CANON_BOOK_ORDER.map((b, i) => [b, i]));
 
@@ -587,16 +587,22 @@ export async function performKeywordSearch(app, query) {
 
     app.searchExpandedTestaments?.clear();
     app.searchExpandedBooks?.clear();
+    const autoExpandedTestaments = new Set();
+    const autoExpandedBooks = new Set();
 
     await fetchAllSearchResults(app, query, (accumulatedResults) => {
         if (accumulatedResults.length > 0) {
-            if (app.searchExpandedTestaments.size === 0 && app.searchExpandedBooks.size === 0) {
-                const groups = groupSearchResultsByCanon(app, accumulatedResults);
+            const groups = groupSearchResultsByCanon(app, accumulatedResults);
 
-                for (const group of groups) {
+            for (const group of groups) {
+                if (!autoExpandedTestaments.has(group.heading)) {
+                    autoExpandedTestaments.add(group.heading);
                     app.searchExpandedTestaments.add(group.heading);
+                }
 
-                    for (const book of group.books) {
+                for (const book of group.books) {
+                    if (!autoExpandedBooks.has(book.book)) {
+                        autoExpandedBooks.add(book.book);
                         app.searchExpandedBooks.add(book.book);
                     }
                 }
