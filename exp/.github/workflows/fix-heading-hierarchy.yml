@@ -1,0 +1,172 @@
+name: Fix Heading Hierarchy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-heading-hierarchy:
+    name: Fix heading hierarchy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Apply focused fixes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              "events.js": [
+                  (
+                      '<h3 id="changeEmailModalTitle" tabindex="-1">Change Email</h3>',
+                      '<h2 id="changeEmailModalTitle" tabindex="-1">Change Email</h2>',
+                  ),
+                  (
+                      '<h3 id="changePasswordModalTitle" tabindex="-1">Change Password</h3>',
+                      '<h2 id="changePasswordModalTitle" tabindex="-1">Change Password</h2>',
+                  ),
+              ],
+              "index.html": [
+                  ("<h4>Old Testament</h4>", "<h3>Old Testament</h3>"),
+                  ("<h4>New Testament</h4>", "<h3>New Testament</h3>"),
+                  (
+                      '<h4 class="passage-extras-heading">Footnotes</h4>',
+                      '<h3 class="passage-extras-heading">Footnotes</h3>',
+                  ),
+                  (
+                      '<h4 class="passage-extras-heading">Cross-References</h4>',
+                      '<h3 class="passage-extras-heading">Cross-References</h3>',
+                  ),
+              ],
+              "css/components.css": [
+                  ("\n.book-category h4 {\n", "\n.book-category h3 {\n"),
+                  (
+                      "\n#bookModal .modal-body:not(.book-testament-filter-active) .book-category h4 {\n",
+                      "\n#bookModal .modal-body:not(.book-testament-filter-active) .book-category h3 {\n",
+                  ),
+              ],
+              "css/geek95.css": [
+                  (
+                      "\n.geek-theme.light-mode .book-category h4,\n",
+                      "\n.geek-theme.light-mode .book-category h3,\n",
+                  ),
+              ],
+          }
+
+          for filename, changes in replacements.items():
+              path = Path(filename)
+              text = path.read_text(encoding="utf-8")
+
+              for old, new in changes:
+                  old_count = text.count(old)
+                  new_count = text.count(new)
+
+                  if old_count == 1:
+                      text = text.replace(old, new, 1)
+                  elif old_count == 0 and new_count == 1:
+                      print(f"Already fixed: {filename}: {new.strip()}")
+                  else:
+                      raise SystemExit(
+                          f"Unexpected replacement state in {filename}: "
+                          f"old={old_count}, new={new_count}, target={old.strip()!r}"
+                      )
+
+              path.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Validate heading hierarchy
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          events = Path("events.js").read_text(encoding="utf-8")
+          index = Path("index.html").read_text(encoding="utf-8")
+          components = Path("css/components.css").read_text(encoding="utf-8")
+          geek = Path("css/geek95.css").read_text(encoding="utf-8")
+
+          required_events = [
+              '<h2 id="changeEmailModalTitle" tabindex="-1">Change Email</h2>',
+              '<h2 id="changePasswordModalTitle" tabindex="-1">Change Password</h2>',
+              'aria-labelledby="changeEmailModalTitle"',
+              'aria-labelledby="changePasswordModalTitle"',
+          ]
+          required_index = [
+              "<h3>Old Testament</h3>",
+              "<h3>New Testament</h3>",
+              '<h3 class="passage-extras-heading">Footnotes</h3>',
+              '<h3 class="passage-extras-heading">Cross-References</h3>',
+          ]
+          required_components = [
+              "\n.book-category h3 {\n",
+              "\n#bookModal .modal-body:not(.book-testament-filter-active) .book-category h3 {\n",
+          ]
+          required_geek = ["\n.geek-theme.light-mode .book-category h3,\n"]
+
+          for value in required_events:
+              assert events.count(value) == 1, value
+          for value in required_index:
+              assert index.count(value) == 1, value
+          for value in required_components:
+              assert components.count(value) == 1, value.strip()
+          for value in required_geek:
+              assert geek.count(value) == 1, value.strip()
+
+          forbidden = {
+              "events.js": [
+                  '<h3 id="changeEmailModalTitle"',
+                  '<h3 id="changePasswordModalTitle"',
+              ],
+              "index.html": [
+                  "<h4>Old Testament</h4>",
+                  "<h4>New Testament</h4>",
+                  '<h4 class="passage-extras-heading">',
+              ],
+              "css/components.css": [
+                  "\n.book-category h4 {\n",
+                  "\n#bookModal .modal-body:not(.book-testament-filter-active) .book-category h4 {\n",
+              ],
+              "css/geek95.css": ["\n.geek-theme.light-mode .book-category h4,\n"],
+          }
+
+          contents = {
+              "events.js": events,
+              "index.html": index,
+              "css/components.css": components,
+              "css/geek95.css": geek,
+          }
+          for filename, values in forbidden.items():
+              for value in values:
+                  assert value not in contents[filename], f"{filename}: {value.strip()}"
+          PY
+
+          node --check events.js
+          git diff --check
+          git diff -- events.js index.html css/components.css css/geek95.css
+
+      - name: Commit fixes
+        run: |
+          if git diff --quiet -- events.js index.html css/components.css css/geek95.css; then
+            echo "Heading hierarchy is already fixed"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add events.js index.html css/components.css css/geek95.css
+          git commit -F - <<'EOF'
+          fix(a11y): correct remaining heading hierarchy
+
+          Use h2 for account dialog titles and h3 for book and passage
+          subsections. Update heading-specific selectors to preserve styling.
+
+          Refs #303
+          EOF
+          git push origin exp
