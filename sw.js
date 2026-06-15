@@ -73,6 +73,7 @@ const APP_SHELL = [
   './sync-prompt.js',
   './modals.js',
   './settings.js',
+  './haptics.js',
   './keyboard.js',
   './events.js',
   './swipe.js',

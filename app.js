@@ -53,6 +53,7 @@ import {
 } from './settings.js';
 import { handleKeyboardShortcuts } from './keyboard.js';
 import { attachEventListeners } from './events.js';
+import { hapticFirm } from './haptics.js';
 
 const TRANSLATION_ALIASES = { NRSVue: 'NRSVUE' };
 function normalizeTranslation(t) { return TRANSLATION_ALIASES[t] || t; }
@@ -180,7 +181,7 @@ function buildDebugReport(app) {
         'fontSize', 'readingFont', 'verseSelectionGesture',
         'showVerseNumbers', 'coloredVerseNumbers', 'showHeadings',
         'showFootnotes', 'showCrossReferences', 'verseByVerse',
-        'showChapterArrows',
+        'showChapterArrows', 'hapticsEnabled',
     ];
     const ls = {};
     for (const k of LS_KEYS) {
@@ -569,7 +570,7 @@ function initLogoLongPressRefresh() {
         cancel();
         holdTimer = setTimeout(async () => {
             activated = true;
-            navigator.vibrate?.(30);
+            hapticFirm(window._bibleApp);
             await hardRefreshApp();
         }, HOLD_MS);
     }, { passive: true });

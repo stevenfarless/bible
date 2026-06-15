@@ -8,6 +8,7 @@ import { runMegasearch, performKeywordSearch } from './search.js';
 import { applyReadingFont } from './settings.js';
 import { initSwipe } from './swipe.js';
 import { handleChangeEmail, handleChangePassword, handleForgotPassword } from './auth.js';
+import { hapticFirm } from './haptics.js';
 
 const CHANGE_EMAIL_HTML = `
 <div id="changeEmailModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="changeEmailModalTitle" aria-hidden="true" inert>
@@ -235,7 +236,7 @@ export function attachEventListeners(app) {
             holdTimer = setTimeout(() => {
                 if (!pressedVerse) return;
                 holdActivated = true;
-                navigator.vibrate?.(20);
+                hapticFirm(app);
                 selectVerse(pressedVerse);
             }, HOLD_MS);
         });
@@ -345,6 +346,7 @@ export function attachEventListeners(app) {
         syncReadingDisplay(app);
     });
     app.chapterArrowsToggle?.addEventListener('change', () => app.toggleSetting('showChapterArrows'));
+    app.hapticsToggle?.addEventListener('change', () => app.toggleSetting('hapticsEnabled'));
 
     app.crossReferencesToggle = document.getElementById('crossReferencesToggle');
     app.crossReferencesToggle?.addEventListener('change', () => app.toggleSetting('showCrossReferences'));
