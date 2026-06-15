@@ -36,6 +36,7 @@
 //   app.swipe?.syncAdjacentPanels();
 
 import { loadStructure, eventsForChapter } from './bsb-structure.js';
+import { hapticLight, hapticFirm } from './haptics.js';
 
 const TAN_30 = Math.tan(Math.PI / 6); // ≈ 0.577
 const COMMIT_DISTANCE = 0.25;          // fraction of viewport width
@@ -144,13 +145,6 @@ function _animDuration(velocityPxMs) {
     const v = Math.abs(velocityPxMs);
     const t = Math.min(1, v / COMMIT_VELOCITY);
     return Math.round(ANIMATION_MS_MAX - t * (ANIMATION_MS_MAX - ANIMATION_MS_MIN));
-}
-
-// ── Haptic feedback ────────────────────────────────────────────────────────
-
-function _haptic(strong = false) {
-    if (!navigator.vibrate) return;
-    navigator.vibrate(strong ? [30, 20, 30] : [12]);
 }
 
 // ── Core init ─────────────────────────────────────────────────────────────
@@ -385,7 +379,7 @@ export function initSwipe(app) {
         };
 
         if (!commit) {
-            if (_atBoundary(dx) && absDx > 20) _haptic(true);
+            if (_atBoundary(dx) && absDx > 20) hapticFirm(app);
             cancelSwipe();
             return;
         }
@@ -397,12 +391,12 @@ export function initSwipe(app) {
             : { book: app.swipe.prevPanel.dataset.book,  chapter: parseInt(app.swipe.prevPanel.dataset.chapter,  10) };
 
         if (!incomingPos.book) {
-            _haptic(true);
+            hapticFirm(app);
             cancelSwipe();
             return;
         }
 
-        _haptic(false);
+        hapticLight(app);
         _animating = true;
 
         viewport.classList.remove('swiping');
