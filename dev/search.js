@@ -592,13 +592,16 @@ export async function performKeywordSearch(app, query) {
         if (accumulatedResults.length > 0) {
             if (app.searchExpandedTestaments.size === 0 && app.searchExpandedBooks.size === 0) {
                 const groups = groupSearchResultsByCanon(app, accumulatedResults);
-                const firstGroup = groups[0];
-                if (firstGroup) {
-                    app.searchExpandedTestaments.add(firstGroup.heading);
-                    const firstBook = firstGroup.books && firstGroup.books[0];
-                    if (firstBook) app.searchExpandedBooks.add(firstBook.book);
+
+                for (const group of groups) {
+                    app.searchExpandedTestaments.add(group.heading);
+
+                    for (const book of group.books) {
+                        app.searchExpandedBooks.add(book.book);
+                    }
                 }
             }
+
             displaySearchResults(app, accumulatedResults, query);
         }
     });
@@ -617,6 +620,7 @@ export async function performKeywordSearch(app, query) {
     const megasearchToggle = document.getElementById('megasearchToggle');
     const megasearchActive = megasearchToggle?.checked ?? false;
     app._dbgUserAction(`megasearch toggle: ${megasearchActive ? 'ON' : 'OFF'}`);
+
     if (megasearchActive && query.trim().length >= 3) {
         runMegasearch(app, query);
     }
