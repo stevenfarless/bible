@@ -139,7 +139,8 @@ jobs:
           for path in Path('.').glob('*.js'):
               if path.name == 'haptics.js':
                   continue
-              if 'navigator.vibrate' in path.read_text(encoding='utf-8'):
+              text = path.read_text(encoding='utf-8')
+              if 'navigator.vibrate(' in text or 'navigator.vibrate?.(' in text:
                   direct.append(str(path))
           assert not direct, f'Direct navigator.vibrate calls remain: {direct}'
           PY
