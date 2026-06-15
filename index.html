@@ -24,7 +24,7 @@
 			var el = document.documentElement;
 			var theme = 'basic';
 			try { theme = localStorage.getItem('colorTheme') || 'basic'; } catch (_) {}
-			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1, lux: 1, vespers: 1, vigil: 1, 'uxorem-amo': 1 };
+			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1, lux: 1, vespers: 1, vigil: 1, uxorem-amo: 1 };
 			if (!valid[theme]) theme = 'basic';
 			el.classList.add(theme + '-theme', 'no-color-transition');
 
@@ -212,119 +212,129 @@
 			</div>
 
 			<div id="footnotesSection" class="passage-extras-section hidden">
-				<h4 class="passage-extras-title">Footnotes</h4>
-				<div id="footnotesContent"></div>
+				<h4 class="passage-extras-heading">Footnotes</h4>
+				<div id="footnotesContent" class="passage-extras-content"></div>
 			</div>
 
 			<div id="crossReferencesSection" class="passage-extras-section hidden">
-				<h4 class="passage-extras-title">Cross References</h4>
-				<div id="crossReferencesContent"></div>
+				<h4 class="passage-extras-heading">Cross-References</h4>
+				<div id="crossReferencesContent" class="passage-extras-content"></div>
 			</div>
 
-			<div class="copyright" id="copyright"></div>
+			<div class="passage-footer">
+				<p id="copyright" class="copyright"></p>
+			</div>
 		</div>
 	</main>
 
-	<div id="toast" class="toast" role="status" aria-live="polite"></div>
-
-	<div class="modal" id="bookModal" role="dialog" aria-modal="true" aria-labelledby="bookModalTitle" tabindex="-1">
+	<div id="bookModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="bookModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2 id="bookModalTitle" tabindex="-1">Select Book</h2>
-				<button id="closeBookModal" class="close-btn close-control" aria-label="Close book selector" title="Close book selector" type="button">
+				<h2 id="bookModalTitle" tabindex="-1">Select a Book</h2>
+				<button class="close-btn close-control" id="closeBookModal" aria-label="Close" type="button">
 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M7 7L17 17M17 7L7 17"></path>
 </svg>
 </button>
 			</div>
-			<div class="modal-body book-modal-body">
-				<div class="book-testament-filters" role="toolbar" aria-label="Filter books by testament"></div>
-				<div id="oldTestamentBooks" class="book-section"></div>
-				<div id="newTestamentBooks" class="book-section"></div>
+			<div
+				id="bookTestamentFilters"
+				class="book-testament-filters"
+				role="group"
+				aria-label="Filter books by testament"
+			></div>
+			<div class="modal-body">
+				<div class="book-category">
+					<h4>Old Testament</h4>
+					<div id="oldTestamentBooks" class="book-grid"></div>
+				</div>
+				<div class="book-category">
+					<h4>New Testament</h4>
+					<div id="newTestamentBooks" class="book-grid"></div>
+				</div>
 			</div>
 		</div>
 	</div>
 
-	<div class="modal" id="chapterModal" role="dialog" aria-modal="true" aria-labelledby="chapterModalTitle" tabindex="-1">
+	<div id="chapterModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="chapterModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2 id="chapterModalTitle"><span id="chapterModalBook">Genesis</span></h2>
-				<button id="closeChapterModal" class="close-btn close-control" aria-label="Close chapter selector" title="Close chapter selector" type="button">
+				<h2 id="chapterModalTitle" tabindex="-1"><span id="chapterModalBook">Genesis</span></h2>
+				<button class="close-btn close-control" id="closeChapterModal" aria-label="Close" type="button">
 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M7 7L17 17M17 7L7 17"></path>
 </svg>
 </button>
 			</div>
 			<div class="modal-body">
-				<div class="chapter-grid" id="chapterGrid"></div>
+				<div id="chapterGrid" class="chapter-grid"></div>
 			</div>
 		</div>
 	</div>
 
-	<div class="modal" id="verseModal" role="dialog" aria-modal="true" aria-labelledby="verseModalTitle" tabindex="-1">
+	<div id="verseModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="verseModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2 id="verseModalTitle"><span id="verseModalBook">Genesis 1</span></h2>
-				<button id="closeVerseModal" class="close-btn close-control" aria-label="Close verse selector" title="Close verse selector" type="button">
+				<h2 id="verseModalTitle" tabindex="-1"><span id="verseModalBook">Genesis 1</span></h2>
+				<button class="close-btn close-control" id="closeVerseModal" aria-label="Close" type="button">
 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M7 7L17 17M17 7L7 17"></path>
 </svg>
 </button>
 			</div>
 			<div class="modal-body">
-				<div class="verse-grid" id="verseGrid"></div>
+				<div id="verseGrid" class="chapter-grid"></div>
 			</div>
 		</div>
 	</div>
 
-	<div class="modal" id="translationModal" role="dialog" aria-modal="true" aria-labelledby="translationModalTitle" tabindex="-1">
-		<div class="modal-content">
+	<div id="translationModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="translationModalTitle" aria-hidden="true" inert>
+		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
-				<h2 id="translationModalTitle">Select Translation</h2>
-				<button id="closeTranslationModal" class="close-btn close-control" aria-label="Close translation selector" title="Close translation selector" type="button">
+				<h2 id="translationModalTitle" tabindex="-1">Translation</h2>
+				<button class="close-btn close-control" id="closeTranslationModal" aria-label="Close" type="button">
 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M7 7L17 17M17 7L7 17"></path>
 </svg>
 </button>
 			</div>
 			<div class="modal-body">
-				<div id="translationList" class="translation-list"></div>
+				<ul id="translationList" class="translation-modal-list"></ul>
 			</div>
 		</div>
 	</div>
 
-	<div class="modal" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle" tabindex="-1">
+	<div id="settingsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="settingsModalTitle" tabindex="-1">Settings</h2>
-				<button id="closeSettingsModal" class="close-btn close-control" aria-label="Close settings" title="Close settings" type="button">
+				<button class="close-btn close-control" id="closeSettingsModal" aria-label="Close" type="button">
 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M7 7L17 17M17 7L7 17"></path>
 </svg>
 </button>
 			</div>
-			<div class="modal-body settings-body">
-				<div class="settings-accordion">
-					<section class="accordion-section" data-settings-section="appearance">
-						<button class="accordion-header" type="button" aria-expanded="true" aria-controls="appearanceSettingsPanel">
-							<span>Appearance</span>
-							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-								<polyline points="6 9 12 15 18 9"></polyline>
-							</svg>
-						</button>
-						<div id="appearanceSettingsPanel" class="accordion-panel active">
-							<div class="settings-group">
+			<div class="modal-body">
+				<div class="accordion-section active" data-section="appearance">
+					<button class="accordion-header" data-target="appearance">
+						<span class="accordion-title">Appearance</span>
+						<svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
+							stroke="currentColor" stroke-width="2">
+							<polyline points="6 9 12 15 18 9"></polyline>
+						</svg>
+					</button>
+					<div class="accordion-panel" data-panel="appearance">
+						<div class="settings-group">
+							<div class="setting-item">
 								<label for="themeSelector">Color Theme</label>
 								<select id="themeSelector" class="input-field">
-									<option value="vespers">Vespers (Light | Dark)</option>
-									<option value="vigil">Vigil (Light | Dark)</option>
-									<option value="lux">Lux (Light | Dark)</option>
-									<option value="dracula">Dracula (Light | Dark)</option>
-									<option value="dracula2test">Dracula 2 Test (Light | Dark)</option>
-									<option value="onyx">Onyx (Light | Dark)</option>
+									<option value="vespers">Lux (Light) | Vespers (Dark)</option>
+									<option value="vigil">Lux (Light) | Vigil (Dark OLED)</option>
+									<option value="dracula">Dracula (Dark) | Alucard (Light)</option>
+									<option value="onyx">Gold (Light | Dark OLED)</option>
 									<option value="sage">Sage (Light | Dark)</option>
 									<option value="ember">Ember (Light | Dark)</option>
-									<option value="perplexity">Perplexity (Light | Dark)</option>
+									<option value="perplexity">Perplexitude (Light | Dark)</option>
 									<option value="basic">Basic Black (Dark) | Basic White (Light)</option>
 									<option value="geek">The Geek Shall Inherit The Earth (Dark OLED)</option>
 									<option value="gnome">Adwaitish (Light | Dark)</option>
@@ -332,176 +342,410 @@
 								</select>
 								<small class="help-text">Choose your preferred color scheme.</small>
 							</div>
-
-							<div class="settings-group">
-								<label for="lightModeSelect">Mode</label>
+							<div class="setting-item">
+								<label for="lightModeSelect">Appearance</label>
 								<select id="lightModeSelect" class="input-field">
-									<option value="system">System</option>
+									<option value="system">System Default</option>
 									<option value="light">Light</option>
 									<option value="dark">Dark</option>
 								</select>
-								<small class="help-text">Use your system preference or choose a fixed mode.</small>
+								<small class="help-text">Follow your device setting or choose a fixed mode.</small>
 							</div>
-
-							<div class="settings-group">
+							<div class="setting-item">
 								<label for="fontSizeSlider">Font Size</label>
-								<div class="range-row">
-									<input type="range" id="fontSizeSlider" min="14" max="40" value="20" />
-									<span id="fontSizeValue">20px</span>
-								</div>
+								<input type="range" id="fontSizeSlider" class="slider" min="12" max="32" value="18" />
+								<span id="fontSizeValue">18px</span>
 							</div>
-
-							<div class="settings-group">
+							<div class="setting-item">
 								<label for="readingFontSelector">Reading Font</label>
 								<select id="readingFontSelector" class="input-field">
 									<option value="gentium">Gentium Book Plus</option>
 									<option value="andika">Andika</option>
 									<option value="ubuntu">Ubuntu</option>
-									<option value="opendyslexic3">OpenDyslexic3</option>
+									<option value="opendyslexic3">Open Dyslexic 3</option>
 									<option value="ia-quattro">iA Writer Quattro S</option>
 									<option value="adwaitasans">Adwaita Sans</option>
 								</select>
-								<small id="readingFontHelpText" class="help-text"></small>
+								<small class="help-text" id="readingFontHelpText">Choose the typeface used for passage text.</small>
 							</div>
-						</div>
-					</section>
-
-					<section class="accordion-section" data-settings-section="reading">
-						<button class="accordion-header" type="button" aria-expanded="false" aria-controls="readingSettingsPanel">
-							<span>Reading</span>
-							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-								<polyline points="6 9 12 15 18 9"></polyline>
-							</svg>
-						</button>
-						<div id="readingSettingsPanel" class="accordion-panel">
-							<div class="settings-group toggle-setting">
-								<label for="verseNumbersToggle">Show verse numbers</label>
-								<input type="checkbox" id="verseNumbersToggle" />
+							<div class="setting-item">
+								<label class="checkbox-label">
+									<input type="checkbox" id="verseNumbersToggle" checked />
+									<span>Show verse numbers</span>
+								</label>
 							</div>
-
-							<div class="settings-group toggle-setting">
-								<label for="coloredVerseNumbersToggle">Use theme color for verse numbers</label>
-								<input type="checkbox" id="coloredVerseNumbersToggle" />
+							<div class="setting-item">
+    <label class="checkbox-label">
+        <input type="checkbox" id="coloredVerseNumbersToggle" checked />
+        <span>Colored verse numbers</span>
+    </label>
+			</div>
+							<div class="setting-item">
+								<label class="checkbox-label">
+									<input type="checkbox" id="headingsToggle" checked />
+									<span>Show section headings</span>
+								</label>
 							</div>
-
-							<div class="settings-group toggle-setting">
-								<label for="headingsToggle">Show section headings</label>
-								<input type="checkbox" id="headingsToggle" />
+							<div class="setting-item setting-item--disabled">
+								<label class="checkbox-label">
+									<input type="checkbox" id="footnotesToggle" disabled />
+									<span>Show footnotes</span>
+								</label>
+								<small class="help-text">Coming soon.</small>
 							</div>
-
-							<div class="settings-group toggle-setting">
-								<label for="verseByVerseToggle">Verse-by-verse mode</label>
-								<input type="checkbox" id="verseByVerseToggle" />
+							<div class="setting-item setting-item--disabled">
+								<label class="checkbox-label">
+									<input type="checkbox" id="crossReferencesToggle" disabled />
+									<span>Show cross-references</span>
+								</label>
+								<small class="help-text">Coming soon.</small>
 							</div>
-
-							<div class="settings-group toggle-setting">
-								<label for="chapterArrowsToggle">Show chapter arrows</label>
-								<input type="checkbox" id="chapterArrowsToggle" />
+							<div class="setting-item">
+								<label class="checkbox-label">
+									<input type="checkbox" id="verseByVerseToggle" />
+									<span>Verse-by-verse display</span>
+								</label>
 							</div>
-
-							<div class="settings-group">
+							<div class="setting-item">
 								<label for="verseSelectionGestureSelect">Verse selection gesture</label>
 								<select id="verseSelectionGestureSelect" class="input-field">
-									<option value="hold">Press and hold</option>
-									<option value="tap">Tap</option>
+									<option value="hold">Tap and hold</option>
+									<option value="tap">Single tap</option>
 								</select>
-								<small class="help-text">Choose how verse selection begins on touch devices.</small>
+								<small class="help-text">Choose how verses are selected.</small>
+							</div>
+							<div class="setting-item">
+								<label class="checkbox-label">
+									<input type="checkbox" id="chapterArrowsToggle" />
+									<span>Show chapter arrows</span>
+								</label>
 							</div>
 						</div>
-					</section>
+					</div>
+				</div>
+
+				<div class="accordion-section" data-section="account">
+					<button class="accordion-header" data-target="account">
+						<span class="accordion-title">Account</span>
+						<svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
+							stroke="currentColor" stroke-width="2">
+							<polyline points="6 9 12 15 18 9"></polyline>
+						</svg>
+					</button>
+					<div class="accordion-panel" data-panel="account">
+						<div class="settings-group">
+							<p class="help-text">
+								Account settings (email, theme, translation, reading position) are automatically synced via Firebase when you're signed in.
+							</p>
+							<button id="openAccountBtn" class="primary-btn account-manage-btn">
+								Manage Account
+							</button>
+						</div>
+					</div>
+				</div>
+				<div class="accordion-section" data-section="about">
+					<button class="accordion-header" data-target="about">
+						<span class="accordion-title">About</span>
+						<svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
+							stroke="currentColor" stroke-width="2">
+							<polyline points="6 9 12 15 18 9"></polyline>
+						</svg>
+					</button>
+					<div class="accordion-panel" data-panel="about">
+						<div class="settings-group about-group">
+							<div class="about-app-info">
+								<span class="about-app-name">Lege Lux</span>
+								<span class="about-version" id="aboutVersion"></span>
+								<span class="about-tagline">A clean, fast Bible reader.</span>
+							</div>
+
+							<div class="sub-accordion-section" data-section="whats-new">
+								<button class="sub-accordion-header" data-target="whats-new" aria-expanded="false">
+									<span>What's new</span>
+									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+										stroke="currentColor" stroke-width="2">
+										<polyline points="6 9 12 15 18 9"></polyline>
+									</svg>
+								</button>
+								<div class="sub-accordion-panel" data-panel="whats-new">
+									<div id="whatsNewContent" class="whats-new-content">
+										<!-- populated by settings.js -->
+									</div>
+								</div>
+							</div>
+
+							<div class="sub-accordion-section" data-section="coming-soon">
+								<button class="sub-accordion-header" data-target="coming-soon" aria-expanded="false">
+									<span>Coming soon</span>
+									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+										stroke="currentColor" stroke-width="2">
+										<polyline points="6 9 12 15 18 9"></polyline>
+									</svg>
+								</button>
+								<div class="sub-accordion-panel" data-panel="coming-soon">
+									<div id="comingSoonContent" class="whats-new-content">
+										<!-- populated by settings.js -->
+									</div>
+									<div class="dev-branch-link">
+										<a href="https://stevenfarless.github.io/bible/dev/" target="_blank" rel="noopener noreferrer">
+											Open dev build
+											<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+										</a>
+										<span class="dev-branch-disclaimer">Still being tested — may contain bugs.</span>
+									</div>
+								</div>
+							</div>
+
+							<div class="sub-accordion-section" data-section="tips">
+								<button class="sub-accordion-header" data-target="tips" aria-expanded="false">
+									<span>Help &amp; Tips</span>
+									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+										stroke="currentColor" stroke-width="2">
+										<polyline points="6 9 12 15 18 9"></polyline>
+									</svg>
+								</button>
+								<div class="sub-accordion-panel" data-panel="tips">
+									<div class="settings-group">
+										<ul class="tips-list">
+											<li>Click the book, chapter, or verse selector to jump to any location.</li>
+											<li>Search by reference (examples: <code>John 3</code>, <code>John 3:16</code>, <code>jn 3 16</code>).</li>
+											<li>Search by keywords to find mentions across the Bible (example: <code>covenant</code>).</li>
+											<li>Wrap a phrase in double quotes to search exactly (example: <code>"in love"</code>).</li>
+											<li>Enable "Search all translations" in the search bar to find verses unique to other translations.</li>
+											<li>Settings sync across devices when signed in.</li>
+										</ul>
+									</div>
+								</div>
+							</div>
+
+							<div class="sub-accordion-section" data-section="shortcuts">
+								<button class="sub-accordion-header" data-target="shortcuts" aria-expanded="false">
+									<span>Keyboard Shortcuts</span>
+									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+										stroke="currentColor" stroke-width="2">
+										<polyline points="6 9 12 15 18 9"></polyline>
+									</svg>
+								</button>
+								<div class="sub-accordion-panel" data-panel="shortcuts">
+									<div class="settings-group">
+										<h4>Navigation</h4>
+										<div class="shortcut-list">
+											<div class="shortcut-item">
+												<kbd>H</kbd> or <kbd>&#x2190;</kbd>
+												<span>Previous chapter</span>
+											</div>
+											<div class="shortcut-item">
+												<kbd>L</kbd> or <kbd>&#x2192;</kbd>
+												<span>Next chapter</span>
+											</div>
+											<div class="shortcut-item">
+												<kbd>K</kbd> or <kbd>&#x2191;</kbd>
+												<span>Previous verse</span>
+											</div>
+											<div class="shortcut-item">
+												<kbd>J</kbd> or <kbd>&#x2193;</kbd>
+												<span>Next verse</span>
+											</div>
+										</div>
+									</div>
+									<div class="settings-group">
+										<h4>General</h4>
+										<div class="shortcut-list">
+											<div class="shortcut-item">
+												<kbd>Ctrl</kbd> + <kbd>K</kbd> or <kbd>/</kbd>
+												<span>Toggle search</span>
+											</div>
+											<div class="shortcut-item">
+												<kbd>T</kbd>
+												<span>Open translation picker</span>
+											</div>
+											<div class="shortcut-item">
+												<kbd>N</kbd>
+												<span>Toggle verse numbers</span>
+											</div>
+											<div class="shortcut-item">
+												<kbd>V</kbd>
+												<span>Toggle verse-by-verse mode</span>
+											</div>
+											<div class="shortcut-item">
+												<kbd>S</kbd>
+												<span>Toggle section headings</span>
+											</div>
+											<div class="shortcut-item">
+												<kbd>Esc</kbd>
+												<span>Close modal / search</span>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+	<div id="loginModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle" aria-hidden="true" inert>
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2 id="loginModalTitle" tabindex="-1">Sign In</h2>
+				<button class="close-btn close-control" id="closeLoginModal" aria-label="Close" type="button">
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M7 7L17 17M17 7L7 17"></path>
+</svg>
+</button>
+			</div>
+			<div class="modal-body">
+				<form id="loginForm" class="auth-form">
+					<div class="setting-item">
+						<label for="loginEmail">Email</label>
+						<input type="email" id="loginEmail" class="input-field" placeholder="your@email.com"
+							autocomplete="email" required />
+					</div>
+					<div class="setting-item">
+						<label for="loginPassword">Password</label>
+						<input type="password" id="loginPassword" class="input-field" placeholder="Password"
+							autocomplete="current-password" required />
+					</div>
+					<button type="submit" class="primary-btn auth-form-submit">Sign In</button>
+				</form>
+				<p class="auth-switch">
+					<a href="#" id="forgotPasswordLink">Forgot password?</a>
+				</p>
+				<p class="auth-switch">
+					Don't have an account?
+					<a href="#" id="showSignupLink">Sign up</a>
+				</p>
+			</div>
+		</div>
+	</div>
+
+	<div id="signupModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="signupModalTitle" aria-hidden="true" inert>
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2 id="signupModalTitle" tabindex="-1">Create Account</h2>
+				<button class="close-btn close-control" id="closeSignupModal" aria-label="Close" type="button">
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M7 7L17 17M17 7L7 17"></path>
+</svg>
+</button>
+			</div>
+			<div class="modal-body">
+				<form id="signupForm" class="auth-form">
+					<div class="setting-item">
+						<label for="signupEmail">Email</label>
+						<input type="email" id="signupEmail" class="input-field" placeholder="your@email.com"
+							autocomplete="email" required />
+					</div>
+					<div class="setting-item">
+						<label for="signupPassword">Password</label>
+						<input type="password" id="signupPassword" class="input-field"
+							placeholder="At least 6 characters" autocomplete="new-password" required />
+					</div>
+					<button type="submit" id="signupSubmit" class="primary-btn auth-form-submit">Create Account</button>
+				</form>
+				<p class="auth-switch">
+					Already have an account?
+					<a href="#" id="showLoginLink">Sign in</a>
+				</p>
+			</div>
+		</div>
+	</div>
+
+	<div id="userMenuModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="userMenuModalTitle" aria-hidden="true" inert>
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2 id="userMenuModalTitle" tabindex="-1">Account</h2>
+				<button class="close-btn close-control" id="closeUserMenuModal" aria-label="Close" type="button">
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M7 7L17 17M17 7L7 17"></path>
+</svg>
+</button>
+			</div>
+			<div class="modal-body">
+				<div class="user-info-box">
+					<p>
+						<strong>Email</strong>
+						<span id="userEmail"></span>
+					</p>
+					<p>
+						<strong>Theme</strong>
+						<span id="userTheme"></span>
+					</p>
+				</div>
+				<div class="account-actions">
+					<button id="changeEmailBtn" class="secondary-btn">Change Email</button>
+					<button id="changePasswordBtn" class="secondary-btn">Change Password</button>
+				</div>
+				<button id="logoutBtn" class="primary-btn account-signout-btn">Sign Out</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="referencesModal" class="modal modal--bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="referencesModalTitle" aria-hidden="true" inert>
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2 id="referencesModalTitle" tabindex="-1">References</h2>
+				<button class="close-btn close-control" id="closeReferencesModal" aria-label="Close" type="button">
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M7 7L17 17M17 7L7 17"></path>
+</svg>
+</button>
+			</div>
+			<div class="modal-body"></div>
+		</div>
+	</div>
+
+	<div id="deuterocanonInfoModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="deuterocanonInfoModalTitle" aria-hidden="true" inert>
+		<div class="modal-content modal-content--sm">
+			<div class="modal-header">
+				<h2 id="deuterocanonInfoModalTitle" tabindex="-1">About the Apocrypha</h2>
+				<button class="close-btn close-control" id="closeDeuterocanonInfoModal" aria-label="Close" type="button">
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M7 7L17 17M17 7L7 17"></path>
+</svg>
+</button>
+			</div>
+			<div class="modal-body">
+				<div class="deuterocanon-info-content">
+					<h4>What is the Deuterocanon?</h4>
+					<p>The Deuterocanon, also called the Apocrypha, is a set of Jewish writings from roughly 400&#x2013;50 BC, the period between the Old and New Testaments. It includes books such as Tobit, Judith, 1 &amp; 2 Maccabees, Sirach, and Wisdom of Solomon.</p>
+
+					<h4>Who accepts them as Scripture?</h4>
+					<p>Catholic and Orthodox Christians consider these books canonical. Most Protestants do not, following the Hebrew Bible&#x2019;s narrower canon. The books were never cited as Scripture by Jesus or the Apostles, and some passages are difficult to reconcile with the rest of Scripture, for example prayers for the dead in 2 Maccabees 12.</p>
+
+					<h4>What did the Protestant Reformers say?</h4>
+					<blockquote>
+						<strong>Martin Luther (1534):</strong> &#x201C;Apocrypha, that is, books not considered equal to Holy Scripture, but which are still useful and good to read.&#x201D;
+					</blockquote>
+					<blockquote>
+						<strong>Thirty-Nine Articles (1563):</strong> &#x201C;The other books the Church doth read for example of life and instruction of manners; but yet doth it not apply them to establish any doctrine.&#x201D;
+					</blockquote>
+					<blockquote>
+						<strong>Belgic Confession (1561):</strong> &#x201C;The church may certainly read these books and learn from them as far as they agree with the canonical books.&#x201D;
+					</blockquote>
+
+					<h4>Why are they here?</h4>
+					<p>They are included for study and historical interest. These writings shaped Jewish thought in the centuries before Christ and appear in translations used by billions of Christians worldwide.</p>
 				</div>
 			</div>
 		</div>
 	</div>
 
-	<div class="modal" id="referencesModal" role="dialog" aria-modal="true" aria-labelledby="referencesModalTitle" tabindex="-1">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h2 id="referencesModalTitle">References</h2>
-				<button id="closeReferencesModal" class="close-btn close-control" aria-label="Close references" title="Close references" type="button">
-<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M7 7L17 17M17 7L7 17"></path>
-</svg>
-</button>
-			</div>
-			<div class="modal-body"></div>
-		</div>
-	</div>
-
-	<div class="modal" id="deuterocanonInfoModal" role="dialog" aria-modal="true" aria-labelledby="deuterocanonInfoModalTitle" tabindex="-1">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h2 id="deuterocanonInfoModalTitle">Deuterocanon</h2>
-				<button id="closeDeuterocanonInfoModal" class="close-btn close-control" aria-label="Close deuterocanon information" title="Close deuterocanon information" type="button">
-<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M7 7L17 17M17 7L7 17"></path>
-</svg>
-</button>
-			</div>
-			<div class="modal-body"></div>
-		</div>
-	</div>
-
-	<div class="modal" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle" tabindex="-1">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h2 id="loginModalTitle">Log In</h2>
-				<button id="closeLoginModal" class="close-btn close-control" aria-label="Close login" title="Close login" type="button">
-<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M7 7L17 17M17 7L7 17"></path>
-</svg>
-</button>
-			</div>
-			<div class="modal-body">
-				<form id="loginForm">
-					<label for="loginEmail">Email</label>
-					<input id="loginEmail" class="input-field" type="email" autocomplete="email" required />
-					<label for="loginPassword">Password</label>
-					<input id="loginPassword" class="input-field" type="password" autocomplete="current-password" required />
-					<button id="loginSubmit" type="submit">Log In</button>
-				</form>
-				<button id="showSignup" type="button">Create account</button>
-			</div>
-		</div>
-	</div>
-
-	<div class="modal" id="signupModal" role="dialog" aria-modal="true" aria-labelledby="signupModalTitle" tabindex="-1">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h2 id="signupModalTitle">Sign Up</h2>
-				<button id="closeSignupModal" class="close-btn close-control" aria-label="Close signup" title="Close signup" type="button">
-<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M7 7L17 17M17 7L7 17"></path>
-</svg>
-</button>
-			</div>
-			<div class="modal-body">
-				<form id="signupForm">
-					<label for="signupEmail">Email</label>
-					<input id="signupEmail" class="input-field" type="email" autocomplete="email" required />
-					<label for="signupPassword">Password</label>
-					<input id="signupPassword" class="input-field" type="password" autocomplete="new-password" required />
-					<button id="signupSubmit" type="submit">Sign Up</button>
-				</form>
-			</div>
-		</div>
-	</div>
-
-	<div class="modal" id="userMenuModal" role="dialog" aria-modal="true" aria-labelledby="userMenuModalTitle" tabindex="-1">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h2 id="userMenuModalTitle">Account</h2>
-				<button id="closeUserMenuModal" class="close-btn close-control" aria-label="Close account menu" title="Close account menu" type="button">
-<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M7 7L17 17M17 7L7 17"></path>
-</svg>
-</button>
-			</div>
-			<div class="modal-body"></div>
-		</div>
-	</div>
+	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 	<script type="module" src="app.js"></script>
+	<script>
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker.register('./sw.js');
+		}
+		// Hide raw build placeholder when pipeline substitution hasn't run.
+		document.addEventListener('DOMContentLoaded', function() {
+			var b = document.getElementById('build-info');
+			if (b && b.textContent.trim().startsWith('__')) b.style.visibility = 'hidden';
+		});
+	</script>
 </body>
-
 </html>
