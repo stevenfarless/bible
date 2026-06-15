@@ -95,6 +95,8 @@ jobs:
               raise SystemExit('Unmigrated swipe haptic call remains')
           path.write_text(text, encoding='utf-8')
 
+          replace_once('app.js', "import { attachEventListeners } from './events.js';\n", "import { attachEventListeners } from './events.js';\nimport { hapticFirm } from './haptics.js';\n")
+          replace_once('app.js', "            navigator.vibrate?.(30);\n            await hardRefreshApp();\n", "            hapticFirm(window._bibleApp);\n            await hardRefreshApp();\n")
           replace_once('sw.js', "  './settings.js',\n", "  './settings.js',\n  './haptics.js',\n")
           replace_once('app.js', "        'showChapterArrows',\n", "        'showChapterArrows', 'hapticsEnabled',\n")
           PY
@@ -126,8 +128,8 @@ jobs:
               'settings.js': ['hapticsEnabled:      true,', "readBool('hapticsEnabled'", "hapticsEnabled:    'hapticsToggle'"],
               'events.js': ["import { hapticFirm } from './haptics.js';", "app.toggleSetting('hapticsEnabled')", 'hapticFirm(app);'],
               'swipe.js': ["import { hapticLight, hapticFirm } from './haptics.js';", 'hapticLight(app);', 'hapticFirm(app);'],
+              'app.js': ["import { hapticFirm } from './haptics.js';", 'hapticFirm(window._bibleApp);', "'hapticsEnabled'"],
               'sw.js': ["'./haptics.js',"],
-              'app.js': ["'hapticsEnabled'"],
           }
 
           for path_name, snippets in required.items():
@@ -168,9 +170,9 @@ jobs:
           git commit -F - <<'EOF'
           feat(haptics): add configurable Android feedback
 
-          Add shared light and firm vibration helpers, migrate swipe and verse
-          selection feedback, and add a persisted haptics toggle that syncs
-          through the existing settings path.
+          Add shared light and firm vibration helpers, migrate swipe, verse
+          selection, and hard-refresh feedback, and add a persisted haptics
+          toggle that syncs through the existing settings path.
 
           Hide the setting where the Vibration API is unavailable and precache
           the haptics module for offline use.
