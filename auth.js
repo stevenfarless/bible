@@ -99,12 +99,6 @@ export function saveReadingPosition(app) {
     }
 }
 
-export function checkApiKey(app) {
-    setTimeout(() => {
-        app.showToast('Sign in to sync your reading position across devices.');
-    }, 500);
-}
-
 export function handleUserButtonClick(app) {
     if (app.currentUser) {
         document.getElementById('userEmail').textContent = app.currentUser.email;

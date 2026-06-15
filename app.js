@@ -31,8 +31,12 @@ import {
 } from './search.js';
 import {
     loadSavedPositionIfChanged, loadSavedReadingPosition, saveReadingPosition,
-    checkApiKey, handleUserButtonClick, handleLogin, handleSignup, handleLogout, loadUserData,
+    handleUserButtonClick, handleLogin, handleSignup, handleLogout, loadUserData,
 } from './auth.js';
+import {
+    maybeShowSyncPrompt, hideSyncPrompt, dismissSyncPrompt,
+    completeSyncPrompt, openSyncPromptLogin,
+} from './sync-prompt.js';
 import {
     openModal, closeModal,
     openBookModal, populateBookModal,
@@ -49,6 +53,7 @@ import {
 } from './settings.js';
 import { handleKeyboardShortcuts } from './keyboard.js';
 import { attachEventListeners } from './events.js';
+import { hapticFirm } from './haptics.js';
 
 const TRANSLATION_ALIASES = { NRSVue: 'NRSVUE' };
 function normalizeTranslation(t) { return TRANSLATION_ALIASES[t] || t; }
@@ -176,7 +181,7 @@ function buildDebugReport(app) {
         'fontSize', 'readingFont', 'verseSelectionGesture',
         'showVerseNumbers', 'coloredVerseNumbers', 'showHeadings',
         'showFootnotes', 'showCrossReferences', 'verseByVerse',
-        'showChapterArrows',
+        'showChapterArrows', 'hapticsEnabled',
     ];
     const ls = {};
     for (const k of LS_KEYS) {
@@ -565,7 +570,7 @@ function initLogoLongPressRefresh() {
         cancel();
         holdTimer = setTimeout(async () => {
             activated = true;
-            navigator.vibrate?.(30);
+            hapticFirm(window._bibleApp);
             await hardRefreshApp();
         }, HOLD_MS);
     }, { passive: true });
@@ -963,14 +968,14 @@ class BibleApp {
             }
 
             if (this.auth && this.database) {
-                let _authResolved = false;
+                await this.auth.ready;
                 this.auth.onAuthStateChanged(async (user) => {
                     this._dbg.t_auth_state = ms();
                     if (user) {
-                        _authResolved = true;
                         this._dbg.authStateUser = user.email;
                         this._dbgEvent(`auth: signed in as ${user.email}`);
                         this.currentUser = user;
+                        this.completeSyncPrompt();
                         await withTimeout(this.loadUserData(), 5000);
                         this._dbg.t_user_data_loaded = ms();
                         this.applySettings();
@@ -987,9 +992,7 @@ class BibleApp {
                         this._dbg.authStateUser = 'signed out';
                         this._dbgEvent('auth: signed out');
                         this.currentUser = null;
-                        // Only prompt sign-in on a real sign-out, not the startup
-                        // null event that fires before Firebase rehydrates IndexedDB.
-                        if (_authResolved) this.checkApiKey();
+                        this.maybeShowSyncPrompt();
                     }
                 });
             }
@@ -1239,7 +1242,11 @@ class BibleApp {
 
     handleKeyboardShortcuts(e)   { handleKeyboardShortcuts(this, e); }
 
-    checkApiKey() { checkApiKey(this); }
+    maybeShowSyncPrompt() { return maybeShowSyncPrompt(this); }
+    hideSyncPrompt()      { return hideSyncPrompt(this); }
+    dismissSyncPrompt()   { return dismissSyncPrompt(this); }
+    completeSyncPrompt()  { return completeSyncPrompt(this); }
+    openSyncPromptLogin() { return openSyncPromptLogin(this); }
 
     copyPassage() {
         _logUserAction('copyPassage');

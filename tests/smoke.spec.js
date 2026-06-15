@@ -4,6 +4,7 @@ import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ page }) => {
         await page.addInitScript(() => {
                 self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+                try { localStorage.setItem('syncPromptDismissedV1', '1'); } catch (_) {}
         });
 });
 
@@ -457,4 +458,61 @@ test('auth: signup with short password shows validation toast', async ({ page })
         await page.locator('#signupSubmit').click();
 
         await expect(page.locator('#toast')).toHaveClass(/show/);
+});
+
+test('sync prompt: responds to desktop and mobile layouts', async ({ page }) => {
+        await page.setViewportSize({ width: 1280, height: 900 });
+        await page.goto('/');
+        await waitForApp(page);
+
+        await page.evaluate(() => {
+                localStorage.removeItem('syncPromptDismissedV1');
+                document.getElementById('syncPrompt').hidden = false;
+        });
+
+        const prompt = page.locator('#syncPrompt');
+        await expect(prompt).toBeVisible();
+
+        const desktopLayout = await page.evaluate(() => {
+                const account = document.getElementById('userBtn').getBoundingClientRect();
+                const panel = document.getElementById('syncPrompt').getBoundingClientRect();
+                return {
+                        accountBottom: account.bottom,
+                        accountRight: account.right,
+                        panelTop: panel.top,
+                        panelRight: panel.right,
+                };
+        });
+
+        expect(desktopLayout.panelTop).toBeGreaterThanOrEqual(desktopLayout.accountBottom);
+        expect(Math.abs(desktopLayout.panelRight - desktopLayout.accountRight)).toBeLessThanOrEqual(2);
+
+        await page.setViewportSize({ width: 390, height: 844 });
+        await expect.poll(() => page.evaluate(() => {
+                const panel = document.getElementById('syncPrompt').getBoundingClientRect();
+                return Math.round(window.innerHeight - panel.bottom);
+        })).toBe(0);
+
+        await page.locator('#syncPromptSignIn').click();
+        await expect(prompt).toBeHidden();
+        await expect(page.locator('#loginModal')).toBeVisible();
+});
+
+test('sync prompt: dismissal persists locally', async ({ page }) => {
+        await page.setViewportSize({ width: 390, height: 844 });
+        await page.goto('/');
+        await waitForApp(page);
+
+        await page.evaluate(() => {
+                localStorage.removeItem('syncPromptDismissedV1');
+                document.getElementById('syncPrompt').hidden = false;
+        });
+
+        const prompt = page.locator('#syncPrompt');
+        await expect(prompt).toBeVisible();
+        await page.locator('#syncPromptDismiss').click();
+        await expect(prompt).toBeHidden();
+        await expect.poll(() => page.evaluate(
+                () => localStorage.getItem('syncPromptDismissedV1')
+        )).toBe('1');
 });

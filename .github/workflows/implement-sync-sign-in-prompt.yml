@@ -1,0 +1,94 @@
+name: "! Implement Sync Sign-In Prompt"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: implement-sync-sign-in-prompt-exp
+  cancel-in-progress: false
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install --package-lock=false
+
+      - name: Apply and recheck implementation
+        run: |
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+
+          path = Path('.github/scripts/implement-sync-sign-in-prompt.py')
+          ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
+          PY
+          python3 .github/scripts/implement-sync-sign-in-prompt.py
+          python3 .github/scripts/implement-sync-sign-in-prompt.py
+
+      - name: Build Firebase bundle
+        run: |
+          npm install --no-save --package-lock=false esbuild @playwright/test
+          npx esbuild config/firebase-config.js --bundle --format=esm --platform=browser --outfile=config/firebase-config.bundle.js
+          grep -q 'authPersistenceReady' config/firebase-config.bundle.js
+          grep -q 'ready: authPersistenceReady' config/firebase-config.bundle.js
+
+      - name: Validate source
+        run: |
+          node --check sync-prompt.js
+          node --check auth.js
+          node --check app.js
+          node --check events.js
+          node --check ui.js
+          node --check config/firebase-config.js
+          node --check config/firebase-config.bundle.js
+          node --check tests/unit/sync-prompt.test.js
+          node --check tests/smoke.spec.js
+          git diff --check
+
+      - name: Verify changed files
+        run: |
+          allowed='^(sync-prompt\.js|config/firebase-config\.js|config/firebase-config\.bundle\.js|index\.html|ui\.js|app\.js|auth\.js|events\.js|css/components\.css|css/utilities\.css|sw\.js|tests/unit/sync-prompt\.test\.js|tests/smoke\.spec\.js)$'
+          unexpected="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev "$allowed" || true)"
+          test -z "$unexpected" || { echo "$unexpected"; exit 1; }
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Run Chromium smoke tests
+        env:
+          BASE_URL: http://localhost:8080
+        run: |
+          npx playwright install chromium --with-deps
+          python3 -m http.server 8080 > /tmp/lege-lux-http.log 2>&1 &
+          for i in $(seq 1 10); do curl -fsS http://localhost:8080 > /dev/null && break || sleep 1; done
+          curl -fsS http://localhost:8080 > /dev/null || { cat /tmp/lege-lux-http.log; exit 1; }
+          npx playwright test tests/smoke.spec.js --project=chromium
+
+      - name: Commit implementation
+        run: |
+          files=(sync-prompt.js config/firebase-config.js config/firebase-config.bundle.js index.html ui.js app.js auth.js events.js css/components.css css/utilities.css sw.js tests/unit/sync-prompt.test.js tests/smoke.spec.js)
+          git diff --check
+          git diff --stat
+          test -n "$(git status --porcelain -- "${files[@]}")" || { echo 'Already implemented'; exit 0; }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- "${files[@]}"
+          git commit -m 'feat(auth): add dismissible sync sign-in prompt' -m 'Replace the generic sign-in toast with a responsive, persistent prompt and add auth lifecycle, accessibility, unit, and browser coverage. Closes #265.'
+          git push origin exp

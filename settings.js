@@ -12,6 +12,7 @@ const DEFAULTS = {
     showCrossReferences: false,
     verseByVerse:        false,
     showChapterArrows:   false,
+    hapticsEnabled:      true,
     lightMode:           'system',
     colorTheme:          'vespers',
     translation:         'KJV',
@@ -74,6 +75,7 @@ export function loadLocalSettings(app) {
     app.state.showCrossReferences = readBool('showCrossReferences', DEFAULTS.showCrossReferences);
     app.state.verseByVerse        = readBool('verseByVerse',        DEFAULTS.verseByVerse);
     app.state.showChapterArrows   = readBool('showChapterArrows',   DEFAULTS.showChapterArrows);
+    app.state.hapticsEnabled      = readBool('hapticsEnabled',      DEFAULTS.hapticsEnabled);
     const _rawLightMode = (() => { try { return localStorage.getItem('lightMode'); } catch (_) { return null; } })();
     app.state.lightMode =
         _rawLightMode === 'light' || _rawLightMode === 'dark' || _rawLightMode === 'system'
@@ -146,6 +148,9 @@ export function applySettings(app) {
     if (app.coloredVerseNumbersToggle) app.coloredVerseNumbersToggle.checked = !!app.state.coloredVerseNumbers;
     if (app.headingsToggle)        app.headingsToggle.checked        = !!app.state.showHeadings;
     if (app.chapterArrowsToggle)   app.chapterArrowsToggle.checked   = !!app.state.showChapterArrows;
+    if (app.hapticsToggle)        app.hapticsToggle.checked        = !!app.state.hapticsEnabled;
+    const hapticsSetting = document.getElementById('hapticsSetting');
+    if (hapticsSetting) hapticsSetting.hidden = typeof navigator.vibrate !== 'function';
 
     syncVerseByVerseMode(app);
     if (app.verseByVerseToggle) app.verseByVerseToggle.checked = !!app.state.verseByVerse;
@@ -169,6 +174,7 @@ const TOGGLE_MAP = {
     coloredVerseNumbers: 'coloredVerseNumbersToggle',
     showHeadings:      'headingsToggle',
     showChapterArrows: 'chapterArrowsToggle',
+    hapticsEnabled:    'hapticsToggle',
 };
 
 export async function toggleSetting(app, setting) {
