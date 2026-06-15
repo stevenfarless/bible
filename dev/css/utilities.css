@@ -238,10 +238,17 @@
 
 .hidden { display: none !important; }
 
-.auth-switch a,
-.recaptcha-disclosure a {
+.auth-switch a {
     text-decoration: underline;
     text-underline-offset: 0.15em;
+}
+
+.recaptcha-notice {
+    margin: 0.75rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    text-align: center;
 }
 
 html.hide-chapter-arrows:not(:has(body[data-app-ready="true"])) #prevChapter,
@@ -255,13 +262,6 @@ html.hide-verse-numbers:not(.verse-by-verse-enabled):not(:has(body[data-app-read
 body.hide-verse-numbers:not(.verse-by-verse-mode) .passage-text .verse-num {
     display: none !important;
 }
-
-/*
-html.hide-verse-numbers.verse-by-verse-enabled:not(:has(body[data-app-ready="true"])) .passage-text .verse-num,
-body.hide-verse-numbers.verse-by-verse-mode .passage-text .verse-num {
-    visibility: hidden;
-}
-*/
 
 .passage-text .verse-num {
     font-weight: 600;
