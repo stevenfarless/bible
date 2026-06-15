@@ -61,3 +61,5 @@ jobs:
           git add index.html tests/smoke.spec.js
           git commit -m "fix: repair index syntax and smoke selectors"
           git push origin HEAD:exp
+
+# Triggered after initial workflow registration.
