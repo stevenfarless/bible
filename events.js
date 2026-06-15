@@ -13,7 +13,7 @@ const CHANGE_EMAIL_HTML = `
 <div id="changeEmailModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="changeEmailModalTitle" aria-hidden="true" inert>
                 <div class="modal-content">
                         <div class="modal-header">
-                                <h3 id="changeEmailModalTitle" tabindex="-1">Change Email</h3>
+                                <h2 id="changeEmailModalTitle" tabindex="-1">Change Email</h2>
                                 <button class="close-btn" id="closeChangeEmailModal" aria-label="Close" type="button">&times;</button>
                         </div>
                         <div class="modal-body">
@@ -37,7 +37,7 @@ const CHANGE_PASSWORD_HTML = `
 <div id="changePasswordModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="changePasswordModalTitle" aria-hidden="true" inert>
                 <div class="modal-content">
                         <div class="modal-header">
-                                <h3 id="changePasswordModalTitle" tabindex="-1">Change Password</h3>
+                                <h2 id="changePasswordModalTitle" tabindex="-1">Change Password</h2>
                                 <button class="close-btn" id="closeChangePasswordModal" aria-label="Close" type="button">&times;</button>
                         </div>
                         <div class="modal-body">
@@ -283,7 +283,7 @@ export function attachEventListeners(app) {
 
         document.addEventListener('pointerdown', (event) => {
             if (app.state.selectedVerse == null) return;
-            if (event.target.closest('.selected-verse-glow, .verse-tools-tray, .verse-tools-trigger')) return;
+            if (event.composedPath().some((element) => element instanceof Element && element.matches('.selected-verse-glow, .verse-tools-tray, .verse-tools-trigger'))) return;
             clearSelectedVerse();
         });
 
