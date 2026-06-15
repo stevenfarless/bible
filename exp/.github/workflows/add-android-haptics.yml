@@ -31,7 +31,7 @@ jobs:
           def replace_once(path_name, old, new):
               path = Path(path_name)
               text = path.read_text(encoding='utf-8')
-              if new in text:
+              if new and new in text:
                   return
               if text.count(old) != 1:
                   raise SystemExit(f'Expected one replacement anchor in {path_name}')
