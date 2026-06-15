@@ -1,0 +1,1343 @@
+name: Add Contextual Haptics
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  add-contextual-haptics:
+    name: Add contextual haptic feedback
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Apply contextual haptics
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_exact(path_name, old, new):
+              path = Path(path_name)
+              text = path.read_text(encoding="utf-8")
+              old_count = text.count(old)
+              new_count = text.count(new)
+
+              if old_count == 1:
+                  path.write_text(text.replace(old, new, 1), encoding="utf-8")
+                  print(f"Updated: {path_name}")
+                  return
+
+              if old_count == 0 and new_count == 1:
+                  print(f"Already updated: {path_name}")
+                  return
+
+              raise SystemExit(
+                  f"Unexpected replacement state in {path_name}: "
+                  f"old={old_count}, new={new_count}"
+              )
+
+          def replace_count(path_name, old, new, expected):
+              path = Path(path_name)
+              text = path.read_text(encoding="utf-8")
+              old_count = text.count(old)
+              new_count = text.count(new)
+
+              if old_count == expected:
+                  path.write_text(text.replace(old, new), encoding="utf-8")
+                  print(f"Updated {expected} occurrences: {path_name}")
+                  return
+
+              if old_count == 0 and new_count == expected:
+                  print(f"Already updated: {path_name}")
+                  return
+
+              raise SystemExit(
+                  f"Unexpected replacement state in {path_name}: "
+                  f"old={old_count}, new={new_count}, expected={expected}"
+              )
+
+          def write_new(path_name, content):
+              path = Path(path_name)
+              normalized = content.rstrip() + "\n"
+
+              if path.exists():
+                  current = path.read_text(encoding="utf-8")
+                  if current == normalized:
+                      print(f"Already present: {path_name}")
+                      return
+                  raise SystemExit(f"Refusing to overwrite unexpected file: {path_name}")
+
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_text(normalized, encoding="utf-8")
+              print(f"Created: {path_name}")
+
+          write_new(
+              "haptics.js",
+              """const LIGHT_CLICK_MS = 10;
+          const FIRM_CLICK_MS = 24;
+
+          function vibrate(app, duration) {
+              if (app?.state?.hapticsEnabled !== true) return false;
+              if (typeof navigator.vibrate !== 'function') return false;
+
+              if (
+                  navigator.userActivation &&
+                  !navigator.userActivation.hasBeenActive
+              ) {
+                  return false;
+              }
+
+              try {
+                  return navigator.vibrate(duration);
+              } catch (_) {
+                  return false;
+              }
+          }
+
+          export function hapticLight(app) {
+              return vibrate(app, LIGHT_CLICK_MS);
+          }
+
+          export function hapticFirm(app) {
+              return vibrate(app, FIRM_CLICK_MS);
+          }""",
+          )
+
+          write_new(
+              "tests/unit/haptics.test.js",
+              """import {
+              afterEach,
+              describe,
+              expect,
+              it,
+              vi,
+          } from 'vitest';
+
+          import {
+              hapticLight,
+              hapticFirm,
+          } from '../../haptics.js';
+
+          afterEach(() => {
+              vi.unstubAllGlobals();
+          });
+
+          function createApp(enabled = true) {
+              return {
+                  state: {
+                      hapticsEnabled: enabled,
+                  },
+              };
+          }
+
+          function installNavigator(vibrate, hasBeenActive = true) {
+              vi.stubGlobal('navigator', {
+                  vibrate,
+                  userActivation: {
+                      hasBeenActive,
+                  },
+              });
+          }
+
+          describe('haptics', () => {
+              it('uses 10ms for light feedback', () => {
+                  const vibrate = vi.fn(() => true);
+                  installNavigator(vibrate);
+
+                  expect(hapticLight(createApp())).toBe(true);
+                  expect(vibrate).toHaveBeenCalledWith(10);
+              });
+
+              it('uses 24ms for firm feedback', () => {
+                  const vibrate = vi.fn(() => true);
+                  installNavigator(vibrate);
+
+                  expect(hapticFirm(createApp())).toBe(true);
+                  expect(vibrate).toHaveBeenCalledWith(24);
+              });
+
+              it('does nothing when disabled', () => {
+                  const vibrate = vi.fn(() => true);
+                  installNavigator(vibrate);
+
+                  expect(hapticLight(createApp(false))).toBe(false);
+                  expect(vibrate).not.toHaveBeenCalled();
+              });
+
+              it('does nothing before user activation', () => {
+                  const vibrate = vi.fn(() => true);
+                  installNavigator(vibrate, false);
+
+                  expect(hapticFirm(createApp())).toBe(false);
+                  expect(vibrate).not.toHaveBeenCalled();
+              });
+
+              it('does nothing when vibration is unsupported', () => {
+                  installNavigator(undefined);
+
+                  expect(hapticLight(createApp())).toBe(false);
+              });
+
+              it('fails silently when vibration throws', () => {
+                  installNavigator(() => {
+                      throw new Error('blocked');
+                  });
+
+                  expect(hapticFirm(createApp())).toBe(false);
+              });
+          });""",
+          )
+
+          replace_exact(
+              "index.html",
+              """\t<link rel=\"modulepreload\" href=\"settings.js\" />
+          \t<link rel=\"modulepreload\" href=\"keyboard.js\" />""",
+              """\t<link rel=\"modulepreload\" href=\"settings.js\" />
+          \t<link rel=\"modulepreload\" href=\"haptics.js\" />
+          \t<link rel=\"modulepreload\" href=\"keyboard.js\" />""",
+          )
+
+          replace_exact(
+              "index.html",
+              """\t\t\t\t\t\t\t<div class=\"setting-item\">
+          \t\t\t\t\t\t\t\t<label class=\"checkbox-label\">
+          \t\t\t\t\t\t\t\t\t<input type=\"checkbox\" id=\"chapterArrowsToggle\" />
+          \t\t\t\t\t\t\t\t\t<span>Show chapter arrows</span>
+          \t\t\t\t\t\t\t\t</label>
+          \t\t\t\t\t\t\t</div>""",
+              """\t\t\t\t\t\t\t<div class=\"setting-item\" id=\"hapticsSetting\">
+          \t\t\t\t\t\t\t\t<label class=\"checkbox-label\">
+          \t\t\t\t\t\t\t\t\t<input type=\"checkbox\" id=\"hapticsToggle\" checked />
+          \t\t\t\t\t\t\t\t\t<span>Haptic feedback</span>
+          \t\t\t\t\t\t\t\t</label>
+          \t\t\t\t\t\t\t</div>
+          \t\t\t\t\t\t\t<div class=\"setting-item\">
+          \t\t\t\t\t\t\t\t<label class=\"checkbox-label\">
+          \t\t\t\t\t\t\t\t\t<input type=\"checkbox\" id=\"chapterArrowsToggle\" />
+          \t\t\t\t\t\t\t\t\t<span>Show chapter arrows</span>
+          \t\t\t\t\t\t\t\t</label>
+          \t\t\t\t\t\t\t</div>""",
+          )
+
+          replace_exact(
+              "sw.js",
+              """  './settings.js',
+            './keyboard.js',""",
+              """  './settings.js',
+            './haptics.js',
+            './keyboard.js',""",
+          )
+
+          replace_exact(
+              "ui.js",
+              """\t'verseSelectionGestureSelect',
+          \t'fontSizeSlider', 'fontSizeValue',""",
+              """\t'verseSelectionGestureSelect', 'hapticsToggle',
+          \t'fontSizeSlider', 'fontSizeValue',""",
+          )
+
+          replace_exact(
+              "ui.js",
+              """\tapp.verseSelectionGestureSelect = document.getElementById('verseSelectionGestureSelect');
+          \tapp.fontSizeSlider = document.getElementById('fontSizeSlider');""",
+              """\tapp.verseSelectionGestureSelect = document.getElementById('verseSelectionGestureSelect');
+          \tapp.hapticsToggle = document.getElementById('hapticsToggle');
+          \tapp.fontSizeSlider = document.getElementById('fontSizeSlider');""",
+          )
+
+          replace_exact(
+              "reading-state.js",
+              """// Responsibility: navigation, verse selection, highlight, reading position.
+
+          export function initializeState() {""",
+              """// Responsibility: navigation, verse selection, highlight, reading position.
+
+          import { hapticLight } from './haptics.js';
+
+          export function initializeState() {""",
+          )
+
+          replace_exact(
+              "reading-state.js",
+              """        verseByVerse: false,
+                  colorTheme: 'vespers',""",
+              """        verseByVerse: false,
+                  hapticsEnabled: true,
+                  colorTheme: 'vespers',""",
+          )
+
+          replace_exact(
+              "reading-state.js",
+              """export function navigateChapter(app, direction) {
+              const books = app.getAllBooks();
+              const currentIndex = books.indexOf(app.state.currentBook);
+
+              // Guard: if currentBook is not in the canonical list, bail out rather than
+              // silently jumping to Genesis 1 (books[-1 + 1] = books[0]).
+              if (currentIndex === -1) {
+                  console.warn(`navigateChapter: \"${app.state.currentBook}\" not found in book list.`);
+                  return;
+              }
+
+              let newChapter = app.state.currentChapter + direction;
+              let newBook = app.state.currentBook;
+
+              const chapterCount = app.getChapterCount(app.state.currentBook);
+
+              if (newChapter < 1) {
+                  if (currentIndex > 0) {
+                      newBook = books[currentIndex - 1];
+                      newChapter = app.getChapterCount(newBook);
+                  } else {
+                      return;
+                  }
+              } else if (newChapter > chapterCount) {
+                  if (currentIndex < books.length - 1) {
+                      newBook = books[currentIndex + 1];
+                      newChapter = 1;
+                  } else {
+                      return;
+                  }
+              }
+
+              app.state.selectedVerse = null;
+              app.loadPassage(newBook, newChapter);
+          }""",
+              """export function navigateChapter(app, direction) {
+              const books = app.getAllBooks();
+              const currentIndex = books.indexOf(app.state.currentBook);
+
+              // Guard: if currentBook is not in the canonical list, bail out rather than
+              // silently jumping to Genesis 1 (books[-1 + 1] = books[0]).
+              if (currentIndex === -1) {
+                  console.warn(`navigateChapter: \"${app.state.currentBook}\" not found in book list.`);
+                  return false;
+              }
+
+              let newChapter = app.state.currentChapter + direction;
+              let newBook = app.state.currentBook;
+
+              const chapterCount = app.getChapterCount(app.state.currentBook);
+
+              if (newChapter < 1) {
+                  if (currentIndex > 0) {
+                      newBook = books[currentIndex - 1];
+                      newChapter = app.getChapterCount(newBook);
+                  } else {
+                      return false;
+                  }
+              } else if (newChapter > chapterCount) {
+                  if (currentIndex < books.length - 1) {
+                      newBook = books[currentIndex + 1];
+                      newChapter = 1;
+                  } else {
+                      return false;
+                  }
+              }
+
+              app.state.selectedVerse = null;
+              app.loadPassage(newBook, newChapter);
+              return true;
+          }""",
+          )
+
+          replace_exact(
+              "reading-state.js",
+              """    trigger.addEventListener('click', () => toggleVerseTray(wrapper, trigger, tray));""",
+              """    trigger.addEventListener('click', (event) => {
+                  const isOpen = toggleVerseTray(wrapper, trigger, tray);
+                  if (isOpen && event.detail > 0) hapticLight(app);
+              });""",
+          )
+
+          replace_exact(
+              "reading-state.js",
+              """export function toggleVerseTray(wrapperOrApp, triggerArg, trayArg) {
+              let wrapper;
+              let trigger;
+              let tray;
+
+              if (wrapperOrApp && wrapperOrApp.passageText) {
+                  wrapper = wrapperOrApp.passageText.querySelector('[data-verse-glow]');
+                  if (!wrapper) return;
+
+                  trigger = wrapper.querySelector('.verse-tools-trigger');
+                  tray = wrapper.querySelector('.verse-tools-tray');
+              } else {
+                  wrapper = wrapperOrApp;
+                  trigger = triggerArg;
+                  tray = trayArg;
+              }
+
+              if (!trigger || !tray) return;
+
+              const isOpen = tray.classList.toggle('verse-tools-tray--open');
+              trigger.classList.toggle('verse-tools-trigger--open', isOpen);
+              trigger.setAttribute('aria-expanded', String(isOpen));
+              tray.setAttribute('aria-hidden', String(!isOpen));
+          }""",
+              """export function toggleVerseTray(wrapperOrApp, triggerArg, trayArg) {
+              let wrapper;
+              let trigger;
+              let tray;
+
+              if (wrapperOrApp && wrapperOrApp.passageText) {
+                  wrapper = wrapperOrApp.passageText.querySelector('[data-verse-glow]');
+                  if (!wrapper) return false;
+
+                  trigger = wrapper.querySelector('.verse-tools-trigger');
+                  tray = wrapper.querySelector('.verse-tools-tray');
+              } else {
+                  wrapper = wrapperOrApp;
+                  trigger = triggerArg;
+                  tray = trayArg;
+              }
+
+              if (!trigger || !tray) return false;
+
+              const isOpen = tray.classList.toggle('verse-tools-tray--open');
+              trigger.classList.toggle('verse-tools-trigger--open', isOpen);
+              trigger.setAttribute('aria-expanded', String(isOpen));
+              tray.setAttribute('aria-hidden', String(!isOpen));
+              return isOpen;
+          }""",
+          )
+
+          replace_exact(
+              "settings.js",
+              """    showChapterArrows:   false,
+              lightMode:           'system',""",
+              """    showChapterArrows:   false,
+              hapticsEnabled:      true,
+              lightMode:           'system',""",
+          )
+
+          replace_exact(
+              "settings.js",
+              """    app.state.showChapterArrows   = readBool('showChapterArrows',   DEFAULTS.showChapterArrows);
+              const _rawLightMode""",
+              """    app.state.showChapterArrows   = readBool('showChapterArrows',   DEFAULTS.showChapterArrows);
+              app.state.hapticsEnabled      = readBool('hapticsEnabled',      DEFAULTS.hapticsEnabled);
+              const _rawLightMode""",
+          )
+
+          replace_exact(
+              "settings.js",
+              """    if (app.chapterArrowsToggle)   app.chapterArrowsToggle.checked   = !!app.state.showChapterArrows;
+
+              syncVerseByVerseMode(app);""",
+              """    if (app.chapterArrowsToggle)   app.chapterArrowsToggle.checked   = !!app.state.showChapterArrows;
+              if (app.hapticsToggle) app.hapticsToggle.checked = !!app.state.hapticsEnabled;
+
+              const hapticsSetting = document.getElementById('hapticsSetting');
+              if (hapticsSetting) {
+                  hapticsSetting.hidden = typeof navigator.vibrate !== 'function';
+              }
+
+              syncVerseByVerseMode(app);""",
+          )
+
+          replace_exact(
+              "settings.js",
+              """    showChapterArrows: 'chapterArrowsToggle',
+          };""",
+              """    showChapterArrows: 'chapterArrowsToggle',
+              hapticsEnabled:    'hapticsToggle',
+          };""",
+          )
+
+          replace_exact(
+              "auth.js",
+              """            verseByVerse: app.state.verseByVerse,
+                      colorTheme: app.state.colorTheme,""",
+              """            verseByVerse: app.state.verseByVerse,
+                      hapticsEnabled: app.state.hapticsEnabled,
+                      colorTheme: app.state.colorTheme,""",
+          )
+
+          replace_exact(
+              "auth.js",
+              """    app.state.verseByVerse         = s.verseByVerse;
+              app.state.colorTheme           = s.colorTheme;""",
+              """    app.state.verseByVerse         = s.verseByVerse;
+              app.state.hapticsEnabled       = s.hapticsEnabled ?? true;
+              app.state.colorTheme           = s.colorTheme;""",
+          )
+
+          replace_exact(
+              "auth.js",
+              """    if (s.verseByVerse        != null) lsSet('verseByVerse',         s.verseByVerse);
+              if (s.colorTheme""",
+              """    if (s.verseByVerse        != null) lsSet('verseByVerse',         s.verseByVerse);
+              if (s.hapticsEnabled      != null) lsSet('hapticsEnabled',       s.hapticsEnabled);
+              if (s.colorTheme""",
+          )
+
+          replace_exact(
+              "app.js",
+              """import { attachEventListeners } from './events.js';
+
+          const TRANSLATION_ALIASES""",
+              """import { attachEventListeners } from './events.js';
+          import { hapticLight } from './haptics.js';
+
+          const TRANSLATION_ALIASES""",
+          )
+
+          replace_exact(
+              "app.js",
+              """        'showChapterArrows',
+              ];""",
+              """        'showChapterArrows', 'hapticsEnabled',
+              ];""",
+          )
+
+          replace_exact(
+              "app.js",
+              """        showChapterArrows:   app?.state?.showChapterArrows,
+                  scrollY:""",
+              """        showChapterArrows:   app?.state?.showChapterArrows,
+                  hapticsEnabled:      app?.state?.hapticsEnabled,
+                  scrollY:""",
+          )
+
+          replace_exact(
+              "app.js",
+              """        showChapterArrows: {
+                      state: app?.state?.showChapterArrows,
+                      checked: app?.chapterArrowsToggle?.checked,
+                      stored: ls.showChapterArrows,
+                  },
+              };""",
+              """        showChapterArrows: {
+                      state: app?.state?.showChapterArrows,
+                      checked: app?.chapterArrowsToggle?.checked,
+                      stored: ls.showChapterArrows,
+                  },
+                  hapticsEnabled: {
+                      state: app?.state?.hapticsEnabled,
+                      checked: app?.hapticsToggle?.checked,
+                      stored: ls.hapticsEnabled,
+                  },
+              };""",
+          )
+
+          replace_exact(
+              "app.js",
+              """    navigateChapter(direction) {
+                  _logUserAction(`navigateChapter: ${direction > 0 ? 'next' : 'prev'} (${this.state.currentBook} ${this.state.currentChapter})`);
+                  navChapter(this, direction);
+              }""",
+              """    navigateChapter(direction) {
+                  _logUserAction(`navigateChapter: ${direction > 0 ? 'next' : 'prev'} (${this.state.currentBook} ${this.state.currentChapter})`);
+                  return navChapter(this, direction);
+              }""",
+          )
+
+          replace_exact(
+              "app.js",
+              """    closeModal(modal)          { closeModal(this, modal); }""",
+              """    closeModal(modal, options) { closeModal(this, modal, options); }""",
+          )
+
+          replace_exact(
+              "app.js",
+              """                    _swapToCheck();
+                              this.showToast('Passage copied!');
+                              this._dbgEvent('copyPassage: clipboard success');""",
+              """                    _swapToCheck();
+                              this.showToast('Passage copied!');
+                              hapticLight(this);
+                              this._dbgEvent('copyPassage: clipboard success');""",
+          )
+
+          replace_exact(
+              "app.js",
+              """            this.showToast('Passage copied!');
+                      this._dbgEvent('copyPassage: fallback execCommand success');""",
+              """            this.showToast('Passage copied!');
+                      hapticLight(this);
+                      this._dbgEvent('copyPassage: fallback execCommand success');""",
+          )
+
+          replace_exact(
+              "events.js",
+              """import { handleChangeEmail, handleChangePassword, handleForgotPassword } from './auth.js';""",
+              """import { handleChangeEmail, handleChangePassword, handleForgotPassword } from './auth.js';
+          import { hapticLight, hapticFirm } from './haptics.js';""",
+          )
+
+          replace_exact(
+              "events.js",
+              """    app.searchToggleBtn?.addEventListener('click', () => app.toggleSearch());
+              app.closeSearchBtn?.addEventListener('click',  () => app.closeSearch());""",
+              """    app.searchToggleBtn?.addEventListener('click', () => app.toggleSearch());
+              app.closeSearchBtn?.addEventListener('click', (event) => {
+                  app.closeSearch();
+                  if (event.detail > 0) hapticLight(app);
+              });""",
+          )
+
+          replace_exact(
+              "events.js",
+              """    document.getElementById('megasearchToggle')?.addEventListener('change', (e) => {
+                  const query = app.searchLastQuery || '';
+                  if (e.target.checked) {
+                      if (query.trim().length >= 3 && app.currentSearchResults?.length > 0) {
+                          runMegasearch(app, query);
+                      }
+                  } else if (query.trim().length > 0) {
+                      performKeywordSearch(app, query);
+                  }
+              });""",
+              """    document.getElementById('megasearchToggle')?.addEventListener('change', (e) => {
+                  const query = app.searchLastQuery || '';
+                  if (e.target.checked) {
+                      if (query.trim().length >= 3 && app.currentSearchResults?.length > 0) {
+                          runMegasearch(app, query);
+                      }
+                  } else if (query.trim().length > 0) {
+                      performKeywordSearch(app, query);
+                  }
+                  hapticLight(app);
+              });""",
+          )
+
+          replace_exact(
+              "events.js",
+              """    app.prevChapterBtn?.addEventListener('click',  () => app.navigateChapter(-1));
+              app.nextChapterBtn?.addEventListener('click',  () => app.navigateChapter(1));""",
+              """    app.prevChapterBtn?.addEventListener('click', (event) => {
+                  const navigated = app.navigateChapter(-1);
+                  if (navigated && event.detail > 0) hapticLight(app);
+              });
+              app.nextChapterBtn?.addEventListener('click', (event) => {
+                  const navigated = app.navigateChapter(1);
+                  if (navigated && event.detail > 0) hapticLight(app);
+              });""",
+          )
+
+          replace_exact(
+              "events.js",
+              """        const selectVerse = (verse) => {
+                      const num = parseInt(verse?.dataset.verse, 10);
+                      if (!num) return;
+
+                      if (app.state.selectedVerse === num) {
+                          app.state.selectedVerse = null;
+                          app.applyVerseGlow();
+                      } else {
+                          app.scrollToVerse(num);
+                      }
+                  };""",
+              """        const selectVerse = (verse) => {
+                      const num = parseInt(verse?.dataset.verse, 10);
+                      if (!num) return false;
+
+                      if (app.state.selectedVerse === num) {
+                          app.state.selectedVerse = null;
+                          app.applyVerseGlow();
+                          return false;
+                      }
+
+                      app.scrollToVerse(num);
+                      return true;
+                  };""",
+          )
+
+          replace_exact(
+              "events.js",
+              """            holdTimer = setTimeout(() => {
+                          if (!pressedVerse) return;
+                          holdActivated = true;
+                          navigator.vibrate?.(20);
+                          selectVerse(pressedVerse);
+                      }, HOLD_MS);""",
+              """            holdTimer = setTimeout(() => {
+                          if (!pressedVerse) return;
+                          holdActivated = true;
+                          if (selectVerse(pressedVerse)) hapticFirm(app);
+                      }, HOLD_MS);""",
+          )
+
+          replace_exact(
+              "events.js",
+              """            if (app.state.verseSelectionGesture === 'tap') {
+                          selectVerse(verse);
+                          return;
+                      }""",
+              """            if (app.state.verseSelectionGesture === 'tap') {
+                          if (selectVerse(verse)) hapticFirm(app);
+                          return;
+                      }""",
+          )
+
+          replace_exact(
+              "events.js",
+              """    [
+                  app.bookModal, app.chapterModal, app.verseModal,
+                  app.settingsModal, app.loginModal,
+                  app.signupModal, app.userMenuModal, app.referencesModal,
+                  app.translationModal, app.deuterocanonInfoModal,
+              ].forEach((modal) => {
+                  if (!modal) return;
+                  modal.addEventListener('click', (e) => { if (e.target === modal) app.closeModal(modal); });
+              });
+
+              app.settingsBtn?.addEventListener('click',        () => app.openModal(app.settingsModal));
+              app.closeVerseModal?.addEventListener('click',    () => app.closeModal(app.verseModal));
+              app.closeBookModal?.addEventListener('click',     () => app.closeModal(app.bookModal));
+              app.closeDeuterocanonInfoModal?.addEventListener('click', () => app.closeModal(app.deuterocanonInfoModal));
+              app.closeChapterModal?.addEventListener('click',  () => app.closeModal(app.chapterModal));
+              app.closeSettingsModal?.addEventListener('click', () => app.closeModal(app.settingsModal));
+              app.closeLoginModal?.addEventListener('click', () => app.closeModal(app.loginModal));
+              app.closeSignupModal?.addEventListener('click', () => app.closeModal(app.signupModal));
+              app.closeUserMenuModal?.addEventListener('click', () => app.closeModal(app.userMenuModal));
+              app.closeReferencesModal?.addEventListener('click', () => app.closeModal(app.referencesModal));
+              app.closeTranslationModal?.addEventListener('click', () => app.closeModal(app.translationModal));""",
+              """    const closeModalFromClick = (event, modal) => {
+                  app.closeModal(modal, { haptic: event.detail > 0 });
+              };
+
+              [
+                  app.bookModal, app.chapterModal, app.verseModal,
+                  app.settingsModal, app.loginModal,
+                  app.signupModal, app.userMenuModal, app.referencesModal,
+                  app.translationModal, app.deuterocanonInfoModal,
+              ].forEach((modal) => {
+                  if (!modal) return;
+                  modal.addEventListener('click', (event) => {
+                      if (event.target === modal) closeModalFromClick(event, modal);
+                  });
+              });
+
+              app.settingsBtn?.addEventListener('click', () => app.openModal(app.settingsModal));
+              app.closeVerseModal?.addEventListener('click', (event) => closeModalFromClick(event, app.verseModal));
+              app.closeBookModal?.addEventListener('click', (event) => closeModalFromClick(event, app.bookModal));
+              app.closeDeuterocanonInfoModal?.addEventListener('click', (event) => closeModalFromClick(event, app.deuterocanonInfoModal));
+              app.closeChapterModal?.addEventListener('click', (event) => closeModalFromClick(event, app.chapterModal));
+              app.closeSettingsModal?.addEventListener('click', (event) => closeModalFromClick(event, app.settingsModal));
+              app.closeLoginModal?.addEventListener('click', (event) => closeModalFromClick(event, app.loginModal));
+              app.closeSignupModal?.addEventListener('click', (event) => closeModalFromClick(event, app.signupModal));
+              app.closeUserMenuModal?.addEventListener('click', (event) => closeModalFromClick(event, app.userMenuModal));
+              app.closeReferencesModal?.addEventListener('click', (event) => closeModalFromClick(event, app.referencesModal));
+              app.closeTranslationModal?.addEventListener('click', (event) => closeModalFromClick(event, app.translationModal));""",
+          )
+
+          replace_exact(
+              "events.js",
+              """    app.verseNumbersToggle?.addEventListener('change', () => app.toggleSetting('showVerseNumbers'));""",
+              """    app.verseNumbersToggle?.addEventListener('change', async () => {
+                  await app.toggleSetting('showVerseNumbers');
+                  hapticLight(app);
+              });""",
+          )
+
+          replace_exact(
+              "events.js",
+              """    app.coloredVerseNumbersToggle?.addEventListener('change', () => {
+                  app.toggleSetting('coloredVerseNumbers');
+              });
+
+              app.headingsToggle?.addEventListener('change', () => app.toggleSetting('showHeadings'));
+              app.footnotesToggle?.addEventListener('change', () => app.toggleSetting('showFootnotes'));""",
+              """    app.coloredVerseNumbersToggle?.addEventListener('change', async () => {
+                  await app.toggleSetting('coloredVerseNumbers');
+                  hapticLight(app);
+              });
+
+              app.headingsToggle?.addEventListener('change', async () => {
+                  await app.toggleSetting('showHeadings');
+                  hapticLight(app);
+              });
+              app.footnotesToggle?.addEventListener('change', async () => {
+                  await app.toggleSetting('showFootnotes');
+                  hapticLight(app);
+              });""",
+          )
+
+          replace_exact(
+              "events.js",
+              """    app.chapterArrowsToggle?.addEventListener('change', () => app.toggleSetting('showChapterArrows'));
+
+              app.crossReferencesToggle = document.getElementById('crossReferencesToggle');
+              app.crossReferencesToggle?.addEventListener('change', () => app.toggleSetting('showCrossReferences'));""",
+              """    app.chapterArrowsToggle?.addEventListener('change', async () => {
+                  await app.toggleSetting('showChapterArrows');
+                  hapticLight(app);
+              });
+
+              app.crossReferencesToggle = document.getElementById('crossReferencesToggle');
+              app.crossReferencesToggle?.addEventListener('change', async () => {
+                  await app.toggleSetting('showCrossReferences');
+                  hapticLight(app);
+              });""",
+          )
+
+          replace_exact(
+              "events.js",
+              """    app.verseByVerseToggle?.addEventListener('change', () => app.toggleVerseByVerse());
+              app.fontSizeSlider?.addEventListener('input', (e) => app.updateFontSize(e.target.value));""",
+              """    app.verseByVerseToggle?.addEventListener('change', async () => {
+                  await app.toggleVerseByVerse();
+                  hapticLight(app);
+              });
+
+              app.hapticsToggle?.addEventListener('change', async (event) => {
+                  const enabling = event.currentTarget.checked;
+                  if (!enabling) hapticLight(app);
+                  await app.toggleSetting('hapticsEnabled');
+                  if (enabling) hapticLight(app);
+              });
+
+              app.fontSizeSlider?.addEventListener('input', (e) => app.updateFontSize(e.target.value));""",
+          )
+
+          replace_exact(
+              "events.js",
+              """    app.verseSelectionGestureSelect?.addEventListener('change', async (event) => {
+                  const gesture = event.currentTarget.value === 'tap' ? 'tap' : 'hold';
+                  app.state.verseSelectionGesture = gesture;
+                  localStorage.setItem('verseSelectionGesture', gesture);
+
+                  if (app.currentUser) {
+                      await app.database
+                          .ref(`users/${app.currentUser.uid}/settings/verseSelectionGesture`)
+                          .set(gesture);
+                  }
+              });""",
+              """    app.verseSelectionGestureSelect?.addEventListener('change', async (event) => {
+                  const gesture = event.currentTarget.value === 'tap' ? 'tap' : 'hold';
+                  app.state.verseSelectionGesture = gesture;
+                  localStorage.setItem('verseSelectionGesture', gesture);
+
+                  if (app.currentUser) {
+                      await app.database
+                          .ref(`users/${app.currentUser.uid}/settings/verseSelectionGesture`)
+                          .set(gesture);
+                  }
+
+                  hapticLight(app);
+              });""",
+          )
+
+          replace_exact(
+              "events.js",
+              """            if (app.currentUser) {
+                          await app.database
+                              .ref(`users/${app.currentUser.uid}/settings/readingFont`)
+                              .set(font);
+                      }
+                  });""",
+              """            if (app.currentUser) {
+                          await app.database
+                              .ref(`users/${app.currentUser.uid}/settings/readingFont`)
+                              .set(font);
+                      }
+
+                      hapticLight(app);
+                  });""",
+          )
+
+          replace_exact(
+              "events.js",
+              """    document.getElementById('lightModeSelect')?.addEventListener('change', (event) => {
+                  app._dbgUserAction?.(`changeAppearance: ${event.currentTarget.value}`);
+                  setLightMode(app, event.currentTarget.value);
+              });""",
+              """    document.getElementById('lightModeSelect')?.addEventListener('change', async (event) => {
+                  app._dbgUserAction?.(`changeAppearance: ${event.currentTarget.value}`);
+                  await setLightMode(app, event.currentTarget.value);
+                  hapticLight(app);
+              });""",
+          )
+
+          replace_exact(
+              "events.js",
+              """        await changeColorTheme(app, theme);
+              };""",
+              """        await changeColorTheme(app, theme);
+                  hapticLight(app);
+              };""",
+          )
+
+          replace_exact(
+              "modals.js",
+              """import { idbIsDownloaded, idbDeleteTranslation } from './translation-store.js';""",
+              """import { idbIsDownloaded, idbDeleteTranslation } from './translation-store.js';
+          import { hapticLight, hapticFirm } from './haptics.js';""",
+          )
+
+          replace_exact(
+              "modals.js",
+              """export function closeModal(app, modal) {
+              if (!modal || !modal.classList.contains('active')) return;
+              if (modal.classList.contains('closing')) return;
+
+              if (modal === app.translationModal) {""",
+              """export function closeModal(app, modal, { haptic = true } = {}) {
+              if (!modal || !modal.classList.contains('active')) return;
+              if (modal.classList.contains('closing')) return;
+
+              if (haptic) hapticLight(app);
+
+              if (modal === app.translationModal) {""",
+          )
+
+          replace_exact(
+              "modals.js",
+              """        button.addEventListener('click', () => {
+                      app.state.selectedVerse = null;
+                      app.loadPassage(book, 1);
+                      app.closeModal(app.bookModal);
+                  });""",
+              """        button.addEventListener('click', (event) => {
+                      app.state.selectedVerse = null;
+                      app.loadPassage(book, 1);
+                      app.closeModal(app.bookModal, { haptic: event.detail > 0 });
+                  });""",
+          )
+
+          replace_exact(
+              "modals.js",
+              """        btn.addEventListener('click', () => {
+                      app.state.selectedVerse = null;
+                      app.loadPassage(app.state.currentBook, i);
+                      app.closeModal(app.chapterModal);
+                  });""",
+              """        btn.addEventListener('click', (event) => {
+                      app.state.selectedVerse = null;
+                      app.loadPassage(app.state.currentBook, i);
+                      app.closeModal(app.chapterModal, { haptic: event.detail > 0 });
+                  });""",
+          )
+
+          replace_exact(
+              "modals.js",
+              """        btn.addEventListener('click', () => {
+                      app.scrollToVerse(i);
+                      app.closeModal(app.verseModal);
+                  });""",
+              """        btn.addEventListener('click', (event) => {
+                      app.scrollToVerse(i);
+                      app.closeModal(app.verseModal, { haptic: event.detail > 0 });
+                  });""",
+          )
+
+          replace_exact(
+              "modals.js",
+              """            li.addEventListener('click', () => {
+                          if (_downloading.has(t.id)) return;
+                          if (li.classList.contains('translation-modal-item--downloaded')) {
+                              app.changeTranslation(t.id);
+                              app.closeModal(app.translationModal);
+                              return;
+                          }
+                          _handleTranslationSelect(app, t, li, iconEl, progressWrap, progressBar, progressLabel);
+                      });""",
+              """            li.addEventListener('click', (event) => {
+                          if (_downloading.has(t.id)) return;
+                          if (li.classList.contains('translation-modal-item--downloaded')) {
+                              app.changeTranslation(t.id);
+                              app.closeModal(app.translationModal, { haptic: event.detail > 0 });
+                              return;
+                          }
+                          _handleTranslationSelect(app, t, li, iconEl, progressWrap, progressBar, progressLabel);
+                      });""",
+          )
+
+          replace_exact(
+              "modals.js",
+              """                deleteBtn.addEventListener('click', (e) => {
+                              e.stopPropagation();
+                              _handleUninstall(app, t, wrapper);
+                          });""",
+              """                deleteBtn.addEventListener('click', (event) => {
+                              event.stopPropagation();
+                              _handleUninstall(app, t, wrapper, event.detail > 0);
+                          });""",
+          )
+
+          replace_exact(
+              "modals.js",
+              """            li.addEventListener('click', () => {
+                          app.changeTranslation(t.id);
+                          app.closeModal(app.translationModal);
+                      });""",
+              """            li.addEventListener('click', (event) => {
+                          app.changeTranslation(t.id);
+                          app.closeModal(app.translationModal, { haptic: event.detail > 0 });
+                      });""",
+          )
+
+          replace_exact(
+              "modals.js",
+              """async function _handleUninstall(app, t, wrapper) {
+              await idbDeleteTranslation(t.id);
+
+              if (app.bibleApi?.evictTranslation) {
+                  app.bibleApi.evictTranslation(t.id);
+              }
+
+              if (app.state.translation === t.id) {
+                  const fallback = [...PRECACHED_TRANSLATIONS][0];
+                  if (fallback) app.changeTranslation(fallback);
+              }
+
+              _flyToAvailable(app, t, wrapper);
+          }""",
+              """async function _handleUninstall(app, t, wrapper, shouldHaptic) {
+              await idbDeleteTranslation(t.id);
+
+              if (app.bibleApi?.evictTranslation) {
+                  app.bibleApi.evictTranslation(t.id);
+              }
+
+              if (app.state.translation === t.id) {
+                  const fallback = [...PRECACHED_TRANSLATIONS][0];
+                  if (fallback) app.changeTranslation(fallback);
+              }
+
+              if (shouldHaptic) hapticFirm(app);
+              _flyToAvailable(app, t, wrapper);
+          }""",
+          )
+
+          replace_exact(
+              "keyboard.js",
+              """        app.closeModal(activeModal);""",
+              """        app.closeModal(activeModal, { haptic: false });""",
+          )
+
+          replace_exact(
+              "search.js",
+              """import { normaliseBookAlias } from './book-aliases.js';""",
+              """import { normaliseBookAlias } from './book-aliases.js';
+          import { hapticLight } from './haptics.js';""",
+          )
+
+          replace_exact(
+              "search.js",
+              """        if (e.type === 'click' && app._searchTouchHandled) {
+                      app._searchTouchHandled = false;
+                      return;
+                  }
+
+                  const query""",
+              """        if (e.type === 'click' && app._searchTouchHandled) {
+                      app._searchTouchHandled = false;
+                      return;
+                  }
+
+                  const isPointerActivation =
+                      e.type === 'touchend' ||
+                      (e.type === 'click' && e.detail > 0);
+
+                  const query""",
+          )
+
+          replace_exact(
+              "search.js",
+              """            card.querySelectorAll('.search-result-translation-badge[data-translation-id]').forEach((b) => {
+                          b.classList.toggle('active', b.dataset.translationId === translationId);
+                      });
+                      return;""",
+              """            card.querySelectorAll('.search-result-translation-badge[data-translation-id]').forEach((b) => {
+                          b.classList.toggle('active', b.dataset.translationId === translationId);
+                      });
+                      if (isPointerActivation) hapticLight(app);
+                      return;""",
+          )
+
+          replace_exact(
+              "search.js",
+              """            const activeTrans = resultItem.dataset.activeTranslation || null;
+                      const ref = resultItem.dataset.reference;
+                      closeSearch(app);""",
+              """            const activeTrans = resultItem.dataset.activeTranslation || null;
+                      const ref = resultItem.dataset.reference;
+                      if (isPointerActivation) hapticLight(app);
+                      closeSearch(app);""",
+          )
+
+          replace_exact(
+              "swipe.js",
+              """import { loadStructure, eventsForChapter } from './bsb-structure.js';""",
+              """import { loadStructure, eventsForChapter } from './bsb-structure.js';
+          import { hapticLight, hapticFirm } from './haptics.js';""",
+          )
+
+          replace_exact(
+              "swipe.js",
+              """// ── Haptic feedback ────────────────────────────────────────────────────────
+
+          function _haptic(strong = false) {
+              if (!navigator.vibrate) return;
+              navigator.vibrate(strong ? [30, 20, 30] : [12]);
+          }
+
+          // ── Core init""",
+              """// ── Core init""",
+          )
+
+          replace_count(
+              "swipe.js",
+              "_haptic(true);",
+              "hapticFirm(app);",
+              2,
+          )
+
+          replace_exact(
+              "swipe.js",
+              "_haptic(false);",
+              "hapticLight(app);",
+          )
+
+          replace_exact(
+              "bottom-sheet-drag.js",
+              """const COMPACT_HEIGHT_RATIO = 0.46;""",
+              """import { hapticFirm } from './haptics.js';
+
+          const COMPACT_HEIGHT_RATIO = 0.46;""",
+          )
+
+          replace_exact(
+              "bottom-sheet-drag.js",
+              """    function finishDrag(event, allowDismiss) {
+                  if (event.pointerId !== drag.pointerId) return;
+
+                  const shouldDismiss = allowDismiss && drag.dismissArmed && drag.velocityY > 0;
+                  const currentHeight = content.offsetHeight;
+                  const compact = compactHeight();
+                  const expanded = expandedHeight();
+                  const midpoint = (compact + expanded) / 2;
+
+                  if (drag.source?.hasPointerCapture(event.pointerId)) {
+                      drag.source.releasePointerCapture(event.pointerId);
+                  }
+                  resetDrag();
+
+                  if (shouldDismiss) {
+                      app.closeModal(modal);
+                      window.setTimeout(() => setSnapState(content, 'compact', false), 320);
+                      return;
+                  }
+
+                  if (drag.velocityY <= -FLICK_VELOCITY) {
+                      setSnapState(content, 'expanded');
+                      return;
+                  }
+
+                  if (drag.velocityY >= FLICK_VELOCITY) {
+                      setSnapState(content, 'compact');
+                      return;
+                  }
+
+                  setSnapState(content, currentHeight >= midpoint ? 'expanded' : 'compact');
+              }""",
+              """    function finishDrag(event, allowDismiss) {
+                  if (event.pointerId !== drag.pointerId) return;
+
+                  const shouldDismiss = allowDismiss && drag.dismissArmed && drag.velocityY > 0;
+                  const currentHeight = content.offsetHeight;
+                  const compact = compactHeight();
+                  const expanded = expandedHeight();
+                  const midpoint = (compact + expanded) / 2;
+                  const previousSnapState = content.classList.contains('settings-sheet--expanded')
+                      ? 'expanded'
+                      : 'compact';
+                  const shouldHapticSnap = event.type === 'pointerup' && drag.axis === 'vertical';
+                  const snapTo = (state) => {
+                      setSnapState(content, state);
+                      if (shouldHapticSnap && state !== previousSnapState) hapticFirm(app);
+                  };
+
+                  if (drag.source?.hasPointerCapture(event.pointerId)) {
+                      drag.source.releasePointerCapture(event.pointerId);
+                  }
+                  resetDrag();
+
+                  if (shouldDismiss) {
+                      app.closeModal(modal);
+                      window.setTimeout(() => setSnapState(content, 'compact', false), 320);
+                      return;
+                  }
+
+                  if (drag.velocityY <= -FLICK_VELOCITY) {
+                      snapTo('expanded');
+                      return;
+                  }
+
+                  if (drag.velocityY >= FLICK_VELOCITY) {
+                      snapTo('compact');
+                      return;
+                  }
+
+                  snapTo(currentHeight >= midpoint ? 'expanded' : 'compact');
+              }""",
+          )
+          PY
+
+      - name: Validate focused changes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          required = {
+              "haptics.js": [
+                  "const LIGHT_CLICK_MS = 10;",
+                  "const FIRM_CLICK_MS = 24;",
+                  "export function hapticLight(app)",
+                  "export function hapticFirm(app)",
+              ],
+              "index.html": [
+                  'rel="modulepreload" href="haptics.js"',
+                  'id="hapticsSetting"',
+                  'id="hapticsToggle"',
+              ],
+              "sw.js": ["'./haptics.js',"],
+              "settings.js": [
+                  "hapticsEnabled:      true,",
+                  "readBool('hapticsEnabled',      DEFAULTS.hapticsEnabled)",
+                  "hapticsSetting.hidden = typeof navigator.vibrate !== 'function';",
+              ],
+              "auth.js": [
+                  "hapticsEnabled: app.state.hapticsEnabled,",
+                  "s.hapticsEnabled ?? true",
+              ],
+              "events.js": [
+                  "import { hapticLight, hapticFirm } from './haptics.js';",
+                  "if (selectVerse(pressedVerse)) hapticFirm(app);",
+                  "app.hapticsToggle?.addEventListener('change'",
+              ],
+              "modals.js": [
+                  "export function closeModal(app, modal, { haptic = true } = {})",
+                  "if (haptic) hapticLight(app);",
+                  "if (shouldHaptic) hapticFirm(app);",
+              ],
+              "swipe.js": [
+                  "import { hapticLight, hapticFirm } from './haptics.js';",
+                  "hapticLight(app);",
+                  "hapticFirm(app);",
+              ],
+              "bottom-sheet-drag.js": [
+                  "import { hapticFirm } from './haptics.js';",
+                  "state !== previousSnapState",
+              ],
+              "tests/unit/haptics.test.js": [
+                  "uses 10ms for light feedback",
+                  "uses 24ms for firm feedback",
+              ],
+          }
+
+          for path_name, snippets in required.items():
+              text = Path(path_name).read_text(encoding="utf-8")
+              for snippet in snippets:
+                  assert snippet in text, f"Missing from {path_name}: {snippet}"
+
+          direct_vibrate = []
+          for path in Path('.').glob('*.js'):
+              if path.name == 'haptics.js':
+                  continue
+              text = path.read_text(encoding='utf-8')
+              if 'navigator.vibrate' in text:
+                  direct_vibrate.append(str(path))
+
+          assert not direct_vibrate, f"Direct vibration calls remain: {direct_vibrate}"
+          assert "function _haptic(" not in Path('swipe.js').read_text(encoding='utf-8')
+          assert "_haptic(true)" not in Path('swipe.js').read_text(encoding='utf-8')
+          assert "_haptic(false)" not in Path('swipe.js').read_text(encoding='utf-8')
+          PY
+
+          node --check haptics.js
+          node --check app.js
+          node --check auth.js
+          node --check bottom-sheet-drag.js
+          node --check events.js
+          node --check keyboard.js
+          node --check modals.js
+          node --check reading-state.js
+          node --check search.js
+          node --check settings.js
+          node --check swipe.js
+          node --check ui.js
+          git diff --check
+          git diff --stat
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      - name: Install repository dependencies
+        run: npm install
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Install Playwright
+        run: npm install --no-save @playwright/test
+
+      - name: Install Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Start local HTTP server
+        run: |
+          python3 -m http.server 8080 &
+          for i in $(seq 1 10); do
+            curl -s http://localhost:8080 > /dev/null && break || sleep 1
+          done
+
+      - name: Run browser smoke tests
+        env:
+          BASE_URL: http://localhost:8080
+        run: npx playwright test tests/smoke.spec.js --project=chromium
+
+      - name: Commit haptic feedback
+        run: |
+          files=(
+            haptics.js
+            index.html
+            sw.js
+            ui.js
+            reading-state.js
+            settings.js
+            auth.js
+            app.js
+            events.js
+            modals.js
+            keyboard.js
+            search.js
+            swipe.js
+            bottom-sheet-drag.js
+            tests/unit/haptics.test.js
+          )
+
+          if git diff --quiet -- "${files[@]}"; then
+            echo "Contextual haptics are already implemented"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${files[@]}"
+          git commit -F - <<'EOF'
+          feat(haptics): add contextual interaction feedback
+
+          Add configurable light and firm vibration feedback for navigation,
+          verse selection, modal closing, settings controls, sheet snap points,
+          search, copy actions, and boundary gestures.
+
+          Centralize vibration handling, respect user activation and browser
+          support, persist the preference locally and through Firebase, and keep
+          automatic, failed, cancelled, and keyboard shortcut actions silent.
+          EOF
+          git push origin exp
