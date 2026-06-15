@@ -194,6 +194,68 @@ test('search: entering a keyword returns results', async ({ page }) => {
         await expect(page.locator('#searchResults')).not.toBeEmpty();
 });
 
+test('search: mobile results keep the final book visible after scroll', async ({ page }) => {
+        await page.setViewportSize({ width: 390, height: 844 });
+        await page.goto('/');
+        await waitForPassage(page);
+
+        await page.locator('#searchToggle').click();
+        await page.locator('#searchInput').fill('love');
+
+        await expect(
+                page.locator('.search-book-heading[data-book="Revelation"]')
+        ).toBeAttached({ timeout: 15000 });
+
+        await page.locator(
+                '.search-expand-collapse-btn[data-action="collapse"]'
+        ).click();
+        await page.locator(
+                '.search-group-heading[data-testament="Old Testament"]'
+        ).click();
+        await page.locator(
+                '.search-group-heading[data-testament="New Testament"]'
+        ).click();
+
+        const results = page.locator('#searchResults');
+        await results.evaluate((element) => {
+                element.scrollTop = element.scrollHeight;
+        });
+        await page.waitForTimeout(200);
+
+        const layout = await page.evaluate(() => {
+                const container = document.getElementById('searchContainer');
+                const results = document.getElementById('searchResults');
+                const finalBook = document.querySelector(
+                        '.search-book-heading[data-book="Revelation"]'
+                );
+
+                if (!container || !results || !finalBook) {
+                        throw new Error('Search layout elements were not found');
+                }
+
+                const containerRect = container.getBoundingClientRect();
+                const resultsRect = results.getBoundingClientRect();
+                const finalBookRect = finalBook.getBoundingClientRect();
+
+                return {
+                        containerBottom: containerRect.bottom,
+                        resultsBottom: resultsRect.bottom,
+                        finalBookBottom: finalBookRect.bottom,
+                        resultsClientHeight: results.clientHeight,
+                        resultsScrollHeight: results.scrollHeight,
+                        scrollTop: results.scrollTop,
+                };
+        });
+
+        expect(layout.resultsBottom).toBeLessThanOrEqual(layout.containerBottom + 1);
+        expect(layout.finalBookBottom).toBeLessThanOrEqual(layout.containerBottom + 1);
+        expect(layout.resultsClientHeight).toBeGreaterThan(0);
+        expect(layout.resultsScrollHeight).toBeGreaterThan(layout.resultsClientHeight);
+        expect(layout.scrollTop + layout.resultsClientHeight).toBeGreaterThanOrEqual(
+                layout.resultsScrollHeight - 1
+        );
+});
+
 test('search: reference query navigates to correct passage', async ({ page }) => {
         await page.goto('/');
         await waitForPassage(page);
