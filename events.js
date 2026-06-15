@@ -10,11 +10,11 @@ import { initSwipe } from './swipe.js';
 import { handleChangeEmail, handleChangePassword, handleForgotPassword } from './auth.js';
 
 const CHANGE_EMAIL_HTML = `
-<div id="changeEmailModal" class="modal">
+<div id="changeEmailModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="changeEmailModalTitle" aria-hidden="true" inert>
                 <div class="modal-content">
                         <div class="modal-header">
-                                <h3>Change Email</h3>
-                                <button class="close-btn" id="closeChangeEmailModal">&times;</button>
+                                <h3 id="changeEmailModalTitle" tabindex="-1">Change Email</h3>
+                                <button class="close-btn" id="closeChangeEmailModal" aria-label="Close" type="button">&times;</button>
                         </div>
                         <div class="modal-body">
                                 <form id="changeEmailForm">
@@ -34,11 +34,11 @@ const CHANGE_EMAIL_HTML = `
         </div>`;
 
 const CHANGE_PASSWORD_HTML = `
-<div id="changePasswordModal" class="modal">
+<div id="changePasswordModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="changePasswordModalTitle" aria-hidden="true" inert>
                 <div class="modal-content">
                         <div class="modal-header">
-                                <h3>Change Password</h3>
-                                <button class="close-btn" id="closeChangePasswordModal">&times;</button>
+                                <h3 id="changePasswordModalTitle" tabindex="-1">Change Password</h3>
+                                <button class="close-btn" id="closeChangePasswordModal" aria-label="Close" type="button">&times;</button>
                         </div>
                         <div class="modal-body">
                                 <form id="changePasswordForm">
@@ -110,10 +110,45 @@ function syncReadingDisplay(app) {
     }
 }
 
+function installCanonFallback(app) {
+    const loadPassage = app.loadPassage.bind(app);
+
+    app.loadPassage = async (book, chapter, restoreScroll = false) => {
+        const books = app.getAllBooks();
+        const activeBook = app.state.currentBook;
+
+        if (activeBook && !books.includes(activeBook)) {
+            app._dbgEvent?.(`loadPassage: "${activeBook}" not in canon — redirecting to Genesis 1`);
+            return loadPassage('Genesis', 1, restoreScroll);
+        }
+
+        return loadPassage(book, chapter, restoreScroll);
+    };
+}
+
+function normalizeModalMarkup() {
+    const bookContent = document.querySelector('#bookModal .modal-content');
+    const bookBody = document.querySelector('#bookModal .modal-body');
+    const filterBar = document.querySelector('#bookModal .book-testament-filters');
+
+    if (bookContent && bookBody && filterBar && filterBar.parentElement !== bookContent) {
+        bookContent.insertBefore(filterBar, bookBody);
+    }
+
+    document.querySelectorAll('.accordion-section[data-settings-section]').forEach((section) => {
+        if (!section.hasAttribute('data-section')) {
+            section.setAttribute('data-section', section.getAttribute('data-settings-section'));
+        }
+    });
+}
+
 /**
  * @param {object} app - BibleApp instance
  */
 export function attachEventListeners(app) {
+    normalizeModalMarkup();
+    installCanonFallback(app);
+
     app.searchToggleBtn?.addEventListener('click', () => app.toggleSearch());
     app.closeSearchBtn?.addEventListener('click',  () => app.closeSearch());
     app.searchInput?.addEventListener('input',     (e) => app.handleSearch(e.target.value, 'type'));
@@ -280,6 +315,9 @@ export function attachEventListeners(app) {
     app.closeDeuterocanonInfoModal?.addEventListener('click', () => app.closeModal(app.deuterocanonInfoModal));
     app.closeChapterModal?.addEventListener('click',  () => app.closeModal(app.chapterModal));
     app.closeSettingsModal?.addEventListener('click', () => app.closeModal(app.settingsModal));
+    app.closeLoginModal?.addEventListener('click', () => app.closeModal(app.loginModal));
+    app.closeSignupModal?.addEventListener('click', () => app.closeModal(app.signupModal));
+    app.closeUserMenuModal?.addEventListener('click', () => app.closeModal(app.userMenuModal));
     app.closeReferencesModal?.addEventListener('click', () => app.closeModal(app.referencesModal));
     app.closeTranslationModal?.addEventListener('click', () => app.closeModal(app.translationModal));
 
@@ -334,9 +372,9 @@ export function attachEventListeners(app) {
     if (readingFontSelector) {
         readingFontSelector.addEventListener('change', async () => {
             const font = readingFontSelector.value;
+            await applyReadingFont(app, font);
             app.state.readingFont = font;
             localStorage.setItem('readingFont', font);
-            applyReadingFont(app, font);
 
             if (app.currentUser) {
                 await app.database
@@ -368,16 +406,19 @@ export function attachEventListeners(app) {
     themeSelector?.addEventListener('input', applyThemeSelection);
     themeSelector?.addEventListener('change', applyThemeSelection);
 
-        document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
+    document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
     document.getElementById('changeEmailBtn')?.addEventListener('click', () => openChangeEmailModal(app));
     document.getElementById('changePasswordBtn')?.addEventListener('click', () => openChangePasswordModal(app));
     document.getElementById('forgotPasswordBtn')?.addEventListener('click', () => handleForgotPassword(app));
 
-    document.getElementById('showSignupLink')?.addEventListener('click', (event) => {
+    const openSignupModal = (event) => {
         event.preventDefault();
         app.closeModal(app.loginModal);
         app.openModal(app.signupModal);
-    });
+    };
+
+    document.getElementById('showSignup')?.addEventListener('click', openSignupModal);
+    document.getElementById('showSignupLink')?.addEventListener('click', openSignupModal);
 
     document.getElementById('showLoginLink')?.addEventListener('click', (event) => {
         event.preventDefault();

@@ -1,6 +1,6 @@
 @font-face {
-    font-family: 'IBM VGA 9x16';
-    src: url('../fonts/Web437_IBM_VGA_9x16-2x.woff') format('woff');
+    font-family: 'IBM_CGAThin-2y';
+    src: url('../fonts/Web437_IBM_CGAthin-2y.woff2') format('woff2');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -27,8 +27,8 @@ body.geek-theme.light-mode {
     --warning-color: #dfe300;
     --error-color: #e35f5f;
     --footnote-hover-bg: rgba(223, 227, 0, 0.18);
-    --font-sans: 'IBM VGA 9x16', 'Courier New', monospace;
-    --font-serif: 'IBM VGA 9x16', 'Courier New', monospace;
+    --font-sans: 'IBM_CGAThin-2y', 'Courier New', monospace;
+    --font-serif: 'IBM_CGAThin-2y', 'Courier New', monospace;
     --border-radius: 0;
     --border-radius-lg: 0;
     --shadow-sm: 1px 1px 0 #000000;
@@ -43,7 +43,7 @@ body.geek-theme.light-mode {
 
 body.geek-theme.light-mode {
     color: #ffffff;
-    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
+    font-family: 'IBM_CGAThin-2y', 'Courier New', monospace;
     -webkit-font-smoothing: none;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -72,7 +72,7 @@ body.geek-theme.light-mode {
 .geek-theme.light-mode .modal-header h2,
 .geek-theme.light-mode .accordion-title {
     color: #dfe300;
-    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
+    font-family: 'IBM_CGAThin-2y', 'Courier New', monospace;
     font-weight: 700;
     letter-spacing: 0;
     text-transform: uppercase;
@@ -90,6 +90,7 @@ body.geek-theme.light-mode {
 .geek-theme.light-mode .secondary-btn,
 .geek-theme.light-mode .book-item,
 .geek-theme.light-mode .chapter-item,
+.geek-theme.light-mode .book-testament-filter,
 .geek-theme.light-mode .toast-action,
 .geek-theme.light-mode .input-field {
     border-radius: 0;
@@ -98,7 +99,7 @@ body.geek-theme.light-mode {
     background: #394dcd;
     color: #ffffff;
     box-shadow: 1px 1px 0 #000000;
-    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
+    font-family: 'IBM_CGAThin-2y', 'Courier New', monospace;
 }
 
 .geek-theme.light-mode .icon-btn,
@@ -113,6 +114,7 @@ body.geek-theme.light-mode {
 .geek-theme.light-mode .nav-btn:hover:not(:disabled),
 .geek-theme.light-mode .book-item:hover,
 .geek-theme.light-mode .chapter-item:hover,
+.geek-theme.light-mode .book-testament-filter:hover,
 .geek-theme.light-mode .primary-btn:hover,
 .geek-theme.light-mode .secondary-btn:hover {
     background: #dfe300;
@@ -127,11 +129,19 @@ body.geek-theme.light-mode {
 .geek-theme.light-mode .nav-btn:active,
 .geek-theme.light-mode .book-item:active,
 .geek-theme.light-mode .chapter-item:active,
+.geek-theme.light-mode .book-testament-filter:active,
 .geek-theme.light-mode .primary-btn:active,
 .geek-theme.light-mode .secondary-btn:active {
     border-color: #6c6c6c #ffffff #ffffff #6c6c6c;
     box-shadow: none;
     transform: translate(1px, 1px);
+}
+
+.geek-theme.light-mode .book-testament-filter--active,
+.geek-theme.light-mode .book-testament-filter--active:hover {
+    background: #dfe300;
+    color: #000055;
+    border-color: #ffffff #6c6c6c #6c6c6c #ffffff;
 }
 
 .geek-theme.light-mode .selector-btn svg,
@@ -163,7 +173,7 @@ body.geek-theme.light-mode {
 .geek-theme.light-mode .passage {
     color: #ffffff;
     background: #000055;
-    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
+    font-family: 'IBM_CGAThin-2y', 'Courier New', monospace;
     transform: none;
     width: auto;
    /* font-size: 18px !important; */
@@ -183,7 +193,7 @@ body.geek-theme.light-mode {
 .geek-theme.light-mode .passage-text h4,
 .geek-theme.light-mode .pericope-heading {
     color: #208c71;
-    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
+    font-family: 'IBM_CGAThin-2y', 'Courier New', monospace;
     font-style: normal;
     text-transform: none;
     transform: none;
@@ -208,6 +218,7 @@ body.geek-theme.light-mode {
 
 .geek-theme.light-mode .modal {
     background: rgba(0, 0, 0, 0.78);
+    -webkit-backdrop-filter: none;
     backdrop-filter: none;
 }
 
@@ -257,7 +268,7 @@ body.geek-theme.light-mode {
 .geek-theme.light-mode .translation-modal-section-heading {
     color: #208c71;
     border-color: #dfe300;
-    font-family: 'IBM VGA 9x16', 'Courier New', monospace;
+    font-family: 'IBM_CGAThin-2y', 'Courier New', monospace;
     text-transform: uppercase;
 }
 

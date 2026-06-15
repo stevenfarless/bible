@@ -15,7 +15,7 @@
 	<meta name="build-id" content="__BUILD_ID__" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
-	     (document.documentElement - - always available in <head>) before the
+	     (document.documentElement - always available in <head>) before the
 	     browser paints, preventing a theme flash on cold load.
 	     document.body is null at this point; do NOT use it here.
 	     ES modules are deferred and cannot achieve this. -->
@@ -24,7 +24,7 @@
 			var el = document.documentElement;
 			var theme = 'basic';
 			try { theme = localStorage.getItem('colorTheme') || 'basic'; } catch (_) {}
-			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1, lux: 1, vespers: 1, vigil: 1 };
+			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1, lux: 1, vespers: 1, vigil: 1, 'uxorem-amo': 1 };
 			if (!valid[theme]) theme = 'basic';
 			el.classList.add(theme + '-theme', 'no-color-transition');
 
@@ -66,14 +66,6 @@
 	<link rel="modulepreload" href="settings.js" />
 	<link rel="modulepreload" href="keyboard.js" />
 	<link rel="modulepreload" href="events.js" />
-	<!-- Preload reading fonts so the browser fetches them early,
-	     preventing a late font-discovery stall that inflates LCP. -->
-	<link rel="preload" href="./fonts/GentiumBookPlus-Regular.woff2" as="font" type="font/woff2" crossorigin />
-	<link rel="preload" href="./fonts/Andika-Regular.woff2" as="font" type="font/woff2" crossorigin />
-	<link rel="preload" href="./fonts/OpenDyslexic3-Regular.woff2" as="font" type="font/woff2" crossorigin />
-	<link rel="preload" href="./fonts/Ubuntu-Regular.woff2" as="font" type="font/woff2" crossorigin />
-	<link rel="preload" href="./fonts/iAWriterQuattroS-Regular.woff2" as="font" type="font/woff2" crossorigin />
-	<link rel="preload" href="./fonts/AdwaitaSans-Regular.woff2" as="font" type="font/woff2" crossorigin />
 	<!-- CSS loaded as parallel <link> tags — @import chains are render-blocking
 	     and sequential; <link> tags are fetched in parallel by the browser. -->
 	<link rel="stylesheet" href="css/fonts.css" />
@@ -87,8 +79,7 @@
 	<link rel="stylesheet" href="css/utilities.css" />
 	<link rel="stylesheet" href="css/pericope.css" />
 	<link rel="stylesheet" href="css/geek95.css">
-	<!-- reCAPTCHA v3 — required for Firebase App Check token exchange -->
-	<script src="https://www.google.com/recaptcha/api.js?render=6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV" async defer></script>
+	<!-- Firebase App Check loads reCAPTCHA v3 through ReCaptchaV3Provider. -->
     <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
 </head>
 
@@ -188,7 +179,11 @@
 			<div class="search-input-row">
 				<input type="text" id="searchInput" class="search-input"
 					placeholder="Search passages or enter reference (e.g., John 3:16)" />
-				<button id="closeSearch" class="close-btn" aria-label="Close search" title="Close search">&#xD7;</button>
+				<button id="closeSearch" class="close-btn close-control" aria-label="Close search" title="Close search" type="button">
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M7 7L17 17M17 7L7 17"></path>
+</svg>
+</button>
 			</div>
 			<div class="search-options-row">
 				<label class="search-toggle-label" for="megasearchToggle">
@@ -232,12 +227,22 @@
 		</div>
 	</main>
 
-	<div id="bookModal" class="modal">
+	<div id="bookModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="bookModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2>Select a Book</h2>
-				<button class="close-btn" id="closeBookModal" aria-label="Close">&#xD7;</button>
+				<h2 id="bookModalTitle" tabindex="-1">Select a Book</h2>
+				<button class="close-btn close-control" id="closeBookModal" aria-label="Close" type="button">
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M7 7L17 17M17 7L7 17"></path>
+</svg>
+</button>
 			</div>
+			<div
+				id="bookTestamentFilters"
+				class="book-testament-filters"
+				role="group"
+				aria-label="Filter books by testament"
+			></div>
 			<div class="modal-body">
 				<div class="book-category">
 					<h4>Old Testament</h4>
@@ -251,11 +256,15 @@
 		</div>
 	</div>
 
-	<div id="chapterModal" class="modal">
+	<div id="chapterModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="chapterModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2><span id="chapterModalBook">Genesis</span></h2>
-				<button class="close-btn" id="closeChapterModal" aria-label="Close">&#xD7;</button>
+				<h2 id="chapterModalTitle" tabindex="-1"><span id="chapterModalBook">Genesis</span></h2>
+				<button class="close-btn close-control" id="closeChapterModal" aria-label="Close" type="button">
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M7 7L17 17M17 7L7 17"></path>
+</svg>
+</button>
 			</div>
 			<div class="modal-body">
 				<div id="chapterGrid" class="chapter-grid"></div>
@@ -263,11 +272,15 @@
 		</div>
 	</div>
 
-	<div id="verseModal" class="modal">
+	<div id="verseModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="verseModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2><span id="verseModalBook">Genesis 1</span></h2>
-				<button class="close-btn" id="closeVerseModal" aria-label="Close">&#xD7;</button>
+				<h2 id="verseModalTitle" tabindex="-1"><span id="verseModalBook">Genesis 1</span></h2>
+				<button class="close-btn close-control" id="closeVerseModal" aria-label="Close" type="button">
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M7 7L17 17M17 7L7 17"></path>
+</svg>
+</button>
 			</div>
 			<div class="modal-body">
 				<div id="verseGrid" class="chapter-grid"></div>
@@ -275,11 +288,15 @@
 		</div>
 	</div>
 
-	<div id="translationModal" class="modal">
+	<div id="translationModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="translationModalTitle" aria-hidden="true" inert>
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
-				<h2>Translation</h2>
-				<button class="close-btn" id="closeTranslationModal" aria-label="Close">&#xD7;</button>
+				<h2 id="translationModalTitle" tabindex="-1">Translation</h2>
+				<button class="close-btn close-control" id="closeTranslationModal" aria-label="Close" type="button">
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M7 7L17 17M17 7L7 17"></path>
+</svg>
+</button>
 			</div>
 			<div class="modal-body">
 				<ul id="translationList" class="translation-modal-list"></ul>
@@ -287,11 +304,15 @@
 		</div>
 	</div>
 
-	<div id="settingsModal" class="modal">
+	<div id="settingsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2>Settings</h2>
-				<button class="close-btn" id="closeSettingsModal" aria-label="Close">&#xD7;</button>
+				<h2 id="settingsModalTitle" tabindex="-1">Settings</h2>
+				<button class="close-btn close-control" id="closeSettingsModal" aria-label="Close" type="button">
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M7 7L17 17M17 7L7 17"></path>
+</svg>
+</button>
 			</div>
 			<div class="modal-body">
 				<div class="accordion-section active" data-section="appearance">
@@ -317,6 +338,7 @@
 									<option value="basic">Basic Black (Dark) | Basic White (Light)</option>
 									<option value="geek">The Geek Shall Inherit The Earth (Dark OLED)</option>
 									<option value="gnome">Adwaitish (Light | Dark)</option>
+									<option value="uxorem-amo">Uxorem Amo (Light | Dark)</option>
 								</select>
 								<small class="help-text">Choose your preferred color scheme.</small>
 							</div>
@@ -415,7 +437,7 @@
 							<p class="help-text">
 								Account settings (email, theme, translation, reading position) are automatically synced via Firebase when you're signed in.
 							</p>
-							<button id="openAccountBtn" class="primary-btn" style="width: 100%; margin-top: 1rem;">
+							<button id="openAccountBtn" class="primary-btn account-manage-btn">
 								Manage Account
 							</button>
 						</div>
@@ -565,42 +587,73 @@
 		</div>
 	</div>
 
-	<div id="loginModal" class="modal">
+	<div id="loginModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2>Sign In</h2>
-				<button class="close-btn" id="closeLoginModal" aria-label="Close">&#xD7;</button>
+				<h2 id="loginModalTitle" tabindex="-1">Sign In</h2>
+				<button class="close-btn close-control" id="closeLoginModal" aria-label="Close" type="button">
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M7 7L17 17M17 7L7 17"></path>
+</svg>
+</button>
 			</div>
-			<div class="modal-body">
-				<form id="loginForm" class="auth-form">
-					<div class="setting-item">
-						<label for="loginEmail">Email</label>
-						<input type="email" id="loginEmail" class="input-field" placeholder="your@email.com"
-							autocomplete="email" required />
-					</div>
-					<div class="setting-item">
-						<label for="loginPassword">Password</label>
-						<input type="password" id="loginPassword" class="input-field" placeholder="Password"
-							autocomplete="current-password" required />
-					</div>
-					<button type="submit" class="primary-btn" style="width: 100%">Sign In</button>
-				</form>
-				<p class="auth-switch">
-					<a href="#" id="forgotPasswordLink">Forgot password?</a>
-				</p>
-				<p class="auth-switch">
-					Don't have an account?
-					<a href="#" id="showSignupLink">Sign up</a>
-				</p>
-			</div>
+
+<div class="modal-body">
+	<form id="loginForm" class="auth-form">
+		<div class="setting-item">
+			<label for="loginEmail">Email</label>
+			<input
+				type="email"
+				id="loginEmail"
+				class="input-field"
+				placeholder="your@email.com"
+				autocomplete="email"
+				required
+			/>
+		</div>
+
+		<div class="setting-item">
+			<label for="loginPassword">Password</label>
+			<input
+				type="password"
+				id="loginPassword"
+				class="input-field"
+				placeholder="Password"
+				autocomplete="current-password"
+				required
+			/>
+		</div>
+
+		<button type="submit" class="primary-btn auth-form-submit">
+			Sign In
+		</button>
+
+		<p class="recaptcha-notice">
+			This site is protected by reCAPTCHA.
+		</p>
+	</form>
+
+	<p class="auth-switch">
+		<a href="#" id="forgotPasswordLink">Forgot password?</a>
+	</p>
+
+	<p class="auth-switch">
+		Don't have an account?
+		<a href="#" id="showSignupLink">Sign up</a>
+	</p>
+</div>
 		</div>
 	</div>
 
-	<div id="signupModal" class="modal">
+	<div id="signupModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="signupModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2>Create Account</h2>
-				<button class="close-btn" id="closeSignupModal" aria-label="Close">&#xD7;</button>
+				<h2 id="signupModalTitle" tabindex="-1">Create Account</h2>
+				<button class="close-btn close-control" id="closeSignupModal" aria-label="Close" type="button">
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M7 7L17 17M17 7L7 17"></path>
+</svg>
+</button>
 			</div>
 			<div class="modal-body">
 				<form id="signupForm" class="auth-form">
@@ -614,7 +667,7 @@
 						<input type="password" id="signupPassword" class="input-field"
 							placeholder="At least 6 characters" autocomplete="new-password" required />
 					</div>
-					<button type="submit" id="signupSubmit" class="primary-btn" style="width: 100%">Create Account</button>
+					<button type="submit" id="signupSubmit" class="primary-btn auth-form-submit">Create Account</button>
 				</form>
 				<p class="auth-switch">
 					Already have an account?
@@ -624,11 +677,15 @@
 		</div>
 	</div>
 
-	<div id="userMenuModal" class="modal">
+	<div id="userMenuModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="userMenuModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2>Account</h2>
-				<button class="close-btn" id="closeUserMenuModal" aria-label="Close">&#xD7;</button>
+				<h2 id="userMenuModalTitle" tabindex="-1">Account</h2>
+				<button class="close-btn close-control" id="closeUserMenuModal" aria-label="Close" type="button">
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M7 7L17 17M17 7L7 17"></path>
+</svg>
+</button>
 			</div>
 			<div class="modal-body">
 				<div class="user-info-box">
@@ -645,26 +702,34 @@
 					<button id="changeEmailBtn" class="secondary-btn">Change Email</button>
 					<button id="changePasswordBtn" class="secondary-btn">Change Password</button>
 				</div>
-				<button id="logoutBtn" class="primary-btn" style="margin-top: var(--spacing-md)">Sign Out</button>
+				<button id="logoutBtn" class="primary-btn account-signout-btn">Sign Out</button>
 			</div>
 		</div>
 	</div>
 
-	<div id="referencesModal" class="modal modal--bottom-sheet">
+	<div id="referencesModal" class="modal modal--bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="referencesModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2>References</h2>
-				<button class="close-btn" id="closeReferencesModal" aria-label="Close">&#xD7;</button>
+				<h2 id="referencesModalTitle" tabindex="-1">References</h2>
+				<button class="close-btn close-control" id="closeReferencesModal" aria-label="Close" type="button">
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M7 7L17 17M17 7L7 17"></path>
+</svg>
+</button>
 			</div>
 			<div class="modal-body"></div>
 		</div>
 	</div>
 
-	<div id="deuterocanonInfoModal" class="modal">
+	<div id="deuterocanonInfoModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="deuterocanonInfoModalTitle" aria-hidden="true" inert>
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
-				<h2>About the Apocrypha</h2>
-				<button class="close-btn" id="closeDeuterocanonInfoModal" aria-label="Close">&#xD7;</button>
+				<h2 id="deuterocanonInfoModalTitle" tabindex="-1">About the Apocrypha</h2>
+				<button class="close-btn close-control" id="closeDeuterocanonInfoModal" aria-label="Close" type="button">
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M7 7L17 17M17 7L7 17"></path>
+</svg>
+</button>
 			</div>
 			<div class="modal-body">
 				<div class="deuterocanon-info-content">
@@ -690,7 +755,7 @@
 				</div>
 			</div>
 		</div>
-	</div>
+    </div>
 
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 

@@ -19,8 +19,17 @@ const DEFAULTS = {
     verseSelectionGesture: 'hold',
 };
 
+const READING_FONT_FAMILIES = {
+    gentium: 'Gentium Book Plus',
+    andika: 'Andika',
+    ubuntu: 'Ubuntu',
+    opendyslexic3: 'OpenDyslexic3',
+    'ia-quattro': 'iA Writer Quattro S',
+    adwaitasans: 'Adwaita Sans',
+};
+
 const RECAPTCHA_STYLE_ID = 'recaptcha-badge-style';
-const RECAPTCHA_DISCLOSURE_HTML = '<div style="margin-top: 1rem; font-size: 0.875rem;">This site is protected by reCAPTCHA and the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a> apply.</div>';
+// const RECAPTCHA_DISCLOSURE_HTML = '<div style="margin-top: 1rem; font-size: 0.875rem;">This site is protected by reCAPTCHA and the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a> apply.</div>';
 
 function readBool(key, defaultValue) {
     try {
@@ -103,6 +112,14 @@ export function loadLocalSettings(app) {
     } catch (_) { /* malformed entry — leave state at defaults */ }
 }
 
+function syncVerseByVerseMode(app) {
+    const enabled = !!app.state.verseByVerse;
+
+    app.passageText?.classList.toggle('verse-by-verse', enabled);
+    document.body.classList.toggle('verse-by-verse-mode', enabled);
+    document.documentElement.classList.toggle('verse-by-verse-enabled', enabled);
+}
+
 export function applySettings(app) {
     ensureRecaptchaBadgeHidden();
 
@@ -130,7 +147,7 @@ export function applySettings(app) {
     if (app.headingsToggle)        app.headingsToggle.checked        = !!app.state.showHeadings;
     if (app.chapterArrowsToggle)   app.chapterArrowsToggle.checked   = !!app.state.showChapterArrows;
 
-    if (app.passageText) app.passageText.classList.toggle('verse-by-verse', !!app.state.verseByVerse);
+    syncVerseByVerseMode(app);
     if (app.verseByVerseToggle) app.verseByVerseToggle.checked = !!app.state.verseByVerse;
 
     const fontSize = app.state.fontSize || DEFAULTS.fontSize;
@@ -199,25 +216,51 @@ export async function toggleVerseByVerse(app) {
             .set(app.state.verseByVerse);
     }
 
-    app.passageText.classList.toggle('verse-by-verse', app.state.verseByVerse);
+    syncVerseByVerseMode(app);
 }
 
-export function applyReadingFont(app, font) {
-    document.body.classList.remove('font-andika', 'font-ubuntu', 'font-opendyslexic3', 'font-retrocide', 'font-ia-quattro', 'font-adwaitasans');
+export async function applyReadingFont(app, font) {
+    const family = READING_FONT_FAMILIES[font];
+    if (!family) throw new Error(`Unknown reading font: ${font}`);
 
-    if (font === 'andika')        document.body.classList.add('font-andika');
-    if (font === 'ubuntu')        document.body.classList.add('font-ubuntu');
-    if (font === 'opendyslexic3') document.body.classList.add('font-opendyslexic3');
-    if (font === 'retrocide')     document.body.classList.add('font-retrocide');
-    if (font === 'ia-quattro')    document.body.classList.add('font-ia-quattro');
-    if (font === 'adwaitasans')   document.body.classList.add('font-adwaitasans');
+    const loaded = await document.fonts.load(`1em "${family}"`);
+    if (loaded.length === 0) {
+        throw new Error(`Reading font failed to load: ${family}`);
+    }
+
+    const fontClasses = [
+        'font-andika',
+        'font-ubuntu',
+        'font-opendyslexic3',
+        'font-retrocide',
+        'font-ia-quattro',
+        'font-adwaitasans',
+    ];
+
+    const fontClass = {
+        andika: 'font-andika',
+        ubuntu: 'font-ubuntu',
+        opendyslexic3: 'font-opendyslexic3',
+        retrocide: 'font-retrocide',
+        'ia-quattro': 'font-ia-quattro',
+        adwaitasans: 'font-adwaitasans',
+    }[font];
+
+    document.documentElement.classList.remove(...fontClasses);
+    document.body.classList.remove(...fontClasses);
+
+    if (fontClass) {
+        document.documentElement.classList.add(fontClass);
+    }
 
     const selector = document.getElementById('readingFontSelector');
     const helpText = document.getElementById('readingFontHelpText');
+
     if (selector) {
         selector.value = font;
         selector.disabled = false;
     }
+
     if (helpText) {
         helpText.textContent = 'Choose the typeface used for passage text.';
     }
@@ -281,12 +324,11 @@ export function updateCopyright(app) {
     if (!app.copyright) return;
 
     const copyrightText = app._copyrightMap[app.state.translation] || '';
-    const copyrightHtml = copyrightText ? `<span class="copyright-text">${escapeHtml(copyrightText)}</span>` : '';
+    const copyrightHtml = copyrightText
+        ? `<span class="copyright-text">${escapeHtml(copyrightText)}</span>`
+        : '';
 
-    app.copyright.innerHTML = [
-        copyrightHtml,
-        `<span class="recaptcha-disclosure">${RECAPTCHA_DISCLOSURE_HTML}</span>`,
-    ].filter(Boolean).join('<br />');
+    app.copyright.innerHTML = copyrightHtml;
 }
 
 /**
@@ -294,16 +336,33 @@ export function updateCopyright(app) {
  * Called once during settings init.
  */
 export function initSubAccordions() {
-    document.querySelectorAll('.sub-accordion-header').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const section = btn.closest('.sub-accordion-section');
+    const sections = Array.from(document.querySelectorAll('.sub-accordion-section'));
+
+    const syncSection = (section) => {
+        const button = section.querySelector('.sub-accordion-header');
+        const panel = section.querySelector('.sub-accordion-panel');
+        const isActive = section.classList.contains('active');
+
+        button?.setAttribute('aria-expanded', String(isActive));
+        if (panel) {
+            panel.inert = !isActive;
+            panel.setAttribute('aria-hidden', String(!isActive));
+        }
+    };
+
+    sections.forEach((section) => {
+        const button = section.querySelector('.sub-accordion-header');
+        syncSection(section);
+
+        button?.addEventListener('click', () => {
             const isActive = section.classList.contains('active');
-            // Collapse all siblings first
-            section.closest('.about-group')
-                .querySelectorAll('.sub-accordion-section')
-                .forEach(s => s.classList.remove('active'));
+            const siblings = Array.from(
+                section.closest('.about-group').querySelectorAll('.sub-accordion-section')
+            );
+
+            siblings.forEach((entry) => entry.classList.remove('active'));
             if (!isActive) section.classList.add('active');
-            btn.setAttribute('aria-expanded', (!isActive).toString());
+            siblings.forEach(syncSection);
         });
     });
 }

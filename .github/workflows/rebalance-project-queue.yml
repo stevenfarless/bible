@@ -1,0 +1,100 @@
+name: Rebalance Project Queue
+
+on:
+  issues:
+    types:
+      - closed
+      - reopened
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Preview a full per-milestone rebalance without updating Project 3
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rebalance-project-queue-${{ github.event_name == 'workflow_dispatch' && 'manual' || 'automatic' }}
+  cancel-in-progress: false
+
+jobs:
+  rebalance:
+    name: Rebalance statuses inside every milestone
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ secrets.GH_PROJECT_TOKEN }}
+      PROJECT_OWNER: stevenfarless
+      PROJECT_NUMBER: "3"
+      REPOSITORY: stevenfarless/lege-lux
+      NOW_CAPACITY: "2"
+      NEXT_CAPACITY: "4"
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
+      TRIGGER_ACTION: ${{ github.event.action || '' }}
+      TRIGGER_ISSUE_NUMBER: ${{ github.event.issue.number || '' }}
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+
+      - name: Verify project token
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "::error::Missing repository secret GH_PROJECT_TOKEN"
+            echo "Save a classic PAT or GitHub CLI OAuth token with project access as GH_PROJECT_TOKEN."
+            exit 1
+          fi
+
+          if [[ "$GH_TOKEN" == github_pat_* ]]; then
+            echo "::error::GH_PROJECT_TOKEN is a fine-grained personal access token."
+            echo "This user-owned Project requires a classic PAT or GitHub CLI OAuth token with project access."
+            exit 1
+          fi
+
+          gh auth status
+
+          gh api graphql \
+            -f query='query { viewer { login } }' \
+            --jq '.data.viewer.login'
+
+      - name: Rebalance every milestone
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 .github/scripts/rebalance_project_queue.py \
+            | tee project-queue-rebalance.log
+
+      - name: Write run summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Lege Lux project queue"
+            echo
+            echo "- Project: stevenfarless Project 3"
+            echo "- Mode: full recalculation inside every milestone"
+            echo "- Now capacity per milestone: 2"
+            echo "- Next capacity per milestone: 4"
+            echo "- Remaining active issues in each milestone: Someday"
+            echo "- Dry run: ${DRY_RUN}"
+            echo "- Trigger: ${GITHUB_EVENT_NAME}"
+            echo "- Trigger action: ${TRIGGER_ACTION:-none}"
+            echo
+
+            if [[ -f project-queue-rebalance.log ]]; then
+              echo '```text'
+              cat project-queue-rebalance.log
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
