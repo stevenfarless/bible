@@ -6,96 +6,375 @@ import { idbIsDownloaded, idbDeleteTranslation } from './translation-store.js';
 
 // ── Open / close ─────────────────────────────────────────────────────────────
 
+const _modalFocusableSelector = [
+    'a[href]',
+    'button:not([disabled])',
+    'input:not([disabled]):not([type="hidden"])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    '[contenteditable="true"]',
+    '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
+const _modalFocusOrigins = new WeakMap();
+const _modalBackgroundStates = new Map();
+
+function _getModalHeading(modal) {
+    const labelledBy = modal.getAttribute('aria-labelledby');
+    if (labelledBy) {
+        const labelledHeading = document.getElementById(labelledBy);
+        if (labelledHeading) return labelledHeading;
+    }
+    return modal.querySelector('h1, h2, h3, h4, h5, h6');
+}
+
+function _ensureModalSemantics(modal) {
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+
+    const heading = _getModalHeading(modal);
+    if (!heading) return;
+
+    if (!heading.id) {
+        heading.id = `${modal.id || 'modal'}Title`;
+    }
+    modal.setAttribute('aria-labelledby', heading.id);
+}
+
+function _getTopActiveModal() {
+    const active = document.querySelectorAll('.modal.active:not(.closing)');
+    return active.length > 0 ? active[active.length - 1] : null;
+}
+
+function _rememberBackgroundState(element) {
+    if (_modalBackgroundStates.has(element)) return;
+    _modalBackgroundStates.set(element, {
+        inert: element.inert,
+        ariaHidden: element.getAttribute('aria-hidden'),
+    });
+}
+
+function _restoreBackgroundState(element) {
+    const state = _modalBackgroundStates.get(element);
+    if (!state) return;
+
+    element.inert = state.inert;
+    if (state.ariaHidden === null) {
+        element.removeAttribute('aria-hidden');
+    } else {
+        element.setAttribute('aria-hidden', state.ariaHidden);
+    }
+    _modalBackgroundStates.delete(element);
+}
+
+function _syncModalIsolation() {
+    const activeModal = _getTopActiveModal();
+
+    for (const child of document.body.children) {
+        if (!(child instanceof HTMLElement)) continue;
+        if (child.tagName === 'SCRIPT' || child.id === 'toast') continue;
+
+        const isModal = child.classList.contains('modal');
+
+        if (activeModal && child === activeModal) {
+            if (!isModal) _restoreBackgroundState(child);
+            child.inert = false;
+            child.removeAttribute('aria-hidden');
+            continue;
+        }
+
+        if (activeModal) {
+            if (!isModal) _rememberBackgroundState(child);
+            child.inert = true;
+            child.setAttribute('aria-hidden', 'true');
+            continue;
+        }
+
+        if (isModal) {
+            child.inert = true;
+            child.setAttribute('aria-hidden', 'true');
+        } else {
+            _restoreBackgroundState(child);
+        }
+    }
+
+    if (activeModal) {
+        document.addEventListener('focusin', _enforceModalFocus, true);
+    } else {
+        document.removeEventListener('focusin', _enforceModalFocus, true);
+    }
+}
+
+function _getModalFocusableElements(modal) {
+    return Array.from(modal.querySelectorAll(_modalFocusableSelector)).filter((element) => (
+        element instanceof HTMLElement
+        && !element.hidden
+        && !element.inert
+        && element.getAttribute('aria-hidden') !== 'true'
+        && element.getClientRects().length > 0
+    ));
+}
+
+function _focusModal(modal) {
+    if (!modal.hasAttribute('tabindex')) {
+        modal.setAttribute('tabindex', '-1');
+    }
+
+    modal.focus({ preventScroll: true });
+}
+
+function _enforceModalFocus(event) {
+    const activeModal = _getTopActiveModal();
+    if (!activeModal || activeModal.contains(event.target)) return;
+
+    event.stopPropagation();
+    _focusModal(activeModal);
+}
+
+function _trapModalFocus(event) {
+    if (event.key !== 'Tab') return;
+
+    const modal = event.currentTarget;
+    const focusable = _getModalFocusableElements(modal);
+
+    if (focusable.length === 0) {
+        event.preventDefault();
+        _focusModal(modal);
+        return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+
+    if (event.shiftKey && (active === first || !modal.contains(active))) {
+        event.preventDefault();
+        last.focus({ preventScroll: true });
+        return;
+    }
+
+    if (!event.shiftKey && (active === last || !modal.contains(active))) {
+        event.preventDefault();
+        first.focus({ preventScroll: true });
+    }
+}
+
+function _resolveFocusOrigin(origin) {
+    let target = origin;
+
+    while (target instanceof HTMLElement) {
+        const containingModal = target.closest('.modal');
+        if (!containingModal || containingModal.classList.contains('active')) return target;
+
+        target = _modalFocusOrigins.get(containingModal);
+        _modalFocusOrigins.delete(containingModal);
+    }
+
+    return null;
+}
+
+function _restoreModalFocus(modal) {
+    const origin = _modalFocusOrigins.get(modal);
+    modal.removeEventListener('keydown', _trapModalFocus);
+
+    const activeModal = _getTopActiveModal();
+
+if (activeModal && activeModal !== modal) {
+    if (
+        origin instanceof HTMLElement &&
+        origin.isConnected &&
+        activeModal.contains(origin)
+    ) {
+        _modalFocusOrigins.delete(modal);
+        origin.focus({ preventScroll: true });
+    }
+
+    return;
+}
+
+    _modalFocusOrigins.delete(modal);
+    const target = _resolveFocusOrigin(origin);
+    if (!(target instanceof HTMLElement) || !target.isConnected) return;
+
+    target.focus({ preventScroll: true });
+}
+
+function _finishModalClose(modal) {
+    modal.classList.remove('active', 'closing');
+    modal.inert = true;
+    modal.setAttribute('aria-hidden', 'true');
+    _maybeRemoveModalOpen();
+    _syncModalIsolation();
+    _restoreModalFocus(modal);
+}
+
 export function openModal(app, modal) {
     if (!modal) return;
+
+    _ensureModalSemantics(modal);
+
+    if (!modal.classList.contains('active')) {
+        const active = document.activeElement;
+        _modalFocusOrigins.set(
+            modal,
+            active instanceof HTMLElement && active !== document.body ? active : null
+        );
+    }
+
+    modal.classList.remove('closing');
+    modal.inert = false;
+    modal.removeAttribute('aria-hidden');
+    modal.addEventListener('keydown', _trapModalFocus);
     modal.classList.add('active');
     document.body.classList.add('modal-open');
+
+    _focusModal(modal);
+    _syncModalIsolation();
 }
 
 export function closeModal(app, modal) {
-    if (!modal) return;
+    if (!modal || !modal.classList.contains('active')) return;
+    if (modal.classList.contains('closing')) return;
 
     if (modal === app.translationModal) {
         _translationKbClear(app);
     }
 
     if (modal === app.settingsModal || modal === app.referencesModal) {
-        // For bottom sheets: add .closing to trigger the CSS dismiss transition,
-        // then remove .active once the animation completes (320ms).
+        modal.classList.add('closing');
+
         if (modal === app.settingsModal) {
-            modal.classList.add('closing');
-            setTimeout(() => {
-                modal.classList.remove('active', 'closing');
-                _maybeRemoveModalOpen();
-            }, 320);
+            setTimeout(() => _finishModalClose(modal), 320);
         } else {
             const content = modal.querySelector('.modal-content');
             content.style.animation = 'slideDownToBottom 250ms ease';
             setTimeout(() => {
-                modal.classList.remove('active');
-                _maybeRemoveModalOpen();
+                _finishModalClose(modal);
                 content.style.animation = '';
             }, 250);
         }
     } else {
-        modal.classList.remove('active');
-        _maybeRemoveModalOpen();
+        _finishModalClose(modal);
     }
 }
 
 function _maybeRemoveModalOpen() {
-    if (!document.querySelector('.modal.active')) {
+    if (!document.querySelector('.modal.active:not(.closing)')) {
         document.body.classList.remove('modal-open');
     }
 }
 
 // ── Book modal ────────────────────────────────────────────────────────────────
 
+const BOOK_TESTAMENT_FILTERS = [
+    { testament: 'Old Testament', label: 'Old Testament' },
+    { testament: 'Deuterocanon', label: 'Apocrypha' },
+    { testament: 'New Testament', label: 'New Testament' },
+];
+
 export function openBookModal(app) {
+    const content = app.bookModal?.querySelector('.modal-content');
+    if (content) content.style.height = '';
+
     populateBookModal(app);
     openModal(app, app.bookModal);
+
+    requestAnimationFrame(() => {
+        if (!content || !app.bookModal?.classList.contains('active')) return;
+        content.style.height = `${content.offsetHeight}px`;
+    });
 }
 
 export function populateBookModal(app) {
     const modalBody = app.bookModal?.querySelector('.modal-body');
-    if (!modalBody) return;
+    const filterBar = app.bookModal?.querySelector('.book-testament-filters');
+    if (!modalBody || !filterBar) return;
 
     modalBody.innerHTML = '';
+    filterBar.innerHTML = '';
+    modalBody.classList.remove('book-testament-filter-active');
+
+    const sections = new Map();
+    const filterButtons = new Map();
+    let activeTestament = null;
+
+    const applyFilter = (testament) => {
+        activeTestament = activeTestament === testament ? null : testament;
+
+        for (const [sectionTestament, section] of sections) {
+            section.hidden = activeTestament !== null
+                && sectionTestament !== activeTestament;
+        }
+
+        for (const [buttonTestament, button] of filterButtons) {
+            const isActive = buttonTestament === activeTestament;
+            button.classList.toggle('book-testament-filter--active', isActive);
+            button.setAttribute('aria-pressed', String(isActive));
+        }
+
+        modalBody.classList.toggle(
+            'book-testament-filter-active',
+            activeTestament !== null
+        );
+        modalBody.scrollTop = 0;
+    };
+
+    for (const { testament, label } of BOOK_TESTAMENT_FILTERS) {
+        const books = app.bibleBooks[testament];
+        if (!books || Object.keys(books).length === 0) continue;
+
+        const button = document.createElement('button');
+        button.className = 'book-testament-filter';
+        button.type = 'button';
+        button.textContent = label;
+        button.setAttribute('aria-pressed', 'false');
+        button.addEventListener('click', () => applyFilter(testament));
+
+        filterButtons.set(testament, button);
+        filterBar.appendChild(button);
+    }
 
     const createBookButton = (book) => {
-        const btn = document.createElement('button');
-        btn.className = 'book-item';
-        btn.textContent = app.bookAbbreviations[book] || book;
-        btn.addEventListener('click', () => {
+        const button = document.createElement('button');
+        button.className = 'book-item';
+        button.type = 'button';
+        button.textContent = app.bookAbbreviations[book] || book;
+        button.addEventListener('click', () => {
             app.state.selectedVerse = null;
             app.loadPassage(book, 1);
             app.closeModal(app.bookModal);
         });
-        return btn;
+        return button;
     };
 
     for (const [testament, books] of Object.entries(app.bibleBooks)) {
         const section = document.createElement('div');
         section.className = 'book-category';
+        section.dataset.testament = testament;
 
         const heading = document.createElement('h4');
-        heading.textContent = testament === 'Deuterocanon' ? 'Apocrypha / Deuterocanon' : testament;
+        heading.textContent = testament === 'Deuterocanon'
+            ? 'Apocrypha / Deuterocanon'
+            : testament;
+
         if (testament === 'Deuterocanon') {
-            const infoBtn = document.createElement('button');
-            infoBtn.className = 'deuterocanon-info-btn';
-            infoBtn.setAttribute('aria-label', 'About the Deuterocanon');
-            infoBtn.innerHTML = '?';
-            infoBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
+            const infoButton = document.createElement('button');
+            infoButton.className = 'deuterocanon-info-btn';
+            infoButton.type = 'button';
+            infoButton.setAttribute('aria-label', 'About the Deuterocanon');
+            infoButton.textContent = '?';
+            infoButton.addEventListener('click', (event) => {
+                event.stopPropagation();
                 openDeuterocanonInfoModal(app);
             });
-            heading.appendChild(infoBtn);
+            heading.appendChild(infoButton);
         }
         section.appendChild(heading);
 
         const grid = document.createElement('div');
         grid.className = 'book-grid';
         if (testament === 'Old Testament') grid.id = 'oldTestamentBooks';
+        if (testament === 'Deuterocanon') grid.id = 'deuterocanonBooks';
         if (testament === 'New Testament') grid.id = 'newTestamentBooks';
 
         for (const book of Object.keys(books)) {
@@ -103,6 +382,7 @@ export function populateBookModal(app) {
         }
 
         section.appendChild(grid);
+        sections.set(testament, section);
         modalBody.appendChild(section);
     }
 }
