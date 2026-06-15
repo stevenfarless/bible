@@ -1,0 +1,244 @@
+name: Add Android Haptics
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: add-android-haptics-exp
+  cancel-in-progress: false
+
+jobs:
+  add-android-haptics:
+    name: Add configurable Android haptic feedback
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Patch Android haptic support
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path_name, old, new):
+              path = Path(path_name)
+              text = path.read_text(encoding='utf-8')
+              if new in text:
+                  return
+              if text.count(old) != 1:
+                  raise SystemExit(f'Expected one replacement anchor in {path_name}')
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          haptics = Path('haptics.js')
+          if not haptics.exists():
+              haptics.write_text("""const LIGHT_CLICK_MS = 12;
+const FIRM_PATTERN = [30, 20, 30];
+
+function canVibrate(app) {
+    return app?.state?.hapticsEnabled !== false
+        && typeof navigator.vibrate === 'function';
+}
+
+export function hapticLight(app) {
+    if (!canVibrate(app)) return false;
+    return navigator.vibrate(LIGHT_CLICK_MS);
+}
+
+export function hapticFirm(app) {
+    if (!canVibrate(app)) return false;
+    return navigator.vibrate(FIRM_PATTERN);
+}
+
+export function supportsHaptics() {
+    return typeof navigator.vibrate === 'function';
+}
+""", encoding='utf-8')
+
+          replace_once(
+              'index.html',
+              '\t<link rel="modulepreload" href="settings.js" />\n',
+              '\t<link rel="modulepreload" href="settings.js" />\n\t<link rel="modulepreload" href="haptics.js" />\n',
+          )
+
+          replace_once(
+              'index.html',
+              '''\t\t\t\t\t\t\t<div class="setting-item">\n\t\t\t\t\t\t\t\t<label class="checkbox-label">\n\t\t\t\t\t\t\t\t\t<input type="checkbox" id="chapterArrowsToggle" />\n\t\t\t\t\t\t\t\t\t<span>Show chapter arrows</span>\n\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t</div>''',
+              '''\t\t\t\t\t\t\t<div class="setting-item" id="hapticsSetting">\n\t\t\t\t\t\t\t\t<label class="checkbox-label">\n\t\t\t\t\t\t\t\t\t<input type="checkbox" id="hapticsToggle" checked />\n\t\t\t\t\t\t\t\t\t<span>Haptic feedback</span>\n\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t\t<small class="help-text">Vibrate for supported interactions on Android.</small>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class="setting-item">\n\t\t\t\t\t\t\t\t<label class="checkbox-label">\n\t\t\t\t\t\t\t\t\t<input type="checkbox" id="chapterArrowsToggle" />\n\t\t\t\t\t\t\t\t\t<span>Show chapter arrows</span>\n\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t</div>''',
+          )
+
+          replace_once(
+              'settings.js',
+              "    showChapterArrows:   false,\n",
+              "    showChapterArrows:   false,\n    hapticsEnabled:      true,\n",
+          )
+          replace_once(
+              'settings.js',
+              "    app.state.showChapterArrows   = readBool('showChapterArrows',   DEFAULTS.showChapterArrows);\n",
+              "    app.state.showChapterArrows   = readBool('showChapterArrows',   DEFAULTS.showChapterArrows);\n    app.state.hapticsEnabled      = readBool('hapticsEnabled',      DEFAULTS.hapticsEnabled);\n",
+          )
+          replace_once(
+              'settings.js',
+              "    if (app.chapterArrowsToggle)   app.chapterArrowsToggle.checked   = !!app.state.showChapterArrows;\n",
+              "    if (app.chapterArrowsToggle)   app.chapterArrowsToggle.checked   = !!app.state.showChapterArrows;\n    if (app.hapticsToggle)        app.hapticsToggle.checked        = !!app.state.hapticsEnabled;\n    const hapticsSetting = document.getElementById('hapticsSetting');\n    if (hapticsSetting) hapticsSetting.hidden = typeof navigator.vibrate !== 'function';\n",
+          )
+          replace_once(
+              'settings.js',
+              "    showChapterArrows: 'chapterArrowsToggle',\n",
+              "    showChapterArrows: 'chapterArrowsToggle',\n    hapticsEnabled:    'hapticsToggle',\n",
+          )
+
+          replace_once(
+              'events.js',
+              "import { handleChangeEmail, handleChangePassword, handleForgotPassword } from './auth.js';\n",
+              "import { handleChangeEmail, handleChangePassword, handleForgotPassword } from './auth.js';\nimport { hapticFirm } from './haptics.js';\n",
+          )
+          replace_once(
+              'events.js',
+              "                navigator.vibrate?.(20);\n                selectVerse(pressedVerse);\n",
+              "                hapticFirm(app);\n                selectVerse(pressedVerse);\n",
+          )
+
+          replace_once(
+              'swipe.js',
+              "import { loadStructure, eventsForChapter } from './bsb-structure.js';\n",
+              "import { loadStructure, eventsForChapter } from './bsb-structure.js';\nimport { hapticLight, hapticFirm } from './haptics.js';\n",
+          )
+          replace_once(
+              'swipe.js',
+              '''// ── Haptic feedback ────────────────────────────────────────────────────────\n\nfunction _haptic(strong = false) {\n    if (!navigator.vibrate) return;\n    navigator.vibrate(strong ? [30, 20, 30] : [12]);\n}\n\n''',
+              '',
+          )
+          path = Path('swipe.js')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace('_haptic(true);', 'hapticFirm(app);')
+          text = text.replace('_haptic(false);', 'hapticLight(app);')
+          text = text.replace('_haptic();', 'hapticLight(app);')
+          if '_haptic(' in text:
+              raise SystemExit('Unmigrated swipe haptic call remains')
+          path.write_text(text, encoding='utf-8')
+
+          replace_once(
+              'sw.js',
+              "  './settings.js',\n",
+              "  './settings.js',\n  './haptics.js',\n",
+          )
+
+          replace_once(
+              'app.js',
+              "        'showChapterArrows',\n",
+              "        'showChapterArrows', 'hapticsEnabled',\n",
+          )
+          PY
+
+      - name: Wire haptics toggle
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('events.js')
+          text = path.read_text(encoding='utf-8')
+          anchor = "    app.chapterArrowsToggle?.addEventListener('change', () => app.toggleSetting('showChapterArrows'));\n"
+          addition = anchor + "    app.hapticsToggle?.addEventListener('change', () => app.toggleSetting('hapticsEnabled'));\n"
+          if "app.toggleSetting('hapticsEnabled')" not in text:
+              if text.count(anchor) != 1:
+                  raise SystemExit('Expected one chapter arrows listener anchor')
+              text = text.replace(anchor, addition, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate implementation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          required = {
+              'haptics.js': [
+                  "export function hapticLight(app)",
+                  "export function hapticFirm(app)",
+                  "typeof navigator.vibrate === 'function'",
+              ],
+              'index.html': [
+                  'href="haptics.js"',
+                  'id="hapticsSetting"',
+                  'id="hapticsToggle"',
+              ],
+              'settings.js': [
+                  'hapticsEnabled:      true,',
+                  "readBool('hapticsEnabled'",
+                  "hapticsEnabled:    'hapticsToggle'",
+              ],
+              'events.js': [
+                  "import { hapticFirm } from './haptics.js';",
+                  "app.toggleSetting('hapticsEnabled')",
+                  'hapticFirm(app);',
+              ],
+              'swipe.js': [
+                  "import { hapticLight, hapticFirm } from './haptics.js';",
+                  'hapticLight(app);',
+                  'hapticFirm(app);',
+              ],
+              'sw.js': ["'./haptics.js',"],
+              'app.js': ["'hapticsEnabled'"],
+          }
+
+          for path_name, snippets in required.items():
+              text = Path(path_name).read_text(encoding='utf-8')
+              for snippet in snippets:
+                  assert snippet in text, f'Missing from {path_name}: {snippet}'
+
+          direct = []
+          for path in Path('.').glob('*.js'):
+              if path.name == 'haptics.js':
+                  continue
+              if 'navigator.vibrate' in path.read_text(encoding='utf-8'):
+                  direct.append(str(path))
+          assert not direct, f'Direct navigator.vibrate calls remain: {direct}'
+          PY
+
+          node --check haptics.js
+          node --check settings.js
+          node --check events.js
+          node --check swipe.js
+          node --check app.js
+          node --check sw.js
+          git diff --check
+
+      - name: Commit Android haptics
+        run: |
+          files=(
+            haptics.js
+            index.html
+            settings.js
+            events.js
+            swipe.js
+            sw.js
+            app.js
+          )
+
+          if [ -z "$(git status --porcelain -- "${files[@]}")" ]; then
+            echo "Android haptics are already implemented"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${files[@]}"
+          git commit -F - <<'EOF'
+          feat(haptics): add configurable Android feedback
+
+          Add shared light and firm vibration helpers, migrate swipe and verse
+          selection feedback, and add a persisted haptics toggle that syncs
+          through the existing settings path.
+
+          Hide the setting where the Vibration API is unavailable and precache
+          the haptics module for offline use.
+          EOF
+          git push origin exp
