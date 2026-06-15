@@ -12,7 +12,7 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="61c82f5" />
+	<meta name="build-id" content="ea8150a" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement - always available in <head>) before the
@@ -38,7 +38,7 @@
 			if (isLight) el.classList.add('light-mode');
 		}());
 	</script>
-	<script src="prepaint-settings.js?v=61c82f5"></script>
+	<script src="prepaint-settings.js?v=ea8150a"></script>
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -51,7 +51,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=61c82f5">.
+	     before the parser reaches <script type="module" src="app.js?v=ea8150a">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -62,25 +62,27 @@
 	<link rel="modulepreload" href="navigation.js" />
 	<link rel="modulepreload" href="search.js" />
 	<link rel="modulepreload" href="auth.js" />
+	<link rel="modulepreload" href="sync-prompt.js" />
 	<link rel="modulepreload" href="modals.js" />
 	<link rel="modulepreload" href="settings.js" />
+	<link rel="modulepreload" href="haptics.js" />
 	<link rel="modulepreload" href="keyboard.js" />
 	<link rel="modulepreload" href="events.js" />
 	<!-- CSS loaded as parallel <link> tags — @import chains are render-blocking
 	     and sequential; <link> tags are fetched in parallel by the browser. -->
-	<link rel="stylesheet" href="css/fonts.css?v=61c82f5" />
-	<link rel="stylesheet" href="css/base.css?v=61c82f5" />
-	<link rel="stylesheet" href="css/tokens.css?v=61c82f5" />
-	<link rel="stylesheet" href="css/themes.css?v=61c82f5" />
-	<link rel="stylesheet" href="css/layout.css?v=61c82f5" />
-	<link rel="stylesheet" href="css/components.css?v=61c82f5" />
-	<link rel="stylesheet" href="css/modals.css?v=61c82f5" />
-	<link rel="stylesheet" href="css/interactions.css?v=61c82f5" />
-	<link rel="stylesheet" href="css/utilities.css?v=61c82f5" />
-	<link rel="stylesheet" href="css/pericope.css?v=61c82f5" />
-	<link rel="stylesheet" href="css/geek95.css?v=61c82f5">
+	<link rel="stylesheet" href="css/fonts.css?v=ea8150a" />
+	<link rel="stylesheet" href="css/base.css?v=ea8150a" />
+	<link rel="stylesheet" href="css/tokens.css?v=ea8150a" />
+	<link rel="stylesheet" href="css/themes.css?v=ea8150a" />
+	<link rel="stylesheet" href="css/layout.css?v=ea8150a" />
+	<link rel="stylesheet" href="css/components.css?v=ea8150a" />
+	<link rel="stylesheet" href="css/modals.css?v=ea8150a" />
+	<link rel="stylesheet" href="css/interactions.css?v=ea8150a" />
+	<link rel="stylesheet" href="css/utilities.css?v=ea8150a" />
+	<link rel="stylesheet" href="css/pericope.css?v=ea8150a" />
+	<link rel="stylesheet" href="css/geek95.css?v=ea8150a">
 	<!-- Firebase App Check loads reCAPTCHA v3 through ReCaptchaV3Provider. -->
-    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js?v=61c82f5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js?v=ea8150a"></script>
 </head>
 
 <body class="initializing">
@@ -88,7 +90,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">61c82f5</span>
+				<span id="build-info">ea8150a</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -413,6 +415,13 @@
 									<option value="tap">Single tap</option>
 								</select>
 								<small class="help-text">Choose how verses are selected.</small>
+							</div>
+							<div class="setting-item" id="hapticsSetting">
+								<label class="checkbox-label">
+									<input type="checkbox" id="hapticsToggle" checked />
+									<span>Haptic feedback</span>
+								</label>
+								<small class="help-text">Vibrate for supported interactions on Android.</small>
 							</div>
 							<div class="setting-item">
 								<label class="checkbox-label">
@@ -757,9 +766,31 @@
 		</div>
     </div>
 
+	<aside
+		id="syncPrompt"
+		class="sync-prompt"
+		aria-labelledby="syncPromptTitle"
+		aria-describedby="syncPromptDescription"
+		hidden
+	>
+		<div class="sync-prompt-header">
+			<h2 id="syncPromptTitle">Sync your reading</h2>
+			<button
+				id="syncPromptDismiss"
+				class="sync-prompt-dismiss"
+				type="button"
+				aria-label="Dismiss sign-in prompt"
+			>&times;</button>
+		</div>
+		<p id="syncPromptDescription">
+			Sign in to keep your reading position and settings synchronized across devices.
+		</p>
+		<button id="syncPromptSignIn" class="primary-btn" type="button">Sign in</button>
+	</aside>
+
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=61c82f5"></script>
+	<script type="module" src="app.js?v=ea8150a"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');

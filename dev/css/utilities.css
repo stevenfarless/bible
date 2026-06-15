@@ -136,6 +136,21 @@
     .search-container.active {
         max-height: calc(100dvh - var(--chrome-height));
     }
+
+    .sync-prompt {
+        top: auto;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        max-height: min(70dvh, 32rem);
+        overflow-y: auto;
+        padding-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom));
+        border-right: 0;
+        border-bottom: 0;
+        border-left: 0;
+        border-radius: 16px 16px 0 0;
+    }
 }
 
 @media (max-width: 480px) {

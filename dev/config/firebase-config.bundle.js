@@ -39,11 +39,9 @@ initializeAppCheck(app, {
 });
 var _auth = getAuth(app);
 var _db = getDatabase(app);
-setPersistence(_auth, indexedDBLocalPersistence).catch(
-  () => setPersistence(_auth, browserLocalPersistence).catch(
-    () => setPersistence(_auth, browserSessionPersistence)
-  )
-);
+var authPersistenceReady = setPersistence(_auth, indexedDBLocalPersistence).catch(() => setPersistence(_auth, browserLocalPersistence)).catch(() => setPersistence(_auth, browserSessionPersistence)).catch((error) => {
+  console.warn("Firebase auth persistence unavailable", error);
+});
 function makeRef(path) {
   const dbRef = ref(_db, path);
   return {
@@ -56,6 +54,7 @@ var dbShim = {
   ref: (path) => makeRef(path)
 };
 var authShim = {
+  ready: authPersistenceReady,
   onAuthStateChanged: (cb) => onAuthStateChanged(_auth, cb),
   signInWithEmailAndPassword: (e, p) => signInWithEmailAndPassword(_auth, e, p),
   createUserWithEmailAndPassword: (e, p) => createUserWithEmailAndPassword(_auth, e, p),

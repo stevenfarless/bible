@@ -51,13 +51,14 @@ const _auth = getAuth(app);
 const _db   = getDatabase(app);
 
 // Try IndexedDB first (most robust), fall back to localStorage, then
-// sessionStorage. This prevents sign-out on every reload when Edge/Safari
-// tracking prevention blocks cross-origin storage access.
-setPersistence(_auth, indexedDBLocalPersistence).catch(() =>
-    setPersistence(_auth, browserLocalPersistence).catch(() =>
-        setPersistence(_auth, browserSessionPersistence)
-    )
-);
+// sessionStorage. Expose completion so auth-state consumers do not infer
+// readiness from timing or show signed-out UI before persistence settles.
+const authPersistenceReady = setPersistence(_auth, indexedDBLocalPersistence)
+    .catch(() => setPersistence(_auth, browserLocalPersistence))
+    .catch(() => setPersistence(_auth, browserSessionPersistence))
+    .catch((error) => {
+        console.warn('Firebase auth persistence unavailable', error);
+    });
 
 // ── Database shim ──────────────────────────────────────────────────────────
 // Returns a ref-like object whose .once() and .set() match the compat API.
@@ -76,6 +77,7 @@ const dbShim = {
 
 // ── Auth shim ──────────────────────────────────────────────────────────────
 const authShim = {
+    ready: authPersistenceReady,
     onAuthStateChanged: (cb)           => onAuthStateChanged(_auth, cb),
     signInWithEmailAndPassword: (e, p) => signInWithEmailAndPassword(_auth, e, p),
     createUserWithEmailAndPassword: (e, p) => createUserWithEmailAndPassword(_auth, e, p),

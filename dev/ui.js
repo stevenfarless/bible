@@ -23,6 +23,7 @@ const REQUIRED_IDS = [
 	'deuterocanonInfoModal', 'closeDeuterocanonInfoModal',
 	'footnotesSection', 'footnotesContent',
 	'crossReferencesSection', 'crossReferencesContent',
+	'syncPrompt', 'syncPromptDismiss', 'syncPromptSignIn',
 	'toast',
 	// Nav translation badge
 	'translationSelectorBtn', 'currentTranslation',
@@ -143,6 +144,11 @@ export function cacheElements(app) {
 	app.footnotesContent = document.getElementById('footnotesContent');
 	app.crossReferencesSection = document.getElementById('crossReferencesSection');
 	app.crossReferencesContent = document.getElementById('crossReferencesContent');
+
+	// Persistent sync prompt
+	app.syncPrompt = document.getElementById('syncPrompt');
+	app.syncPromptDismiss = document.getElementById('syncPromptDismiss');
+	app.syncPromptSignIn = document.getElementById('syncPromptSignIn');
 
 	// Toast
 	app.toast = document.getElementById('toast');
