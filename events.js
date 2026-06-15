@@ -327,61 +327,122 @@ export function attachEventListeners(app) {
         app.state.showVerseNumbers = e.currentTarget.checked;
         syncReadingDisplay(app);
     });
-    app.verseNumbersToggle?.addEventListener('change', (e) => app.toggleVerseNumbers(e.currentTarget.checked));
+    app.verseNumbersToggle?.addEventListener('change', () => app.toggleSetting('showVerseNumbers'));
 
     app.coloredVerseNumbersToggle?.addEventListener('input', (e) => {
         app.state.coloredVerseNumbers = e.currentTarget.checked;
         syncReadingDisplay(app);
     });
-    app.coloredVerseNumbersToggle?.addEventListener('change', (e) => app.toggleColoredVerseNumbers(e.currentTarget.checked));
-
-    app.headingsToggle?.addEventListener('change', (e) => app.toggleHeadings(e.currentTarget.checked));
-    app.footnotesToggle?.addEventListener('change', (e) => app.toggleFootnotes(e.currentTarget.checked));
-    app.crossReferencesToggle?.addEventListener('change', (e) => app.toggleCrossReferences(e.currentTarget.checked));
-
-    app.verseByVerseToggle?.addEventListener('input', (e) => {
-        app.state.verseByVerse = e.currentTarget.checked;
-        syncReadingDisplay(app);
+    app.coloredVerseNumbersToggle?.addEventListener('change', () => {
+        app.toggleSetting('coloredVerseNumbers');
     });
-    app.verseByVerseToggle?.addEventListener('change', (e) => app.toggleVerseByVerse(e.currentTarget.checked));
+
+    app.headingsToggle?.addEventListener('change', () => app.toggleSetting('showHeadings'));
+    app.footnotesToggle?.addEventListener('change', () => app.toggleSetting('showFootnotes'));
 
     app.chapterArrowsToggle?.addEventListener('input', (e) => {
         app.state.showChapterArrows = e.currentTarget.checked;
         syncReadingDisplay(app);
     });
-    app.chapterArrowsToggle?.addEventListener('change', (e) => app.toggleChapterArrows(e.currentTarget.checked));
+    app.chapterArrowsToggle?.addEventListener('change', () => app.toggleSetting('showChapterArrows'));
 
-    document.getElementById('verseSelectionGesture')?.addEventListener('change', (e) => {
-        app.state.verseSelectionGesture = e.currentTarget.value;
-        app.saveSettings();
+    app.crossReferencesToggle = document.getElementById('crossReferencesToggle');
+    app.crossReferencesToggle?.addEventListener('change', () => app.toggleSetting('showCrossReferences'));
+
+    app.verseByVerseToggle?.addEventListener('input', (e) => {
+        app.state.verseByVerse = e.currentTarget.checked;
+        syncReadingDisplay(app);
+    });
+    app.verseByVerseToggle?.addEventListener('change', () => app.toggleVerseByVerse());
+    app.fontSizeSlider?.addEventListener('input', (e) => app.updateFontSize(e.target.value));
+
+    app.verseSelectionGestureSelect?.addEventListener('change', async (event) => {
+        const gesture = event.currentTarget.value === 'tap' ? 'tap' : 'hold';
+        app.state.verseSelectionGesture = gesture;
+        localStorage.setItem('verseSelectionGesture', gesture);
+
+        if (app.currentUser) {
+            await app.database
+                .ref(`users/${app.currentUser.uid}/settings/verseSelectionGesture`)
+                .set(gesture);
+        }
     });
 
-    app.fontSizeSlider?.addEventListener('input', (e) => app.changeFontSize(e.currentTarget.value));
-    app.themeSelector?.addEventListener('change', (e) => changeColorTheme(app, e.currentTarget.value));
-    app.lightModeSelect?.addEventListener('change', (e) => setLightMode(app, e.currentTarget.value));
-    app.readingFontSelect?.addEventListener('change', (e) => applyReadingFont(app, e.currentTarget.value));
+    const readingFontSelector = document.getElementById('readingFontSelector');
+    if (readingFontSelector) {
+        readingFontSelector.addEventListener('change', async () => {
+            const font = readingFontSelector.value;
+            await applyReadingFont(app, font);
+            app.state.readingFont = font;
+            localStorage.setItem('readingFont', font);
 
-    document.getElementById('loginForm')?.addEventListener('submit', (e) => app.handleLogin(e));
-    document.getElementById('signupForm')?.addEventListener('submit', (e) => app.handleSignup(e));
-    document.getElementById('forgotPasswordLink')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        handleForgotPassword(app);
+            if (app.currentUser) {
+                await app.database
+                    .ref(`users/${app.currentUser.uid}/settings/readingFont`)
+                    .set(font);
+            }
+        });
+    }
+
+    document.getElementById('lightModeSelect')?.addEventListener('change', (event) => {
+        app._dbgUserAction?.(`changeAppearance: ${event.currentTarget.value}`);
+        setLightMode(app, event.currentTarget.value);
     });
-    document.getElementById('showSignupLink')?.addEventListener('click', (e) => {
-        e.preventDefault();
+
+    const themeSelector = document.getElementById('themeSelector');
+    let lastAppliedTheme = app.state.colorTheme;
+
+    const applyThemeSelection = async (event) => {
+        const theme = event.currentTarget.value;
+        if (!theme || theme === lastAppliedTheme) return;
+
+        lastAppliedTheme = theme;
+        app._dbgUserAction?.(`changeTheme: ${theme}`);
+        app.state.colorTheme = theme;
+        localStorage.setItem('colorTheme', theme);
+        await changeColorTheme(app, theme);
+    };
+
+    themeSelector?.addEventListener('input', applyThemeSelection);
+    themeSelector?.addEventListener('change', applyThemeSelection);
+
+    document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
+    document.getElementById('changeEmailBtn')?.addEventListener('click', () => openChangeEmailModal(app));
+    document.getElementById('changePasswordBtn')?.addEventListener('click', () => openChangePasswordModal(app));
+    document.getElementById('forgotPasswordBtn')?.addEventListener('click', () => handleForgotPassword(app));
+
+    const openSignupModal = (event) => {
+        event.preventDefault();
         app.closeModal(app.loginModal);
         app.openModal(app.signupModal);
-    });
-    document.getElementById('showLoginLink')?.addEventListener('click', (e) => {
-        e.preventDefault();
+    };
+
+    document.getElementById('showSignup')?.addEventListener('click', openSignupModal);
+    document.getElementById('showSignupLink')?.addEventListener('click', openSignupModal);
+
+    document.getElementById('showLoginLink')?.addEventListener('click', (event) => {
+        event.preventDefault();
         app.closeModal(app.signupModal);
         app.openModal(app.loginModal);
     });
-    document.getElementById('logoutBtn')?.addEventListener('click', () => app.handleLogout());
-    document.getElementById('changeEmailBtn')?.addEventListener('click', () => openChangeEmailModal(app));
-    document.getElementById('changePasswordBtn')?.addEventListener('click', () => openChangePasswordModal(app));
 
-    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
-        if (app.state.lightMode === 'system') applyLightMode(app);
+    document.getElementById('loginForm')?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        app.handleLogin();
     });
+
+    document.getElementById('signupForm')?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        app.handleSignup();
+    });
+
+    document.getElementById('logoutBtn')?.addEventListener('click', () => app.handleLogout());
+
+    window.addEventListener('scroll', () => {
+        app.handleChromeScroll();
+        clearTimeout(app.scrollTimeout);
+        app.scrollTimeout = setTimeout(() => app.saveReadingPosition(), 500);
+    }, { passive: true });
+
+    document.addEventListener('keydown', (event) => app.handleKeyboardShortcuts(event));
 }
