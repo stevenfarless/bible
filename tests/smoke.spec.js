@@ -238,7 +238,7 @@ test('passage cache: navigating back to a visited passage writes cache', async (
 test('settings: toggling verse numbers checkbox changes its state', async ({ page }) => {
         await page.goto('/');
         await waitForPassage(page);
-        await openSettingsSection(page, 'reading');
+        await openSettingsSection(page, 'appearance');
 
         const checkbox = page.locator('#verseNumbersToggle');
         const initial = await checkbox.isChecked();
@@ -249,7 +249,7 @@ test('settings: toggling verse numbers checkbox changes its state', async ({ pag
 test('settings: verse-by-verse mode toggles passage layout class', async ({ page }) => {
         await page.goto('/');
         await waitForPassage(page);
-        await openSettingsSection(page, 'reading');
+        await openSettingsSection(page, 'appearance');
 
         const checkbox = page.locator('#verseByVerseToggle');
         const initial = await checkbox.isChecked();
@@ -389,7 +389,7 @@ test('auth: signup with short password shows validation toast', async ({ page })
         await waitForApp(page);
 
         await page.locator('#userBtn').click();
-        await page.locator('#showSignup').click();
+        await page.locator('#showSignupLink').click();
         await page.locator('#signupEmail').fill('test@example.com');
         await page.locator('#signupPassword').fill('123');
         await page.locator('#signupSubmit').click();
