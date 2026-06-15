@@ -406,7 +406,12 @@ export function attachEventListeners(app) {
     themeSelector?.addEventListener('input', applyThemeSelection);
     themeSelector?.addEventListener('change', applyThemeSelection);
 
-    document.getElementById('userBtn')?.addEventListener('click', () => app.handleUserButtonClick());
+    document.getElementById('userBtn')?.addEventListener('click', () => {
+        app.hideSyncPrompt();
+        app.handleUserButtonClick();
+    });
+    app.syncPromptDismiss?.addEventListener('click', () => app.dismissSyncPrompt());
+    app.syncPromptSignIn?.addEventListener('click', () => app.openSyncPromptLogin());
     document.getElementById('changeEmailBtn')?.addEventListener('click', () => openChangeEmailModal(app));
     document.getElementById('changePasswordBtn')?.addEventListener('click', () => openChangePasswordModal(app));
     document.getElementById('forgotPasswordBtn')?.addEventListener('click', () => handleForgotPassword(app));
