@@ -3,17 +3,17 @@
 
 export function initializeState() {
     return {
-        currentBook: 'John',
+        currentBook: 'Genesis',
         currentChapter: 1,
         selectedVerse: null,
-        fontSize: 18,
+        fontSize: 20,
         showVerseNumbers: true,
         showHeadings: true,
         showFootnotes: false,
         showCrossReferences: false,
         verseByVerse: false,
-        colorTheme: 'dracula',
-        lightMode: false,
+        colorTheme: 'vespers',
+        lightMode: 'system',
         translation: 'KJV'
     };
 }
@@ -117,30 +117,10 @@ export function applyVerseGlow(app) {
     wrapper.appendChild(tray);
 
     trigger.addEventListener('click', () => toggleVerseTray(wrapper, trigger, tray));
-
-    wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-// Exported so app.js can delegate app.toggleVerseTray() to this.
-export function toggleVerseTray(wrapperOrApp, triggerArg, trayArg) {
-    // Called via app.toggleVerseTray() from keyboard.js — locate live elements.
-    let wrapper, trigger, tray;
-    if (wrapperOrApp && wrapperOrApp.passageText) {
-        // Called as toggleVerseTray(app)
-        wrapper = wrapperOrApp.passageText.querySelector('[data-verse-glow]');
-        if (!wrapper) return;
-        trigger = wrapper.querySelector('.verse-tools-trigger');
-        tray    = wrapper.querySelector('.verse-tools-tray');
-    } else {
-        // Called directly from the click listener with (wrapper, trigger, tray)
-        wrapper = wrapperOrApp;
-        trigger = triggerArg;
-        tray    = trayArg;
-    }
-    if (!trigger || !tray) return;
-
-    const isOpen = tray.classList.toggle('verse-tools-tray--open');
-    trigger.classList.toggle('verse-tools-trigger--open', isOpen);
-    trigger.setAttribute('aria-expanded', String(isOpen));
-    tray.setAttribute('aria-hidden', String(!isOpen));
+export function toggleVerseTray(wrapper, trigger, tray) {
+    const open = wrapper.classList.toggle('verse-tools-open');
+    trigger.setAttribute('aria-expanded', String(open));
+    tray.setAttribute('aria-hidden', String(!open));
 }
