@@ -283,7 +283,7 @@ export function attachEventListeners(app) {
 
         document.addEventListener('pointerdown', (event) => {
             if (app.state.selectedVerse == null) return;
-            if (event.target.closest('.selected-verse-glow, .verse-tools-tray, .verse-tools-trigger')) return;
+            if (event.composedPath().some((element) => element instanceof Element && element.matches('.selected-verse-glow, .verse-tools-tray, .verse-tools-trigger'))) return;
             clearSelectedVerse();
         });
 
