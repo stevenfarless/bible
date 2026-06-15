@@ -32,7 +32,13 @@ jobs:
 
       - name: Apply and recheck implementation
         run: |
-          python3 -m py_compile .github/scripts/implement-sync-sign-in-prompt.py
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+
+          path = Path('.github/scripts/implement-sync-sign-in-prompt.py')
+          ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
+          PY
           python3 .github/scripts/implement-sync-sign-in-prompt.py
           python3 .github/scripts/implement-sync-sign-in-prompt.py
 
