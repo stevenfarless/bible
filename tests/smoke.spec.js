@@ -4,12 +4,30 @@ import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ page }) => {
         await page.addInitScript(() => {
                 self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-                try { localStorage.setItem('syncPromptDismissedV1', '1'); } catch (_) {}
+
+                try {
+                        const syncPromptTest =
+                                new URLSearchParams(location.search).has('syncPromptTest');
+
+                        if (syncPromptTest) {
+                                localStorage.removeItem('syncPromptDismissedV1');
+                        } else {
+                                localStorage.setItem('syncPromptDismissedV1', '1');
+                        }
+                } catch (_) {}
         });
 });
 
 async function waitForApp(page) {
         await page.waitForSelector('body[data-app-ready]', { timeout: 10000 });
+}
+
+async function waitForAuthState(page) {
+        await page.waitForFunction(
+                () => window._bibleApp?.authStateResolved === true,
+                null,
+                { timeout: 10000 }
+        );
 }
 
 async function waitForPassage(page) {
@@ -460,59 +478,215 @@ test('auth: signup with short password shows validation toast', async ({ page })
         await expect(page.locator('#toast')).toHaveClass(/show/);
 });
 
-test('sync prompt: responds to desktop and mobile layouts', async ({ page }) => {
-        await page.setViewportSize({ width: 1280, height: 900 });
-        await page.goto('/');
+test('sync prompt: remains hidden during signed-out startup', async ({ page }) => {
+        await page.goto('/?syncPromptTest=1');
         await waitForApp(page);
+        await waitForAuthState(page);
 
-        await page.evaluate(() => {
-                localStorage.removeItem('syncPromptDismissedV1');
-                document.getElementById('syncPrompt').hidden = false;
-        });
+        expect(await page.evaluate(
+                () => window._bibleApp.currentUser
+        )).toBeNull();
 
-        const prompt = page.locator('#syncPrompt');
-        await expect(prompt).toBeVisible();
-
-        const desktopLayout = await page.evaluate(() => {
-                const account = document.getElementById('userBtn').getBoundingClientRect();
-                const panel = document.getElementById('syncPrompt').getBoundingClientRect();
-                return {
-                        accountBottom: account.bottom,
-                        accountRight: account.right,
-                        panelTop: panel.top,
-                        panelRight: panel.right,
-                };
-        });
-
-        expect(desktopLayout.panelTop).toBeGreaterThanOrEqual(desktopLayout.accountBottom);
-        expect(Math.abs(desktopLayout.panelRight - desktopLayout.accountRight)).toBeLessThanOrEqual(2);
-
-        await page.setViewportSize({ width: 390, height: 844 });
-        await expect.poll(() => page.evaluate(() => {
-                const panel = document.getElementById('syncPrompt').getBoundingClientRect();
-                return Math.round(window.innerHeight - panel.bottom);
-        })).toBe(0);
-
-        await page.locator('#syncPromptSignIn').click();
-        await expect(prompt).toBeHidden();
-        await expect(page.locator('#loginModal')).toBeVisible();
+        await expect(page.locator('#syncPrompt')).toBeHidden();
+        await expect(page.locator('#settingsModal')).not.toHaveClass(/active/);
 });
 
-test('sync prompt: dismissal persists locally', async ({ page }) => {
-        await page.setViewportSize({ width: 390, height: 844 });
-        await page.goto('/');
+test('sync prompt: appears when a signed-out user opens settings', async ({ page }) => {
+        await page.goto('/?syncPromptTest=1');
         await waitForApp(page);
+        await waitForAuthState(page);
 
         await page.evaluate(() => {
                 localStorage.removeItem('syncPromptDismissedV1');
-                document.getElementById('syncPrompt').hidden = false;
+                window._bibleApp.currentUser = null;
+                window._bibleApp.authStateResolved = true;
         });
 
+        await page.locator('#settingsBtn').click();
+
+        const settings = page.locator('#settingsModal');
         const prompt = page.locator('#syncPrompt');
+
+        await expect(settings).toHaveClass(/active/);
         await expect(prompt).toBeVisible();
+        await expect(page.locator('#settingsModal #syncPrompt')).toHaveCount(1);
+
+        expect(await page.locator('#settingsModal .modal-body').evaluate(
+                element => element.scrollTop
+        )).toBe(0);
+});
+
+test('sync prompt: remains hidden when a signed-in user opens settings', async ({ page }) => {
+        await page.goto('/?syncPromptTest=1');
+        await waitForApp(page);
+        await waitForAuthState(page);
+
+        await page.evaluate(() => {
+                localStorage.removeItem('syncPromptDismissedV1');
+                window._bibleApp.currentUser = {
+                        uid: 'test-user',
+                        email: 'test@example.com',
+                };
+                window._bibleApp.authStateResolved = true;
+        });
+
+        await page.locator('#settingsBtn').click();
+
+        await expect(page.locator('#settingsModal')).toHaveClass(/active/);
+        await expect(page.locator('#syncPrompt')).toBeHidden();
+});
+
+test('sync prompt: remains hidden before authentication resolves', async ({ page }) => {
+        await page.goto('/?syncPromptTest=1');
+        await waitForApp(page);
+        await waitForAuthState(page);
+
+        await page.evaluate(() => {
+                localStorage.removeItem('syncPromptDismissedV1');
+                window._bibleApp.currentUser = null;
+                window._bibleApp.authStateResolved = false;
+        });
+
+        await page.locator('#settingsBtn').click();
+
+        await expect(page.locator('#settingsModal')).toHaveClass(/active/);
+        await expect(page.locator('#syncPrompt')).toBeHidden();
+});
+
+test('sync prompt: dismissal persists across settings openings', async ({ page }) => {
+        await page.goto('/?syncPromptTest=1');
+        await waitForApp(page);
+        await waitForAuthState(page);
+
+        await page.evaluate(() => {
+                localStorage.removeItem('syncPromptDismissedV1');
+                window._bibleApp.currentUser = null;
+                window._bibleApp.authStateResolved = true;
+        });
+
+        await page.locator('#settingsBtn').click();
+        await expect(page.locator('#syncPrompt')).toBeVisible();
+
         await page.locator('#syncPromptDismiss').click();
-        await expect(prompt).toBeHidden();
+        await expect(page.locator('#syncPrompt')).toBeHidden();
+
         await expect.poll(() => page.evaluate(
                 () => localStorage.getItem('syncPromptDismissedV1')
         )).toBe('1');
+
+        await page.locator('#closeSettingsModal').click();
+        await expect(page.locator('#settingsModal')).not.toHaveClass(/active/);
+
+        await page.locator('#settingsBtn').click();
+        await expect(page.locator('#syncPrompt')).toBeHidden();
+});
+
+test('sync prompt: closing settings does not persist dismissal', async ({ page }) => {
+        await page.goto('/?syncPromptTest=1');
+        await waitForApp(page);
+        await waitForAuthState(page);
+
+        await page.evaluate(() => {
+                localStorage.removeItem('syncPromptDismissedV1');
+                window._bibleApp.currentUser = null;
+                window._bibleApp.authStateResolved = true;
+        });
+
+        await page.locator('#settingsBtn').click();
+        await expect(page.locator('#syncPrompt')).toBeVisible();
+
+        await page.keyboard.press('Escape');
+
+        await expect(page.locator('#settingsModal')).not.toHaveClass(/active/);
+        await expect(page.locator('#syncPrompt')).toBeHidden();
+
+        expect(await page.evaluate(
+                () => localStorage.getItem('syncPromptDismissedV1')
+        )).toBeNull();
+
+        await page.locator('#settingsBtn').click();
+        await expect(page.locator('#syncPrompt')).toBeVisible();
+});
+
+test('sync prompt: sign in opens login without persisting dismissal', async ({ page }) => {
+        await page.goto('/?syncPromptTest=1');
+        await waitForApp(page);
+        await waitForAuthState(page);
+
+        await page.evaluate(() => {
+                localStorage.removeItem('syncPromptDismissedV1');
+                window._bibleApp.currentUser = null;
+                window._bibleApp.authStateResolved = true;
+        });
+
+        await page.locator('#settingsBtn').click();
+        await expect(page.locator('#syncPrompt')).toBeVisible();
+
+        await page.locator('#syncPromptSignIn').click();
+
+        await expect(page.locator('#syncPrompt')).toBeHidden();
+        await expect(page.locator('#loginModal')).toHaveClass(/active/);
+
+        expect(await page.evaluate(
+                () => localStorage.getItem('syncPromptDismissedV1')
+        )).toBeNull();
+});
+
+test('sync prompt: stays inside settings on desktop and mobile', async ({ page }) => {
+        await page.setViewportSize({ width: 1280, height: 900 });
+        await page.goto('/?syncPromptTest=1');
+        await waitForApp(page);
+        await waitForAuthState(page);
+
+        await page.evaluate(() => {
+                localStorage.removeItem('syncPromptDismissedV1');
+                window._bibleApp.currentUser = null;
+                window._bibleApp.authStateResolved = true;
+        });
+
+        await page.locator('#settingsBtn').click();
+        await expect(page.locator('#syncPrompt')).toBeVisible();
+
+        const readLayout = () => page.evaluate(() => {
+                const settings = document.getElementById('settingsModal');
+                const body = settings.querySelector('.modal-body');
+                const prompt = document.getElementById('syncPrompt');
+                const close = document.getElementById('closeSettingsModal');
+
+                const bodyRect = body.getBoundingClientRect();
+                const promptRect = prompt.getBoundingClientRect();
+                const closeRect = close.getBoundingClientRect();
+
+                const overlapsClose =
+                        promptRect.left < closeRect.right &&
+                        promptRect.right > closeRect.left &&
+                        promptRect.top < closeRect.bottom &&
+                        promptRect.bottom > closeRect.top;
+
+                return {
+                        position: getComputedStyle(prompt).position,
+                        insideSettings: settings.contains(prompt),
+                        horizontallyContained:
+                                promptRect.left >= bodyRect.left - 1 &&
+                                promptRect.right <= bodyRect.right + 1,
+                        overlapsClose,
+                };
+        });
+
+        const desktop = await readLayout();
+
+        expect(desktop.position).toBe('static');
+        expect(desktop.insideSettings).toBe(true);
+        expect(desktop.horizontallyContained).toBe(true);
+        expect(desktop.overlapsClose).toBe(false);
+
+        await page.setViewportSize({ width: 390, height: 844 });
+        await expect(page.locator('#syncPrompt')).toBeVisible();
+
+        const mobile = await readLayout();
+
+        expect(mobile.position).toBe('static');
+        expect(mobile.insideSettings).toBe(true);
+        expect(mobile.horizontallyContained).toBe(true);
+        expect(mobile.overlapsClose).toBe(false);
 });

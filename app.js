@@ -621,6 +621,7 @@ class BibleApp {
         this.auth     = window.firebaseAuth;
         this.database = window.firebaseDatabase;
         this.currentUser = null;
+        this.authStateResolved = !this.auth || !this.database;
         this._copyrightMap = {};
         this._translationRegistry = [];
         this._normalizeTranslation = normalizeTranslation;
@@ -976,6 +977,8 @@ class BibleApp {
                 await this.auth.ready;
                 this.auth.onAuthStateChanged(async (user) => {
                     this._dbg.t_auth_state = ms();
+                    this.authStateResolved = true;
+
                     if (user) {
                         this._dbg.authStateUser = user.email;
                         this._dbgEvent(`auth: signed in as ${user.email}`);
@@ -997,7 +1000,18 @@ class BibleApp {
                         this._dbg.authStateUser = 'signed out';
                         this._dbgEvent('auth: signed out');
                         this.currentUser = null;
-                        this.maybeShowSyncPrompt();
+                        this.hideSyncPrompt();
+
+                        if (this.settingsModal?.classList.contains('active')) {
+                            const promptShown = this.maybeShowSyncPrompt();
+
+                            if (promptShown) {
+                                const settingsBody =
+                                    this.settingsModal.querySelector('.modal-body');
+
+                                if (settingsBody) settingsBody.scrollTop = 0;
+                            }
+                        }
                     }
                 });
             }

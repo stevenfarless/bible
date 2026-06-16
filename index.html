@@ -317,6 +317,28 @@
 </button>
 			</div>
 			<div class="modal-body">
+				<aside
+					id="syncPrompt"
+					class="sync-prompt"
+					aria-labelledby="syncPromptTitle"
+					aria-describedby="syncPromptDescription"
+					hidden
+				>
+					<div class="sync-prompt-header">
+						<h3 id="syncPromptTitle">Sync your reading</h3>
+						<button
+							id="syncPromptDismiss"
+							class="sync-prompt-dismiss"
+							type="button"
+							aria-label="Dismiss sign-in prompt"
+						>&times;</button>
+					</div>
+					<p id="syncPromptDescription">
+						Sign in to keep your reading position and settings synchronized across devices.
+					</p>
+					<button id="syncPromptSignIn" class="primary-btn" type="button">Sign in</button>
+				</aside>
+
 				<div class="accordion-section active" data-section="appearance">
 					<button class="accordion-header" data-target="appearance">
 						<span class="accordion-title">Appearance</span>
@@ -765,28 +787,6 @@
 			</div>
 		</div>
     </div>
-
-	<aside
-		id="syncPrompt"
-		class="sync-prompt"
-		aria-labelledby="syncPromptTitle"
-		aria-describedby="syncPromptDescription"
-		hidden
-	>
-		<div class="sync-prompt-header">
-			<h2 id="syncPromptTitle">Sync your reading</h2>
-			<button
-				id="syncPromptDismiss"
-				class="sync-prompt-dismiss"
-				type="button"
-				aria-label="Dismiss sign-in prompt"
-			>&times;</button>
-		</div>
-		<p id="syncPromptDescription">
-			Sign in to keep your reading position and settings synchronized across devices.
-		</p>
-		<button id="syncPromptSignIn" class="primary-btn" type="button">Sign in</button>
-	</aside>
 
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
