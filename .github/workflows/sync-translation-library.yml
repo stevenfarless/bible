@@ -1,0 +1,250 @@
+name: "! Sync Translation Library"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-translation-library-exp
+  cancel-in-progress: false
+
+jobs:
+  implement:
+    name: Sync translation preferences without automatic downloads
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Validate patch script
+        run: |
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+
+          path = Path('.github/scripts/implement-translation-library-sync.py')
+          ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
+          PY
+
+      - name: Apply and recheck implementation
+        run: |
+          python3 .github/scripts/implement-translation-library-sync.py
+          python3 .github/scripts/implement-translation-library-sync.py
+
+      - name: Install validation dependencies
+        run: |
+          npm install --package-lock=false
+          npm install --no-save --package-lock=false esbuild @playwright/test
+
+      - name: Rebuild Firebase bundle
+        run: |
+          npx esbuild config/firebase-config.js \
+            --bundle \
+            --format=esm \
+            --platform=browser \
+            --outfile=config/firebase-config.bundle.js
+          grep -q "translation:.*KJV" config/firebase-config.bundle.js
+
+      - name: Validate implementation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          required = {
+              'translation-sync.js': [
+                  "export const BUILT_IN_TRANSLATIONS",
+                  "export async function loadSyncedTranslationLibrary",
+                  "export function maybeShowTranslationSyncModal",
+                  "export async function recoverUnavailableActiveTranslation",
+                  "useFallback(app, 'BSB')",
+              ],
+              'translation-store.js': [
+                  'return true;',
+                  'idbMarkDownloaded failed',
+              ],
+              'bible-api.js': [
+                  'const failedBooks = [];',
+                  'await idbDeleteTranslation(translation);',
+                  'Could not mark ${translation} installed',
+              ],
+              'settings.js': [
+                  "localStorage.getItem('preferredTranslation')",
+                  'syncPreference = true',
+                  'await app.recordTranslationInstalled(translation);',
+              ],
+              'auth.js': [
+                  'app.preferredTranslation = normalizeTranslation(',
+                  "'preferredTranslation'",
+                  'app.maybeShowTranslationSyncModal();',
+              ],
+              'app.js': [
+                  "from './translation-sync.js';",
+                  'await this.prepareLocalTranslation();',
+                  'await this.loadSyncedTranslationLibrary();',
+                  'await this.recoverUnavailableActiveTranslation(book);',
+                  'pendingPreferredTranslation:',
+              ],
+              'index.html': [
+                  'href="translation-sync.js"',
+                  'id="translationSyncModal"',
+                  'id="translationSyncUseKJV"',
+                  'id="translationSyncUseBSB"',
+              ],
+              'ui.js': [
+                  'app.translationSyncModal =',
+                  'app.translationSyncDownload =',
+              ],
+              'modals.js': [
+                  'function _isRestorableFocusTarget(target)',
+                  'focused.blur();',
+                  'app.recordTranslationUninstalled',
+                  'await app.recordTranslationInstalled(t.id);',
+              ],
+              'keyboard.js': [
+                  'app.translationModal, app.translationSyncModal,',
+              ],
+              'events.js': [
+                  'app.translationModal, app.translationSyncModal,',
+              ],
+              'css/components.css': [
+                  '.translation-sync-list {',
+                  '.translation-sync-fallback-actions[hidden]',
+              ],
+              'sw.js': [
+                  "'./translation-sync.js'",
+              ],
+              'tests/unit/translation-sync.test.js': [
+                  "treats KJV and BSB as built-in translations",
+                  "falls back to BSB",
+              ],
+              'tests/smoke.spec.js': [
+                  "translation sync: offers KJV and BSB without starting a download",
+                  "modal focus: closing login does not leave focus in an aria-hidden modal",
+              ],
+          }
+
+          for path_name, snippets in required.items():
+              text = Path(path_name).read_text(encoding='utf-8')
+              for snippet in snippets:
+                  assert snippet in text, f'Missing from {path_name}: {snippet}'
+
+          index = Path('index.html').read_text(encoding='utf-8')
+          assert index.count('id="translationSyncModal"') == 1
+          assert index.count('id="translationSyncUseKJV"') == 1
+          assert index.count('id="translationSyncUseBSB"') == 1
+
+          app = Path('app.js').read_text(encoding='utf-8')
+          assert app.count("from './translation-sync.js';") == 1
+
+          components = Path('css/components.css').read_text(encoding='utf-8')
+          assert components.count('.translation-sync-list {') == 1
+
+          sw = Path('sw.js').read_text(encoding='utf-8')
+          assert sw.count("'./translation-sync.js'") == 1
+          PY
+
+          node --check translation-sync.js
+          node --check translation-store.js
+          node --check bible-api.js
+          node --check settings.js
+          node --check auth.js
+          node --check app.js
+          node --check events.js
+          node --check keyboard.js
+          node --check modals.js
+          node --check ui.js
+          node --check tests/unit/translation-sync.test.js
+          node --check tests/smoke.spec.js
+          git diff --check
+
+      - name: Verify changed files
+        run: |
+          allowed='^(translation-sync\.js|translation-store\.js|bible-api\.js|settings\.js|auth\.js|config/firebase-config\.js|config/firebase-config\.bundle\.js|app\.js|index\.html|ui\.js|events\.js|keyboard\.js|modals\.js|css/components\.css|sw\.js|tests/unit/translation-sync\.test\.js|tests/smoke\.spec\.js)$'
+          unexpected="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev "$allowed" || true)"
+
+          test -z "$unexpected" || {
+            echo "Unexpected changed files:"
+            echo "$unexpected"
+            exit 1
+          }
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Run Chromium smoke tests
+        env:
+          BASE_URL: http://localhost:8080
+        run: |
+          npx playwright install chromium --with-deps
+          python3 -m http.server 8080 > /tmp/lege-lux-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+
+          for i in $(seq 1 10); do
+            curl -fsS http://localhost:8080 > /dev/null && break
+            sleep 1
+          done
+
+          curl -fsS http://localhost:8080 > /dev/null || {
+            cat /tmp/lege-lux-http.log
+            exit 1
+          }
+
+          npx playwright test tests/smoke.spec.js --project=chromium
+
+      - name: Commit translation library sync
+        run: |
+          files=(
+            translation-sync.js
+            translation-store.js
+            bible-api.js
+            settings.js
+            auth.js
+            config/firebase-config.js
+            config/firebase-config.bundle.js
+            app.js
+            index.html
+            ui.js
+            events.js
+            keyboard.js
+            modals.js
+            css/components.css
+            sw.js
+            tests/unit/translation-sync.test.js
+            tests/smoke.spec.js
+          )
+
+          git diff --check
+          git diff --stat
+
+          if [ -z "$(git status --porcelain -- "${files[@]}")" ]; then
+            echo "Translation library sync is already implemented"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${files[@]}"
+          git commit -F - <<'EOF'
+          feat(translations): sync library preferences across devices
+
+          Track optional translation preferences in Firebase while keeping Bible
+          files device-local. Prompt before downloading missing translations and
+          preserve the synced preference when KJV or BSB is used temporarily.
+
+          Reject partial installations, recover unavailable saved translations,
+          and move modal focus before hiding a closed dialog.
+          EOF
+          git push origin exp
