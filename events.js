@@ -8,7 +8,7 @@ import { runMegasearch, performKeywordSearch } from './search.js';
 import { applyReadingFont } from './settings.js';
 import { initSwipe } from './swipe.js';
 import { handleChangeEmail, handleChangePassword, handleForgotPassword } from './auth.js';
-import { hapticFirm } from './haptics.js';
+import { attachButtonHaptics, hapticFirm } from './haptics.js';
 
 const CHANGE_EMAIL_HTML = `
 <div id="changeEmailModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="changeEmailModalTitle" aria-hidden="true" inert>
@@ -149,6 +149,7 @@ function normalizeModalMarkup() {
 export function attachEventListeners(app) {
     normalizeModalMarkup();
     installCanonFallback(app);
+    attachButtonHaptics(app);
 
     app.searchToggleBtn?.addEventListener('click', () => app.toggleSearch());
     app.closeSearchBtn?.addEventListener('click',  () => app.closeSearch());
