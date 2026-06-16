@@ -1,0 +1,256 @@
+name: "! Defer Firebase Startup"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: defer-firebase-startup-exp
+  cancel-in-progress: false
+
+jobs:
+  implement:
+    name: Move Firebase Auth and reCAPTCHA off the reading startup path
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Extract and validate implementation script
+        env:
+          IMPLEMENTATION_SHA256: ca4dba935ba530e190d59a0913131ce8bb99ce337540dc6e182751f7abd949dc
+        run: |
+          base64 --decode .github/scripts/implement-deferred-firebase-startup.py.gz.b64 \
+            | gzip --decompress > /tmp/implement-issue-253.py
+          echo "$IMPLEMENTATION_SHA256  /tmp/implement-issue-253.py" | sha256sum --check
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+
+          path = Path('/tmp/implement-issue-253.py')
+          ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
+          PY
+
+      - name: Apply implementation twice
+        run: |
+          python3 /tmp/implement-issue-253.py
+          python3 /tmp/implement-issue-253.py
+
+      - name: Install validation dependencies
+        run: |
+          npm install --package-lock=false
+          npm install --no-save --package-lock=false \
+            @playwright/test \
+            esbuild \
+            firebase \
+            marked
+
+      - name: Rebuild lazy Firebase bundle
+        run: |
+          npx esbuild config/firebase-config.js \
+            --bundle \
+            --format=esm \
+            --platform=browser \
+            --external:https://* \
+            --outfile=config/firebase-config.bundle.js
+
+          grep -q 'initializeFirebaseAuth' config/firebase-config.bundle.js
+          grep -q 'initializeFirebaseDatabase' config/firebase-config.bundle.js
+          grep -q 'firebase-app-check.js' config/firebase-config.bundle.js
+          grep -q 'firebase-database.js' config/firebase-config.bundle.js
+
+      - name: Validate implementation boundaries
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          required = {
+              'bible-api.js': [
+                  "from './firebase-config.js'",
+              ],
+              'auth.js': [
+                  'await app.ensureInteractiveFirebase();',
+                  'skipped stale remote position after local interaction',
+                  "ref(`users/${app.currentUser.uid}`)",
+              ],
+              'config/firebase-config.js': [
+                  'export function initializeFirebaseAuth()',
+                  'export function initializeFirebaseDatabase()',
+                  "import(\n        'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check.js'",
+                  "import(\n            'https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js'",
+                  'if (authInitializationPromise) return authInitializationPromise;',
+                  'if (databaseInitializationPromise) return databaseInitializationPromise;',
+              ],
+              'app.js': [
+                  'auth restoration: scheduled after reader reveal',
+                  'database/App Check skipped for signed-out session',
+                  'async ensureInteractiveFirebase()',
+                  "import('./config/firebase-config.bundle.js')",
+                  'this.authAvailable = null;',
+              ],
+              'events.js': [
+                  'app.authAvailable === true',
+                  'app._authRestoreBaseline.positionInteracted = true;',
+              ],
+              'sw.js': [
+                  "'./config/firebase-config.bundle.js'",
+              ],
+              'scripts/prepare-offline-build.mjs': [
+                  "path.join(outputRoot, 'config/firebase-config.bundle.js')",
+              ],
+              'tests/smoke.spec.js': [
+                  'startup: anonymous reading survives Firebase bundle failure',
+                  'startup: signed-out reading does not request reCAPTCHA',
+              ],
+              'docs/ARCHITECTURE.md': [
+                  'Construct BibleApp without loading Firebase',
+              ],
+          }
+
+          for path_name, snippets in required.items():
+              text = Path(path_name).read_text(encoding='utf-8')
+              for snippet in snippets:
+                  assert snippet in text, f'Missing from {path_name}: {snippet}'
+
+          auth = Path('auth.js').read_text(encoding='utf-8')
+          assert "from './config/firebase-config.js'" not in auth
+          assert 'loadUserDataFromFirebase' not in auth
+
+          bible_api = Path('bible-api.js').read_text(encoding='utf-8')
+          assert "from './config/firebase-config.js'" not in bible_api
+
+          app = Path('app.js').read_text(encoding='utf-8')
+          assert 'window.firebaseAuth' not in app
+          assert 'window.firebaseDatabase' not in app
+          assert "await import('./config/firebase-config.bundle.js')" not in app
+          assert app.count("import('./config/firebase-config.bundle.js')") == 1
+
+          config = Path('config/firebase-config.js').read_text(encoding='utf-8')
+          static_prefix = config.split('const firebaseConfig', 1)[0]
+          assert 'firebase-app-check.js' not in static_prefix
+          assert 'firebase-database.js' not in static_prefix
+          assert config.count('initializeFirebaseAppCheck(app)') == 2
+
+          index = Path('index.html').read_text(encoding='utf-8')
+          for host in (
+              'esv-bible-6dffb-default-rtdb.firebaseio.com',
+              'https://www.gstatic.com',
+              'https://www.google.com',
+              'https://apis.google.com',
+          ):
+              assert f'rel="preconnect" href="{host}"' not in index
+
+          service_worker = Path('sw.js').read_text(encoding='utf-8')
+          assert service_worker.count("'./config/firebase-config.bundle.js'") == 1
+          PY
+
+          node --check app.js
+          node --check auth.js
+          node --check bible-api.js
+          node --check config/firebase-config.js
+          node --check config/firebase-config.bundle.js
+          node --check events.js
+          node --check settings.js
+          node --check ui.js
+          node --check scripts/prepare-offline-build.mjs
+          node --check tests/smoke.spec.js
+          git diff --check
+
+      - name: Verify changed files
+        run: |
+          allowed='^(app\.js|auth\.js|bible-api\.js|config/firebase-config\.js|config/firebase-config\.bundle\.js|docs/ARCHITECTURE\.md|events\.js|index\.html|scripts/prepare-offline-build\.mjs|settings\.js|sw\.js|tests/smoke\.spec\.js|ui\.js)$'
+          unexpected="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev "$allowed" || true)"
+
+          test -z "$unexpected" || {
+            echo "Unexpected changed files:"
+            echo "$unexpected"
+            exit 1
+          }
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Run Chromium smoke tests
+        env:
+          BASE_URL: http://localhost:8080
+        run: |
+          npx playwright install chromium --with-deps
+          python3 -m http.server 8080 > /tmp/lege-lux-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+
+          for i in $(seq 1 10); do
+            curl -fsS http://localhost:8080 > /dev/null && break
+            sleep 1
+          done
+
+          curl -fsS http://localhost:8080 > /dev/null || {
+            cat /tmp/lege-lux-http.log
+            exit 1
+          }
+
+          npx playwright test tests/smoke.spec.js --project=chromium
+
+      - name: Validate offline artifact
+        run: |
+          node scripts/prepare-offline-build.mjs
+          test -f _site/config/firebase-config.bundle.js
+          test ! -f _site/config/firebase-config.js || \
+            grep -q 'FIREBASE_DB_URL' _site/config/firebase-config.js
+          grep -q 'initializeFirebaseAuth' _site/config/firebase-config.bundle.js
+
+      - name: Commit deferred Firebase startup
+        run: |
+          files=(
+            app.js
+            auth.js
+            bible-api.js
+            config/firebase-config.js
+            config/firebase-config.bundle.js
+            docs/ARCHITECTURE.md
+            events.js
+            index.html
+            scripts/prepare-offline-build.mjs
+            settings.js
+            sw.js
+            tests/smoke.spec.js
+            ui.js
+          )
+
+          git diff --check
+          git diff --stat
+
+          if [ -z "$(git status --porcelain -- "${files[@]}")" ]; then
+            echo "Issue #253 is already implemented"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${files[@]}"
+          git commit -F - <<'EOF'
+          perf(auth): defer Firebase until after reader startup
+
+          Remove Firebase SDK initialization from the local reading dependency
+          graph. Restore existing Auth sessions after the passage is visible and
+          initialize App Check and Database only for authenticated sync or
+          interactive account actions.
+
+          Preserve anonymous reading when Firebase is unavailable and add browser
+          coverage for blocked Firebase startup and signed-out reCAPTCHA requests.
+
+          Refs #253
+          EOF
+          git push origin exp
