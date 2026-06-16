@@ -66,6 +66,19 @@ jobs:
             git apply --recount "$followup_patch"
           fi
 
+      - name: Apply translation reconciliation race fix
+        run: |
+          patch_file=.github/patches/issue-253-translation-race.patch
+
+          if git apply --check --recount "$patch_file"; then
+            git apply --recount "$patch_file"
+          elif git apply --reverse --check --recount "$patch_file"; then
+            echo 'Translation preference race fix is already present.'
+          else
+            echo 'translation-sync.js no longer matches the reviewed race fix.'
+            exit 1
+          fi
+
       - name: Install validation dependencies
         run: |
           npm install --package-lock=false
@@ -124,6 +137,27 @@ jobs:
           grep -q 'app.canWriteRemoteState()' translation-sync.js
 
           test "$(grep -c 'this._startBackgroundAuthRestoration();' app.js)" -eq 1
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          text = Path('translation-sync.js').read_text(encoding='utf-8')
+          start = text.index('async function applyPreferredTranslationState(app)')
+          end = text.index('export async function prepareLocalTranslation', start)
+          section = text[start:end]
+
+          available = section.index(
+              'const available = await collectAvailableTranslations();'
+          )
+          preferred = section.index(
+              'const preferred = normalizeTranslationId('
+          )
+
+          if available > preferred:
+              raise SystemExit(
+                  'Preferred translation is still captured before the async availability scan.'
+              )
+          PY
 
           if grep -q "'./config/firebase-config.bundle.js'" sw.js; then
             echo 'The lazy Firebase bundle must stay out of the web service-worker APP_SHELL.'
@@ -212,8 +246,9 @@ jobs:
           Database, App Check, and reCAPTCHA only for authenticated sync or
           interactive account actions.
 
-          Preserve offline bundle generation and guard UI-originated remote writes
-          until authenticated restoration finishes.
+          Preserve offline bundle generation, guard UI-originated remote writes
+          during restoration, and retain newer translation preferences while
+          local availability is scanned.
 
           Refs #253
           EOF
