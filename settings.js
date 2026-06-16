@@ -150,7 +150,7 @@ export function applySettings(app) {
     if (app.chapterArrowsToggle)   app.chapterArrowsToggle.checked   = !!app.state.showChapterArrows;
     if (app.hapticsToggle)        app.hapticsToggle.checked        = !!app.state.hapticsEnabled;
     const hapticsSetting = document.getElementById('hapticsSetting');
-    if (hapticsSetting) hapticsSetting.hidden = typeof navigator.vibrate !== 'function';
+    if (hapticsSetting) hapticsSetting.hidden = false;
 
     syncVerseByVerseMode(app);
     if (app.verseByVerseToggle) app.verseByVerseToggle.checked = !!app.state.verseByVerse;

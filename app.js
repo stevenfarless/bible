@@ -53,7 +53,7 @@ import {
 } from './settings.js';
 import { handleKeyboardShortcuts } from './keyboard.js';
 import { attachEventListeners } from './events.js';
-import { hapticFirm } from './haptics.js';
+import { getHapticsDebugState, hapticFirm } from './haptics.js';
 
 const TRANSLATION_ALIASES = { NRSVue: 'NRSVUE' };
 function normalizeTranslation(t) { return TRANSLATION_ALIASES[t] || t; }
@@ -169,6 +169,7 @@ function buildDebugReport(app) {
     const connDown  = navigator.connection?.downlink != null ? `${navigator.connection.downlink} Mbps` : 'unknown';
     const buildId   = document.querySelector('meta[name="build-id"]')?.content || '__BUILD_ID__';
     const swController = navigator.serviceWorker?.controller?.scriptURL ?? 'none';
+    const hapticsDebug = getHapticsDebugState(app);
 
     // ── Firebase connectivity ─────────────────────────────────────────────
     const fbConnected = dbg.firebaseConnected === true  ? 'connected ✓'
@@ -328,6 +329,9 @@ function buildDebugReport(app) {
         `  network: ${online}  type: ${connType}  downlink: ${connDown}`,
         `  firebase: ${fbConnected}`,
         `  serviceWorker controller: ${swController}`,
+        `  hapticsSupported: ${hapticsDebug.supported}`,
+        `  hapticsEnabled: ${hapticsDebug.enabled}`,
+        `  hapticsLastAttempt: ${hapticsDebug.lastAttempt ? JSON.stringify(hapticsDebug.lastAttempt) : '(none)'}`,
         '',
         '=== timings (ms since navigation start) ===',
         ...timings,
@@ -390,6 +394,7 @@ function buildDebugReport(app) {
         `  showHeadings: ${app?.state?.showHeadings}`,
         `  verseByVerse: ${app?.state?.verseByVerse}`,
         `  showChapterArrows: ${app?.state?.showChapterArrows}`,
+        `  hapticsEnabled: ${app?.state?.hapticsEnabled}`,
         `  scrollY: ${window.scrollY}`,
         `  currentUser: ${app?.currentUser?.email ?? 'not signed in'}`,
         '',
