@@ -4,40 +4,65 @@ on:
   push:
     branches:
       - '**'
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Build Cross References JSON
+      - Build Firebase Bundle
+      - Build Search Index
+      - Build search indexes
+      - Bundle Translations
+      - Create Theme
+      - Generate Translation Metadata
+      - Split translations into per-book files
+      - Add Android Haptics
+      - "! Expand Android Haptics"
+      - "! Implement Sync Sign-In Prompt"
+      - "! Implement Settings Sync Prompt"
+      - "! Sync Translation Library"
+    types:
+      - completed
+    branches:
+      - exp
 
 concurrency:
-  group: gh-pages-${{ github.ref_name }}
+  group: gh-pages-${{ github.event_name == 'workflow_run' && 'exp' || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
   build-and-deploy:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pages: write
       id-token: write
       actions: read
+    env:
+      DEPLOY_BRANCH: ${{ github.event_name == 'workflow_run' && 'exp' || github.ref_name }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
+          ref: ${{ env.DEPLOY_BRANCH }}
           fetch-depth: 0
 
       - name: Derive destination directory
         id: dest
         run: |
-          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+          if [ "${DEPLOY_BRANCH}" = "main" ]; then
             echo "dir=." >> "$GITHUB_OUTPUT"
           else
-            DEST="${GITHUB_REF_NAME//\//-}"
+            DEST="${DEPLOY_BRANCH//\//-}"
             echo "dir=$DEST" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Inject build info
         run: |
-          BRANCH="${GITHUB_REF_NAME}"
-          SHA7="${GITHUB_SHA::7}"
+          BRANCH="${DEPLOY_BRANCH}"
+          FULL_SHA="$(git rev-parse HEAD)"
+          SHA7="${FULL_SHA::7}"
           if [ "${BRANCH}" = "main" ]; then
             sed -i "s|__BUILD_INFO__||g" index.html
             sed -i "s|__BUILD_COLOR__|#444444|g" css/pericope.css
@@ -54,7 +79,7 @@ jobs:
           sed -i "s/__BUILD_ID__/${SHA7}/g" sw.js index.html
           sed -E -i "s|(<script[^>]*[[:space:]]src=\")([^\"]+\.js)(\")|\1\2?v=${SHA7}\3|g" index.html
           sed -E -i "s|(<link[^>]*[[:space:]]href=\"css/[^\"]+\.css)(\")|\1?v=${SHA7}\2|g" index.html
-          echo "${GITHUB_SHA}" > version.txt
+          echo "${FULL_SHA}" > version.txt
 
       - name: Inject Firebase config
         env:
