@@ -206,7 +206,7 @@ export async function setLightMode(app, mode) {
 	applyLightMode(normalized);
 	const sel = document.getElementById('lightModeSelect');
 	if (sel) sel.value = normalized;
-	if (app.currentUser) {
+	if (app.canWriteRemoteState()) {
 		await app.database.ref(`users/${app.currentUser.uid}/settings/lightMode`).set(normalized);
 	}
 }
@@ -302,7 +302,7 @@ export async function changeColorTheme(app, theme) {
 
 	try { localStorage.setItem('colorTheme', resolved); } catch (_) {}
 
-	if (app.currentUser) {
+	if (app.canWriteRemoteState()) {
 		await app.database
 			.ref(`users/${app.currentUser.uid}/settings/colorTheme`)
 			.set(resolved);

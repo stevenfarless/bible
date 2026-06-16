@@ -152,7 +152,7 @@ async function bundleFirebase() {
         source = source.replaceAll(remote, local);
     }
 
-    const outputPath = path.join(outputRoot, 'config/firebase-config.js');
+    const outputPath = path.join(outputRoot, 'config/firebase-config.bundle.js');
     await fs.mkdir(path.dirname(outputPath), { recursive: true });
     await build({
         stdin: {
@@ -168,8 +168,6 @@ async function bundleFirebase() {
         platform: 'browser',
         target: ['chrome109', 'firefox115', 'safari16.4'],
     });
-
-    await fs.rm(path.join(outputRoot, 'config/firebase-config.bundle.js'), { force: true });
 }
 
 async function localizeMarked() {
