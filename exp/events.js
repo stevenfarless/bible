@@ -317,8 +317,7 @@ export function attachEventListeners(app) {
         app.openModal(app.settingsModal);
 
         const canOfferSync = Boolean(
-            app.auth &&
-            app.database &&
+            app.authAvailable === true &&
             app.authStateResolved &&
             !app.currentUser
         );
@@ -388,7 +387,7 @@ export function attachEventListeners(app) {
         app.state.verseSelectionGesture = gesture;
         localStorage.setItem('verseSelectionGesture', gesture);
 
-        if (app.currentUser) {
+        if (app.canWriteRemoteState()) {
             await app.database
                 .ref(`users/${app.currentUser.uid}/settings/verseSelectionGesture`)
                 .set(gesture);
@@ -403,7 +402,7 @@ export function attachEventListeners(app) {
             app.state.readingFont = font;
             localStorage.setItem('readingFont', font);
 
-            if (app.currentUser) {
+            if (app.canWriteRemoteState()) {
                 await app.database
                     .ref(`users/${app.currentUser.uid}/settings/readingFont`)
                     .set(font);

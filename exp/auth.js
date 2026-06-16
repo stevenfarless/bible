@@ -1,8 +1,6 @@
 // auth.js
 // Firebase auth, user data, and reading-position persistence for BibleApp.
 
-import { loadUserData as loadUserDataFromFirebase } from './config/firebase-config.js';
-
 function lsSet(key, value) {
     try { localStorage.setItem(key, String(value)); } catch (_) {}
 }
@@ -91,7 +89,7 @@ export function saveReadingPosition(app) {
     // miss because their localStorage position is stale.
     lsSetJSON('readingPosition', pos);
 
-    if (app.currentUser && app.database) {
+    if (app.canWriteRemoteState()) {
         app.database
             .ref(`users/${app.currentUser.uid}/readingPosition`)
             .set(pos)
@@ -134,6 +132,7 @@ export async function handleLogin(app) {
     }
 
     try {
+        await app.ensureInteractiveAuth();
         await app.auth.signInWithEmailAndPassword(email, password);
         app.showToast('Signed in successfully!');
         app.closeModal(app.loginModal);
@@ -171,9 +170,11 @@ export async function handleSignup(app) {
     }
 
     try {
+        await app.ensureInteractiveAuth();
         const userCredential = await app.auth.createUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
 
+        await app.ensureInteractiveDatabase();
         await app.database.ref(`users/${user.uid}/settings`).set({
             fontSize: app.state.fontSize,
             showVerseNumbers: app.state.showVerseNumbers,
@@ -181,9 +182,13 @@ export async function handleSignup(app) {
             showFootnotes: app.state.showFootnotes,
             showCrossReferences: app.state.showCrossReferences,
             verseByVerse: app.state.verseByVerse,
+            showChapterArrows: app.state.showChapterArrows,
+            hapticsEnabled: app.state.hapticsEnabled,
             colorTheme: app.state.colorTheme,
             lightMode: app.state.lightMode ?? 'system',
             translation: app.preferredTranslation || app.state.translation || 'KJV',
+            readingFont: app.state.readingFont,
+            verseSelectionGesture: app.state.verseSelectionGesture,
         });
 
         app.showToast('Account created successfully!');
@@ -210,42 +215,60 @@ export async function handleLogout(app) {
 }
 
 export async function loadUserData(app, normalizeTranslation) {
-    if (!app.currentUser) return;
-    const data = await loadUserDataFromFirebase(app.currentUser.uid);
-    if (!data) return;
-    const s = data.settings;
+    if (!app.currentUser || !app.database) return;
 
-    app.state.fontSize             = s.fontSize;
-    app.state.showVerseNumbers     = s.showVerseNumbers;
-    app.state.showHeadings         = s.showHeadings;
-    app.state.showFootnotes        = s.showFootnotes;
-    app.state.showCrossReferences  = s.showCrossReferences;
-    app.state.verseByVerse         = s.verseByVerse;
-    app.state.colorTheme           = s.colorTheme;
-    // Migrate old boolean values from Firebase to string enum
-    app.state.lightMode =
-        s.lightMode === 'light' || s.lightMode === 'dark' || s.lightMode === 'system'
-            ? s.lightMode
-            : s.lightMode === true ? 'light'
-            : s.lightMode === false ? 'dark'
-            : 'system';
-    app.preferredTranslation = normalizeTranslation(
-        s.translation || app.preferredTranslation || 'KJV'
-    );
+    let data;
+    try {
+        const snapshot = await app.database
+            .ref(`users/${app.currentUser.uid}`)
+            .once('value');
+        data = snapshot?.val();
+    } catch (error) {
+        console.error('loadUserData error:', error);
+        return;
+    }
 
-    if (s.fontSize            != null) lsSet('fontSize',             s.fontSize);
-    if (s.showVerseNumbers    != null) lsSet('showVerseNumbers',     s.showVerseNumbers);
-    if (s.showHeadings        != null) lsSet('showHeadings',         s.showHeadings);
-    if (s.showFootnotes       != null) lsSet('showFootnotes',        s.showFootnotes);
-    if (s.showCrossReferences != null) lsSet('showCrossReferences',  s.showCrossReferences);
-    if (s.verseByVerse        != null) lsSet('verseByVerse',         s.verseByVerse);
-    if (s.colorTheme          != null) lsSet('colorTheme',           s.colorTheme);
-    if (s.lightMode           != null) lsSet('lightMode',            app.state.lightMode);
+    const s = data?.settings;
+    if (!s) return;
+
+    const applySetting = (key, value) => {
+        if (value == null) return;
+        app.state[key] = value;
+        lsSet(key, value);
+    };
+
+    applySetting('fontSize', s.fontSize);
+    applySetting('showVerseNumbers', s.showVerseNumbers);
+    applySetting('coloredVerseNumbers', s.coloredVerseNumbers);
+    applySetting('showHeadings', s.showHeadings);
+    applySetting('showFootnotes', s.showFootnotes);
+    applySetting('showCrossReferences', s.showCrossReferences);
+    applySetting('verseByVerse', s.verseByVerse);
+    applySetting('showChapterArrows', s.showChapterArrows);
+    applySetting('hapticsEnabled', s.hapticsEnabled);
+    applySetting('colorTheme', s.colorTheme);
+    applySetting('readingFont', s.readingFont);
+    applySetting('verseSelectionGesture', s.verseSelectionGesture);
+
+    if (s.lightMode != null) {
+        app.state.lightMode =
+            s.lightMode === 'light' ||
+            s.lightMode === 'dark' ||
+            s.lightMode === 'system'
+                ? s.lightMode
+                : s.lightMode === true
+                    ? 'light'
+                    : s.lightMode === false
+                        ? 'dark'
+                        : 'system';
+        lsSet('lightMode', app.state.lightMode);
+    }
+
     if (s.translation != null) {
-        lsSet(
-            'preferredTranslation',
-            normalizeTranslation(s.translation || 'KJV')
+        app.preferredTranslation = normalizeTranslation(
+            s.translation || app.preferredTranslation || 'KJV'
         );
+        lsSet('preferredTranslation', app.preferredTranslation);
     }
 }
 
@@ -316,6 +339,7 @@ export async function handleForgotPassword(app) {
     }
 
     try {
+        await app.ensureInteractiveAuth();
         await app.auth.sendPasswordResetEmail(email);
         app.showToast('Reset link sent — check your inbox');
         app.closeModal(document.getElementById('forgotPasswordModal'));

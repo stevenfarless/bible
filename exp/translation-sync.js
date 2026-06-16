@@ -264,11 +264,11 @@ async function writeEntireRemoteLibrary(app, library) {
 }
 
 async function applyPreferredTranslationState(app) {
+    const available = await collectAvailableTranslations();
     const preferred = normalizeTranslationId(
         app.preferredTranslation || app.state.translation || 'KJV'
     );
     const active = normalizeTranslationId(app.state.translation || preferred);
-    const available = await collectAvailableTranslations();
     const result = chooseDeviceTranslation({
         preferred,
         active,
@@ -384,7 +384,7 @@ export async function recordTranslationInstalled(app, translation) {
     app.missingSyncedTranslations = (app.missingSyncedTranslations || [])
         .filter((item) => item !== normalized);
 
-    if (!app.currentUser || !app.database) {
+    if (!app.canWriteRemoteState()) {
         rememberPendingAdd(normalized);
         return true;
     }
@@ -413,7 +413,7 @@ export async function removeTranslationFromSyncedLibrary(app, translation) {
         .filter((item) => item !== normalized);
     forgetPendingAdd(normalized);
 
-    if (app.currentUser && app.database) {
+    if (app.canWriteRemoteState()) {
         await app.database
             .ref(
                 `users/${app.currentUser.uid}` +

@@ -192,7 +192,7 @@ export async function toggleSetting(app, setting) {
 
     lsSet(setting, el.checked);
 
-    if (app.currentUser) {
+    if (app.canWriteRemoteState()) {
         await app.database
             .ref(`users/${app.currentUser.uid}/settings/${setting}`)
             .set(el.checked);
@@ -224,7 +224,7 @@ export async function toggleVerseByVerse(app) {
 
     lsSet('verseByVerse', app.state.verseByVerse);
 
-    if (app.currentUser) {
+    if (app.canWriteRemoteState()) {
         await app.database
             .ref(`users/${app.currentUser.uid}/settings/verseByVerse`)
             .set(app.state.verseByVerse);
@@ -287,7 +287,7 @@ export async function updateFontSize(app, size) {
 
     lsSet('fontSize', size);
 
-    if (app.currentUser) {
+    if (app.canWriteRemoteState()) {
         await app.database
             .ref(`users/${app.currentUser.uid}/settings/fontSize`)
             .set(parseInt(size, 10));
@@ -346,7 +346,7 @@ export async function changeTranslation(
         lsSet('preferredTranslation', translation);
         await app.recordTranslationInstalled(translation);
 
-        if (app.currentUser) {
+        if (app.canWriteRemoteState()) {
             await app.database
                 .ref(`users/${app.currentUser.uid}/settings/translation`)
                 .set(translation);

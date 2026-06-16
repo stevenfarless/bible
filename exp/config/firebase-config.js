@@ -1,32 +1,28 @@
-// ================================
-// Firebase Configuration — modular SDK v9 with compat shim
-// app.js uses compat-style .ref().once()/.set() and auth.signIn* methods.
-// We wrap the modular SDK to preserve that contract without loading compat.
-// ================================
+// Firebase configuration and lazy initialization.
+// Auth loads after the reader is visible. Database and App Check load only for
+// authenticated synchronization or an explicit account operation.
 
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
 import {
-    getAuth,
-    onAuthStateChanged,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    signOut,
-    setPersistence,
-    indexedDBLocalPersistence,
+    getApp,
+    getApps,
+    initializeApp,
+} from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+import {
+    EmailAuthProvider,
     browserLocalPersistence,
     browserSessionPersistence,
+    createUserWithEmailAndPassword,
+    getAuth,
+    indexedDBLocalPersistence,
+    onAuthStateChanged,
+    reauthenticateWithCredential,
+    sendPasswordResetEmail,
+    setPersistence,
+    signInWithEmailAndPassword,
+    signOut,
+    updatePassword,
+    verifyBeforeUpdateEmail,
 } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
-import {
-    getDatabase,
-    ref,
-    get,
-    set,
-    onValue,
-} from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js';
-import {
-    initializeAppCheck,
-    ReCaptchaV3Provider,
-} from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyCHH_MNP89AsMlhzfjbcJEN3lJBebtdnKs",
@@ -40,78 +36,119 @@ const firebaseConfig = {
 
 export const FIREBASE_DB_URL = firebaseConfig.databaseURL;
 
-const app = initializeApp(firebaseConfig);
+let firebaseApp = null;
+let authInitializationPromise = null;
+let appCheckInitializationPromise = null;
+let databaseInitializationPromise = null;
 
-initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider('6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV'),
-    isTokenAutoRefreshEnabled: true,
-});
+function getFirebaseApp() {
+    if (firebaseApp) return firebaseApp;
 
-const _auth = getAuth(app);
-const _db   = getDatabase(app);
+    firebaseApp = getApps().length > 0
+        ? getApp()
+        : initializeApp(firebaseConfig);
 
-// Try IndexedDB first (most robust), fall back to localStorage, then
-// sessionStorage. Expose completion so auth-state consumers do not infer
-// readiness from timing or show signed-out UI before persistence settles.
-const authPersistenceReady = setPersistence(_auth, indexedDBLocalPersistence)
-    .catch(() => setPersistence(_auth, browserLocalPersistence))
-    .catch(() => setPersistence(_auth, browserSessionPersistence))
-    .catch((error) => {
-        console.warn('Firebase auth persistence unavailable', error);
-    });
-
-// ── Database shim ──────────────────────────────────────────────────────────
-// Returns a ref-like object whose .once() and .set() match the compat API.
-function makeRef(path) {
-    const dbRef = ref(_db, path);
-    return {
-        once: (_event) => get(dbRef).then((snap) => snap),
-        set:  (value)  => set(dbRef, value),
-        ref:  (subpath) => makeRef(path ? `${path}/${subpath}` : subpath),
-    };
+    return firebaseApp;
 }
 
-const dbShim = {
-    ref: (path) => makeRef(path),
-};
+export function initializeFirebaseAuth() {
+    if (authInitializationPromise) return authInitializationPromise;
 
-// ── Auth shim ──────────────────────────────────────────────────────────────
-const authShim = {
-    ready: authPersistenceReady,
-    onAuthStateChanged: (cb)           => onAuthStateChanged(_auth, cb),
-    signInWithEmailAndPassword: (e, p) => signInWithEmailAndPassword(_auth, e, p),
-    createUserWithEmailAndPassword: (e, p) => createUserWithEmailAndPassword(_auth, e, p),
-    signOut: ()                        => signOut(_auth),
-    get currentUser()                  { return _auth.currentUser; },
-};
+    authInitializationPromise = (async () => {
+        const app = getFirebaseApp();
+        const auth = getAuth(app);
 
-// Expose on window so app.js reads window.firebaseAuth / window.firebaseDatabase
-window.firebaseAuth     = authShim;
-window.firebaseDatabase = dbShim;
+        const ready = setPersistence(auth, indexedDBLocalPersistence)
+            .catch(() => setPersistence(auth, browserLocalPersistence))
+            .catch(() => setPersistence(auth, browserSessionPersistence))
+            .catch((error) => {
+                console.warn('Firebase auth persistence unavailable', error);
+            });
 
-// ── loadUserData export ────────────────────────────────────────────────────
-export async function loadUserData(userId) {
-    try {
-        const snap = await get(ref(_db, `users/${userId}`));
-        const userData = snap.val();
-        if (!userData) return null;
+        await ready;
 
-        const s = userData.settings || {};
         return {
-            settings: {
-                fontSize:            s.fontSize            ?? 18,
-                showVerseNumbers:    s.showVerseNumbers     !== false,
-                showHeadings:        s.showHeadings         !== false,
-                showFootnotes:       s.showFootnotes        === true,
-                showCrossReferences: s.showCrossReferences  === true,
-                verseByVerse:        s.verseByVerse         === true,
-                colorTheme:          s.colorTheme           || 'dracula',
-                lightMode:           s.lightMode            ?? 'system',
-                translation:         s.translation          || 'KJV',
+            ready,
+            onAuthStateChanged: (callback) =>
+                onAuthStateChanged(auth, callback),
+            signInWithEmailAndPassword: (email, password) =>
+                signInWithEmailAndPassword(auth, email, password),
+            createUserWithEmailAndPassword: (email, password) =>
+                createUserWithEmailAndPassword(auth, email, password),
+            signOut: () => signOut(auth),
+            createCredential: (email, password) =>
+                EmailAuthProvider.credential(email, password),
+            reauthenticateWithCredential: (user, credential) =>
+                reauthenticateWithCredential(user, credential),
+            verifyBeforeUpdateEmail: (user, email) =>
+                verifyBeforeUpdateEmail(user, email),
+            updatePassword: (user, password) =>
+                updatePassword(user, password),
+            sendPasswordResetEmail: (email) =>
+                sendPasswordResetEmail(auth, email),
+            get currentUser() {
+                return auth.currentUser;
             },
         };
-    } catch (err) {
-        console.error('loadUserData error:', err);
-        return null;
-    }
+    })();
+
+    return authInitializationPromise;
+}
+
+function initializeFirebaseAppCheck(app) {
+    if (appCheckInitializationPromise) return appCheckInitializationPromise;
+
+    appCheckInitializationPromise = import(
+        'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check.js'
+    ).then(({ initializeAppCheck, ReCaptchaV3Provider }) => (
+        initializeAppCheck(app, {
+            provider: new ReCaptchaV3Provider(
+                '6Lf8bAAtAAAAALvK77sjk7750S7XVUQR7Ai2cXXV'
+            ),
+            isTokenAutoRefreshEnabled: true,
+        })
+    ));
+
+    return appCheckInitializationPromise;
+}
+
+export function initializeFirebaseDatabase() {
+    if (databaseInitializationPromise) return databaseInitializationPromise;
+
+    databaseInitializationPromise = (async () => {
+        const app = getFirebaseApp();
+        await initializeFirebaseAppCheck(app);
+
+        const {
+            get,
+            getDatabase,
+            onValue,
+            ref,
+            set,
+        } = await import(
+            'https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js'
+        );
+
+        const database = getDatabase(app);
+
+        function makeRef(path) {
+            const databaseRef = ref(database, path);
+            return {
+                once: () => get(databaseRef),
+                set: (value) => set(databaseRef, value),
+                ref: (subpath) =>
+                    makeRef(path ? `${path}/${subpath}` : subpath),
+            };
+        }
+
+        return {
+            ref: (path) => makeRef(path),
+            onConnected: (callback) => onValue(
+                ref(database, '.info/connected'),
+                (snapshot) => callback(Boolean(snapshot.val()))
+            ),
+        };
+    })();
+
+    return databaseInitializationPromise;
 }
