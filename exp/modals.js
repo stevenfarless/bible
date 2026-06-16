@@ -236,6 +236,10 @@ export function closeModal(app, modal) {
     if (!modal || !modal.classList.contains('active')) return;
     if (modal.classList.contains('closing')) return;
 
+    if (modal === app.settingsModal) {
+        app.hideSyncPrompt?.();
+    }
+
     if (modal === app.translationModal) {
         _translationKbClear(app);
     }
