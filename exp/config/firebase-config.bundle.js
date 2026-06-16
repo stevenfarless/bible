@@ -81,7 +81,7 @@ async function loadUserData(userId) {
         verseByVerse: s.verseByVerse === true,
         colorTheme: s.colorTheme || "dracula",
         lightMode: s.lightMode ?? "system",
-        translation: s.translation || "ESV"
+        translation: s.translation || "KJV"
       }
     };
   } catch (err) {

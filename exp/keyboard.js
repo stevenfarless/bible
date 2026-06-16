@@ -19,7 +19,7 @@ if (e.key === 'Escape') {
         app.bookModal, app.chapterModal, app.helpModal,
         app.settingsModal, app.loginModal, app.signupModal,
         app.userMenuModal, app.verseModal, app.referencesModal,
-        app.translationModal,
+        app.translationModal, app.translationSyncModal,
     ].find((modal) => modal?.classList.contains('active'));
 
     if (activeModal) {

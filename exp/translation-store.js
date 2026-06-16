@@ -83,7 +83,11 @@ export async function idbPutBook(translation, book, data) {
     try {
         await _open();
         await _idbPut(_tx('books', 'readwrite'), `${translation}/${book}`, data);
-    } catch (_) {}
+        return true;
+    } catch (error) {
+        console.error(`idbPutBook failed for ${translation}/${book}`, error);
+        return false;
+    }
 }
 
 export async function idbGetSearchIndex(translation) {
@@ -99,7 +103,11 @@ export async function idbPutSearchIndex(translation, data) {
     try {
         await _open();
         await _idbPut(_tx('searchIndex', 'readwrite'), translation, data);
-    } catch (_) {}
+        return true;
+    } catch (error) {
+        console.error(`idbPutSearchIndex failed for ${translation}`, error);
+        return false;
+    }
 }
 
 export async function idbIsDownloaded(translation) {
@@ -115,7 +123,11 @@ export async function idbMarkDownloaded(translation) {
     try {
         await _open();
         await _idbPut(_tx('downloaded', 'readwrite'), translation, true);
-    } catch (_) {}
+        return true;
+    } catch (error) {
+        console.error(`idbMarkDownloaded failed for ${translation}`, error);
+        return false;
+    }
 }
 
 /**

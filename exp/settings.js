@@ -98,8 +98,16 @@ export function loadLocalSettings(app) {
         app.state.verseSelectionGesture = DEFAULTS.verseSelectionGesture;
     }
 
-    try { app.state.translation = app._normalizeTranslation(localStorage.getItem('translation') || DEFAULTS.translation); }
-    catch (_) { app.state.translation = DEFAULTS.translation; }
+    try {
+        const storedActive = localStorage.getItem('translation') || DEFAULTS.translation;
+        const storedPreferred =
+            localStorage.getItem('preferredTranslation') || storedActive;
+        app.state.translation = app._normalizeTranslation(storedActive);
+        app.preferredTranslation = app._normalizeTranslation(storedPreferred);
+    } catch (_) {
+        app.state.translation = DEFAULTS.translation;
+        app.preferredTranslation = DEFAULTS.translation;
+    }
 
     try {
         const raw = localStorage.getItem('readingPosition');
@@ -291,35 +299,49 @@ export async function updateFontSize(app, size) {
  * then load the current passage (redirecting to Genesis 1 if the active
  * book is not present in the new canon).
  */
-export async function changeTranslation(app, translation) {
+export async function changeTranslation(
+    app,
+    translation,
+    { syncPreference = true } = {}
+) {
     app.state.translation = translation;
     app.bibleApi.setTranslation(translation);
 
     if (app.translationSelector) app.translationSelector.value = translation;
-    if (app.currentTranslationSpan) app.currentTranslationSpan.textContent = translation;
+    if (app.currentTranslationSpan) {
+        app.currentTranslationSpan.textContent = translation;
+    }
 
     lsSet('translation', translation);
 
-    if (app.currentUser) {
-        await app.database
-            .ref(`users/${app.currentUser.uid}/settings/translation`)
-            .set(translation);
+    if (syncPreference) {
+        app.preferredTranslation = translation;
+        app.pendingPreferredTranslation = null;
+        lsSet('preferredTranslation', translation);
+        await app.recordTranslationInstalled(translation);
+
+        if (app.currentUser) {
+            await app.database
+                .ref(`users/${app.currentUser.uid}/settings/translation`)
+                .set(translation);
+        }
     }
 
-    // Fetch meta.json for the incoming translation and rebuild the canon.
-    // A missing or malformed meta falls back to the static 66-book structure
-    // inside _rebuildBibleBooks, so this is safe to fire-and-forget on error.
     let meta = null;
     try {
-        const res = await fetch(`./translations/${translation}/meta.json`);
-        if (res.ok) meta = await res.json();
-    } catch (_) { /* network error — fall back to static structure */ }
+        const response = await fetch(
+            `./translations/${encodeURIComponent(translation)}/meta.json`
+        );
+        if (response.ok) meta = await response.json();
+    } catch (_) {}
+
     app._rebuildBibleBooks(meta);
 
-    // Register the book list so searchPassages fallback skips books this
-    // translation doesn't include (e.g. deuterocanon for protestant canons).
     if (meta?.books?.length) {
-        app.bibleApi.setBookList(translation, meta.books.map(b => b.name));
+        app.bibleApi.setBookList(
+            translation,
+            meta.books.map((book) => book.name)
+        );
     }
 
     updateCopyright(app);

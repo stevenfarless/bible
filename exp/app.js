@@ -38,6 +38,19 @@ import {
     completeSyncPrompt, openSyncPromptLogin,
 } from './sync-prompt.js';
 import {
+    attachTranslationSyncEvents,
+    dismissTranslationSyncForSession,
+    isTranslationAvailableOnDevice,
+    loadSyncedTranslationLibrary,
+    maybeShowTranslationSyncModal,
+    prepareLocalTranslation,
+    recordTranslationInstalled,
+    recordTranslationUninstalled,
+    recoverUnavailableActiveTranslation,
+    refreshMissingSyncedTranslations,
+    removeTranslationFromSyncedLibrary,
+} from './translation-sync.js';
+import {
     openModal, closeModal,
     openBookModal, populateBookModal,
     openChapterModal, populateChapterModal,
@@ -178,7 +191,8 @@ function buildDebugReport(app) {
 
     const LS_KEYS = [
         'readingPosition', 'passageCache',
-        'translation', 'colorTheme', 'lightMode',
+        'translation', 'preferredTranslation', 'translationFallback',
+        'translationLibraryPendingAddsV1', 'colorTheme', 'lightMode',
         'fontSize', 'readingFont', 'verseSelectionGesture',
         'showVerseNumbers', 'coloredVerseNumbers', 'showHeadings',
         'showFootnotes', 'showCrossReferences', 'verseByVerse',
@@ -384,6 +398,10 @@ function buildDebugReport(app) {
         `  currentBook: ${app?.state?.currentBook}`,
         `  currentChapter: ${app?.state?.currentChapter}`,
         `  translation: ${app?.state?.translation}`,
+        `  preferredTranslation: ${app?.preferredTranslation ?? 'n/a'}`,
+        `  pendingPreferredTranslation: ${app?.pendingPreferredTranslation ?? '(none)'}`,
+        `  syncedTranslationLibrary: ${[...(app?.syncedTranslationLibrary || [])].join(', ') || '(empty)'}`,
+        `  missingSyncedTranslations: ${(app?.missingSyncedTranslations || []).join(', ') || '(none)'}`,
         `  colorTheme: ${app?.state?.colorTheme}`,
         `  lightMode: ${app?.state?.lightMode}`,
         `  fontSize: ${app?.state?.fontSize}`,
@@ -622,6 +640,10 @@ class BibleApp {
         this.database = window.firebaseDatabase;
         this.currentUser = null;
         this.authStateResolved = !this.auth || !this.database;
+        this.preferredTranslation = 'KJV';
+        this.pendingPreferredTranslation = null;
+        this.syncedTranslationLibrary = new Set();
+        this.missingSyncedTranslations = [];
         this._copyrightMap = {};
         this._translationRegistry = [];
         this._normalizeTranslation = normalizeTranslation;
@@ -876,10 +898,12 @@ class BibleApp {
             if (lightModeToggle) lightModeToggle.checked = document.body.classList.contains('light-mode');
 
             attachEventListeners(this);
+            attachTranslationSyncEvents(this);
             this.initializeAccordion();
             document.body.setAttribute('data-app-ready', 'true');
 
             this.loadLocalSettings();
+            await this.prepareLocalTranslation();
             this.applySettings();
             this._dbg.t_settings_loaded = ms();
 
@@ -973,6 +997,11 @@ class BibleApp {
                 this._prefetchAdjacentBooks();
             }
 
+            if (!this.auth || !this.database) {
+                await this.loadSyncedTranslationLibrary();
+                this.maybeShowTranslationSyncModal();
+            }
+
             if (this.auth && this.database) {
                 await this.auth.ready;
                 this.auth.onAuthStateChanged(async (user) => {
@@ -984,12 +1013,35 @@ class BibleApp {
                         this._dbgEvent(`auth: signed in as ${user.email}`);
                         this.currentUser = user;
                         this.completeSyncPrompt();
+
+                        const translationBefore = this.state.translation;
                         await withTimeout(this.loadUserData(), 5000);
+                        const translationSyncResult =
+                            await this.loadSyncedTranslationLibrary();
+
                         this._dbg.t_user_data_loaded = ms();
                         this.applySettings();
                         const bookBefore = this.state.currentBook;
                         const chBefore   = this.state.currentChapter;
                         await this._loadSavedPositionIfChanged();
+
+                        const positionChanged =
+                            this.state.currentBook !== bookBefore ||
+                            this.state.currentChapter !== chBefore;
+
+                        if (
+                            translationSyncResult.activeTranslationChanged &&
+                            !positionChanged &&
+                            this.state.translation !== translationBefore
+                        ) {
+                            await this.loadPassage(
+                                this.state.currentBook,
+                                this.state.currentChapter,
+                                Boolean(this.lastScrollPosition)
+                            );
+                        }
+
+                        this.maybeShowTranslationSyncModal();
                         this._dbg.t_firebase_position_end = ms();
                         this._dbg.firebasePositionChanged =
                             this.state.currentBook !== bookBefore || this.state.currentChapter !== chBefore;
@@ -1012,6 +1064,9 @@ class BibleApp {
                                 if (settingsBody) settingsBody.scrollTop = 0;
                             }
                         }
+
+                        await this.loadSyncedTranslationLibrary();
+                        this.maybeShowTranslationSyncModal();
                     }
                 });
             }
@@ -1148,9 +1203,17 @@ class BibleApp {
         );
 
         if (!data) {
+            const recovered =
+                await this.recoverUnavailableActiveTranslation(book);
+
+            if (recovered) return;
+
             this._dbgEvent(`loadPassage: no data for ${book} ${chapter}`);
             if (this.passageTitle) this.passageTitle.textContent = `${book} ${chapter}`;
-            if (this.passageText)  this.passageText.innerHTML = '<p class="error">Passage not available.</p>';
+            if (this.passageText) {
+                this.passageText.innerHTML =
+                    '<p class="error">Passage not available.</p>';
+            }
             this.chromeSuspend = false;
             document.body.classList.remove('chrome-no-transition');
             return;
@@ -1253,9 +1316,9 @@ class BibleApp {
         _logUserAction(`updateFontSize: ${size}`);
         await updateFontSize(this, size);
     }
-    async changeTranslation(t) {
+    async changeTranslation(t, options = {}) {
         _logUserAction(`changeTranslation: ${t}`);
-        await changeTranslation(this, t);
+        await changeTranslation(this, t, options);
     }
     updateCopyright()            { updateCopyright(this); }
 
@@ -1266,6 +1329,37 @@ class BibleApp {
     dismissSyncPrompt()   { return dismissSyncPrompt(this); }
     completeSyncPrompt()  { return completeSyncPrompt(this); }
     openSyncPromptLogin() { return openSyncPromptLogin(this); }
+
+    async prepareLocalTranslation() {
+        return prepareLocalTranslation(this);
+    }
+    async loadSyncedTranslationLibrary() {
+        return loadSyncedTranslationLibrary(this);
+    }
+    async isTranslationAvailableOnDevice(translation) {
+        return isTranslationAvailableOnDevice(translation);
+    }
+    async recordTranslationInstalled(translation) {
+        return recordTranslationInstalled(this, translation);
+    }
+    async recordTranslationUninstalled(translation, options) {
+        return recordTranslationUninstalled(this, translation, options);
+    }
+    async removeTranslationFromSyncedLibrary(translation) {
+        return removeTranslationFromSyncedLibrary(this, translation);
+    }
+    async refreshMissingSyncedTranslations() {
+        return refreshMissingSyncedTranslations(this);
+    }
+    maybeShowTranslationSyncModal(options) {
+        return maybeShowTranslationSyncModal(this, options);
+    }
+    dismissTranslationSyncForSession() {
+        return dismissTranslationSyncForSession(this);
+    }
+    async recoverUnavailableActiveTranslation(book) {
+        return recoverUnavailableActiveTranslation(this, book);
+    }
 
     copyPassage() {
         _logUserAction('copyPassage');
