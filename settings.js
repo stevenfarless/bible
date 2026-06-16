@@ -304,6 +304,8 @@ export async function changeTranslation(
     translation,
     { syncPreference = true } = {}
 ) {
+    const verseAnchor = app.state.selectedVerse;
+
     app.state.translation = translation;
     app.bibleApi.setTranslation(translation);
 
@@ -346,6 +348,24 @@ export async function changeTranslation(
 
     updateCopyright(app);
     await app.loadPassage(app.state.currentBook, app.state.currentChapter);
+
+    if (verseAnchor === null) return;
+
+    const availableVerses = Array.from(
+        app.passageText.querySelectorAll('.verse[data-verse]')
+    )
+        .map((verse) => parseInt(verse.dataset.verse, 10))
+        .filter(Number.isFinite);
+
+    if (availableVerses.length === 0) return;
+
+    const targetVerse = availableVerses.reduce((nearest, verse) => (
+        Math.abs(verse - verseAnchor) < Math.abs(nearest - verseAnchor)
+            ? verse
+            : nearest
+    ));
+
+    app.scrollToVerse(targetVerse);
 }
 
 export function updateCopyright(app) {
