@@ -1,5 +1,5 @@
-const LIGHT_CLICK_MS = 12;
-const FIRM_PATTERN = [30, 20, 30];
+const LIGHT_CLICK_MS = 35;
+const FIRM_PATTERN = [50, 30, 50];
 
 const debugState = {
     lastAttempt: null,
