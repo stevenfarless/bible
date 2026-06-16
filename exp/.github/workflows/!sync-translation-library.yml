@@ -117,6 +117,20 @@ jobs:
 
           path = Path('tests/smoke.spec.js')
           text = path.read_text(encoding='utf-8')
+
+          start_marker = (
+              "test('dynamic book picker: meta.json network error "
+              "falls back gracefully', async ({ page }) => {"
+          )
+          next_marker = "\ntest('auth: unauthenticated user button opens login modal'"
+
+          start = text.find(start_marker)
+          end = text.find(next_marker, start)
+
+          if start < 0 or end < 0:
+              raise SystemExit('Could not locate metadata fallback smoke test')
+
+          block = text[start:end]
           replacements = {
               "await page.route('**/translations/ASV/meta.json', route => route.abort());":
                   "await page.route('**/translations/BSB/meta.json', route => route.abort());",
@@ -125,14 +139,14 @@ jobs:
           }
 
           for old, new in replacements.items():
-              count = text.count(old)
+              count = block.count(old)
               if count != 1:
                   raise SystemExit(
-                      f'Expected one smoke-test anchor for {old!r}, found {count}'
+                      f'Expected one metadata-test anchor for {old!r}, found {count}'
                   )
-              text = text.replace(old, new, 1)
+              block = block.replace(old, new, 1)
 
-          path.write_text(text, encoding='utf-8')
+          path.write_text(text[:start] + block + text[end:], encoding='utf-8')
           PY
 
       - name: Install validation dependencies
