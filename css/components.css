@@ -1600,3 +1600,69 @@ body.hide-verse-numbers .verse .verse-num {
         transform: none;
     }
 }
+
+.translation-sync-list {
+    display: grid;
+    gap: var(--spacing-sm);
+    margin: var(--spacing-lg) 0;
+}
+
+.translation-sync-choice {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: var(--bg-raised);
+    border: 1px solid var(--border-neutral);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+}
+
+.translation-sync-choice input {
+    flex: 0 0 auto;
+}
+
+.translation-sync-choice span {
+    min-width: 0;
+    color: var(--text-body);
+}
+
+.translation-sync-status {
+    min-height: 1.5em;
+    margin: var(--spacing-md) 0;
+    color: var(--text-muted);
+}
+
+.translation-sync-fallback-actions {
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-neutral);
+}
+
+.translation-sync-fallback-actions[hidden] {
+    display: none;
+}
+
+.translation-sync-fallback-actions p {
+    margin: 0 0 var(--spacing-md);
+    color: var(--text-muted);
+}
+
+.translation-sync-button-row,
+.translation-sync-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+
+.translation-sync-actions {
+    justify-content: flex-end;
+    margin-top: var(--spacing-lg);
+}
+
+.translation-sync-actions .primary-btn,
+.translation-sync-actions .secondary-btn,
+.translation-sync-button-row .secondary-btn {
+    min-height: 44px;
+    touch-action: manipulation;
+}

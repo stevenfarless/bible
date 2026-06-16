@@ -28,6 +28,12 @@ const REQUIRED_IDS = [
 	// Nav translation badge
 	'translationSelectorBtn', 'currentTranslation',
 	'translationModal', 'closeTranslationModal', 'translationList',
+	'translationSyncModal', 'closeTranslationSyncModal',
+	'translationSyncTitle', 'translationSyncDescription',
+	'translationSyncList', 'translationSyncStatus',
+	'translationSyncFallbackActions', 'translationSyncUseKJV',
+	'translationSyncUseBSB', 'translationSyncNotNow',
+	'translationSyncDownload',
 ];
 
 // The inline <script> in <head> stamps the theme class and no-color-transition
@@ -78,6 +84,17 @@ export function cacheElements(app) {
 	app.translationModal = document.getElementById('translationModal');
 	app.closeTranslationModal = document.getElementById('closeTranslationModal');
 	app.translationList = document.getElementById('translationList');
+	app.translationSyncModal = document.getElementById('translationSyncModal');
+	app.closeTranslationSyncModal = document.getElementById('closeTranslationSyncModal');
+	app.translationSyncTitle = document.getElementById('translationSyncTitle');
+	app.translationSyncDescription = document.getElementById('translationSyncDescription');
+	app.translationSyncList = document.getElementById('translationSyncList');
+	app.translationSyncStatus = document.getElementById('translationSyncStatus');
+	app.translationSyncFallbackActions = document.getElementById('translationSyncFallbackActions');
+	app.translationSyncUseKJV = document.getElementById('translationSyncUseKJV');
+	app.translationSyncUseBSB = document.getElementById('translationSyncUseBSB');
+	app.translationSyncNotNow = document.getElementById('translationSyncNotNow');
+	app.translationSyncDownload = document.getElementById('translationSyncDownload');
 
 	// Search
 	app.searchContainer = document.getElementById('searchContainer');

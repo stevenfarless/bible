@@ -439,12 +439,12 @@ test('dynamic book picker: book not in canon redirects to Genesis 1', async ({ p
 test('dynamic book picker: meta.json network error falls back gracefully', async ({ page }) => {
         const errors = collectPageErrors(page);
 
-        await page.route('**/translations/ASV/meta.json', route => route.abort());
+        await page.route('**/translations/BSB/meta.json', route => route.abort());
 
         await page.goto('/');
         await waitForPassage(page);
 
-        await page.evaluate(() => window._bibleApp.changeTranslation('ASV'));
+        await page.evaluate(() => window._bibleApp.changeTranslation('BSB'));
         await waitForPassage(page);
 
         expect(errors).toHaveLength(0);
@@ -689,4 +689,65 @@ test('sync prompt: stays inside settings on desktop and mobile', async ({ page }
         expect(mobile.insideSettings).toBe(true);
         expect(mobile.horizontallyContained).toBe(true);
         expect(mobile.overlapsClose).toBe(false);
+});
+
+test('translation sync: offers KJV and BSB without starting a download', async ({ page }) => {
+        await page.goto('/');
+        await waitForApp(page);
+
+        const nkjvRequests = [];
+        page.on('request', (request) => {
+                if (request.url().includes('/translations/NKJV/')) {
+                        nkjvRequests.push(request.url());
+                }
+        });
+
+        await page.evaluate(() => {
+                window._bibleApp.preferredTranslation = 'NKJV';
+                window._bibleApp.pendingPreferredTranslation = 'NKJV';
+                window._bibleApp.missingSyncedTranslations = ['NKJV'];
+                window._bibleApp.maybeShowTranslationSyncModal({ force: true });
+        });
+
+        await expect(page.locator('#translationSyncModal')).toHaveClass(/active/);
+        await expect(page.locator('#translationSyncUseKJV')).toBeVisible();
+        await expect(page.locator('#translationSyncUseBSB')).toBeVisible();
+        await expect(page.locator('#translationSyncDownload')).toBeVisible();
+        expect(nkjvRequests).toHaveLength(0);
+});
+
+test('translation sync: BSB fallback keeps the synced preference', async ({ page }) => {
+        await page.goto('/');
+        await waitForApp(page);
+
+        await page.evaluate(() => {
+                window._bibleApp.preferredTranslation = 'NKJV';
+                window._bibleApp.pendingPreferredTranslation = 'NKJV';
+                window._bibleApp.missingSyncedTranslations = ['NKJV'];
+                window._bibleApp.maybeShowTranslationSyncModal({ force: true });
+        });
+
+        await page.locator('#translationSyncUseBSB').click();
+        await expect(page.locator('#translationSyncModal')).not.toHaveClass(/active/);
+
+        await expect.poll(() => page.evaluate(() => ({
+                active: window._bibleApp.state.translation,
+                preferred: window._bibleApp.preferredTranslation,
+        }))).toEqual({ active: 'BSB', preferred: 'NKJV' });
+});
+
+test('modal focus: closing login does not leave focus in an aria-hidden modal', async ({ page }) => {
+        await page.goto('/');
+        await waitForApp(page);
+
+        await page.locator('#userBtn').click();
+        await page.locator('#loginPassword').focus();
+        await page.locator('#closeLoginModal').click();
+
+        await expect(page.locator('#loginModal')).not.toHaveClass(/active/);
+
+        expect(await page.evaluate(() => {
+                const active = document.activeElement;
+                return Boolean(active?.closest?.('[aria-hidden="true"]'));
+        })).toBe(false);
 });

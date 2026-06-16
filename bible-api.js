@@ -384,43 +384,83 @@ export class BibleApi {
     async downloadTranslation(translation, bookList, onProgress) {
         const books = bookList?.length ? bookList : BOOK_LOAD_ORDER;
         const total = books.length;
+        const failedBooks = [];
         let done = 0;
 
         const fetchAndStore = async (book) => {
             const cacheKey = `${translation}/${book}`;
-            let data = this._bookCache.get(cacheKey) ?? null;
-            if (data === null) {
-                try {
+
+            try {
+                let data = this._bookCache.get(cacheKey) ?? null;
+                if (data === null) {
                     const filename = BOOK_KEY_ALIASES[book] ?? book;
-                    const url = `./translations/${translation}/${encodeURIComponent(filename)}.json`;
-                    const res = await fetch(url);
-                    if (res.ok) {
-                        data = await res.json();
-                        this._bookCache.set(cacheKey, data);
+                    const url =
+                        `./translations/${encodeURIComponent(translation)}/` +
+                        `${encodeURIComponent(filename)}.json`;
+                    const response = await fetch(url);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
                     }
-                } catch (_) {}
+
+                    data = await response.json();
+                    if (!data || typeof data !== 'object') {
+                        throw new Error('Invalid book data');
+                    }
+                    this._bookCache.set(cacheKey, data);
+                }
+
+                const stored = await idbPutBook(translation, book, data);
+                if (!stored) throw new Error('IndexedDB write failed');
+            } catch (error) {
+                failedBooks.push(book);
+                console.error(
+                    `Translation download failed for ${translation}/${book}`,
+                    error
+                );
+            } finally {
+                done++;
+                onProgress?.(done, total);
             }
-            if (data !== null) await idbPutBook(translation, book, data);
-            done++;
-            onProgress?.(done, total);
         };
 
-        const BATCH = 4;
-        for (let i = 0; i < books.length; i += BATCH) {
-            await Promise.all(books.slice(i, i + BATCH).map(fetchAndStore));
+        const batchSize = 4;
+        for (let index = 0; index < books.length; index += batchSize) {
+            await Promise.all(
+                books.slice(index, index + batchSize).map(fetchAndStore)
+            );
+        }
+
+        if (failedBooks.length > 0) {
+            await idbDeleteTranslation(translation);
+            this.evictTranslation(translation);
+            throw new Error(
+                `Failed to download ${failedBooks.length} books: ` +
+                failedBooks.join(', ')
+            );
         }
 
         try {
-            const url = `./translations/${translation}/${translation}_search_index.json`;
-            const res = await fetch(url);
-            if (res.ok) {
-                const idx = await res.json();
-                await idbPutSearchIndex(translation, idx);
-                this._searchIndexCache.set(translation, idx);
-            }
-        } catch (_) {}
+            const url =
+                `./translations/${encodeURIComponent(translation)}/` +
+                `${encodeURIComponent(translation)}_search_index.json`;
+            const response = await fetch(url);
 
-        await idbMarkDownloaded(translation);
+            if (response.ok) {
+                const index = await response.json();
+                await idbPutSearchIndex(translation, index);
+                this._searchIndexCache.set(translation, index);
+            }
+        } catch (error) {
+            console.warn(`Search index unavailable for ${translation}`, error);
+        }
+
+        const marked = await idbMarkDownloaded(translation);
+        if (!marked) {
+            await idbDeleteTranslation(translation);
+            this.evictTranslation(translation);
+            throw new Error(`Could not mark ${translation} installed`);
+        }
 
         if (navigator.serviceWorker?.controller) {
             navigator.serviceWorker.controller.postMessage({

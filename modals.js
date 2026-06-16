@@ -2,7 +2,7 @@
 // Modal open/close, population, and drag-to-resize for BibleApp.
 
 import { LOCAL_TRANSLATIONS, PRECACHED_TRANSLATIONS } from './bible-api.js';
-import { idbIsDownloaded, idbDeleteTranslation } from './translation-store.js';
+import { idbDeleteTranslation } from './translation-store.js';
 
 // ── Open / close ─────────────────────────────────────────────────────────────
 
@@ -173,33 +173,46 @@ function _resolveFocusOrigin(origin) {
     return null;
 }
 
+function _isRestorableFocusTarget(target) {
+    return target instanceof HTMLElement
+        && target.isConnected
+        && !target.hidden
+        && !target.inert
+        && target.getClientRects().length > 0
+        && !target.closest('[hidden], [inert], [aria-hidden="true"]');
+}
+
 function _restoreModalFocus(modal) {
     const origin = _modalFocusOrigins.get(modal);
     modal.removeEventListener('keydown', _trapModalFocus);
 
     const activeModal = _getTopActiveModal();
-
-if (activeModal && activeModal !== modal) {
-    if (
-        origin instanceof HTMLElement &&
-        origin.isConnected &&
-        activeModal.contains(origin)
-    ) {
+    if (activeModal && activeModal !== modal) {
         _modalFocusOrigins.delete(modal);
-        origin.focus({ preventScroll: true });
-    }
 
-    return;
-}
+        if (
+            _isRestorableFocusTarget(origin) &&
+            activeModal.contains(origin)
+        ) {
+            origin.focus({ preventScroll: true });
+        } else {
+            _focusModal(activeModal);
+        }
+        return;
+    }
 
     _modalFocusOrigins.delete(modal);
     const target = _resolveFocusOrigin(origin);
-    if (!(target instanceof HTMLElement) || !target.isConnected) return;
-
+    if (!_isRestorableFocusTarget(target)) return;
     target.focus({ preventScroll: true });
 }
 
 function _finishModalClose(modal) {
+    const focused = document.activeElement;
+    if (focused instanceof HTMLElement && modal.contains(focused)) {
+        focused.blur();
+    }
+
     modal.classList.remove('active', 'closing');
     modal.inert = true;
     modal.setAttribute('aria-hidden', 'true');
@@ -240,6 +253,10 @@ export function closeModal(app, modal) {
         app.hideSyncPrompt?.();
     }
 
+    if (modal === app.translationSyncModal) {
+        app.dismissTranslationSyncForSession?.();
+    }
+
     if (modal === app.translationModal) {
         _translationKbClear(app);
     }
@@ -248,17 +265,22 @@ export function closeModal(app, modal) {
         modal.classList.add('closing');
 
         if (modal === app.settingsModal) {
-            setTimeout(() => _finishModalClose(modal), 320);
+            setTimeout(() => {
+                _finishModalClose(modal);
+                app.maybeShowTranslationSyncModal?.();
+            }, 320);
         } else {
             const content = modal.querySelector('.modal-content');
             content.style.animation = 'slideDownToBottom 250ms ease';
             setTimeout(() => {
                 _finishModalClose(modal);
                 content.style.animation = '';
+                app.maybeShowTranslationSyncModal?.();
             }, 250);
         }
     } else {
         _finishModalClose(modal);
+        queueMicrotask(() => app.maybeShowTranslationSyncModal?.());
     }
 }
 
@@ -508,7 +530,9 @@ export async function populateTranslationModal(app) {
 
     const idbChecks = await Promise.all(
         registry.map((t) =>
-            PRECACHED_TRANSLATIONS.has(t.id) ? Promise.resolve(true) : idbIsDownloaded(t.id)
+            PRECACHED_TRANSLATIONS.has(t.id)
+                ? Promise.resolve(true)
+                : app.isTranslationAvailableOnDevice(t.id)
         )
     );
 
@@ -800,17 +824,24 @@ function _attachSwipe(wrapper, li) {
 }
 
 async function _handleUninstall(app, t, wrapper) {
+    const removeFromDevice = confirm(
+        `Remove ${t.id} from this device?\n\n` +
+        'This removes the downloaded files from this browser.'
+    );
+    if (!removeFromDevice) return;
+
+    let removeFromLibrary = false;
+    if (app.currentUser) {
+        removeFromLibrary = confirm(
+            `Also remove ${t.id} from your synced translation library?\n\n` +
+            'Choose OK to stop offering it on your other devices.\n' +
+            'Choose Cancel to remove it only from this device.'
+        );
+    }
+
     await idbDeleteTranslation(t.id);
-
-    if (app.bibleApi?.evictTranslation) {
-        app.bibleApi.evictTranslation(t.id);
-    }
-
-    if (app.state.translation === t.id) {
-        const fallback = [...PRECACHED_TRANSLATIONS][0];
-        if (fallback) app.changeTranslation(fallback);
-    }
-
+    app.bibleApi?.evictTranslation?.(t.id);
+    await app.recordTranslationUninstalled(t.id, { removeFromLibrary });
     _flyToAvailable(app, t, wrapper);
 }
 
@@ -842,6 +873,7 @@ async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progre
             progressBar.style.width = `${pct}%`;
             progressLabel.textContent = `${done} / ${tot}`;
         });
+        await app.recordTranslationInstalled(t.id);
 
         _downloading.delete(t.id);
         li.classList.remove('translation-modal-item--downloading');
