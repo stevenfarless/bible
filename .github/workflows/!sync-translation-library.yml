@@ -112,6 +112,29 @@ jobs:
           });
           EOF
 
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('tests/smoke.spec.js')
+          text = path.read_text(encoding='utf-8')
+          replacements = {
+              "await page.route('**/translations/ASV/meta.json', route => route.abort());":
+                  "await page.route('**/translations/BSB/meta.json', route => route.abort());",
+              "await page.evaluate(() => window._bibleApp.changeTranslation('ASV'));":
+                  "await page.evaluate(() => window._bibleApp.changeTranslation('BSB'));",
+          }
+
+          for old, new in replacements.items():
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(
+                      f'Expected one smoke-test anchor for {old!r}, found {count}'
+                  )
+              text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
       - name: Install validation dependencies
         run: |
           npm install --package-lock=false
@@ -199,6 +222,8 @@ jobs:
                   'falls back to BSB',
               ],
               'tests/smoke.spec.js': [
+                  "translations/BSB/meta.json",
+                  "changeTranslation('BSB')",
                   'translation sync: offers KJV and BSB without starting a download',
                   'modal focus: closing login does not leave focus in an aria-hidden modal',
               ],
