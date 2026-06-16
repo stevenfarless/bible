@@ -63,6 +63,7 @@
 	<link rel="modulepreload" href="search.js" />
 	<link rel="modulepreload" href="auth.js" />
 	<link rel="modulepreload" href="sync-prompt.js" />
+	<link rel="modulepreload" href="translation-sync.js" />
 	<link rel="modulepreload" href="modals.js" />
 	<link rel="modulepreload" href="settings.js" />
 	<link rel="modulepreload" href="haptics.js" />
@@ -306,6 +307,44 @@
 		</div>
 	</div>
 
+	<div
+		id="translationSyncModal"
+		class="modal"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="translationSyncTitle"
+		aria-describedby="translationSyncDescription"
+		aria-hidden="true"
+		inert
+	>
+		<div class="modal-content modal-content--sm">
+			<div class="modal-header">
+				<h2 id="translationSyncTitle" tabindex="-1">Download your translations?</h2>
+				<button id="closeTranslationSyncModal" class="close-btn close-control" type="button" aria-label="Close">
+					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<path d="M7 7L17 17M17 7L7 17"></path>
+					</svg>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p id="translationSyncDescription"></p>
+				<div id="translationSyncList" class="translation-sync-list"></div>
+				<p id="translationSyncStatus" class="translation-sync-status" role="status" aria-live="polite"></p>
+				<div id="translationSyncFallbackActions" class="translation-sync-fallback-actions" hidden>
+					<p>Use a built-in translation for now:</p>
+					<div class="translation-sync-button-row">
+						<button id="translationSyncUseKJV" class="secondary-btn" type="button">Use KJV</button>
+						<button id="translationSyncUseBSB" class="secondary-btn" type="button">Use BSB</button>
+					</div>
+				</div>
+				<div class="translation-sync-actions">
+					<button id="translationSyncNotNow" class="secondary-btn" type="button">Not now</button>
+					<button id="translationSyncDownload" class="primary-btn" type="button">Download selected</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<div id="settingsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
@@ -317,6 +356,28 @@
 </button>
 			</div>
 			<div class="modal-body">
+				<aside
+					id="syncPrompt"
+					class="sync-prompt"
+					aria-labelledby="syncPromptTitle"
+					aria-describedby="syncPromptDescription"
+					hidden
+				>
+					<div class="sync-prompt-header">
+						<h3 id="syncPromptTitle">Sync your reading</h3>
+						<button
+							id="syncPromptDismiss"
+							class="sync-prompt-dismiss"
+							type="button"
+							aria-label="Dismiss sign-in prompt"
+						>&times;</button>
+					</div>
+					<p id="syncPromptDescription">
+						Sign in to keep your reading position and settings synchronized across devices.
+					</p>
+					<button id="syncPromptSignIn" class="primary-btn" type="button">Sign in</button>
+				</aside>
+
 				<div class="accordion-section active" data-section="appearance">
 					<button class="accordion-header" data-target="appearance">
 						<span class="accordion-title">Appearance</span>
@@ -765,28 +826,6 @@
 			</div>
 		</div>
     </div>
-
-	<aside
-		id="syncPrompt"
-		class="sync-prompt"
-		aria-labelledby="syncPromptTitle"
-		aria-describedby="syncPromptDescription"
-		hidden
-	>
-		<div class="sync-prompt-header">
-			<h2 id="syncPromptTitle">Sync your reading</h2>
-			<button
-				id="syncPromptDismiss"
-				class="sync-prompt-dismiss"
-				type="button"
-				aria-label="Dismiss sign-in prompt"
-			>&times;</button>
-		</div>
-		<p id="syncPromptDescription">
-			Sign in to keep your reading position and settings synchronized across devices.
-		</p>
-		<button id="syncPromptSignIn" class="primary-btn" type="button">Sign in</button>
-	</aside>
 
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 

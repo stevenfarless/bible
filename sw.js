@@ -71,6 +71,7 @@ const APP_SHELL = [
   './search.js',
   './auth.js',
   './sync-prompt.js',
+  './translation-sync.js',
   './modals.js',
   './settings.js',
   './haptics.js',
