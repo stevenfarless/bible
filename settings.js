@@ -295,21 +295,45 @@ export async function updateFontSize(app, size) {
 }
 
 /**
- * Fetch the new translation's meta.json, rebuild app.bibleBooks from it,
- * then load the current passage (redirecting to Genesis 1 if the active
- * book is not present in the new canon).
+ * Preserve the visible verse position, switch translations, rebuild the
+ * active canon from meta.json, reload the passage, and restore the nearest
+ * matching verse at the same viewport offset.
+ *
+ * Redirects to Genesis 1 when the active book is absent from the new canon.
  */
 export async function changeTranslation(
     app,
     translation,
     { syncPreference = true } = {}
 ) {
-    const verseAnchor = app.state.selectedVerse;
+    const chromeBottom = Math.max(
+        0,
+        document.querySelector('.top-chrome')
+            ?.getBoundingClientRect().bottom || 0
+    );
+
+    const currentVerses = Array.from(
+        app.passageText.querySelectorAll('.verse[data-verse]')
+    );
+
+    const visibleVerse = currentVerses.find((verse) => (
+        verse.getBoundingClientRect().bottom > chromeBottom
+    )) || currentVerses[currentVerses.length - 1];
+
+    const verseAnchor = visibleVerse
+        ? {
+            number: parseInt(visibleVerse.dataset.verse, 10),
+            offset: visibleVerse.getBoundingClientRect().top - chromeBottom,
+        }
+        : null;
 
     app.state.translation = translation;
     app.bibleApi.setTranslation(translation);
 
-    if (app.translationSelector) app.translationSelector.value = translation;
+    if (app.translationSelector) {
+        app.translationSelector.value = translation;
+    }
+
     if (app.currentTranslationSpan) {
         app.currentTranslationSpan.textContent = translation;
     }
@@ -330,11 +354,15 @@ export async function changeTranslation(
     }
 
     let meta = null;
+
     try {
         const response = await fetch(
             `./translations/${encodeURIComponent(translation)}/meta.json`
         );
-        if (response.ok) meta = await response.json();
+
+        if (response.ok) {
+            meta = await response.json();
+        }
     } catch (_) {}
 
     app._rebuildBibleBooks(meta);
@@ -347,25 +375,45 @@ export async function changeTranslation(
     }
 
     updateCopyright(app);
-    await app.loadPassage(app.state.currentBook, app.state.currentChapter);
 
-    if (verseAnchor === null) return;
+    await app.loadPassage(
+        app.state.currentBook,
+        app.state.currentChapter
+    );
+
+    if (!verseAnchor) return;
 
     const availableVerses = Array.from(
         app.passageText.querySelectorAll('.verse[data-verse]')
-    )
-        .map((verse) => parseInt(verse.dataset.verse, 10))
-        .filter(Number.isFinite);
+    );
 
     if (availableVerses.length === 0) return;
 
-    const targetVerse = availableVerses.reduce((nearest, verse) => (
-        Math.abs(verse - verseAnchor) < Math.abs(nearest - verseAnchor)
-            ? verse
-            : nearest
-    ));
+    const targetVerse = availableVerses.reduce((nearest, verse) => {
+        const nearestNumber = parseInt(nearest.dataset.verse, 10);
+        const verseNumber = parseInt(verse.dataset.verse, 10);
 
-    app.scrollToVerse(targetVerse);
+        return Math.abs(verseNumber - verseAnchor.number)
+            < Math.abs(nearestNumber - verseAnchor.number)
+            ? verse
+            : nearest;
+    });
+
+    const restoredChromeBottom = Math.max(
+        0,
+        document.querySelector('.top-chrome')
+            ?.getBoundingClientRect().bottom || 0
+    );
+
+    const targetOffset =
+        targetVerse.getBoundingClientRect().top - restoredChromeBottom;
+
+    window.scrollBy(0, targetOffset - verseAnchor.offset);
+    app.currentVerseSpan.textContent = targetVerse.dataset.verse;
+
+    if (app.state.selectedVerse !== null) {
+        app.applyVerseGlow();
+    }
 }
 
 export function updateCopyright(app) {
