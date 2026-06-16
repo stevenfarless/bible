@@ -12,7 +12,7 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="e9af84a" />
+	<meta name="build-id" content="aa02545" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement - always available in <head>) before the
@@ -38,7 +38,7 @@
 			if (isLight) el.classList.add('light-mode');
 		}());
 	</script>
-	<script src="prepaint-settings.js?v=e9af84a"></script>
+	<script src="prepaint-settings.js?v=aa02545"></script>
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -51,7 +51,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=e9af84a">.
+	     before the parser reaches <script type="module" src="app.js?v=aa02545">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -63,6 +63,7 @@
 	<link rel="modulepreload" href="search.js" />
 	<link rel="modulepreload" href="auth.js" />
 	<link rel="modulepreload" href="sync-prompt.js" />
+	<link rel="modulepreload" href="translation-sync.js" />
 	<link rel="modulepreload" href="modals.js" />
 	<link rel="modulepreload" href="settings.js" />
 	<link rel="modulepreload" href="haptics.js" />
@@ -70,19 +71,19 @@
 	<link rel="modulepreload" href="events.js" />
 	<!-- CSS loaded as parallel <link> tags — @import chains are render-blocking
 	     and sequential; <link> tags are fetched in parallel by the browser. -->
-	<link rel="stylesheet" href="css/fonts.css?v=e9af84a" />
-	<link rel="stylesheet" href="css/base.css?v=e9af84a" />
-	<link rel="stylesheet" href="css/tokens.css?v=e9af84a" />
-	<link rel="stylesheet" href="css/themes.css?v=e9af84a" />
-	<link rel="stylesheet" href="css/layout.css?v=e9af84a" />
-	<link rel="stylesheet" href="css/components.css?v=e9af84a" />
-	<link rel="stylesheet" href="css/modals.css?v=e9af84a" />
-	<link rel="stylesheet" href="css/interactions.css?v=e9af84a" />
-	<link rel="stylesheet" href="css/utilities.css?v=e9af84a" />
-	<link rel="stylesheet" href="css/pericope.css?v=e9af84a" />
-	<link rel="stylesheet" href="css/geek95.css?v=e9af84a">
+	<link rel="stylesheet" href="css/fonts.css?v=aa02545" />
+	<link rel="stylesheet" href="css/base.css?v=aa02545" />
+	<link rel="stylesheet" href="css/tokens.css?v=aa02545" />
+	<link rel="stylesheet" href="css/themes.css?v=aa02545" />
+	<link rel="stylesheet" href="css/layout.css?v=aa02545" />
+	<link rel="stylesheet" href="css/components.css?v=aa02545" />
+	<link rel="stylesheet" href="css/modals.css?v=aa02545" />
+	<link rel="stylesheet" href="css/interactions.css?v=aa02545" />
+	<link rel="stylesheet" href="css/utilities.css?v=aa02545" />
+	<link rel="stylesheet" href="css/pericope.css?v=aa02545" />
+	<link rel="stylesheet" href="css/geek95.css?v=aa02545">
 	<!-- Firebase App Check loads reCAPTCHA v3 through ReCaptchaV3Provider. -->
-    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js?v=e9af84a"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js?v=aa02545"></script>
 </head>
 
 <body class="initializing">
@@ -90,7 +91,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">e9af84a</span>
+				<span id="build-info">aa02545</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -306,6 +307,44 @@
 		</div>
 	</div>
 
+	<div
+		id="translationSyncModal"
+		class="modal"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="translationSyncTitle"
+		aria-describedby="translationSyncDescription"
+		aria-hidden="true"
+		inert
+	>
+		<div class="modal-content modal-content--sm">
+			<div class="modal-header">
+				<h2 id="translationSyncTitle" tabindex="-1">Download your translations?</h2>
+				<button id="closeTranslationSyncModal" class="close-btn close-control" type="button" aria-label="Close">
+					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<path d="M7 7L17 17M17 7L7 17"></path>
+					</svg>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p id="translationSyncDescription"></p>
+				<div id="translationSyncList" class="translation-sync-list"></div>
+				<p id="translationSyncStatus" class="translation-sync-status" role="status" aria-live="polite"></p>
+				<div id="translationSyncFallbackActions" class="translation-sync-fallback-actions" hidden>
+					<p>Use a built-in translation for now:</p>
+					<div class="translation-sync-button-row">
+						<button id="translationSyncUseKJV" class="secondary-btn" type="button">Use KJV</button>
+						<button id="translationSyncUseBSB" class="secondary-btn" type="button">Use BSB</button>
+					</div>
+				</div>
+				<div class="translation-sync-actions">
+					<button id="translationSyncNotNow" class="secondary-btn" type="button">Not now</button>
+					<button id="translationSyncDownload" class="primary-btn" type="button">Download selected</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<div id="settingsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
@@ -317,6 +356,28 @@
 </button>
 			</div>
 			<div class="modal-body">
+				<aside
+					id="syncPrompt"
+					class="sync-prompt"
+					aria-labelledby="syncPromptTitle"
+					aria-describedby="syncPromptDescription"
+					hidden
+				>
+					<div class="sync-prompt-header">
+						<h3 id="syncPromptTitle">Sync your reading</h3>
+						<button
+							id="syncPromptDismiss"
+							class="sync-prompt-dismiss"
+							type="button"
+							aria-label="Dismiss sign-in prompt"
+						>&times;</button>
+					</div>
+					<p id="syncPromptDescription">
+						Sign in to keep your reading position and settings synchronized across devices.
+					</p>
+					<button id="syncPromptSignIn" class="primary-btn" type="button">Sign in</button>
+				</aside>
+
 				<div class="accordion-section active" data-section="appearance">
 					<button class="accordion-header" data-target="appearance">
 						<span class="accordion-title">Appearance</span>
@@ -766,31 +827,9 @@
 		</div>
     </div>
 
-	<aside
-		id="syncPrompt"
-		class="sync-prompt"
-		aria-labelledby="syncPromptTitle"
-		aria-describedby="syncPromptDescription"
-		hidden
-	>
-		<div class="sync-prompt-header">
-			<h2 id="syncPromptTitle">Sync your reading</h2>
-			<button
-				id="syncPromptDismiss"
-				class="sync-prompt-dismiss"
-				type="button"
-				aria-label="Dismiss sign-in prompt"
-			>&times;</button>
-		</div>
-		<p id="syncPromptDescription">
-			Sign in to keep your reading position and settings synchronized across devices.
-		</p>
-		<button id="syncPromptSignIn" class="primary-btn" type="button">Sign in</button>
-	</aside>
-
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=e9af84a"></script>
+	<script type="module" src="app.js?v=aa02545"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');

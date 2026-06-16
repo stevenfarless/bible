@@ -137,6 +137,7 @@ export async function handleLogin(app) {
         await app.auth.signInWithEmailAndPassword(email, password);
         app.showToast('Signed in successfully!');
         app.closeModal(app.loginModal);
+        app.maybeShowTranslationSyncModal();
         document.getElementById('loginEmail').value = '';
         document.getElementById('loginPassword').value = '';
     } catch (error) {
@@ -182,7 +183,7 @@ export async function handleSignup(app) {
             verseByVerse: app.state.verseByVerse,
             colorTheme: app.state.colorTheme,
             lightMode: app.state.lightMode ?? 'system',
-            translation: app.state.translation || 'ESV',
+            translation: app.preferredTranslation || app.state.translation || 'KJV',
         });
 
         app.showToast('Account created successfully!');
@@ -228,7 +229,9 @@ export async function loadUserData(app, normalizeTranslation) {
             : s.lightMode === true ? 'light'
             : s.lightMode === false ? 'dark'
             : 'system';
-    app.state.translation          = normalizeTranslation(s.translation || 'ESV');
+    app.preferredTranslation = normalizeTranslation(
+        s.translation || app.preferredTranslation || 'KJV'
+    );
 
     if (s.fontSize            != null) lsSet('fontSize',             s.fontSize);
     if (s.showVerseNumbers    != null) lsSet('showVerseNumbers',     s.showVerseNumbers);
@@ -238,7 +241,12 @@ export async function loadUserData(app, normalizeTranslation) {
     if (s.verseByVerse        != null) lsSet('verseByVerse',         s.verseByVerse);
     if (s.colorTheme          != null) lsSet('colorTheme',           s.colorTheme);
     if (s.lightMode           != null) lsSet('lightMode',            app.state.lightMode);
-    if (s.translation         != null) lsSet('translation',          normalizeTranslation(s.translation || 'ESV'));
+    if (s.translation != null) {
+        lsSet(
+            'preferredTranslation',
+            normalizeTranslation(s.translation || 'KJV')
+        );
+    }
 }
 
 export async function handleChangeEmail(app) {

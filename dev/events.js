@@ -305,13 +305,37 @@ export function attachEventListeners(app) {
         app.bookModal, app.chapterModal, app.verseModal,
         app.settingsModal, app.loginModal,
         app.signupModal, app.userMenuModal, app.referencesModal,
-        app.translationModal, app.deuterocanonInfoModal,
+        app.translationModal, app.translationSyncModal,
+        app.deuterocanonInfoModal,
     ].forEach((modal) => {
         if (!modal) return;
         modal.addEventListener('click', (e) => { if (e.target === modal) app.closeModal(modal); });
     });
 
-    app.settingsBtn?.addEventListener('click',        () => app.openModal(app.settingsModal));
+    const openSettings = () => {
+        app.hideSyncPrompt();
+        app.openModal(app.settingsModal);
+
+        const canOfferSync = Boolean(
+            app.auth &&
+            app.database &&
+            app.authStateResolved &&
+            !app.currentUser
+        );
+
+        if (!canOfferSync) return;
+
+        const promptShown = app.maybeShowSyncPrompt();
+
+        if (promptShown) {
+            const settingsBody =
+                app.settingsModal?.querySelector('.modal-body');
+
+            if (settingsBody) settingsBody.scrollTop = 0;
+        }
+    };
+
+    app.settingsBtn?.addEventListener('click', openSettings);
     app.closeVerseModal?.addEventListener('click',    () => app.closeModal(app.verseModal));
     app.closeBookModal?.addEventListener('click',     () => app.closeModal(app.bookModal));
     app.closeDeuterocanonInfoModal?.addEventListener('click', () => app.closeModal(app.deuterocanonInfoModal));

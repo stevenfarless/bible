@@ -1260,16 +1260,11 @@ body.hide-verse-numbers .verse .verse-num {
 
 /* Sync sign-in prompt */
 .sync-prompt {
-    position: fixed;
-    top: calc(var(--header-height) + var(--spacing-sm));
-    right: max(
-        var(--spacing-lg),
-        calc((100vw - var(--max-width)) / 2 + var(--spacing-lg))
-    );
-    z-index: 500;
+    position: static;
     display: grid;
-    width: min(22rem, calc(100vw - var(--spacing-lg) - var(--spacing-lg)));
+    width: 100%;
     gap: var(--spacing-md);
+    margin: 0 0 var(--spacing-lg);
     padding: var(--spacing-lg);
     background-color: var(--bg-card);
     border: 1px solid var(--border-neutral);
@@ -1289,7 +1284,7 @@ body.hide-verse-numbers .verse .verse-num {
     gap: var(--spacing-md);
 }
 
-.sync-prompt h2 {
+.sync-prompt h3 {
     margin: 0;
     color: var(--primary-color);
     font-size: 1.05rem;
@@ -1335,13 +1330,6 @@ body.hide-verse-numbers .verse .verse-num {
 .sync-prompt .primary-btn:focus-visible {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
-}
-
-@media (min-width: 769px) {
-    body.chrome-hidden .sync-prompt:not([hidden]) {
-        opacity: 0;
-        pointer-events: none;
-    }
 }
 
 /* User Info */
@@ -1611,4 +1599,70 @@ body.hide-verse-numbers .verse .verse-num {
     .close-control:active {
         transform: none;
     }
+}
+
+.translation-sync-list {
+    display: grid;
+    gap: var(--spacing-sm);
+    margin: var(--spacing-lg) 0;
+}
+
+.translation-sync-choice {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: var(--bg-raised);
+    border: 1px solid var(--border-neutral);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+}
+
+.translation-sync-choice input {
+    flex: 0 0 auto;
+}
+
+.translation-sync-choice span {
+    min-width: 0;
+    color: var(--text-body);
+}
+
+.translation-sync-status {
+    min-height: 1.5em;
+    margin: var(--spacing-md) 0;
+    color: var(--text-muted);
+}
+
+.translation-sync-fallback-actions {
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-neutral);
+}
+
+.translation-sync-fallback-actions[hidden] {
+    display: none;
+}
+
+.translation-sync-fallback-actions p {
+    margin: 0 0 var(--spacing-md);
+    color: var(--text-muted);
+}
+
+.translation-sync-button-row,
+.translation-sync-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+
+.translation-sync-actions {
+    justify-content: flex-end;
+    margin-top: var(--spacing-lg);
+}
+
+.translation-sync-actions .primary-btn,
+.translation-sync-actions .secondary-btn,
+.translation-sync-button-row .secondary-btn {
+    min-height: 44px;
+    touch-action: manipulation;
 }
