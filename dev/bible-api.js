@@ -1,5 +1,5 @@
 // bible-api.js
-import { FIREBASE_DB_URL } from './config/firebase-config.js';
+import { FIREBASE_DB_URL } from './firebase-config.js';
 import { normaliseBookAlias } from './book-aliases.js';
 import {
     idbGetBook, idbPutBook,

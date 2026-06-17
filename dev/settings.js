@@ -192,7 +192,7 @@ export async function toggleSetting(app, setting) {
 
     lsSet(setting, el.checked);
 
-    if (app.currentUser) {
+    if (app.canWriteRemoteState()) {
         await app.database
             .ref(`users/${app.currentUser.uid}/settings/${setting}`)
             .set(el.checked);
@@ -224,7 +224,7 @@ export async function toggleVerseByVerse(app) {
 
     lsSet('verseByVerse', app.state.verseByVerse);
 
-    if (app.currentUser) {
+    if (app.canWriteRemoteState()) {
         await app.database
             .ref(`users/${app.currentUser.uid}/settings/verseByVerse`)
             .set(app.state.verseByVerse);
@@ -287,7 +287,7 @@ export async function updateFontSize(app, size) {
 
     lsSet('fontSize', size);
 
-    if (app.currentUser) {
+    if (app.canWriteRemoteState()) {
         await app.database
             .ref(`users/${app.currentUser.uid}/settings/fontSize`)
             .set(parseInt(size, 10));
@@ -346,7 +346,7 @@ export async function changeTranslation(
         lsSet('preferredTranslation', translation);
         await app.recordTranslationInstalled(translation);
 
-        if (app.currentUser) {
+        if (app.canWriteRemoteState()) {
             await app.database
                 .ref(`users/${app.currentUser.uid}/settings/translation`)
                 .set(translation);
@@ -469,7 +469,63 @@ export function initSubAccordions() {
  *
  * Falls back to the build-info SHA if the API request fails.
  */
-export async function populateAboutVersion() {
+let markedLoadPromise = null;
+
+function loadMarked() {
+    if (typeof window.marked !== 'undefined') {
+        return Promise.resolve(window.marked);
+    }
+
+    if (markedLoadPromise) {
+        return markedLoadPromise;
+    }
+
+    markedLoadPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+
+        script.src =
+            'https://cdn.jsdelivr.net/npm/marked@9/marked.min.js';
+        script.async = true;
+
+        script.addEventListener('load', () => {
+            if (typeof window.marked !== 'undefined') {
+                resolve(window.marked);
+                return;
+            }
+
+            reject(new Error('marked.js loaded without exposing marked'));
+        });
+
+        script.addEventListener('error', () => {
+            reject(new Error('marked.js failed to load'));
+        });
+
+        document.head.appendChild(script);
+    });
+
+    return markedLoadPromise;
+}
+
+let aboutVersionScheduled = false;
+
+export function populateAboutVersion() {
+    if (aboutVersionScheduled) return;
+
+    aboutVersionScheduled = true;
+
+    const load = () => {
+        void loadAboutVersion();
+    };
+
+    if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(load, { timeout: 5000 });
+        return;
+    }
+
+    window.setTimeout(load, 3000);
+}
+
+async function loadAboutVersion() {
     const versionEl   = document.getElementById('aboutVersion');
     const contentEl   = document.getElementById('whatsNewContent');
     const whatsNewBtn = document.querySelector('[data-section="whats-new"] .sub-accordion-header');
@@ -499,13 +555,18 @@ export async function populateAboutVersion() {
         }
 
         if (contentEl && release.body) {
-            // marked is loaded via CDN in index.html before this runs
-            if (typeof marked !== 'undefined') {
+            try {
+                const marked = await loadMarked();
                 contentEl.innerHTML = marked.parse(release.body);
-            } else {
+            } catch (_) {
                 contentEl.textContent = release.body;
             }
-            if (whatsNewBtn) whatsNewBtn.closest('.sub-accordion-section').removeAttribute('hidden');
+
+            if (whatsNewBtn) {
+                whatsNewBtn
+                    .closest('.sub-accordion-section')
+                    .removeAttribute('hidden');
+            }
         }
 
         // Fetch the latest prerelease for the Coming Soon section
@@ -528,9 +589,10 @@ async function _populateComingSoon() {
         const pre = releases.find(r => r.prerelease === true);
         if (!pre || !pre.body) return;
 
-        if (typeof marked !== 'undefined') {
+        try {
+            const marked = await loadMarked();
             el.innerHTML = marked.parse(pre.body);
-        } else {
+        } catch (_) {
             el.textContent = pre.body;
         }
 

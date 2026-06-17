@@ -611,7 +611,8 @@ body.light-mode .crossref-item {
 /* Monospace for numeric/code nav selector content */
 #currentChapter,
 #currentVerse {
-    font-family: 'iA Writer Mono S', 'Courier New', monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        'Liberation Mono', 'Courier New', monospace;
     font-weight: 700;
     letter-spacing: 0.02em;
     min-width: 3ch;
@@ -620,7 +621,8 @@ body.light-mode .crossref-item {
 }
 
 #currentTranslation {
-    font-family: 'iA Writer Mono S', 'Courier New', monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        'Liberation Mono', 'Courier New', monospace;
     font-weight: 500;
     letter-spacing: 0.02em;
 }
@@ -777,7 +779,7 @@ body.hide-chapter-arrows #nextChapter {
 
 .copyright {
     font-size: 0.85rem;
-    color: var(--text-muted);
+    color: var(--text-body);
     font-style: italic;
 }
 

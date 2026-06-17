@@ -151,7 +151,8 @@
 
 #build-info {
     display: inline-block;
-    font-family: 'iA Writer Mono S', 'Courier New', monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        'Liberation Mono', 'Courier New', monospace;
     font-size: .75rem;
     font-weight: bold;
     letter-spacing: 0.04em;

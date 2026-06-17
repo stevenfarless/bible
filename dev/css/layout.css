@@ -69,6 +69,34 @@ body.chrome-no-transition .top-chrome {
     padding-top: calc(var(--chrome-height) + var(--spacing-xl));
 }
 
+body:not(.passage-ready) #passageText {
+    min-height: calc(100dvh - var(--chrome-height) - (2 * var(--spacing-xl)));
+}
+
+.passage-loading-placeholder {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8em;
+    padding-top: 0.25em;
+}
+
+.passage-loading-line {
+    display: block;
+    width: 100%;
+    height: 1em;
+    border-radius: 0.25rem;
+    background-color: currentColor;
+    opacity: 0.08;
+}
+
+.passage-loading-line--short {
+    width: 65%;
+}
+
+body.passage-ready .passage-loading-placeholder {
+    display: none;
+}
+
 
 /* Header */
 .header {
