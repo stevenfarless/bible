@@ -991,3 +991,50 @@ test('startup: visible monospace UI avoids loading iA Writer Mono', async ({ pag
         expect(families.translation).toContain('ui-monospace');
         expect(monoFontRequests).toHaveLength(0);
 });
+
+test('accessibility: copyright text meets WCAG AA contrast', async ({ page }) => {
+        await page.goto('/');
+        await waitForPassage(page);
+
+        const ratio = await page.locator('#copyright').evaluate(element => {
+                const parseRgb = value => {
+                        const channels = value.match(/[\d.]+/g)?.slice(0, 3).map(Number);
+                        if (!channels || channels.length !== 3) {
+                                throw new Error(`Unsupported color: ${value}`);
+                        }
+                        return channels;
+                };
+
+                const luminance = channels => {
+                        const linear = channels.map(channel => {
+                                const value = channel / 255;
+                                return value <= 0.04045
+                                        ? value / 12.92
+                                        : ((value + 0.055) / 1.055) ** 2.4;
+                        });
+                        return (
+                                0.2126 * linear[0]
+                                + 0.7152 * linear[1]
+                                + 0.0722 * linear[2]
+                        );
+                };
+
+                const foreground = parseRgb(getComputedStyle(element).color);
+                const container = element.closest('.passage-container');
+                const background = parseRgb(
+                        getComputedStyle(container).backgroundColor
+                );
+                const lighter = Math.max(
+                        luminance(foreground),
+                        luminance(background)
+                );
+                const darker = Math.min(
+                        luminance(foreground),
+                        luminance(background)
+                );
+
+                return (lighter + 0.05) / (darker + 0.05);
+        });
+
+        expect(ratio).toBeGreaterThanOrEqual(4.5);
+});

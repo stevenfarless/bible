@@ -779,7 +779,7 @@ body.hide-chapter-arrows #nextChapter {
 
 .copyright {
     font-size: 0.85rem;
-    color: var(--text-muted);
+    color: var(--text-body);
     font-style: italic;
 }
 
