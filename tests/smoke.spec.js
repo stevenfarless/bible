@@ -957,3 +957,37 @@ test('startup: marked loads only after delayed release metadata', async ({ page 
                 'Test release notes'
         );
 });
+
+test('startup: visible monospace UI avoids loading iA Writer Mono', async ({ page }) => {
+        const monoFontRequests = [];
+
+        page.on('request', request => {
+                if (request.url().includes('iAWriterMonoS-Regular.woff')) {
+                        monoFontRequests.push(request.url());
+                }
+        });
+
+        await page.goto('/');
+        await waitForPassage(page);
+
+        const families = await page.evaluate(() => ({
+                build: getComputedStyle(
+                        document.getElementById('build-info')
+                ).fontFamily,
+                chapter: getComputedStyle(
+                        document.getElementById('currentChapter')
+                ).fontFamily,
+                verse: getComputedStyle(
+                        document.getElementById('currentVerse')
+                ).fontFamily,
+                translation: getComputedStyle(
+                        document.getElementById('currentTranslation')
+                ).fontFamily,
+        }));
+
+        expect(families.build).toContain('ui-monospace');
+        expect(families.chapter).toContain('ui-monospace');
+        expect(families.verse).toContain('ui-monospace');
+        expect(families.translation).toContain('ui-monospace');
+        expect(monoFontRequests).toHaveLength(0);
+});
