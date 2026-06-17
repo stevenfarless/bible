@@ -751,3 +751,52 @@ test('modal focus: closing login does not leave focus in an aria-hidden modal', 
                 return Boolean(active?.closest?.('[aria-hidden="true"]'));
         })).toBe(false);
 });
+
+test('auth restoration: delayed remote position cannot overwrite local navigation', async ({ page }) => {
+        await page.goto('/');
+        await waitForPassage(page);
+
+        const result = await page.evaluate(async () => {
+                const app = window._bibleApp;
+                let releaseRemote;
+                const gate = new Promise(resolve => { releaseRemote = resolve; });
+
+                app._authRestorePositionBaseline = {
+                        book: 'Genesis',
+                        chapter: 1,
+                        scrollY: 0,
+                };
+                app.currentUser = { uid: 'position-test' };
+                app.database = {
+                        ref() {
+                                return {
+                                        async once() {
+                                                await gate;
+                                                return {
+                                                        val: () => ({
+                                                                book: 'Genesis',
+                                                                chapter: 1,
+                                                                scrollY: 0,
+                                                        }),
+                                                };
+                                        },
+                                };
+                        },
+                };
+
+                const restoration = app._loadSavedPositionIfChanged();
+                app.state.currentChapter = 2;
+                releaseRemote();
+                await restoration;
+
+                return {
+                        chapter: app.state.currentChapter,
+                        events: app._dbg.events.map(event => event.msg),
+                };
+        });
+
+        expect(result.chapter).toBe(2);
+        expect(result.events).toContain(
+                'auth restoration: discarded remote position changed during read'
+        );
+});

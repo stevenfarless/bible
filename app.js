@@ -657,6 +657,7 @@ class BibleApp {
         this._authRestorationScheduled = false;
         this._firebaseConnectedUnsubscribe = null;
         this._syncWritesEnabled = false;
+        this._authRestorePositionBaseline = null;
         this.preferredTranslation = 'KJV';
         this.pendingPreferredTranslation = null;
         this.syncedTranslationLibrary = new Set();
@@ -956,6 +957,10 @@ class BibleApp {
             }
 
             this._syncWritesEnabled = true;
+            if (this.hasLocalPositionChangedSinceAuthStart()) {
+                saveReadingPosition(this);
+                this._dbgEvent('auth restoration: saved newer local position');
+            }
             this.maybeShowTranslationSyncModal();
             this._dbg.t_firebase_position_end = ms();
             this._dbg.firebasePositionChanged = positionChanged;
@@ -972,6 +977,11 @@ class BibleApp {
         if (this._authRestorationPromise) {
             return this._authRestorationPromise;
         }
+        this._authRestorePositionBaseline = {
+            book: this.state.currentBook,
+            chapter: this.state.currentChapter,
+            scrollY: window.scrollY || 0,
+        };
 
         this._dbg.t_auth_restore_start = ms();
         this._dbgEvent('auth restoration: started');
@@ -1055,6 +1065,17 @@ class BibleApp {
             this.currentUser &&
             this.database &&
             this._syncWritesEnabled
+        );
+    }
+
+    hasLocalPositionChangedSinceAuthStart() {
+        const baseline = this._authRestorePositionBaseline;
+        if (!baseline) return false;
+
+        return (
+            this.state.currentBook !== baseline.book ||
+            this.state.currentChapter !== baseline.chapter ||
+            Math.abs((window.scrollY || 0) - baseline.scrollY) > 2
         );
     }
 
