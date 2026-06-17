@@ -62,7 +62,18 @@ diff --git a/app.js b/app.js
              this.updateNavigationState();
              return true;
          } catch (_) {
-@@ -1438,6 +1439,7 @@ class BibleApp {
+@@ -1406,7 +1407,10 @@ class BibleApp {
+             this.passageText.querySelector('.loading') === null &&
+             this.passageText.innerHTML.trim() !== '';
+-        if (!alreadyCached) {
++        const hasStartupPlaceholder = Boolean(
++            this.passageText?.querySelector('.passage-loading-placeholder')
++        );
++        if (!alreadyCached && !hasStartupPlaceholder) {
+             this.passageText.innerHTML = '<p class="loading">Loading passage...</p>';
+         }
+ 
+@@ -1438,6 +1442,7 @@ class BibleApp {
                  this.passageText.innerHTML =
                      '<p class="error">Passage not available.</p>';
              }
@@ -70,7 +81,7 @@ diff --git a/app.js b/app.js
              this.chromeSuspend = false;
              document.body.classList.remove('chrome-no-transition');
              return;
-@@ -1451,6 +1453,7 @@ class BibleApp {
+@@ -1451,6 +1456,7 @@ class BibleApp {
          this.passageText.innerHTML = data.passages[0];
          this.originalPassageHtml   = this.passageText.innerHTML;
          this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
