@@ -44,6 +44,7 @@ jobs:
       - name: Validate changed files
         run: |
           node --check settings.js
+          node --check scripts/prepare-offline-build.mjs
           node --check tests/smoke.spec.js
           git diff --check
 
@@ -56,12 +57,14 @@ jobs:
           grep -q 'function loadMarked()' settings.js
           grep -q "script.async = true;" settings.js
           grep -q 'const marked = await loadMarked();' settings.js
+          grep -q 'rewriteMarkedLoader' scripts/prepare-offline-build.mjs
+          grep -q "'./vendor/marked/marked.min.js'" scripts/prepare-offline-build.mjs
           grep -q 'marked loads only after delayed release metadata' tests/smoke.spec.js
 
           test "$(grep -c 'const marked = await loadMarked();' settings.js)" -eq 2
           test "$(grep -c 'marked@9/marked.min.js' settings.js)" -eq 1
 
-          UNEXPECTED="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev '^(index.html|settings.js|tests/smoke.spec.js)$' || true)"
+          UNEXPECTED="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev '^(index.html|settings.js|scripts/prepare-offline-build.mjs|tests/smoke.spec.js)$' || true)"
           test -z "$UNEXPECTED" || {
             echo "Unexpected changed files:"
             echo "$UNEXPECTED"
@@ -107,6 +110,7 @@ jobs:
           FILES=(
             index.html
             settings.js
+            scripts/prepare-offline-build.mjs
             tests/smoke.spec.js
           )
 
@@ -122,8 +126,9 @@ jobs:
           perf(startup): lazy-load release note markdown parser
 
           Remove marked.js from the initial document and load it once when
-          delayed GitHub release metadata needs Markdown rendering. Preserve
-          plain-text fallback when the third-party script is unavailable.
+          delayed GitHub release metadata needs Markdown rendering. Rewrite the
+          offline build to use the bundled local parser and preserve plain-text
+          fallback when the third-party script is unavailable.
 
           Refs #389
           EOF
