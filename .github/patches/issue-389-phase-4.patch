@@ -1,7 +1,7 @@
 diff --git a/css/components.css b/css/components.css
 --- a/css/components.css
 +++ b/css/components.css
-@@ -611,7 +611,8 @@
+@@ -611,14 +611,16 @@
  /* Monospace for numeric/code nav selector content */
  #currentChapter,
  #currentVerse {
@@ -11,6 +11,17 @@ diff --git a/css/components.css b/css/components.css
      font-weight: 700;
      letter-spacing: 0.02em;
      min-width: 3ch;
+     text-align: center;
+     font-variant-numeric: tabular-nums;
+ }
+ 
+ #currentTranslation {
+-    font-family: 'iA Writer Mono S', 'Courier New', monospace;
++    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
++        'Liberation Mono', 'Courier New', monospace;
+     font-weight: 500;
+     letter-spacing: 0.02em;
+ }
 diff --git a/css/pericope.css b/css/pericope.css
 --- a/css/pericope.css
 +++ b/css/pericope.css
@@ -38,7 +49,7 @@ diff --git a/sw.js b/sw.js
 diff --git a/tests/smoke.spec.js b/tests/smoke.spec.js
 --- a/tests/smoke.spec.js
 +++ b/tests/smoke.spec.js
-@@ -955,3 +955,31 @@ test('startup: marked loads only after delayed release metadata', async ({ page }) => {
+@@ -955,3 +955,35 @@ test('startup: marked loads only after delayed release metadata', async ({ page }) => {
                  'Test release notes'
          );
  });
@@ -65,10 +76,14 @@ diff --git a/tests/smoke.spec.js b/tests/smoke.spec.js
 +                verse: getComputedStyle(
 +                        document.getElementById('currentVerse')
 +                ).fontFamily,
++                translation: getComputedStyle(
++                        document.getElementById('currentTranslation')
++                ).fontFamily,
 +        }));
 +
 +        expect(families.build).toContain('ui-monospace');
 +        expect(families.chapter).toContain('ui-monospace');
 +        expect(families.verse).toContain('ui-monospace');
++        expect(families.translation).toContain('ui-monospace');
 +        expect(monoFontRequests).toHaveLength(0);
 +});
