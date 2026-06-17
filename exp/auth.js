@@ -11,6 +11,12 @@ function lsSetJSON(key, value) {
 
 export async function loadSavedPositionIfChanged(app, withTimeout) {
     if (!app.currentUser || !app.database) return;
+    if (app.hasLocalPositionChangedSinceAuthStart()) {
+        app._dbgEvent(
+            'auth restoration: skipped remote position after local interaction'
+        );
+        return;
+    }
 
     let targetBook = app.state.currentBook;
     let targetChapter = app.state.currentChapter;
@@ -34,6 +40,13 @@ export async function loadSavedPositionIfChanged(app, withTimeout) {
         }
     } catch (err) {
         console.error('_loadSavedPositionIfChanged: Firebase read failed', err);
+    }
+
+    if (app.hasLocalPositionChangedSinceAuthStart()) {
+        app._dbgEvent(
+            'auth restoration: discarded remote position changed during read'
+        );
+        return;
     }
 
     if (targetBook !== app.state.currentBook || targetChapter !== app.state.currentChapter) {
