@@ -1,0 +1,85 @@
+name: "! Preserve Local Position During Auth Restore"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Apply patch
+        run: |
+          PATCH=.github/patches/issue-253-preserve-local-position.patch
+          if git apply --check --recount "$PATCH"; then
+            git apply --recount "$PATCH"
+          elif git apply --reverse --check --recount "$PATCH"; then
+            echo "Fix already present"
+          else
+            echo "Current files do not match the reviewed patch"
+            exit 1
+          fi
+
+      - name: Validate source
+        run: |
+          node --check app.js
+          node --check auth.js
+          node --check tests/smoke.spec.js
+          git diff --check
+          grep -q '_authRestorePositionBaseline' app.js
+          grep -q 'hasLocalPositionChangedSinceAuthStart()' app.js
+          grep -q 'saved newer local position' app.js
+          grep -q 'discarded remote position changed during read' auth.js
+          grep -q 'delayed remote position cannot overwrite local navigation' tests/smoke.spec.js
+          CHANGED="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev '^(app.js|auth.js|tests/smoke.spec.js)$' || true)"
+          test -z "$CHANGED"
+
+      - name: Install dependencies
+        run: |
+          npm install --package-lock=false
+          npm install --no-save --package-lock=false @playwright/test
+          npx playwright install chromium --with-deps
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Run browser tests
+        env:
+          BASE_URL: http://localhost:8080
+        run: |
+          python3 -m http.server 8080 > /tmp/lege-lux-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 10); do
+            curl -fsS http://localhost:8080 > /dev/null && break
+            sleep 1
+          done
+          curl -fsS http://localhost:8080 > /dev/null
+          npx playwright test tests/smoke.spec.js --project=chromium
+
+      - name: Commit fix
+        run: |
+          if git diff --quiet -- app.js auth.js tests/smoke.spec.js; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.js auth.js tests/smoke.spec.js
+          git commit -m "fix(auth): preserve local navigation during session restoration" -m "Discard delayed Firebase position data after local navigation and save the newer local position. Add regression coverage. Refs #253"
+          git push origin exp

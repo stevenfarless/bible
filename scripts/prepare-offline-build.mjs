@@ -152,7 +152,7 @@ async function bundleFirebase() {
         source = source.replaceAll(remote, local);
     }
 
-    const outputPath = path.join(outputRoot, 'config/firebase-config.js');
+    const outputPath = path.join(outputRoot, 'config/firebase-config.bundle.js');
     await fs.mkdir(path.dirname(outputPath), { recursive: true });
     await build({
         stdin: {
@@ -168,8 +168,6 @@ async function bundleFirebase() {
         platform: 'browser',
         target: ['chrome109', 'firefox115', 'safari16.4'],
     });
-
-    await fs.rm(path.join(outputRoot, 'config/firebase-config.bundle.js'), { force: true });
 }
 
 async function localizeMarked() {
@@ -191,12 +189,12 @@ async function localizeMarked() {
     await fs.copyFile(resolvedSource, destination);
 }
 
-function rewriteIndex(sourceIndex) {
+function rewriteMarkedLoader(source) {
     const markedPattern = /https:\/\/cdn\.jsdelivr\.net\/npm\/marked@9\/marked\.min\.js(?:\?[^\"]*)?/;
-    if (!markedPattern.test(sourceIndex)) {
-        throw new Error('Could not find the hosted Marked script in index.html.');
+    if (!markedPattern.test(source)) {
+        throw new Error('Could not find the hosted Marked URL in settings.js.');
     }
-    return sourceIndex.replace(markedPattern, 'vendor/marked/marked.min.js');
+    return source.replace(markedPattern, './vendor/marked/marked.min.js');
 }
 
 async function validateInitialTranslations() {
@@ -278,6 +276,13 @@ async function verifyOutput(assets) {
     if (outputIndex.includes('cdn.jsdelivr.net/npm/marked')) {
         throw new Error('Built index still loads Marked from jsDelivr.');
     }
+    const outputSettings = await fs.readFile(path.join(outputRoot, 'settings.js'), 'utf8');
+    if (outputSettings.includes('cdn.jsdelivr.net/npm/marked')) {
+        throw new Error('Built settings.js still loads Marked from jsDelivr.');
+    }
+    if (!outputSettings.includes("'./vendor/marked/marked.min.js'")) {
+        throw new Error('Built settings.js does not load the local Marked bundle.');
+    }
     if (assets.length < 150) {
         throw new Error(`Offline manifest contains only ${assets.length} assets; expected the full shell and two translations.`);
     }
@@ -287,11 +292,15 @@ async function main() {
     if (!initialTranslations.length) throw new Error('INITIAL_OFFLINE_TRANSLATIONS cannot be empty.');
 
     const sourceIndex = await fs.readFile(path.join(root, 'index.html'), 'utf8');
+    const sourceSettings = await fs.readFile(path.join(root, 'settings.js'), 'utf8');
     await copyRuntimeTree();
     await validateCssSources(sourceIndex);
     await bundleFirebase();
     await localizeMarked();
-    await fs.writeFile(path.join(outputRoot, 'index.html'), rewriteIndex(sourceIndex));
+    await fs.writeFile(
+        path.join(outputRoot, 'settings.js'),
+        rewriteMarkedLoader(sourceSettings)
+    );
     await validateInitialTranslations();
     const assets = await writeOfflineManifest();
     await verifyOutput(assets);

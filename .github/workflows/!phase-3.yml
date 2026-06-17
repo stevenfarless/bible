@@ -1,0 +1,135 @@
+name: "! Phase 3"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: issue-389-phase-3-exp
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    name: Lazy-load release-note Markdown parser
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Apply reviewed patch
+        run: |
+          PATCH=.github/patches/issue-389-phase-3.patch
+
+          if git apply --check --recount "$PATCH"; then
+            git apply --recount "$PATCH"
+          elif git apply --reverse --check --recount "$PATCH"; then
+            echo "Phase 3 changes are already present."
+          else
+            echo "The affected files no longer match the reviewed Phase 3 patch."
+            exit 1
+          fi
+
+      - name: Validate changed files
+        run: |
+          node --check settings.js
+          node --check scripts/prepare-offline-build.mjs
+          node --check tests/smoke.spec.js
+          git diff --check
+
+          if grep -q '<script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>' index.html; then
+            echo "marked.js is still loaded during initial startup."
+            exit 1
+          fi
+
+          grep -q 'let markedLoadPromise = null;' settings.js
+          grep -q 'function loadMarked()' settings.js
+          grep -q "script.async = true;" settings.js
+          grep -q 'const marked = await loadMarked();' settings.js
+          grep -q 'rewriteMarkedLoader' scripts/prepare-offline-build.mjs
+          grep -q "'./vendor/marked/marked.min.js'" scripts/prepare-offline-build.mjs
+          grep -q 'marked loads only after delayed release metadata' tests/smoke.spec.js
+
+          test "$(grep -c 'const marked = await loadMarked();' settings.js)" -eq 2
+          test "$(grep -c 'marked@9/marked.min.js' settings.js)" -eq 1
+
+          UNEXPECTED="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev '^(index.html|settings.js|scripts/prepare-offline-build.mjs|tests/smoke.spec.js)$' || true)"
+          test -z "$UNEXPECTED" || {
+            echo "Unexpected changed files:"
+            echo "$UNEXPECTED"
+            exit 1
+          }
+
+      - name: Install dependencies
+        run: |
+          npm install --package-lock=false
+          npm install --no-save --package-lock=false @playwright/test esbuild firebase marked
+          npx playwright install chromium --with-deps
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Run Chromium tests
+        env:
+          BASE_URL: http://localhost:8080
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+        run: |
+          python3 -m http.server 8080 > /tmp/lege-lux-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+
+          for i in $(seq 1 10); do
+            curl -fsS http://localhost:8080 > /dev/null && break
+            sleep 1
+          done
+
+          curl -fsS http://localhost:8080 > /dev/null || {
+            cat /tmp/lege-lux-http.log
+            exit 1
+          }
+
+          npx playwright test tests/smoke.spec.js tests/auth-settings-race.spec.js --project=chromium
+
+      - name: Run offline build audit
+        run: node scripts/prepare-offline-build.mjs
+
+      - name: Commit Phase 3
+        run: |
+          FILES=(
+            index.html
+            settings.js
+            scripts/prepare-offline-build.mjs
+            tests/smoke.spec.js
+          )
+
+          if git diff --quiet -- "${FILES[@]}"; then
+            echo "No Phase 3 changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${FILES[@]}"
+          git commit -F - <<'EOF'
+          perf(startup): lazy-load release note markdown parser
+
+          Remove marked.js from the initial document and load it once when
+          delayed GitHub release metadata needs Markdown rendering. Rewrite the
+          offline build to use the bundled local parser and preserve plain-text
+          fallback when the third-party script is unavailable.
+
+          Refs #389
+          EOF
+          git push origin exp

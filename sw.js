@@ -106,7 +106,6 @@ const APP_SHELL = [
   './fonts/iAWriterQuattroS-Italic.woff2',
   './fonts/iAWriterQuattroS-Bold.woff2',
   './fonts/iAWriterQuattroS-BoldItalic.woff2',
-  './fonts/iAWriterMonoS-Regular.woff',
   './fonts/AdwaitaSans-Regular.woff2',
   './fonts/AdwaitaSans-Italic.woff2',
   './fonts/Web437_IBM_VGA_9x16-2x.woff',

@@ -751,3 +751,290 @@ test('modal focus: closing login does not leave focus in an aria-hidden modal', 
                 return Boolean(active?.closest?.('[aria-hidden="true"]'));
         })).toBe(false);
 });
+
+test('auth restoration: delayed remote position cannot overwrite local navigation', async ({ page }) => {
+        await page.goto('/');
+        await waitForPassage(page);
+
+        const result = await page.evaluate(async () => {
+                const app = window._bibleApp;
+                let releaseRemote;
+                const gate = new Promise(resolve => { releaseRemote = resolve; });
+
+                app._authRestorePositionBaseline = {
+                        book: 'Genesis',
+                        chapter: 1,
+                        scrollY: 0,
+                };
+                app.currentUser = { uid: 'position-test' };
+                app.database = {
+                        ref() {
+                                return {
+                                        async once() {
+                                                await gate;
+                                                return {
+                                                        val: () => ({
+                                                                book: 'Genesis',
+                                                                chapter: 1,
+                                                                scrollY: 0,
+                                                        }),
+                                                };
+                                        },
+                                };
+                        },
+                };
+
+                const restoration = app._loadSavedPositionIfChanged();
+                app.state.currentChapter = 2;
+                releaseRemote();
+                await restoration;
+
+                return {
+                        chapter: app.state.currentChapter,
+                        events: app._dbg.events.map(event => event.msg),
+                };
+        });
+
+        expect(result.chapter).toBe(2);
+        expect(result.events).toContain(
+                'auth restoration: discarded remote position changed during read'
+        );
+});
+
+test('cold startup: passage space stays reserved until the first passage renders', async ({ page }) => {
+        let releasePassage;
+        const passageGate = new Promise(resolve => { releasePassage = resolve; });
+
+        await page.addInitScript(() => {
+                localStorage.removeItem('passageCache');
+                localStorage.removeItem('readingPosition');
+                localStorage.setItem('translation', 'KJV');
+                localStorage.setItem('preferredTranslation', 'KJV');
+        });
+
+        await page.route('**/translations/KJV/Genesis.json', async route => {
+                await passageGate;
+                await route.continue();
+        });
+
+        const navigation = page.goto('/');
+        await page.waitForSelector('#passageText');
+        await page.waitForFunction(() => (
+                document.body.classList.contains('initializing') === false
+        ));
+
+        const loadingState = await page.evaluate(() => ({
+                ready: document.body.classList.contains('passage-ready'),
+                minHeight: parseFloat(getComputedStyle(
+                        document.getElementById('passageText')
+                ).minHeight),
+                placeholder: Boolean(document.querySelector(
+                        '.passage-loading-placeholder'
+                )),
+        }));
+
+        expect(loadingState.ready).toBe(false);
+        expect(loadingState.placeholder).toBe(true);
+        expect(loadingState.minHeight).toBeGreaterThan(300);
+
+        releasePassage();
+        await navigation;
+        await waitForPassage(page);
+        await expect.poll(() => page.evaluate(() => (
+                document.body.classList.contains('passage-ready')
+        ))).toBe(true);
+        await expect(page.locator('.passage-loading-placeholder')).toHaveCount(0);
+});
+
+test('startup: GitHub release checks wait for browser idle time', async ({ page }) => {
+        const releaseRequests = [];
+
+        await page.addInitScript(() => {
+                window.__idleCallbacks = [];
+                window.requestIdleCallback = (callback) => {
+                        window.__idleCallbacks.push(callback);
+                        return window.__idleCallbacks.length;
+                };
+        });
+
+        await page.route('https://api.github.com/repos/stevenfarless/lege-lux/releases/latest', async route => {
+                releaseRequests.push(route.request().url());
+                await route.fulfill({
+                        status: 200,
+                        contentType: 'application/json',
+                        body: JSON.stringify({
+                                tag_name: 'v-test',
+                                body: 'Test release',
+                        }),
+                });
+        });
+
+        await page.route('https://api.github.com/repos/stevenfarless/lege-lux/releases?per_page=10', async route => {
+                releaseRequests.push(route.request().url());
+                await route.fulfill({
+                        status: 200,
+                        contentType: 'application/json',
+                        body: '[]',
+                });
+        });
+
+        await page.goto('/');
+        await waitForPassage(page);
+
+        expect(releaseRequests).toHaveLength(0);
+
+        await page.evaluate(() => {
+                for (const callback of window.__idleCallbacks.splice(0)) {
+                        callback({ didTimeout: false, timeRemaining: () => 50 });
+                }
+        });
+
+        await expect.poll(() => releaseRequests.length).toBe(2);
+        expect(releaseRequests[0]).toContain('/releases/latest');
+        expect(releaseRequests[1]).toContain('/releases?per_page=10');
+});
+
+test('startup: marked loads only after delayed release metadata', async ({ page }) => {
+        const markedRequests = [];
+
+        await page.addInitScript(() => {
+                window.__idleCallbacks = [];
+                window.requestIdleCallback = (callback) => {
+                        window.__idleCallbacks.push(callback);
+                        return window.__idleCallbacks.length;
+                };
+        });
+
+        await page.route(
+                'https://api.github.com/repos/stevenfarless/lege-lux/releases/latest',
+                route => route.fulfill({
+                        status: 200,
+                        contentType: 'application/json',
+                        body: JSON.stringify({
+                                tag_name: 'v-test',
+                                body: '**Test release notes**',
+                        }),
+                })
+        );
+
+        await page.route(
+                'https://api.github.com/repos/stevenfarless/lege-lux/releases?per_page=10',
+                route => route.fulfill({
+                        status: 200,
+                        contentType: 'application/json',
+                        body: '[]',
+                })
+        );
+
+        await page.route('**/marked@9/marked.min.js', async route => {
+                markedRequests.push(route.request().url());
+                await route.fulfill({
+                        status: 200,
+                        contentType: 'text/javascript',
+                        body: `
+                                window.marked = {
+                                        parse(value) {
+                                                return '<strong>' + value + '</strong>';
+                                        }
+                                };
+                        `,
+                });
+        });
+
+        await page.goto('/');
+        await waitForPassage(page);
+
+        expect(markedRequests).toHaveLength(0);
+
+        await page.evaluate(() => {
+                for (const callback of window.__idleCallbacks.splice(0)) {
+                        callback({ didTimeout: false, timeRemaining: () => 50 });
+                }
+        });
+
+        await expect.poll(() => markedRequests.length).toBe(1);
+        await expect(page.locator('#whatsNewContent')).toContainText(
+                'Test release notes'
+        );
+});
+
+test('startup: visible monospace UI avoids loading iA Writer Mono', async ({ page }) => {
+        const monoFontRequests = [];
+
+        page.on('request', request => {
+                if (request.url().includes('iAWriterMonoS-Regular.woff')) {
+                        monoFontRequests.push(request.url());
+                }
+        });
+
+        await page.goto('/');
+        await waitForPassage(page);
+
+        const families = await page.evaluate(() => ({
+                build: getComputedStyle(
+                        document.getElementById('build-info')
+                ).fontFamily,
+                chapter: getComputedStyle(
+                        document.getElementById('currentChapter')
+                ).fontFamily,
+                verse: getComputedStyle(
+                        document.getElementById('currentVerse')
+                ).fontFamily,
+                translation: getComputedStyle(
+                        document.getElementById('currentTranslation')
+                ).fontFamily,
+        }));
+
+        expect(families.build).toContain('ui-monospace');
+        expect(families.chapter).toContain('ui-monospace');
+        expect(families.verse).toContain('ui-monospace');
+        expect(families.translation).toContain('ui-monospace');
+        expect(monoFontRequests).toHaveLength(0);
+});
+
+test('accessibility: copyright text meets WCAG AA contrast', async ({ page }) => {
+        await page.goto('/');
+        await waitForPassage(page);
+
+        const ratio = await page.locator('#copyright').evaluate(element => {
+                const parseRgb = value => {
+                        const channels = value.match(/[\d.]+/g)?.slice(0, 3).map(Number);
+                        if (!channels || channels.length !== 3) {
+                                throw new Error(`Unsupported color: ${value}`);
+                        }
+                        return channels;
+                };
+
+                const luminance = channels => {
+                        const linear = channels.map(channel => {
+                                const value = channel / 255;
+                                return value <= 0.04045
+                                        ? value / 12.92
+                                        : ((value + 0.055) / 1.055) ** 2.4;
+                        });
+                        return (
+                                0.2126 * linear[0]
+                                + 0.7152 * linear[1]
+                                + 0.0722 * linear[2]
+                        );
+                };
+
+                const foreground = parseRgb(getComputedStyle(element).color);
+                const container = element.closest('.passage-container');
+                const background = parseRgb(
+                        getComputedStyle(container).backgroundColor
+                );
+                const lighter = Math.max(
+                        luminance(foreground),
+                        luminance(background)
+                );
+                const darker = Math.min(
+                        luminance(foreground),
+                        luminance(background)
+                );
+
+                return (lighter + 0.05) / (darker + 0.05);
+        });
+
+        expect(ratio).toBeGreaterThanOrEqual(4.5);
+});

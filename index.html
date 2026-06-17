@@ -44,12 +44,6 @@
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
 	<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
 	<link rel="icon" href="./favicon.ico" />
-	<link rel="preconnect" href="https://esv-bible-6dffb-default-rtdb.firebaseio.com" />
-	<link rel="preconnect" href="https://www.gstatic.com" />
-	<link rel="preconnect" href="https://www.google.com" />
-	<link rel="preconnect" href="https://apis.google.com" />
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- Preload all ES modules so the browser fetches them in parallel
 	     before the parser reaches <script type="module" src="app.js">.
 	     This eliminates the sequential module-discovery waterfall. -->
@@ -83,7 +77,6 @@
 	<link rel="stylesheet" href="css/pericope.css" />
 	<link rel="stylesheet" href="css/geek95.css">
 	<!-- Firebase App Check loads reCAPTCHA v3 through ReCaptchaV3Provider. -->
-    <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
 </head>
 
 <body class="initializing">
@@ -211,7 +204,11 @@
 				</button>
 			</div>
 			<div id="passageText" class="passage-text">
-				<div class="loading">Loading passage...</div>
+				<div class="loading passage-loading-placeholder" aria-label="Loading passage">
+					<span class="passage-loading-line"></span>
+					<span class="passage-loading-line"></span>
+					<span class="passage-loading-line passage-loading-line--short"></span>
+				</div>
 			</div>
 
 			<div id="footnotesSection" class="passage-extras-section hidden">
