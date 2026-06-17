@@ -47,16 +47,22 @@ jobs:
           node --check tests/smoke.spec.js
           git diff --check
 
-          grep -q 'font-family: ui-monospace, SFMono-Regular' css/components.css
-          grep -q 'font-family: ui-monospace, SFMono-Regular' css/pericope.css
+          grep -A8 '^#currentChapter,$' css/components.css | grep -q 'font-family: ui-monospace, SFMono-Regular'
+          grep -A5 '^#currentTranslation {' css/components.css | grep -q 'font-family: ui-monospace, SFMono-Regular'
+          grep -A8 '^#build-info {' css/pericope.css | grep -q 'font-family: ui-monospace, SFMono-Regular'
           grep -q 'visible monospace UI avoids loading iA Writer Mono' tests/smoke.spec.js
 
-          if grep -q "'iA Writer Mono S'" css/components.css; then
-            echo "Visible navigation selectors still reference iA Writer Mono."
+          if grep -A8 '^#currentChapter,$' css/components.css | grep -q "'iA Writer Mono S'"; then
+            echo "Current chapter or verse still references iA Writer Mono."
             exit 1
           fi
 
-          if grep -q "#build-info[[:space:][:print:]]*'iA Writer Mono S'" css/pericope.css; then
+          if grep -A5 '^#currentTranslation {' css/components.css | grep -q "'iA Writer Mono S'"; then
+            echo "Current translation still references iA Writer Mono."
+            exit 1
+          fi
+
+          if grep -A8 '^#build-info {' css/pericope.css | grep -q "'iA Writer Mono S'"; then
             echo "The build badge still references the iA Writer Mono web font."
             exit 1
           fi
@@ -131,8 +137,8 @@ jobs:
           perf(fonts): use system monospace for startup UI
 
           Avoid loading the iA Writer Mono web font during startup by using the
-          device monospace stack for the build badge plus current chapter and
-          verse selectors, and remove the unused font from app-shell precaching.
+          device monospace stack for the build badge plus current chapter, verse,
+          and translation selectors, and remove it from app-shell precaching.
 
           Refs #389
           EOF
