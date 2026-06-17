@@ -893,3 +893,67 @@ test('startup: GitHub release checks wait for browser idle time', async ({ page 
         expect(releaseRequests[0]).toContain('/releases/latest');
         expect(releaseRequests[1]).toContain('/releases?per_page=10');
 });
+
+test('startup: marked loads only after delayed release metadata', async ({ page }) => {
+        const markedRequests = [];
+
+        await page.addInitScript(() => {
+                window.__idleCallbacks = [];
+                window.requestIdleCallback = (callback) => {
+                        window.__idleCallbacks.push(callback);
+                        return window.__idleCallbacks.length;
+                };
+        });
+
+        await page.route(
+                'https://api.github.com/repos/stevenfarless/lege-lux/releases/latest',
+                route => route.fulfill({
+                        status: 200,
+                        contentType: 'application/json',
+                        body: JSON.stringify({
+                                tag_name: 'v-test',
+                                body: '**Test release notes**',
+                        }),
+                })
+        );
+
+        await page.route(
+                'https://api.github.com/repos/stevenfarless/lege-lux/releases?per_page=10',
+                route => route.fulfill({
+                        status: 200,
+                        contentType: 'application/json',
+                        body: '[]',
+                })
+        );
+
+        await page.route('**/marked@9/marked.min.js', async route => {
+                markedRequests.push(route.request().url());
+                await route.fulfill({
+                        status: 200,
+                        contentType: 'text/javascript',
+                        body: `
+                                window.marked = {
+                                        parse(value) {
+                                                return '<strong>' + value + '</strong>';
+                                        }
+                                };
+                        `,
+                });
+        });
+
+        await page.goto('/');
+        await waitForPassage(page);
+
+        expect(markedRequests).toHaveLength(0);
+
+        await page.evaluate(() => {
+                for (const callback of window.__idleCallbacks.splice(0)) {
+                        callback({ didTimeout: false, timeRemaining: () => 50 });
+                }
+        });
+
+        await expect.poll(() => markedRequests.length).toBe(1);
+        await expect(page.locator('#whatsNewContent')).toContainText(
+                'Test release notes'
+        );
+});

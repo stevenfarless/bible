@@ -469,6 +469,43 @@ export function initSubAccordions() {
  *
  * Falls back to the build-info SHA if the API request fails.
  */
+let markedLoadPromise = null;
+
+function loadMarked() {
+    if (typeof window.marked !== 'undefined') {
+        return Promise.resolve(window.marked);
+    }
+
+    if (markedLoadPromise) {
+        return markedLoadPromise;
+    }
+
+    markedLoadPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+
+        script.src =
+            'https://cdn.jsdelivr.net/npm/marked@9/marked.min.js';
+        script.async = true;
+
+        script.addEventListener('load', () => {
+            if (typeof window.marked !== 'undefined') {
+                resolve(window.marked);
+                return;
+            }
+
+            reject(new Error('marked.js loaded without exposing marked'));
+        });
+
+        script.addEventListener('error', () => {
+            reject(new Error('marked.js failed to load'));
+        });
+
+        document.head.appendChild(script);
+    });
+
+    return markedLoadPromise;
+}
+
 let aboutVersionScheduled = false;
 
 export function populateAboutVersion() {
@@ -518,13 +555,18 @@ async function loadAboutVersion() {
         }
 
         if (contentEl && release.body) {
-            // marked is loaded via CDN in index.html before this runs
-            if (typeof marked !== 'undefined') {
+            try {
+                const marked = await loadMarked();
                 contentEl.innerHTML = marked.parse(release.body);
-            } else {
+            } catch (_) {
                 contentEl.textContent = release.body;
             }
-            if (whatsNewBtn) whatsNewBtn.closest('.sub-accordion-section').removeAttribute('hidden');
+
+            if (whatsNewBtn) {
+                whatsNewBtn
+                    .closest('.sub-accordion-section')
+                    .removeAttribute('hidden');
+            }
         }
 
         // Fetch the latest prerelease for the Coming Soon section
@@ -547,9 +589,10 @@ async function _populateComingSoon() {
         const pre = releases.find(r => r.prerelease === true);
         if (!pre || !pre.body) return;
 
-        if (typeof marked !== 'undefined') {
+        try {
+            const marked = await loadMarked();
             el.innerHTML = marked.parse(pre.body);
-        } else {
+        } catch (_) {
             el.textContent = pre.body;
         }
 
