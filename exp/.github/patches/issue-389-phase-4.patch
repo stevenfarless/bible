@@ -1,0 +1,40 @@
+diff --git a/css/pericope.css b/css/pericope.css
+--- a/css/pericope.css
++++ b/css/pericope.css
+@@ -153,7 +153,8 @@
+ 
+ #build-info {
+     display: inline-block;
+-    font-family: 'iA Writer Mono S', 'Courier New', monospace;
++    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
++        'Liberation Mono', 'Courier New', monospace;
+     font-size: .75rem;
+     font-weight: bold;
+     letter-spacing: 0.04em;
+diff --git a/tests/smoke.spec.js b/tests/smoke.spec.js
+--- a/tests/smoke.spec.js
++++ b/tests/smoke.spec.js
+@@ -955,3 +955,22 @@ test('startup: marked loads only after delayed release metadata', async ({ page }) => {
+                 'Test release notes'
+         );
+ });
++
++test('startup: build badge uses system monospace without loading iA Writer Mono', async ({ page }) => {
++        const monoFontRequests = [];
++
++        page.on('request', request => {
++                if (request.url().includes('iAWriterMonoS-Regular.woff')) {
++                        monoFontRequests.push(request.url());
++                }
++        });
++
++        await page.goto('/');
++        await waitForPassage(page);
++
++        const family = await page.locator('#build-info').evaluate(element => (
++                getComputedStyle(element).fontFamily
++        ));
++
++        expect(family).toContain('ui-monospace');
++        expect(monoFontRequests).toHaveLength(0);
++});
