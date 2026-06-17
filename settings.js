@@ -469,7 +469,26 @@ export function initSubAccordions() {
  *
  * Falls back to the build-info SHA if the API request fails.
  */
-export async function populateAboutVersion() {
+let aboutVersionScheduled = false;
+
+export function populateAboutVersion() {
+    if (aboutVersionScheduled) return;
+
+    aboutVersionScheduled = true;
+
+    const load = () => {
+        void loadAboutVersion();
+    };
+
+    if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(load, { timeout: 5000 });
+        return;
+    }
+
+    window.setTimeout(load, 3000);
+}
+
+async function loadAboutVersion() {
     const versionEl   = document.getElementById('aboutVersion');
     const contentEl   = document.getElementById('whatsNewContent');
     const whatsNewBtn = document.querySelector('[data-section="whats-new"] .sub-accordion-header');

@@ -845,3 +845,51 @@ test('cold startup: passage space stays reserved until the first passage renders
         ))).toBe(true);
         await expect(page.locator('.passage-loading-placeholder')).toHaveCount(0);
 });
+
+test('startup: GitHub release checks wait for browser idle time', async ({ page }) => {
+        const releaseRequests = [];
+
+        await page.addInitScript(() => {
+                window.__idleCallbacks = [];
+                window.requestIdleCallback = (callback) => {
+                        window.__idleCallbacks.push(callback);
+                        return window.__idleCallbacks.length;
+                };
+        });
+
+        await page.route('https://api.github.com/repos/stevenfarless/lege-lux/releases/latest', async route => {
+                releaseRequests.push(route.request().url());
+                await route.fulfill({
+                        status: 200,
+                        contentType: 'application/json',
+                        body: JSON.stringify({
+                                tag_name: 'v-test',
+                                body: 'Test release',
+                        }),
+                });
+        });
+
+        await page.route('https://api.github.com/repos/stevenfarless/lege-lux/releases?per_page=10', async route => {
+                releaseRequests.push(route.request().url());
+                await route.fulfill({
+                        status: 200,
+                        contentType: 'application/json',
+                        body: '[]',
+                });
+        });
+
+        await page.goto('/');
+        await waitForPassage(page);
+
+        expect(releaseRequests).toHaveLength(0);
+
+        await page.evaluate(() => {
+                for (const callback of window.__idleCallbacks.splice(0)) {
+                        callback({ didTimeout: false, timeRemaining: () => 50 });
+                }
+        });
+
+        await expect.poll(() => releaseRequests.length).toBe(2);
+        expect(releaseRequests[0]).toContain('/releases/latest');
+        expect(releaseRequests[1]).toContain('/releases?per_page=10');
+});
