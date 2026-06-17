@@ -1,0 +1,124 @@
+name: "! Phase 2"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: issue-389-phase-2-exp
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    name: Delay GitHub release checks until idle
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Apply reviewed patch
+        run: |
+          PATCH=.github/patches/issue-389-phase-2.patch
+
+          if git apply --check --recount "$PATCH"; then
+            git apply --recount "$PATCH"
+          elif git apply --reverse --check --recount "$PATCH"; then
+            echo "Phase 2 changes are already present."
+          else
+            echo "The affected files no longer match the reviewed Phase 2 patch."
+            exit 1
+          fi
+
+      - name: Validate changed files
+        run: |
+          node --check settings.js
+          node --check tests/smoke.spec.js
+          git diff --check
+
+          grep -q 'let aboutVersionScheduled = false;' settings.js
+          grep -q 'requestIdleCallback(load, { timeout: 5000 })' settings.js
+          grep -q 'window.setTimeout(load, 3000)' settings.js
+          grep -q 'async function loadAboutVersion()' settings.js
+          grep -q 'GitHub release checks wait for browser idle time' tests/smoke.spec.js
+
+          test "$(grep -c 'export function populateAboutVersion()' settings.js)" -eq 1
+          test "$(grep -c 'async function loadAboutVersion()' settings.js)" -eq 1
+
+          UNEXPECTED="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev '^(settings.js|tests/smoke.spec.js)$' || true)"
+          test -z "$UNEXPECTED" || {
+            echo "Unexpected changed files:"
+            echo "$UNEXPECTED"
+            exit 1
+          }
+
+      - name: Install dependencies
+        run: |
+          npm install --package-lock=false
+          npm install --no-save --package-lock=false @playwright/test esbuild firebase marked
+          npx playwright install chromium --with-deps
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Run Chromium tests
+        env:
+          BASE_URL: http://localhost:8080
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+        run: |
+          python3 -m http.server 8080 > /tmp/lege-lux-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+
+          for i in $(seq 1 10); do
+            curl -fsS http://localhost:8080 > /dev/null && break
+            sleep 1
+          done
+
+          curl -fsS http://localhost:8080 > /dev/null || {
+            cat /tmp/lege-lux-http.log
+            exit 1
+          }
+
+          npx playwright test tests/smoke.spec.js tests/auth-settings-race.spec.js --project=chromium
+
+      - name: Run offline build audit
+        run: node scripts/prepare-offline-build.mjs
+
+      - name: Commit Phase 2
+        run: |
+          FILES=(
+            settings.js
+            tests/smoke.spec.js
+          )
+
+          if git diff --quiet -- "${FILES[@]}"; then
+            echo "No Phase 2 changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${FILES[@]}"
+          git commit -F - <<'EOF'
+          perf(startup): delay GitHub release checks until idle
+
+          Schedule About and prerelease metadata requests after initial passage
+          startup so they do not compete with Bible data and critical rendering
+          on slow connections.
+
+          Refs #389
+          EOF
+          git push origin exp
