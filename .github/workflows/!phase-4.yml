@@ -43,6 +43,7 @@ jobs:
 
       - name: Validate changed files
         run: |
+          node --check sw.js
           node --check tests/smoke.spec.js
           git diff --check
 
@@ -54,7 +55,15 @@ jobs:
             exit 1
           fi
 
-          UNEXPECTED="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev '^(css/pericope.css|tests/smoke.spec.js)$' || true)"
+          if grep -q "'./fonts/iAWriterMonoS-Regular.woff'" sw.js; then
+            echo "The service-worker app shell still precaches iA Writer Mono."
+            exit 1
+          fi
+
+          test -f fonts/iAWriterMonoS-Regular.woff
+          grep -q "font-family: 'iA Writer Mono S'" css/fonts.css
+
+          UNEXPECTED="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev '^(css/pericope.css|sw.js|tests/smoke.spec.js)$' || true)"
           test -z "$UNEXPECTED" || {
             echo "Unexpected changed files:"
             echo "$UNEXPECTED"
@@ -99,6 +108,7 @@ jobs:
         run: |
           FILES=(
             css/pericope.css
+            sw.js
             tests/smoke.spec.js
           )
 
@@ -113,8 +123,9 @@ jobs:
           git commit -F - <<'EOF'
           perf(fonts): use system monospace for build badge
 
-          Avoid loading the iA Writer Mono web font during startup when the
-          small build badge can use the device monospace stack.
+          Avoid loading the iA Writer Mono web font during startup by using the
+          device monospace stack and removing the unused font from service-worker
+          app-shell precaching. Keep the font file available for future use.
 
           Refs #389
           EOF
