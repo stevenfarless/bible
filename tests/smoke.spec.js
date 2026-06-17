@@ -800,3 +800,48 @@ test('auth restoration: delayed remote position cannot overwrite local navigatio
                 'auth restoration: discarded remote position changed during read'
         );
 });
+
+test('cold startup: passage space stays reserved until the first passage renders', async ({ page }) => {
+        let releasePassage;
+        const passageGate = new Promise(resolve => { releasePassage = resolve; });
+
+        await page.addInitScript(() => {
+                localStorage.removeItem('passageCache');
+                localStorage.removeItem('readingPosition');
+                localStorage.setItem('translation', 'KJV');
+                localStorage.setItem('preferredTranslation', 'KJV');
+        });
+
+        await page.route('**/translations/KJV/Genesis.json', async route => {
+                await passageGate;
+                await route.continue();
+        });
+
+        const navigation = page.goto('/');
+        await page.waitForSelector('#passageText');
+        await page.waitForFunction(() => (
+                document.body.classList.contains('initializing') === false
+        ));
+
+        const loadingState = await page.evaluate(() => ({
+                ready: document.body.classList.contains('passage-ready'),
+                minHeight: parseFloat(getComputedStyle(
+                        document.getElementById('passageText')
+                ).minHeight),
+                placeholder: Boolean(document.querySelector(
+                        '.passage-loading-placeholder'
+                )),
+        }));
+
+        expect(loadingState.ready).toBe(false);
+        expect(loadingState.placeholder).toBe(true);
+        expect(loadingState.minHeight).toBeGreaterThan(300);
+
+        releasePassage();
+        await navigation;
+        await waitForPassage(page);
+        await expect.poll(() => page.evaluate(() => (
+                document.body.classList.contains('passage-ready')
+        ))).toBe(true);
+        await expect(page.locator('.passage-loading-placeholder')).toHaveCount(0);
+});
