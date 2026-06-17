@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   fix:
-    name: Use system monospace for the build badge
+    name: Use system monospace for visible startup UI
     runs-on: ubuntu-latest
     timeout-minutes: 35
 
@@ -47,8 +47,14 @@ jobs:
           node --check tests/smoke.spec.js
           git diff --check
 
+          grep -q 'font-family: ui-monospace, SFMono-Regular' css/components.css
           grep -q 'font-family: ui-monospace, SFMono-Regular' css/pericope.css
-          grep -q 'build badge uses system monospace without loading iA Writer Mono' tests/smoke.spec.js
+          grep -q 'visible monospace UI avoids loading iA Writer Mono' tests/smoke.spec.js
+
+          if grep -q "'iA Writer Mono S'" css/components.css; then
+            echo "Visible navigation selectors still reference iA Writer Mono."
+            exit 1
+          fi
 
           if grep -q "#build-info[[:space:][:print:]]*'iA Writer Mono S'" css/pericope.css; then
             echo "The build badge still references the iA Writer Mono web font."
@@ -63,7 +69,7 @@ jobs:
           test -f fonts/iAWriterMonoS-Regular.woff
           grep -q "font-family: 'iA Writer Mono S'" css/fonts.css
 
-          UNEXPECTED="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev '^(css/pericope.css|sw.js|tests/smoke.spec.js)$' || true)"
+          UNEXPECTED="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev '^(css/components.css|css/pericope.css|sw.js|tests/smoke.spec.js)$' || true)"
           test -z "$UNEXPECTED" || {
             echo "Unexpected changed files:"
             echo "$UNEXPECTED"
@@ -107,6 +113,7 @@ jobs:
       - name: Commit Phase 4
         run: |
           FILES=(
+            css/components.css
             css/pericope.css
             sw.js
             tests/smoke.spec.js
@@ -121,11 +128,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- "${FILES[@]}"
           git commit -F - <<'EOF'
-          perf(fonts): use system monospace for build badge
+          perf(fonts): use system monospace for startup UI
 
           Avoid loading the iA Writer Mono web font during startup by using the
-          device monospace stack and removing the unused font from service-worker
-          app-shell precaching. Keep the font file available for future use.
+          device monospace stack for the build badge plus current chapter and
+          verse selectors, and remove the unused font from app-shell precaching.
 
           Refs #389
           EOF
