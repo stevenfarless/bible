@@ -26,8 +26,8 @@ on:
       - exp
 
 concurrency:
-  group: gh-pages-${{ github.event_name == 'workflow_run' && 'exp' || github.ref_name }}
-  cancel-in-progress: true
+  group: gh-pages-deployment
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
