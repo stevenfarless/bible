@@ -1143,6 +1143,7 @@ class BibleApp {
                 this.originalPassageHtml   = html;
                 this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
             }
+            document.body.classList.add('passage-ready');
             this.updateNavigationState();
             return true;
         } catch (_) {
@@ -1414,7 +1415,10 @@ class BibleApp {
             this.passageText &&
             this.passageText.querySelector('.loading') === null &&
             this.passageText.innerHTML.trim() !== '';
-        if (!alreadyCached) {
+        const hasStartupPlaceholder = Boolean(
+            this.passageText?.querySelector('.passage-loading-placeholder')
+        );
+        if (!alreadyCached && !hasStartupPlaceholder) {
             this.passageText.innerHTML = '<p class="loading">Loading passage...</p>';
         }
 
@@ -1444,6 +1448,7 @@ class BibleApp {
                 this.passageText.innerHTML =
                     '<p class="error">Passage not available.</p>';
             }
+            document.body.classList.add('passage-ready');
             this.chromeSuspend = false;
             document.body.classList.remove('chrome-no-transition');
             return;
@@ -1457,6 +1462,7 @@ class BibleApp {
         this.passageText.innerHTML = data.passages[0];
         this.originalPassageHtml   = this.passageText.innerHTML;
         this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
+        document.body.classList.add('passage-ready');
 
         this.updateCopyright();
         this.currentVerseSpan.textContent = '1';
