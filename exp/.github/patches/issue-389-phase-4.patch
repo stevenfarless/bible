@@ -1,3 +1,16 @@
+diff --git a/css/components.css b/css/components.css
+--- a/css/components.css
++++ b/css/components.css
+@@ -611,7 +611,8 @@
+ /* Monospace for numeric/code nav selector content */
+ #currentChapter,
+ #currentVerse {
+-    font-family: 'iA Writer Mono S', 'Courier New', monospace;
++    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
++        'Liberation Mono', 'Courier New', monospace;
+     font-weight: 700;
+     letter-spacing: 0.02em;
+     min-width: 3ch;
 diff --git a/css/pericope.css b/css/pericope.css
 --- a/css/pericope.css
 +++ b/css/pericope.css
@@ -25,12 +38,12 @@ diff --git a/sw.js b/sw.js
 diff --git a/tests/smoke.spec.js b/tests/smoke.spec.js
 --- a/tests/smoke.spec.js
 +++ b/tests/smoke.spec.js
-@@ -955,3 +955,22 @@ test('startup: marked loads only after delayed release metadata', async ({ page }) => {
+@@ -955,3 +955,31 @@ test('startup: marked loads only after delayed release metadata', async ({ page }) => {
                  'Test release notes'
          );
  });
 +
-+test('startup: build badge uses system monospace without loading iA Writer Mono', async ({ page }) => {
++test('startup: visible monospace UI avoids loading iA Writer Mono', async ({ page }) => {
 +        const monoFontRequests = [];
 +
 +        page.on('request', request => {
@@ -42,10 +55,20 @@ diff --git a/tests/smoke.spec.js b/tests/smoke.spec.js
 +        await page.goto('/');
 +        await waitForPassage(page);
 +
-+        const family = await page.locator('#build-info').evaluate(element => (
-+                getComputedStyle(element).fontFamily
-+        ));
++        const families = await page.evaluate(() => ({
++                build: getComputedStyle(
++                        document.getElementById('build-info')
++                ).fontFamily,
++                chapter: getComputedStyle(
++                        document.getElementById('currentChapter')
++                ).fontFamily,
++                verse: getComputedStyle(
++                        document.getElementById('currentVerse')
++                ).fontFamily,
++        }));
 +
-+        expect(family).toContain('ui-monospace');
++        expect(families.build).toContain('ui-monospace');
++        expect(families.chapter).toContain('ui-monospace');
++        expect(families.verse).toContain('ui-monospace');
 +        expect(monoFontRequests).toHaveLength(0);
 +});
