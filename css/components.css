@@ -679,6 +679,11 @@ body.hide-chapter-arrows #nextChapter {
     box-shadow: var(--shadow-md);
 }
 
+body.initializing .passage-container,
+.passage-loading-placeholder {
+    min-height: 60vh;
+}
+
 .passage-header {
     display: flex;
     justify-content: space-between;
