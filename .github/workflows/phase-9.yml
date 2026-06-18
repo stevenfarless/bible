@@ -7,6 +7,7 @@ on:
       - exp
     paths:
       - .github/workflows/phase-9.yml
+      - .github/scripts/phase9_font_startup.py
 
 permissions:
   contents: write
@@ -35,42 +36,7 @@ jobs:
           node-version: "20"
 
       - name: Defer non-critical font catalog
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path('index.html')
-          text = path.read_text()
-
-          critical_fonts = """\t<style id="startup-font-faces">
-\t\t@font-face {
-\t\t\tfont-family: 'Cinzel';
-\t\t\tsrc: url('./fonts/Cinzel-Regular.woff2') format('woff2');
-\t\t\tfont-weight: 400;
-\t\t\tfont-style: normal;
-\t\t\tfont-display: swap;
-\t\t}
-
-\t\t@font-face {
-\t\t\tfont-family: 'Gentium Book Plus';
-\t\t\tsrc: url('./fonts/GentiumBookPlus-Regular.woff2') format('woff2');
-\t\t\tfont-weight: 400;
-\t\t\tfont-style: normal;
-\t\t\tfont-display: swap;
-\t\t}
-\t</style>
-\t<link rel="preload" href="css/fonts.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-\t<noscript><link rel="stylesheet" href="css/fonts.css" /></noscript>"""
-
-          old = '\t<link rel="stylesheet" href="css/fonts.css" />'
-          if old in text:
-              text = text.replace(old, critical_fonts, 1)
-              path.write_text(text)
-          elif 'id="startup-font-faces"' in text and 'rel="preload" href="css/fonts.css" as="style"' in text:
-              print('Phase 9 font startup optimization is already present.')
-          else:
-              raise SystemExit('Expected blocking fonts.css link was not found in index.html.')
-          PY
+        run: python3 .github/scripts/phase9_font_startup.py
 
       - name: Validate changed files
         run: |
