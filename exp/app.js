@@ -1144,11 +1144,12 @@ class BibleApp {
                 this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
             }
             document.body.classList.add('passage-ready');
-            this.updateNavigationState();
+            updateNavigationState(this);
             return true;
-        } catch (_) {
-            return false;
-        }
+            } catch (err) {
+                this._dbgEvent(`cache restore failed: ${err?.message || err}`);
+                return false;
+            }
     }
 
     // ── Background prefetch ────────────────────────────────────────────────
