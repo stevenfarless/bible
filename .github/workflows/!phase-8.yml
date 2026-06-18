@@ -1,0 +1,157 @@
+name: "! Phase 8"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: phase-8-exp
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    name: Stabilize startup passage layout and deploy Pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Stabilize startup passage layout
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('css/components.css')
+          text = path.read_text()
+
+          rule = """body.initializing .passage-container,
+          .passage-loading-placeholder {
+              min-height: 60vh;
+          }
+          """
+
+          if 'body.initializing .passage-container' in text and '.passage-loading-placeholder' in text:
+              print('Phase 8 startup passage layout rule is already present.')
+          else:
+              anchor = """.passage-container {
+              background-color: var(--bg-card);
+              border-radius: var(--border-radius-lg);
+              padding: var(--spacing-xl);
+              box-shadow: var(--shadow-md);
+          }
+          """
+
+              if anchor not in text:
+                  raise SystemExit('Expected .passage-container block was not found in css/components.css.')
+
+              text = text.replace(anchor, anchor + "\n" + rule, 1)
+              path.write_text(text)
+          PY
+
+      - name: Validate changed files
+        run: |
+          git diff --check
+
+          grep -q '^body\.initializing \.passage-container,$' css/components.css
+          grep -q '^\.passage-loading-placeholder {$' css/components.css
+          grep -q '^    min-height: 60vh;$' css/components.css
+
+          UNEXPECTED="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev '^(css/components.css)$' || true)"
+          test -z "$UNEXPECTED" || {
+            echo "Unexpected changed files:"
+            echo "$UNEXPECTED"
+            exit 1
+          }
+
+      - name: Install dependencies
+        run: |
+          npm install --package-lock=false
+          npm install --no-save --package-lock=false @playwright/test esbuild firebase marked
+          npx playwright install chromium --with-deps
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Run Chromium tests
+        env:
+          BASE_URL: http://localhost:8080
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+        run: |
+          python3 -m http.server 8080 > /tmp/lege-lux-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+
+          for i in $(seq 1 10); do
+            curl -fsS http://localhost:8080 > /dev/null && break
+            sleep 1
+          done
+
+          curl -fsS http://localhost:8080 > /dev/null || {
+            cat /tmp/lege-lux-http.log
+            exit 1
+          }
+
+          npx playwright test tests/smoke.spec.js tests/auth-settings-race.spec.js --project=chromium
+
+      - name: Run offline build audit
+        run: node scripts/prepare-offline-build.mjs
+
+      - name: Commit Phase 8
+        run: |
+          FILES=(
+            css/components.css
+          )
+
+          if git diff --quiet -- "${FILES[@]}"; then
+            echo "No Phase 8 changes to commit."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -- "${FILES[@]}"
+            git commit -F - <<'EOF'
+          fix: stabilize startup passage layout
+
+          Reserve vertical space for the initial passage area so cached or
+          fetched passage content does not shift the layout during startup.
+          EOF
+            git push origin exp
+          fi
+
+      - name: Dispatch GitHub Pages deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RESPONSE_FILE="$(mktemp)"
+          STATUS="$({
+            curl -sS \
+              -o "$RESPONSE_FILE" \
+              -w '%{http_code}' \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/deploy-gh-pages.yml/dispatches" \
+              -d '{"ref":"exp"}'
+          })"
+
+          if [ "$STATUS" != "204" ]; then
+            echo "Deploy to GitHub Pages workflow dispatch failed with HTTP $STATUS."
+            cat "$RESPONSE_FILE"
+            exit 1
+          fi
+
+          echo "Deploy to GitHub Pages workflow dispatched for exp."
