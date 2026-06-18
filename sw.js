@@ -7,6 +7,7 @@ let BUILD_ID = 'pending';
 let CACHE_NAME = 'bible-pending';
 
 const APP_SHELL_PATTERN = /\.(js|mjs|css)$/;
+const LONG_LIVED_STATIC_PATTERN = /\.(js|mjs|css|woff2?|png|ico|webmanifest)$/;
 
 const PRECACHED_TRANSLATIONS = new Set(['KJV', 'BSB']);
 
@@ -110,6 +111,23 @@ const APP_SHELL = [
   './fonts/AdwaitaSans-Italic.woff2',
   './fonts/Web437_IBM_VGA_9x16-2x.woff',
 ];
+
+function isLongLivedStaticAsset(url) {
+  if (url.origin !== self.location.origin) return false;
+  if (!LONG_LIVED_STATIC_PATTERN.test(url.pathname)) return false;
+  if (url.pathname.endsWith('/index.html')) return false;
+  return url.searchParams.has('v') || url.pathname.includes('/fonts/');
+}
+
+function withLongLivedStaticHeaders(response) {
+  const headers = new Headers(response.headers);
+  headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
 
 function isFirebaseCacheable(url) {
   if (!url.hostname.endsWith('.firebaseio.com')) return false;
@@ -226,9 +244,11 @@ self.addEventListener('fetch', (event) => {
         // Start background fetch to keep cache fresh
         const networkFetch = fetch(event.request).then((response) => {
           if (response.ok) {
-            const clone = response.clone();
+            const cacheResponse = isLongLivedStaticAsset(url)
+              ? withLongLivedStaticHeaders(response.clone())
+              : response.clone();
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, clone);
+              cache.put(event.request, cacheResponse);
             });
           }
           return response;
@@ -237,7 +257,13 @@ self.addEventListener('fetch', (event) => {
         });
         
         // Return cached version immediately, or wait for network if not cached
-        return cached || networkFetch;
+        if (cached) return cached;
+        return networkFetch.then((response) => {
+          if (response && isLongLivedStaticAsset(url)) {
+            return withLongLivedStaticHeaders(response.clone());
+          }
+          return response;
+        });
       })
     );
     return;

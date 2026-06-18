@@ -703,8 +703,8 @@ class BibleApp {
         this.scrollTimeout = null;
         this.lastScrollPosition = 0;
         this.chromeHidden = false;
-        this.chromeScrollAnchorY  = window.scrollY || 0;
-        this.chromeLastY          = window.scrollY || 0;
+        this.chromeScrollAnchorY  = 0;
+        this.chromeLastY          = 0;
         this.chromeLastDirection  = null;
         this.chromeDelta          = 8;
         this.chromeHideOffset     = 80;
@@ -1119,7 +1119,10 @@ class BibleApp {
     _restorePassageCache() {
         try {
             const raw = localStorage.getItem(PASSAGE_CACHE_KEY);
-            if (!raw) return false;
+            if (!raw) {
+                this._dbgEvent('cache restore: no passageCache entry');
+                return false;
+            }
             const { book, chapter, translation, title, html } = JSON.parse(raw);
 
             const stateBook    = this.state.currentBook;
@@ -1144,11 +1147,12 @@ class BibleApp {
                 this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
             }
             document.body.classList.add('passage-ready');
-            this.updateNavigationState();
+            updateNavigationState(this);
             return true;
-        } catch (_) {
-            return false;
-        }
+            } catch (err) {
+                this._dbgEvent(`cache restore failed: ${err?.message || err}`);
+                return false;
+            }
     }
 
     // ── Background prefetch ────────────────────────────────────────────────

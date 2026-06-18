@@ -1,6 +1,28 @@
 (function () {
     var root = document.documentElement;
     var systemLightQuery = window.matchMedia('(prefers-color-scheme: light)');
+    var DEFAULT_COLOR_THEME = 'vespers';
+    var THEME_CLASSES = [
+        'lux-theme', 'vespers-theme', 'vigil-theme',
+        'dracula-theme', 'dracula2test-theme', 'onyx-theme',
+        'sage-theme', 'ember-theme', 'perplexity-theme',
+        'basic-theme', 'geek-theme', 'gnome-theme', 'uxorem-amo-theme'
+    ];
+    var VALID_THEMES = {
+        dracula: 1,
+        dracula2test: 1,
+        onyx: 1,
+        sage: 1,
+        ember: 1,
+        perplexity: 1,
+        basic: 1,
+        geek: 1,
+        gnome: 1,
+        lux: 1,
+        vespers: 1,
+        vigil: 1,
+        'uxorem-amo': 1
+    };
 
     function get(key) {
         try { return localStorage.getItem(key); } catch (_) { return null; }
@@ -9,6 +31,30 @@
     function set(key, value) {
         try { localStorage.setItem(key, String(value)); } catch (_) {}
     }
+
+    function applyStartupTheme() {
+        var theme = get('colorTheme') || DEFAULT_COLOR_THEME;
+        if (!VALID_THEMES[theme]) theme = DEFAULT_COLOR_THEME;
+
+        root.classList.remove.apply(root.classList, THEME_CLASSES);
+        root.classList.add(theme + '-theme', 'no-color-transition');
+
+        if (document.body) {
+            document.body.classList.remove.apply(document.body.classList, THEME_CLASSES);
+            document.body.classList.add(theme + '-theme', 'no-color-transition');
+        }
+    }
+
+    function mirrorStartupClassesToBody() {
+        if (!document.body) return;
+        THEME_CLASSES.forEach(function (className) {
+            document.body.classList.toggle(className, root.classList.contains(className));
+        });
+        document.body.classList.toggle('light-mode', root.classList.contains('light-mode'));
+        document.body.classList.add('no-color-transition');
+    }
+
+    applyStartupTheme();
 
     var fontFiles = {
         gentium: ['./fonts/GentiumBookPlus-Regular.woff2', 'font/woff2'],
@@ -77,7 +123,10 @@
     installVerseSelectionSuppression();
 
     document.addEventListener('DOMContentLoaded', function () {
+        applyStartupTheme();
+        mirrorStartupClassesToBody();
         applyLightMode(readLightMode());
+
         var selector = document.getElementById('lightModeSelect');
         if (!selector) return;
 
