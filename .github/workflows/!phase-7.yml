@@ -80,22 +80,22 @@ jobs:
           grep -q '<noscript><link rel="stylesheet" href="css/utilities.css" /></noscript>' index.html
           grep -q '<noscript><link rel="stylesheet" href="css/geek95.css"></noscript>' index.html
 
-          if grep -q 'rel="stylesheet" href="css/modals.css" />' index.html; then
+          if grep -q '^\s*<link rel="stylesheet" href="css/modals.css" />' index.html; then
             echo "modals.css still blocks first render."
             exit 1
           fi
 
-          if grep -q 'rel="stylesheet" href="css/interactions.css" />' index.html; then
+          if grep -q '^\s*<link rel="stylesheet" href="css/interactions.css" />' index.html; then
             echo "interactions.css still blocks first render."
             exit 1
           fi
 
-          if grep -q 'rel="stylesheet" href="css/utilities.css" />' index.html; then
+          if grep -q '^\s*<link rel="stylesheet" href="css/utilities.css" />' index.html; then
             echo "utilities.css still blocks first render."
             exit 1
           fi
 
-          if grep -q 'rel="stylesheet" href="css/geek95.css">' index.html; then
+          if grep -q '^\s*<link rel="stylesheet" href="css/geek95.css">' index.html; then
             echo "geek95.css still blocks first render."
             exit 1
           fi
