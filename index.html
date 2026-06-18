@@ -65,7 +65,25 @@
 	<link rel="modulepreload" href="events.js" />
 	<!-- CSS loaded as parallel <link> tags — @import chains are render-blocking
 	     and sequential; <link> tags are fetched in parallel by the browser. -->
-	<link rel="stylesheet" href="css/fonts.css" />
+	<style id="startup-font-faces">
+		@font-face {
+			font-family: 'Cinzel';
+			src: url('./fonts/Cinzel-Regular.woff2') format('woff2');
+			font-weight: 400;
+			font-style: normal;
+			font-display: swap;
+		}
+
+		@font-face {
+			font-family: 'Gentium Book Plus';
+			src: url('./fonts/GentiumBookPlus-Regular.woff2') format('woff2');
+			font-weight: 400;
+			font-style: normal;
+			font-display: swap;
+		}
+	</style>
+	<link rel="preload" href="css/fonts.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/fonts.css" /></noscript>
 	<link rel="stylesheet" href="css/base.css" />
 	<link rel="stylesheet" href="css/tokens.css" />
 	<link rel="stylesheet" href="css/themes.css" />
