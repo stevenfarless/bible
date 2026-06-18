@@ -703,8 +703,8 @@ class BibleApp {
         this.scrollTimeout = null;
         this.lastScrollPosition = 0;
         this.chromeHidden = false;
-        this.chromeScrollAnchorY  = window.scrollY || 0;
-        this.chromeLastY          = window.scrollY || 0;
+        this.chromeScrollAnchorY  = 0;
+        this.chromeLastY          = 0;
         this.chromeLastDirection  = null;
         this.chromeDelta          = 8;
         this.chromeHideOffset     = 80;
