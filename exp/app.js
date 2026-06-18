@@ -1119,7 +1119,10 @@ class BibleApp {
     _restorePassageCache() {
         try {
             const raw = localStorage.getItem(PASSAGE_CACHE_KEY);
-            if (!raw) return false;
+            if (!raw) {
+                this._dbgEvent('cache restore: no passageCache entry');
+                return false;
+            }
             const { book, chapter, translation, title, html } = JSON.parse(raw);
 
             const stateBook    = this.state.currentBook;
