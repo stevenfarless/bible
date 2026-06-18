@@ -1,7 +1,12 @@
-name: "! Phase 9"
+name: Phase 9
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - exp
+    paths:
+      - .github/workflows/phase-9.yml
 
 permissions:
   contents: write
@@ -178,4 +183,4 @@ jobs:
             exit 1
           fi
 
-          echo "Deploy to GitHub Pages workflow dispatched for exp."
+          echo "Deploy to GitHub Pages dispatched for exp."
