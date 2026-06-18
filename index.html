@@ -71,11 +71,15 @@
 	<link rel="stylesheet" href="css/themes.css" />
 	<link rel="stylesheet" href="css/layout.css" />
 	<link rel="stylesheet" href="css/components.css" />
-	<link rel="stylesheet" href="css/modals.css" />
-	<link rel="stylesheet" href="css/interactions.css" />
-	<link rel="stylesheet" href="css/utilities.css" />
+	<link rel="preload" href="css/modals.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/modals.css" /></noscript>
+	<link rel="preload" href="css/interactions.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/interactions.css" /></noscript>
+	<link rel="preload" href="css/utilities.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/utilities.css" /></noscript>
 	<link rel="stylesheet" href="css/pericope.css" />
-	<link rel="stylesheet" href="css/geek95.css">
+	<link rel="preload" href="css/geek95.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+	<noscript><link rel="stylesheet" href="css/geek95.css"></noscript>
 	<!-- Firebase App Check loads reCAPTCHA v3 through ReCaptchaV3Provider. -->
 </head>
 
