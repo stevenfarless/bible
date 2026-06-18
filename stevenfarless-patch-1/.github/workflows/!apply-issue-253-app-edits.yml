@@ -1,0 +1,255 @@
+name: "! Apply Issue 253 Firebase Deferral"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-issue-253-firebase-deferral-exp
+  cancel-in-progress: false
+
+jobs:
+  implement:
+    name: Defer Firebase until after reader startup
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v6
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Apply supporting source patch
+        run: |
+          patch_file=.github/patches/issue-253-support.patch
+
+          if grep -q 'export function initializeFirebaseAuth()' config/firebase-config.js \
+            && grep -q 'await app.ensureInteractiveAuth();' auth.js \
+            && grep -q "from './firebase-config.js'" bible-api.js; then
+            echo 'Supporting issue #253 changes are already present.'
+          elif git apply --check --recount "$patch_file"; then
+            git apply --recount "$patch_file"
+          else
+            echo 'Supporting files are partially changed or no longer match the reviewed patch.'
+            exit 1
+          fi
+
+      - name: Apply app.js patches
+        run: |
+          main_patch=.github/patches/issue-253-app.patch
+          followup_patch=.github/patches/issue-253-app-followup.patch
+
+          if grep -q '_firebaseModuleUrl()' app.js \
+            && test "$(grep -c 'this._startBackgroundAuthRestoration();' app.js)" -eq 1 \
+            && ! grep -q 'window.firebaseAuth' app.js; then
+            echo 'Final issue #253 app.js changes are already present.'
+          else
+            git apply --check --recount "$main_patch" || {
+              echo 'app.js no longer matches the reviewed primary patch.'
+              exit 1
+            }
+            git apply --recount "$main_patch"
+
+            git apply --check --recount "$followup_patch" || {
+              echo 'The primary app.js patch applied, but the reviewed follow-up no longer matches.'
+              exit 1
+            }
+            git apply --recount "$followup_patch"
+          fi
+
+      - name: Apply translation reconciliation race fix
+        run: |
+          patch_file=.github/patches/issue-253-translation-race.patch
+
+          if git apply --check --recount "$patch_file"; then
+            git apply --recount "$patch_file"
+          elif git apply --reverse --check --recount "$patch_file"; then
+            echo 'Translation preference race fix is already present.'
+          else
+            echo 'translation-sync.js no longer matches the reviewed race fix.'
+            exit 1
+          fi
+
+      - name: Install validation dependencies
+        run: |
+          npm install --package-lock=false
+          npm install --no-save --package-lock=false \
+            @playwright/test \
+            esbuild \
+            firebase \
+            marked
+
+      - name: Rebuild lazy Firebase bundle
+        run: |
+          npx esbuild config/firebase-config.js \
+            --bundle \
+            --format=esm \
+            --platform=browser \
+            --external:https://* \
+            --outfile=config/firebase-config.bundle.js
+
+      - name: Validate implementation boundaries
+        run: |
+          node --check app.js
+          node --check auth.js
+          node --check bible-api.js
+          node --check config/firebase-config.js
+          node --check config/firebase-config.bundle.js
+          node --check events.js
+          node --check settings.js
+          node --check translation-sync.js
+          node --check ui.js
+          node --check scripts/prepare-offline-build.mjs
+          git diff --check
+
+          grep -q 'export function initializeFirebaseAuth()' config/firebase-config.js
+          grep -q 'export function initializeFirebaseDatabase()' config/firebase-config.js
+          grep -q 'firebase-app-check.js' config/firebase-config.js
+          grep -q 'firebase-database.js' config/firebase-config.js
+          grep -q 'initializeFirebaseAuth' config/firebase-config.bundle.js
+          grep -q 'initializeFirebaseDatabase' config/firebase-config.bundle.js
+
+          ! grep -q 'window.firebaseAuth' app.js
+          ! grep -q 'window.firebaseDatabase' app.js
+          ! grep -q "await import('./config/firebase-config.bundle.js')" app.js
+          ! grep -q "from './config/firebase-config.js'" auth.js
+          ! grep -q "from './config/firebase-config.js'" bible-api.js
+          ! grep -q 'window.firebaseAuth' config/firebase-config.js
+          ! grep -q 'window.firebaseDatabase' config/firebase-config.js
+
+          grep -q '_firebaseModuleUrl()' app.js
+          grep -q 'module.initializeFirebaseAuth()' app.js
+          grep -q 'module.initializeFirebaseDatabase()' app.js
+          grep -q 'database/App Check skipped for signed-out session' app.js
+          grep -q 'app.canWriteRemoteState()' auth.js
+          grep -q 'app.canWriteRemoteState()' settings.js
+          grep -q 'app.canWriteRemoteState()' ui.js
+          grep -q 'app.canWriteRemoteState()' events.js
+          grep -q 'app.canWriteRemoteState()' translation-sync.js
+
+          test "$(grep -c 'this._startBackgroundAuthRestoration();' app.js)" -eq 1
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          text = Path('translation-sync.js').read_text(encoding='utf-8')
+          start = text.index('async function applyPreferredTranslationState(app)')
+          end = text.index('export async function prepareLocalTranslation', start)
+          section = text[start:end]
+
+          available = section.index(
+              'const available = await collectAvailableTranslations();'
+          )
+          preferred = section.index(
+              'const preferred = normalizeTranslationId('
+          )
+
+          if available > preferred:
+              raise SystemExit(
+                  'Preferred translation is still captured before the async availability scan.'
+              )
+          PY
+
+          if grep -q "'./config/firebase-config.bundle.js'" sw.js; then
+            echo 'The lazy Firebase bundle must stay out of the web service-worker APP_SHELL.'
+            exit 1
+          fi
+
+          for host in \
+            esv-bible-6dffb-default-rtdb.firebaseio.com \
+            https://www.gstatic.com \
+            https://www.google.com \
+            https://apis.google.com; do
+            if grep -q "rel=\"preconnect\" href=\"$host\"" index.html; then
+              echo "Unexpected startup preconnect remains: $host"
+              exit 1
+            fi
+          done
+
+          allowed='^(app\.js|auth\.js|bible-api\.js|config/firebase-config\.js|config/firebase-config\.bundle\.js|events\.js|index\.html|scripts/prepare-offline-build\.mjs|settings\.js|translation-sync\.js|ui\.js)$'
+          unexpected="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev "$allowed" || true)"
+          test -z "$unexpected" || {
+            echo 'Unexpected changed files:'
+            echo "$unexpected"
+            exit 1
+          }
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Run Chromium smoke tests
+        env:
+          BASE_URL: http://localhost:8080
+        run: |
+          npx playwright install chromium --with-deps
+          python3 -m http.server 8080 > /tmp/lege-lux-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+
+          for i in $(seq 1 10); do
+            curl -fsS http://localhost:8080 > /dev/null && break
+            sleep 1
+          done
+
+          curl -fsS http://localhost:8080 > /dev/null || {
+            cat /tmp/lege-lux-http.log
+            exit 1
+          }
+
+          npx playwright test tests/smoke.spec.js --project=chromium
+
+      - name: Validate offline artifact
+        run: |
+          node scripts/prepare-offline-build.mjs
+          test -f _site/config/firebase-config.bundle.js
+          grep -q 'initializeFirebaseAuth' _site/config/firebase-config.bundle.js
+          grep -q 'initializeFirebaseDatabase' _site/config/firebase-config.bundle.js
+
+      - name: Commit issue 253 implementation
+        run: |
+          files=(
+            app.js
+            auth.js
+            bible-api.js
+            config/firebase-config.js
+            config/firebase-config.bundle.js
+            events.js
+            index.html
+            scripts/prepare-offline-build.mjs
+            settings.js
+            translation-sync.js
+            ui.js
+          )
+
+          if [ -z "$(git status --porcelain -- "${files[@]}")" ]; then
+            echo 'Issue #253 implementation is already present.'
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${files[@]}"
+          git commit -F - <<'EOF'
+          perf(auth): defer Firebase until after reader startup
+
+          Remove Firebase SDK initialization from the local reading dependency
+          graph. Restore existing Auth sessions after the reader starts and load
+          Database, App Check, and reCAPTCHA only for authenticated sync or
+          interactive account actions.
+
+          Preserve offline bundle generation, guard UI-originated remote writes
+          during restoration, and retain newer translation preferences while
+          local availability is scanned.
+
+          Refs #253
+          EOF
+          git push origin exp
