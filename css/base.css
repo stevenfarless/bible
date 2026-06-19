@@ -72,6 +72,18 @@ body:not(.no-color-transition) *::after {
     }
 }
 
+
+/* Let vertical reading scroll stay native while preserving horizontal chapter swipes. */
+#swipeViewport,
+#swipeViewport .passage-text,
+#swipeViewport .verse {
+    touch-action: pan-y pinch-zoom;
+}
+
+#swipeViewport {
+    overscroll-behavior-x: contain;
+}
+
 /* During an active swipe drag the three panel elements must track the finger
    with zero latency. The wildcard transition above would otherwise ease every
    translateX write, causing jitter and preventing adjacent panels from sitting

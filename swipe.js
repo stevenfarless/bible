@@ -161,6 +161,8 @@ export function initSwipe(app) {
         position: 'relative',
         overflow: 'hidden',
         width:    '100%',
+        touchAction: 'pan-y pinch-zoom',
+        overscrollBehaviorX: 'contain',
     });
 
     currentPanel.parentNode.insertBefore(viewport, currentPanel);
@@ -297,12 +299,19 @@ export function initSwipe(app) {
         _lastT = e.timeStamp;
 
         if (!_tracking) {
-            if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+            const absDx = Math.abs(dx);
+            const absDy = Math.abs(dy);
 
-            if (Math.abs(dy) > Math.abs(dx) * TAN_30 || Math.abs(dy) > Math.abs(dx)) {
+            if (absDx < 6 && absDy < 6) return;
+
+            if (absDy > absDx * 1.25) {
+                app._dbgUserAction?.(`swipe vetoed: dx=${Math.round(dx)} dy=${Math.round(dy)}`);
                 _vetoed = true;
                 return;
             }
+
+            if (absDx < 8) return;
+
             _tracking = true;
             viewport.classList.add('swiping');
 
@@ -313,20 +322,11 @@ export function initSwipe(app) {
             viewport.style.height = app.passageText.offsetHeight + 'px';
         }
 
-        if (!e.cancelable) {
-            _cleanupDrag();
-
-            const W = vw();
-            _setTranslateX(app.passageText, 0);
-            _setTranslateX(app.swipe.prevPanel, -W);
-            _setTranslateX(app.swipe.nextPanel, W);
-
-            _tracking = false;
-            _vetoed = true;
-            return;
+        if (e.cancelable) {
+            e.preventDefault();
+        } else {
+            app._dbgUserAction?.(`swipe continuing: touchmove not cancelable dx=${Math.round(dx)} dy=${Math.round(dy)}`);
         }
-
-        e.preventDefault();
 
         const W         = vw();
         const effective = _applyResistance(dx);
