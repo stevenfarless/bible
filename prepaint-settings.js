@@ -169,11 +169,6 @@
         modal.classList.toggle('active', open);
         modal.setAttribute('aria-hidden', String(!open));
         modal.inert = !open;
-
-        if (open) {
-            var closeButton = modal.querySelector('#closeBugReportModal');
-            setTimeout(function () { closeButton && closeButton.focus(); }, 0);
-        }
     }
 
     function installBugReportUi() {
