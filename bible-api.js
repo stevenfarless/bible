@@ -184,8 +184,17 @@ export async function loadTranslationIndex() {
 
 
 function _normalizeTerm(word) {
-    const w = word.toLowerCase();
+    let w = word.toLowerCase();
+
+    if (w.length > 3) {
+        w = w.replace(/[’']s$/, '');
+    }
+
     if (w.length < 3) return w;
+
+    if (w.endsWith('est') && w.length > 5) {
+        return _normalizeTerm(w.slice(0, -2));
+    }
     if (w.endsWith('eth') && w.length > 4) {
         return _normalizeTerm(w.slice(0, -3));
     }
