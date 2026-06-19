@@ -1,5 +1,5 @@
 // BUILD_ID is injected at deploy time by the CI workflow:
-//   sed -i "s/d31faed/$GITHUB_SHA/g" sw.js
+//   sed -i "s/a2b271f/$GITHUB_SHA/g" sw.js
 // The placeholder below is replaced with the full commit SHA before
 // the file is published to GitHub Pages. Never edit the placeholder
 // directly — changes here are overwritten on every deploy.
@@ -146,7 +146,7 @@ function translationFromUrl(pathname) {
 }
 
 function resolveBuildId() {
-  return 'd31faed';
+  return 'a2b271f';
 }
 
 async function precacheFiles() {
@@ -241,7 +241,7 @@ self.addEventListener('fetch', (event) => {
     // Stale-while-revalidate for app shell JS/CSS:
     // Serve from cache immediately, revalidate in the background.
     event.respondWith(
-      caches.match(event.request, { ignoreSearch: true }).then((cached) => {
+      caches.match(event.request).then((cached) => {
         // Start background fetch to keep cache fresh
         const networkFetch = fetch(event.request).then((response) => {
           if (response.ok) {
