@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: fix-issue-280-exp
@@ -86,15 +87,22 @@ jobs:
             exit 1
           }
 
-      - name: Commit issue 280 fix
+      - name: Commit issue 280 fix branch
+        id: commit_fix
         run: |
           if [ -z "$(git status --porcelain -- sw.js)" ]; then
             echo "Issue 280 is already fixed."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
+          branch="fix/issue-280-offline-firebase-bundle-${GITHUB_RUN_ID}"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
           git add sw.js
           git commit -F - <<'EOF'
           fix(sw): cache Firebase auth bundle offline
@@ -107,6 +115,32 @@ jobs:
           Keep the root firebase-config.js entry because bible-api.js still imports
           FIREBASE_DB_URL from it.
 
-          Closes #280
+          Fixes #280
           EOF
-          git push origin exp
+          git push origin "$branch"
+
+      - name: Open pull request
+        if: steps.commit_fix.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_BRANCH: ${{ steps.commit_fix.outputs.branch }}
+        run: |
+          gh pr create \
+            --base exp \
+            --head "$ISSUE_BRANCH" \
+            --title "fix(sw): cache Firebase auth bundle offline" \
+            --body-file - <<'EOF'
+          ## Summary
+
+          - Add `./config/firebase-config.bundle.js` to the normal service worker app shell.
+          - Keep `./firebase-config.js` because `bible-api.js` still imports `FIREBASE_DB_URL` from it.
+          - Make app-shell cache lookups ignore build query strings so `?v=<buildId>` requests can resolve the cached bundle offline.
+
+          ## Validation
+
+          - `node --check sw.js`
+          - `git diff --check`
+          - Targeted workflow validation for the expected APP_SHELL entries and query-tolerant cache lookup
+
+          Fixes #280
+          EOF
