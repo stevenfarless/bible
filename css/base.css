@@ -72,6 +72,11 @@ body:not(.no-color-transition) *::after {
     }
 }
 
+#swipeViewport {
+    touch-action: pan-y; /*Vertical movement is still normal page scrolling.*/
+    overscroll-behavior-x: contain; /*Reduces horizontal browser-level overscroll behavior during side swipes.*\
+}
+
 /* During an active swipe drag the three panel elements must track the finger
    with zero latency. The wildcard transition above would otherwise ease every
    translateX write, causing jitter and preventing adjacent panels from sitting
