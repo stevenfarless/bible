@@ -1,5 +1,5 @@
 // BUILD_ID is injected at deploy time by the CI workflow:
-//   sed -i "s/670f99d/$GITHUB_SHA/g" sw.js
+//   sed -i "s/772c121/$GITHUB_SHA/g" sw.js
 // The placeholder below is replaced with the full commit SHA before
 // the file is published to GitHub Pages. Never edit the placeholder
 // directly — changes here are overwritten on every deploy.
@@ -146,7 +146,7 @@ function translationFromUrl(pathname) {
 }
 
 function resolveBuildId() {
-  return '670f99d';
+  return '772c121';
 }
 
 async function precacheFiles() {
@@ -238,37 +238,28 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (APP_SHELL_PATTERN.test(url.pathname)) {
-    // Stale-while-revalidate for app shell JS/CSS:
-    // Serve from cache immediately, revalidate in the background.
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        // Start background fetch to keep cache fresh
-        const networkFetch = fetch(event.request).then((response) => {
+      event.respondWith((async () => {
+        const cache = await caches.open(CACHE_NAME);
+    
+        try {
+          const response = await fetch(new Request(event.request, { cache: 'no-store' }));
+    
           if (response.ok) {
             const cacheResponse = isLongLivedStaticAsset(url)
               ? withLongLivedStaticHeaders(response.clone())
               : response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, cacheResponse);
-            });
+    
+            await cache.put(event.request, cacheResponse);
           }
+    
           return response;
-        }).catch(() => {
-          // Network fetch failed; that's okay, we already returned cached version
-        });
-        
-        // Return cached version immediately, or wait for network if not cached
-        if (cached) return cached;
-        return networkFetch.then((response) => {
-          if (response && isLongLivedStaticAsset(url)) {
-            return withLongLivedStaticHeaders(response.clone());
-          }
-          return response;
-        });
-      })
-    );
-    return;
-  }
+        } catch {
+          const cached = await cache.match(event.request);
+          return cached || new Response('Offline', { status: 503 });
+        }
+      })());
+      return;
+    }
 
   const isRoot = url.pathname === '/' || url.pathname.endsWith('/index.html');
 
