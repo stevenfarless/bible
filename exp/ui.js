@@ -16,7 +16,7 @@ const REQUIRED_IDS = [
 	'oldTestamentBooks', 'newTestamentBooks',
 	'chapterModalBook', 'chapterGrid', 'verseModalBook', 'verseGrid',
 	'themeSelector', 'verseNumbersToggle', 'coloredVerseNumbersToggle', 'headingsToggle', 'footnotesToggle',
-	'crossReferencesToggle', 'verseByVerseToggle', 'chapterArrowsToggle',
+	'crossReferencesToggle', 'verseByVerseToggle', 'chapterArrowsToggle', 'hapticsToggle',
 	'verseSelectionGestureSelect',
 	'fontSizeSlider', 'fontSizeValue',
 	'referencesModal', 'closeReferencesModal',
@@ -143,6 +143,7 @@ export function cacheElements(app) {
 	app.crossReferencesToggle = document.getElementById('crossReferencesToggle');
 	app.verseByVerseToggle = document.getElementById('verseByVerseToggle');
 	app.chapterArrowsToggle = document.getElementById('chapterArrowsToggle');
+	app.hapticsToggle = document.getElementById('hapticsToggle');
 	app.verseSelectionGestureSelect = document.getElementById('verseSelectionGestureSelect');
 	app.fontSizeSlider = document.getElementById('fontSizeSlider');
 	app.fontSizeValue = document.getElementById('fontSizeValue');
@@ -248,63 +249,14 @@ export function updateThemeIcon(isLightMode) {
 	}
 }
 
-const ALL_THEME_CLASSES = ['lux-theme', 'vespers-theme', 'vigil-theme', 'dracula-theme', 'dracula2test-theme', 'onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme', 'gnome-theme', 'uxorem-amo-theme'];
-
-// bg-base values sourced from css/tokens.css (Dracula/Alucard) and css/themes.css (all others).
-// dark = the theme's dark-mode --bg-base; light = the theme's light-mode --bg-base.
-const THEME_BG = {
-	'basic-theme':        { dark: '#000000', light: '#ffffff' },
-	'dracula-theme':      { dark: '#191A21', light: '#FFFBEB' },
-	'dracula2test-theme': { dark: '#191A21', light: '#FFFBEB' },
-	'onyx-theme':         { dark: '#000000', light: '#faf9f7' },
-	'sage-theme':         { dark: '#0d1710', light: '#f6f8f5' },
-	'ember-theme':        { dark: '#161009', light: '#faf8f3' },
-	'perplexity-theme':   { dark: '#0A1616', light: '#f5f5f5' },
-	'geek-theme':         { dark: '#000000', light: '#000000' },
-	'gnome-theme':        { dark: '#1e1e1e', light: '#f6f5f4' },
-	'lux-theme':		  { dark: '#1a1614', light: '#f5f2ec' },
-	'vespers-theme':      { dark: '#1a1714', light: '#f5f2ec' },
-	'vigil-theme':        { dark: '#000000', light: '#f5f2ec' },
-	'uxorem-amo-theme':        { dark: '#161018', light: '#F9F2F6' },
-};
-
+// Update browser theme color meta tag based on current theme and mode
 export function updateThemeColor() {
-	const isLight = document.documentElement.classList.contains('light-mode');
-	const activeClass = [...document.documentElement.classList]
-		.find(c => c.endsWith('-theme')) || 'basic-theme';
-	const map = THEME_BG[activeClass] || THEME_BG['basic-theme'];
-	const color = isLight ? map.light : map.dark;
-
 	let meta = document.querySelector('meta[name="theme-color"]');
 	if (!meta) {
 		meta = document.createElement('meta');
-		meta.name = 'theme-color';
+		meta.setAttribute('name', 'theme-color');
 		document.head.appendChild(meta);
 	}
-	meta.content = color;
-}
-
-export async function changeColorTheme(app, theme) {
-	// Sync removal and addition on both <html> and <body> so that
-	// both the :root/:html CSS variable selectors and the body.X-theme
-	// component selectors (header, modals, geek overrides) resolve correctly.
-	document.documentElement.classList.remove(...ALL_THEME_CLASSES);
-	document.body.classList.remove(...ALL_THEME_CLASSES);
-
-	const valid = ALL_THEME_CLASSES.includes(theme + '-theme');
-	const resolved = valid ? theme : 'basic';
-	const cls = resolved + '-theme';
-
-	document.documentElement.classList.add(cls);
-	document.body.classList.add(cls);
-
-	updateThemeColor();
-
-	try { localStorage.setItem('colorTheme', resolved); } catch (_) {}
-
-	if (app.canWriteRemoteState()) {
-		await app.database
-			.ref(`users/${app.currentUser.uid}/settings/colorTheme`)
-			.set(resolved);
-	}
+	const isLight = document.documentElement.classList.contains('light-mode');
+	meta.setAttribute('content', isLight ? '#f5efe0' : '#111217');
 }
