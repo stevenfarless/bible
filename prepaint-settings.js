@@ -2,7 +2,7 @@
     var root = document.documentElement;
     var systemLightQuery = window.matchMedia('(prefers-color-scheme: light)');
     var DEFAULT_COLOR_THEME = 'vespers';
-    var BUG_REPORT_EMAIL = 'legelux@proton.me';
+    var BUG_REPORT_EMAIL = 'legelux+bugs@proton.me';
     var THEME_CLASSES = [
         'lux-theme', 'vespers-theme', 'vigil-theme',
         'dracula-theme', 'dracula2test-theme', 'onyx-theme',
