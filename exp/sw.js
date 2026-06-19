@@ -1,5 +1,5 @@
 // BUILD_ID is injected at deploy time by the CI workflow:
-//   sed -i "s/a62701a/$GITHUB_SHA/g" sw.js
+//   sed -i "s/5e3b2b2/$GITHUB_SHA/g" sw.js
 // The placeholder below is replaced with the full commit SHA before
 // the file is published to GitHub Pages. Never edit the placeholder
 // directly — changes here are overwritten on every deploy.
@@ -145,7 +145,7 @@ function translationFromUrl(pathname) {
 }
 
 function resolveBuildId() {
-  return 'a62701a';
+  return '5e3b2b2';
 }
 
 async function precacheFiles() {
