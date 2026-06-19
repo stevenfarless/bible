@@ -2,7 +2,6 @@
     var root = document.documentElement;
     var systemLightQuery = window.matchMedia('(prefers-color-scheme: light)');
     var DEFAULT_COLOR_THEME = 'vespers';
-    var BUG_REPORT_EMAIL = 'legelux+bugs@proton.me';
     var THEME_CLASSES = [
         'lux-theme', 'vespers-theme', 'vigil-theme',
         'dracula-theme', 'dracula2test-theme', 'onyx-theme',
@@ -145,32 +144,6 @@
         });
     }
 
-    function buildBugReportMailto() {
-        var body = [
-            'Describe the issue here:',
-            '',
-            '',
-            '',
-            '__________________________________',
-            'PASTE the copied debug log below this line:',
-            '__________________________________',
-            '',
-            '',
-            '',
-            ''
-        ].join('\n');
-    
-        return 'mailto:' + encodeURIComponent(BUG_REPORT_EMAIL) +
-            '?subject=' + encodeURIComponent('Bug Report') +
-            '&body=' + encodeURIComponent(body);
-    }
-
-    function setBugReportModalOpen(modal, open) {
-        modal.classList.toggle('active', open);
-        modal.setAttribute('aria-hidden', String(!open));
-        modal.inert = !open;
-    }
-
     function installBugReportUi() {
         var controls = document.querySelector('.header-controls');
         var settingsButton = document.getElementById('settingsBtn');
@@ -289,7 +262,6 @@
         applyStartupTheme();
         mirrorStartupClassesToBody();
         applyLightMode(readLightMode());
-        installBugReportUi();
 
         var selector = document.getElementById('lightModeSelect');
         if (!selector) return;
