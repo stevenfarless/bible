@@ -80,6 +80,7 @@ const APP_SHELL = [
   './events.js',
   './swipe.js',
   './firebase-config.js',
+  './config/firebase-config.bundle.js',
   './translations/index.json',
   './translations/KJV/KJV_search_index.json',
   './translations/BSB/BSB_search_index.json',
@@ -240,7 +241,7 @@ self.addEventListener('fetch', (event) => {
     // Stale-while-revalidate for app shell JS/CSS:
     // Serve from cache immediately, revalidate in the background.
     event.respondWith(
-      caches.match(event.request).then((cached) => {
+      caches.match(event.request, { ignoreSearch: true }).then((cached) => {
         // Start background fetch to keep cache fresh
         const networkFetch = fetch(event.request).then((response) => {
           if (response.ok) {
