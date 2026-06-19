@@ -72,9 +72,12 @@ body:not(.no-color-transition) *::after {
     }
 }
 
+
+/*Vertical movement is still normal page scrolling.*/
+/*Reduces horizontal browser-level overscroll behavior during side swipes.*/
 #swipeViewport {
-    touch-action: pan-y; /*Vertical movement is still normal page scrolling.*/
-    overscroll-behavior-x: contain; /*Reduces horizontal browser-level overscroll behavior during side swipes.*\
+    touch-action: pan-y;
+    overscroll-behavior-x: contain;
 }
 
 /* During an active swipe drag the three panel elements must track the finger
