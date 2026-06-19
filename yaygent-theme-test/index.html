@@ -12,7 +12,7 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="ff97520" />
+	<meta name="build-id" content="e362f5b" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement - always available in <head>) before the
@@ -24,7 +24,7 @@
 			var el = document.documentElement;
 			var theme = 'basic';
 			try { theme = localStorage.getItem('colorTheme') || 'basic'; } catch (_) {}
-			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1, lux: 1, vespers: 1, vigil: 1, 'uxorem-amo': 1 };
+			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1, lux: 1, vespers: 1, vigil: 1, 'uxorem-amo': 1, 'yay-gent': 1 };
 			if (!valid[theme]) theme = 'basic';
 			el.classList.add(theme + '-theme', 'no-color-transition');
 
@@ -38,14 +38,14 @@
 			if (isLight) el.classList.add('light-mode');
 		}());
 	</script>
-	<script src="prepaint-settings.js?v=ff97520"></script>
+	<script src="prepaint-settings.js?v=e362f5b"></script>
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
 	<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
 	<link rel="icon" href="./favicon.ico" />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=ff97520">.
+	     before the parser reaches <script type="module" src="app.js?v=e362f5b">.
 	     This eliminates the sequential module-discovery waterfall. -->
 	<link rel="modulepreload" href="app.js" />
 	<link rel="modulepreload" href="bible-api.js" />
@@ -82,22 +82,22 @@
 			font-display: swap;
 		}
 	</style>
-	<link rel="preload" href="css/fonts.css?v=ff97520" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/fonts.css?v=ff97520" /></noscript>
-	<link rel="stylesheet" href="css/base.css?v=ff97520" />
-	<link rel="stylesheet" href="css/tokens.css?v=ff97520" />
-	<link rel="stylesheet" href="css/themes.css?v=ff97520" />
-	<link rel="stylesheet" href="css/layout.css?v=ff97520" />
-	<link rel="stylesheet" href="css/components.css?v=ff97520" />
-	<link rel="preload" href="css/modals.css?v=ff97520" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/modals.css?v=ff97520" /></noscript>
-	<link rel="preload" href="css/interactions.css?v=ff97520" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/interactions.css?v=ff97520" /></noscript>
-	<link rel="preload" href="css/utilities.css?v=ff97520" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/utilities.css?v=ff97520" /></noscript>
-	<link rel="stylesheet" href="css/pericope.css?v=ff97520" />
-	<link rel="preload" href="css/geek95.css?v=ff97520" as="style" onload="this.onload=null;this.rel='stylesheet'">
-	<noscript><link rel="stylesheet" href="css/geek95.css?v=ff97520"></noscript>
+	<link rel="preload" href="css/fonts.css?v=e362f5b" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/fonts.css?v=e362f5b" /></noscript>
+	<link rel="stylesheet" href="css/base.css?v=e362f5b" />
+	<link rel="stylesheet" href="css/tokens.css?v=e362f5b" />
+	<link rel="stylesheet" href="css/themes.css?v=e362f5b" />
+	<link rel="stylesheet" href="css/layout.css?v=e362f5b" />
+	<link rel="stylesheet" href="css/components.css?v=e362f5b" />
+	<link rel="preload" href="css/modals.css?v=e362f5b" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/modals.css?v=e362f5b" /></noscript>
+	<link rel="preload" href="css/interactions.css?v=e362f5b" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/interactions.css?v=e362f5b" /></noscript>
+	<link rel="preload" href="css/utilities.css?v=e362f5b" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/utilities.css?v=e362f5b" /></noscript>
+	<link rel="stylesheet" href="css/pericope.css?v=e362f5b" />
+	<link rel="preload" href="css/geek95.css?v=e362f5b" as="style" onload="this.onload=null;this.rel='stylesheet'">
+	<noscript><link rel="stylesheet" href="css/geek95.css?v=e362f5b"></noscript>
 	<!-- Firebase App Check loads reCAPTCHA v3 through ReCaptchaV3Provider. -->
 </head>
 
@@ -106,7 +106,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">ff97520</span>
+				<span id="build-info">e362f5b</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -421,6 +421,7 @@
 									<option value="geek">The Geek Shall Inherit The Earth</option>
 									<option value="gnome">Adwaitish</option>
 									<option value="uxorem-amo">Uxorem Amo</option>
+									<option value="yay-gent">Yay Gent (Light | Dark)</option>
 								</select>
 								<small class="help-text">Choose your preferred color scheme.</small>
 							</div>
@@ -848,7 +849,7 @@
 
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=ff97520"></script>
+	<script type="module" src="app.js?v=e362f5b"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');

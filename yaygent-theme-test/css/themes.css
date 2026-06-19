@@ -1064,3 +1064,113 @@ body.uxorem-amo-theme .help-text,
 body.uxorem-amo-theme .verse-number {
     color: var(--text-muted);
 }
+
+/* Yay Gent theme */
+:root.yay-gent-theme,
+html.yay-gent-theme,
+body.yay-gent-theme {
+    --bg-base: #060B1A;
+    --bg-card: #121B30;
+    --bg-raised: #1A2846;
+
+    --text-heading: #FFFFFF;
+    --text-body: #F2DEDE;
+    --text-muted: #9C9C9C;
+
+    --border-neutral: #3E485E;
+    --highlight-border: #747B8B;
+
+    --primary-color: #4BA6F7;
+    --primary-dark: #2493F5;
+    --primary-light: #7CBEF9;
+    --brand-secondary: #2D3D66;
+    --section-heading-color: var(--brand-secondary);
+    --accent-color: #A94442;
+
+    --success-color: #6FBF73;
+    --warning-color: #F2C14E;
+    --error-color: #E57373;
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.50);
+}
+
+:root.yay-gent-theme.light-mode,
+html.yay-gent-theme.light-mode,
+body.yay-gent-theme.light-mode {
+    --bg-base: #FFFFFF;
+    --bg-card: #E9EDF4;
+    --bg-raised: #DBE2ED;
+
+    --text-heading: #000000;
+    --text-body: #212529;
+    --text-muted: #065599;
+
+    --border-neutral: #B5C9DE;
+    --highlight-border: #8291A0;
+
+    --primary-color: #3291C4;
+    --primary-dark: #2A79A3;
+    --primary-light: #55A8D4;
+    --brand-secondary: #012347;
+    --section-heading-color: var(--brand-secondary);
+    --accent-color: #A94442;
+
+    --success-color: #2E7D32;
+    --warning-color: #9A6700;
+    --error-color: #B3261E;
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.16);
+}
+
+body.yay-gent-theme,
+body.yay-gent-theme .main-content {
+    background-color: var(--bg-base);
+    color: var(--text-body);
+}
+
+body.yay-gent-theme .passage-container {
+    background-color: var(--bg-card);
+    color: var(--text-body);
+}
+
+body.yay-gent-theme .passage-title,
+body.yay-gent-theme .passage-text,
+body.yay-gent-theme .verse {
+    color: var(--text-body);
+}
+
+body.yay-gent-theme .top-chrome,
+body.yay-gent-theme .header,
+body.yay-gent-theme .navigation,
+body.yay-gent-theme .modal-content,
+body.yay-gent-theme .accordion-section,
+body.yay-gent-theme .accordion-panel,
+body.yay-gent-theme .settings-group,
+body.yay-gent-theme .input-field {
+    background-color: var(--bg-card);
+    color: var(--text-body);
+    border-color: var(--border-neutral);
+}
+
+body.yay-gent-theme .modal-header,
+body.yay-gent-theme .accordion-header,
+body.yay-gent-theme .selector-btn,
+body.yay-gent-theme .nav-btn,
+body.yay-gent-theme .icon-btn {
+    background-color: var(--bg-raised);
+    color: var(--text-heading);
+    border-color: var(--border-neutral);
+}
+
+body.yay-gent-theme .help-text,
+body.yay-gent-theme .verse-number {
+    color: var(--text-muted);
+}
