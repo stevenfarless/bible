@@ -289,6 +289,7 @@
 .primary-btn:hover {
     background-color: var(--primary-dark);
 }
+
 .secondary-btn {
     padding: var(--spacing-sm) var(--spacing-lg);
     background-color: transparent;
@@ -668,7 +669,7 @@ body.light-mode .crossref-item {
 /* Hide chapter arrows when the user has disabled them in settings */
 body.hide-chapter-arrows #prevChapter,
 body.hide-chapter-arrows #nextChapter {
-	display: none;
+    display: none;
 }
 
 /* Passage Content */
@@ -938,12 +939,12 @@ body.hide-verse-numbers .verse .verse-num {
 }
 
 /* Checked state */
-.search-toggle-checkbox:checked + .search-toggle-track {
+.search-toggle-checkbox:checked+.search-toggle-track {
     background: var(--primary-color);
     border-color: var(--primary-color);
 }
 
-.search-toggle-checkbox:checked + .search-toggle-track::after {
+.search-toggle-checkbox:checked+.search-toggle-track::after {
     transform: translateX(14px);
     background: var(--bg-base);
 }
@@ -1148,6 +1149,11 @@ body.hide-verse-numbers .verse .verse-num {
     font-family: var(--font-serif);
     color: var(--text-body);
     line-height: 1.6;
+}
+
+.search-result-content strong {
+    color: var(--search-highlight-color);
+    font-weight: 700;
 }
 
 .search-load-more {
@@ -1470,7 +1476,9 @@ body.hide-verse-numbers .verse .verse-num {
     margin: var(--spacing-md) 0 var(--spacing-sm);
 }
 
-.whats-new-content h1 { font-size: 1rem; }
+.whats-new-content h1 {
+    font-size: 1rem;
+}
 
 .whats-new-content p {
     margin-bottom: var(--spacing-sm);
@@ -1518,8 +1526,14 @@ body.hide-verse-numbers .verse .verse-num {
     margin: var(--spacing-md) 0;
 }
 
-.whats-new-content strong { font-weight: 700; color: var(--text-heading); }
-.whats-new-content em    { font-style: italic; }
+.whats-new-content strong {
+    font-weight: 700;
+    color: var(--text-heading);
+}
+
+.whats-new-content em {
+    font-style: italic;
+}
 
 /* Dev branch link block inside Coming Soon panel */
 .dev-branch-link {
