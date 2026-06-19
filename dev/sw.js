@@ -1,5 +1,5 @@
 // BUILD_ID is injected at deploy time by the CI workflow:
-//   sed -i "s/3af9b08/$GITHUB_SHA/g" sw.js
+//   sed -i "s/8ed5f26/$GITHUB_SHA/g" sw.js
 // The placeholder below is replaced with the full commit SHA before
 // the file is published to GitHub Pages. Never edit the placeholder
 // directly — changes here are overwritten on every deploy.
@@ -80,6 +80,7 @@ const APP_SHELL = [
   './events.js',
   './swipe.js',
   './firebase-config.js',
+  './config/firebase-config.bundle.js',
   './translations/index.json',
   './translations/KJV/KJV_search_index.json',
   './translations/BSB/BSB_search_index.json',
@@ -145,7 +146,7 @@ function translationFromUrl(pathname) {
 }
 
 function resolveBuildId() {
-  return '3af9b08';
+  return '8ed5f26';
 }
 
 async function precacheFiles() {
