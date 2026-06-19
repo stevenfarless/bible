@@ -161,6 +161,8 @@ export function initSwipe(app) {
         position: 'relative',
         overflow: 'hidden',
         width:    '100%',
+        touchAction: 'pan-y pinch-zoom',
+        overscrollBehaviorX: 'contain',
     });
 
     currentPanel.parentNode.insertBefore(viewport, currentPanel);
