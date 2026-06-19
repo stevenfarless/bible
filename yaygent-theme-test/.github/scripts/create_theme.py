@@ -87,6 +87,31 @@ def replace_once(text, old, new, description):
     return text.replace(old, new, 1)
 
 
+def replace_pattern_once(text, pattern, replacement, description):
+    text, count = re.subn(pattern, replacement, text, count=1, flags=re.S)
+    if count != 1:
+        raise SystemExit(f"Could not find insertion point for {description}")
+    return text
+
+
+def add_prepaint_theme(index, theme_id):
+    return replace_pattern_once(
+        index,
+        r"(var valid = \{.*?)(\s*\};)",
+        lambda match: f"{match.group(1)}, '{theme_id}': 1{match.group(2)}",
+        "prepaint theme allowlist",
+    )
+
+
+def add_ui_theme_class(ui, theme_class):
+    return replace_pattern_once(
+        ui,
+        r"(const ALL_THEME_CLASSES = \[.*?)(\];)",
+        lambda match: f"{match.group(1)}, '{theme_class}'{match.group(2)}",
+        "theme class list",
+    )
+
+
 def validate_theme_id(theme_id, label):
     if not ID_PATTERN.fullmatch(theme_id):
         raise SystemExit(f"{label} must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens")
@@ -249,11 +274,11 @@ body.{theme_id}-theme .verse-number {{
     mode_label = "Light | Dark" if mode == "both" else mode.title()
     option = f'\t\t\t\t\t\t\t\t\t<option value="{option_value}">{html.escape(name)} ({mode_label})</option>\n'
     index = replace_once(index, '\t\t\t\t\t\t\t\t</select>', option + '\t\t\t\t\t\t\t\t</select>', "theme selector option")
-    index = replace_once(index, "vigil: 1 };", f"vigil: 1, '{theme_id}': 1 }};", "prepaint theme allowlist")
+    index = add_prepaint_theme(index, theme_id)
     INDEX_FILE.write_text(index)
 
     theme_class = f"{theme_id}-theme"
-    ui = replace_once(ui, "'gnome-theme'];", f"'gnome-theme', '{theme_class}'];", "theme class list")
+    ui = add_ui_theme_class(ui, theme_class)
     light_bg = light_values["bg_base"] if light_values else dark_values["bg_base"]
     bg_entry = f"\t'{theme_class}':        {{ dark: '{dark_values['bg_base']}', light: '{light_bg}' }},\n"
     ui = replace_once(ui, "};\n\nexport function updateThemeColor()", bg_entry + "};\n\nexport function updateThemeColor()", "theme-color background map")
