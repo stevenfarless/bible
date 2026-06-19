@@ -1,5 +1,5 @@
 // BUILD_ID is injected at deploy time by the CI workflow:
-//   sed -i "s/f5759c6/$GITHUB_SHA/g" sw.js
+//   sed -i "s/a80ef61/$GITHUB_SHA/g" sw.js
 // The placeholder below is replaced with the full commit SHA before
 // the file is published to GitHub Pages. Never edit the placeholder
 // directly — changes here are overwritten on every deploy.
@@ -80,6 +80,7 @@ const APP_SHELL = [
   './events.js',
   './swipe.js',
   './firebase-config.js',
+  './config/firebase-config.bundle.js',
   './translations/index.json',
   './translations/KJV/KJV_search_index.json',
   './translations/BSB/BSB_search_index.json',
@@ -145,7 +146,7 @@ function translationFromUrl(pathname) {
 }
 
 function resolveBuildId() {
-  return 'f5759c6';
+  return 'a80ef61';
 }
 
 async function precacheFiles() {
@@ -240,7 +241,7 @@ self.addEventListener('fetch', (event) => {
     // Stale-while-revalidate for app shell JS/CSS:
     // Serve from cache immediately, revalidate in the background.
     event.respondWith(
-      caches.match(event.request).then((cached) => {
+      caches.match(event.request, { ignoreSearch: true }).then((cached) => {
         // Start background fetch to keep cache fresh
         const networkFetch = fetch(event.request).then((response) => {
           if (response.ok) {
