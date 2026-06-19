@@ -80,6 +80,7 @@ const APP_SHELL = [
   './events.js',
   './swipe.js',
   './firebase-config.js',
+  './config/firebase-config.bundle.js',
   './translations/index.json',
   './translations/KJV/KJV_search_index.json',
   './translations/BSB/BSB_search_index.json',

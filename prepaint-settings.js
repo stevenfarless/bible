@@ -100,6 +100,50 @@
         document.head.appendChild(style);
     }
 
+    function redactDebugReportText(text) {
+        if (typeof text !== 'string') return text;
+        return text.replace(
+            /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
+            '[redacted-email]'
+        );
+    }
+
+    function installDebugReportEmailRedaction() {
+        var assignedReportBuilder;
+
+        try {
+            Object.defineProperty(window, '_buildDebugReport', {
+                configurable: true,
+                get: function () { return assignedReportBuilder; },
+                set: function (fn) {
+                    assignedReportBuilder = typeof fn === 'function'
+                        ? function () { return redactDebugReportText(fn.apply(this, arguments)); }
+                        : fn;
+                }
+            });
+        } catch (_) {}
+
+        function redactDebugPanel() {
+            var panel = document.getElementById('debugPanel');
+            var box = panel && panel.firstElementChild && panel.firstElementChild.firstElementChild;
+            if (!box) return;
+
+            var redacted = redactDebugReportText(box.textContent || '');
+            if (redacted !== box.textContent) box.textContent = redacted;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!document.body || !('MutationObserver' in window)) return;
+
+            var observer = new MutationObserver(redactDebugPanel);
+            observer.observe(document.body, {
+                childList: true,
+                characterData: true,
+                subtree: true
+            });
+        });
+    }
+
     if (!readBool('showVerseNumbers', true)) root.classList.add('hide-verse-numbers');
     if (!readBool('coloredVerseNumbers', true)) root.classList.add('muted-verse-numbers');
     if (!readBool('showChapterArrows', false)) root.classList.add('hide-chapter-arrows');
@@ -121,6 +165,7 @@
 
     applyLightMode(readLightMode());
     installVerseSelectionSuppression();
+    installDebugReportEmailRedaction();
 
     document.addEventListener('DOMContentLoaded', function () {
         applyStartupTheme();

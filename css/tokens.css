@@ -158,5 +158,6 @@
     --error-color: hsl(0, 0%, 80%);
 
     /* Component tokens */
+    --search-highlight-color: var(--brand-secondary);
     --footnote-hover-bg: rgba(255, 255, 255, 0.10);
 }

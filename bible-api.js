@@ -146,15 +146,25 @@ function _classifySearchQuery(query) {
  * Strategy: stem the query term, then match any token that starts with that
  * stem and is bounded by a word boundary on both sides.
  */
-function _buildStemRegex(q) {
-    const terms = q.split(/[^\p{L}\p{N}']+/u).filter(Boolean);
-    const regexes = terms.map((term) => {
-        const stem = _normalizeTerm(term.toLowerCase());
-        const escapedStem = stem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        return new RegExp(`\\b${escapedStem}\\w*`, 'i');
-    });
-    return regexes;
+function _tokenizeSearchText(value) {
+    return String(value || '')
+        .toLowerCase()
+        .split(/[^\p{L}\p{N}']+/u)
+        .filter(Boolean);
 }
+
+function _buildTextMatcher(query) {
+    const normalizedTerms = _tokenizeSearchText(query).map((term) => _normalizeTerm(term));
+
+    return (value) => {
+        const normalizedTokens = new Set(
+            _tokenizeSearchText(value).map((token) => _normalizeTerm(token))
+        );
+
+        return normalizedTerms.every((term) => normalizedTokens.has(term));
+    };
+}
+
 
 export async function loadTranslationIndex() {
     if (!FIREBASE_TRANSLATIONS_ENABLED) return [];
@@ -174,9 +184,21 @@ export async function loadTranslationIndex() {
 
 
 function _normalizeTerm(word) {
-    const w = word.toLowerCase();
+    let w = word.toLowerCase();
+
+    if (w.length > 3) {
+        w = w.replace(/[’']s$/, '');
+    }
+
     if (w.length < 3) return w;
+
+    if (w.endsWith('est') && w.length > 5) {
+        return _normalizeTerm(w.slice(0, -2));
+    }
     if (w.endsWith('eth') && w.length > 4) {
+        return _normalizeTerm(w.slice(0, -3));
+    }
+    if (w.endsWith('ing') && w.length > 5) {
         return _normalizeTerm(w.slice(0, -3));
     }
     if (w.endsWith('ed') && w.length > 4 && !'aeiou'.includes(w[w.length - 3])) {
@@ -648,7 +670,7 @@ export class BibleApi {
         const mode = _classifySearchQuery(q);
         const queryTerms = normalizedQ.split(/[^\p{L}\p{N}']+/u).filter(Boolean);
         const normalizedQueryTerms = queryTerms.map((term) => _normalizeTerm(term));
-        const stemRegexes = mode === 'text' ? _buildStemRegex(normalizedQ) : [];
+        const textMatcher = mode === 'text' ? _buildTextMatcher(normalizedQ) : null;
         const wildcardTextRegex = mode === 'wildcardText' ? _buildWildcardTextRegex(q) : null;
         const referenceRegex = mode === 'reference' ? _buildReferenceRegex(q) : null;
 
@@ -656,7 +678,7 @@ export class BibleApi {
             ? (value) => referenceRegex?.test(value) ?? false
             : mode === 'wildcardText'
                 ? (value) => wildcardTextRegex?.test(String(value || '')) ?? false
-                : (value) => stemRegexes.every((re) => re.test(String(value || '')));
+                : (value) => textMatcher?.(value) ?? false;
 
         const scanMode = mode === 'reference' ? 'reference' : 'text';
 
@@ -788,14 +810,14 @@ export class BibleApi {
         if (candidates.length === 0) return [];
 
         const mode = _classifySearchQuery(q);
-        const stemRegexes = mode === 'text' ? _buildStemRegex(q.toLowerCase()) : [];
+        const textMatcher = mode === 'text' ? _buildTextMatcher(q.toLowerCase()) : null;
         const wildcardTextRegex = mode === 'wildcardText' ? _buildWildcardTextRegex(q) : null;
         const referenceRegex = mode === 'reference' ? _buildReferenceRegex(q) : null;
         const matcher = mode === 'reference'
             ? (value) => referenceRegex?.test(value) ?? false
             : mode === 'wildcardText'
                 ? (value) => wildcardTextRegex?.test(String(value || '')) ?? false
-                : (value) => stemRegexes.every((re) => re.test(String(value || '')));
+                : (value) => textMatcher?.(value) ?? false;
         const scanMode = mode === 'reference' ? 'reference' : 'text';
 
         const seen = new Set(

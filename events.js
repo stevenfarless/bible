@@ -10,6 +10,31 @@ import { initSwipe } from './swipe.js';
 import { handleChangeEmail, handleChangePassword, handleForgotPassword } from './auth.js';
 import { attachButtonHaptics, hapticFirm } from './haptics.js';
 
+const BUG_REPORT_EMAIL = 'legelux+bugs@proton.me';
+
+const BUG_REPORT_MODAL_HTML = `
+<div id="bugReportModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="bugReportModalTitle" aria-hidden="true" inert>
+    <div class="modal-content modal-content--sm">
+        <div class="modal-header">
+            <h2 id="bugReportModalTitle" tabindex="-1">Report a Bug</h2>
+            <button class="close-btn close-control" id="closeBugReportModal" aria-label="Close" type="button">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7L17 17M17 7L7 17"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>First copy the debug log. Then open an email and paste the log under the marked line.</p>
+            <div class="btn-row">
+                <button id="copyBugReportLog" class="primary-btn" type="button">Copy Debug Log</button>
+                <button id="openBugReportEmail" class="secondary-btn" type="button" disabled>Open Email</button>
+            </div>
+            <p id="bugReportStatus" aria-live="polite"></p>
+            <textarea id="bugReportManualLog" class="input-field" rows="8" hidden readonly></textarea>
+        </div>
+    </div>
+</div>`;
+
 const CHANGE_EMAIL_HTML = `
 <div id="changeEmailModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="changeEmailModalTitle" aria-hidden="true" inert>
                 <div class="modal-content">
@@ -100,6 +125,101 @@ function openChangePasswordModal(app) {
     });
 }
 
+function buildBugReportMailto() {
+    const body = [
+        'Describe the issue here:',
+        '',
+        '',
+        '',
+        '__________________________________',
+        'PASTE the copied debug log below this line:',
+        '__________________________________',
+        '',
+        '',
+        '',
+        ''
+    ].join('\n');
+
+    return 'mailto:' + encodeURIComponent(BUG_REPORT_EMAIL) +
+        '?subject=' + encodeURIComponent('Bug Report') +
+        '&body=' + encodeURIComponent(body);
+}
+
+function redactDebugReportText(text) {
+    if (typeof text !== 'string') return text;
+    return text.replace(
+        /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
+        '[redacted-email]'
+    );
+}
+
+function installBugReportUi(app) {
+    const controls = document.querySelector('.header-controls');
+    const settingsButton = document.getElementById('settingsBtn');
+
+    if (!controls || !settingsButton || document.getElementById('bugReportBtn')) return;
+
+    const button = document.createElement('button');
+    button.className = 'icon-btn';
+    button.id = 'bugReportBtn';
+    button.type = 'button';
+    button.title = 'Report a bug';
+    button.setAttribute('aria-label', 'Report a bug');
+    button.innerHTML = '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="6" y="7" width="12" height="13" rx="5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7V5a3 3 0 0 1 6 0v2M12 11v9M6 12H3M18 12h3M7 17l-2 2M17 17l2 2M8 8 6 6M16 8l2-2"></path></svg>';
+    controls.insertBefore(button, settingsButton);
+
+    const modal = injectModal(BUG_REPORT_MODAL_HTML);
+    const closeButton = modal.querySelector('#closeBugReportModal');
+    const copyButton = modal.querySelector('#copyBugReportLog');
+    const emailButton = modal.querySelector('#openBugReportEmail');
+    const status = modal.querySelector('#bugReportStatus');
+    const manualLog = modal.querySelector('#bugReportManualLog');
+
+    function resetModal() {
+        emailButton.disabled = true;
+        status.textContent = '';
+        manualLog.hidden = true;
+        manualLog.value = '';
+    }
+
+    button.addEventListener('click', () => {
+        resetModal();
+        app.openModal(modal);
+    });
+
+    closeButton.addEventListener('click', () => app.closeModal(modal));
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) app.closeModal(modal);
+    });
+
+    copyButton.addEventListener('click', async () => {
+        let report = typeof window._buildDebugReport === 'function'
+            ? window._buildDebugReport()
+            : 'Debug log unavailable. Please describe what happened.';
+
+        report = redactDebugReportText(report);
+
+        try {
+            await navigator.clipboard.writeText(report);
+            status.textContent = 'Debug log copied. Tap Open Email, then paste the log under the marked line.';
+            emailButton.disabled = false;
+            manualLog.hidden = true;
+        } catch (_) {
+            manualLog.value = report;
+            manualLog.hidden = false;
+            manualLog.focus();
+            manualLog.select();
+            status.textContent = 'Copy failed. Manually copy the log below, then tap Open Email.';
+            emailButton.disabled = false;
+        }
+    });
+
+    emailButton.addEventListener('click', () => {
+        window.location.href = buildBugReportMailto();
+    });
+}
+
 function syncReadingDisplay(app) {
     document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
     document.body.classList.toggle('muted-verse-numbers', !app.state.coloredVerseNumbers);
@@ -150,6 +270,7 @@ export function attachEventListeners(app) {
     normalizeModalMarkup();
     installCanonFallback(app);
     attachButtonHaptics(app);
+    installBugReportUi(app);
 
     app.searchToggleBtn?.addEventListener('click', () => app.toggleSearch());
     app.closeSearchBtn?.addEventListener('click',  () => app.closeSearch());
