@@ -1,5 +1,5 @@
 // BUILD_ID is injected at deploy time by the CI workflow:
-//   sed -i "s/772c121/$GITHUB_SHA/g" sw.js
+//   sed -i "s/719e3ce/$GITHUB_SHA/g" sw.js
 // The placeholder below is replaced with the full commit SHA before
 // the file is published to GitHub Pages. Never edit the placeholder
 // directly — changes here are overwritten on every deploy.
@@ -146,7 +146,7 @@ function translationFromUrl(pathname) {
 }
 
 function resolveBuildId() {
-  return '772c121';
+  return '719e3ce';
 }
 
 async function precacheFiles() {
@@ -237,29 +237,29 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (APP_SHELL_PATTERN.test(url.pathname)) {
-      event.respondWith((async () => {
-        const cache = await caches.open(CACHE_NAME);
-    
-        try {
-          const response = await fetch(new Request(event.request, { cache: 'no-store' }));
-    
-          if (response.ok) {
-            const cacheResponse = isLongLivedStaticAsset(url)
-              ? withLongLivedStaticHeaders(response.clone())
-              : response.clone();
-    
-            await cache.put(event.request, cacheResponse);
-          }
-    
-          return response;
-        } catch {
-          const cached = await cache.match(event.request);
-          return cached || new Response('Offline', { status: 503 });
+      if (APP_SHELL_PATTERN.test(url.pathname)) {
+          event.respondWith((async () => {
+            const cache = await caches.open(CACHE_NAME);
+
+            try {
+              const response = await fetch(new Request(event.request, { cache: 'no-store' }));
+
+              if (response.ok) {
+                const cacheResponse = isLongLivedStaticAsset(url)
+                  ? withLongLivedStaticHeaders(response.clone())
+                  : response.clone();
+
+                await cache.put(event.request, cacheResponse);
+              }
+
+              return response;
+            } catch {
+              const cached = await cache.match(event.request);
+              return cached || new Response('Offline', { status: 503 });
+            }
+          })());
+          return;
         }
-      })());
-      return;
-    }
 
   const isRoot = url.pathname === '/' || url.pathname.endsWith('/index.html');
 
