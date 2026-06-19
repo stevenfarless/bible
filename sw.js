@@ -237,29 +237,29 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (APP_SHELL_PATTERN.test(url.pathname)) {
-      event.respondWith((async () => {
-        const cache = await caches.open(CACHE_NAME);
-    
-        try {
-          const response = await fetch(new Request(event.request, { cache: 'no-store' }));
-    
-          if (response.ok) {
-            const cacheResponse = isLongLivedStaticAsset(url)
-              ? withLongLivedStaticHeaders(response.clone())
-              : response.clone();
-    
-            await cache.put(event.request, cacheResponse);
-          }
-    
-          return response;
-        } catch {
-          const cached = await cache.match(event.request);
-          return cached || new Response('Offline', { status: 503 });
+      if (APP_SHELL_PATTERN.test(url.pathname)) {
+          event.respondWith((async () => {
+            const cache = await caches.open(CACHE_NAME);
+
+            try {
+              const response = await fetch(new Request(event.request, { cache: 'no-store' }));
+
+              if (response.ok) {
+                const cacheResponse = isLongLivedStaticAsset(url)
+                  ? withLongLivedStaticHeaders(response.clone())
+                  : response.clone();
+
+                await cache.put(event.request, cacheResponse);
+              }
+
+              return response;
+            } catch {
+              const cached = await cache.match(event.request);
+              return cached || new Response('Offline', { status: 503 });
+            }
+          })());
+          return;
         }
-      })());
-      return;
-    }
 
   const isRoot = url.pathname === '/' || url.pathname.endsWith('/index.html');
 
