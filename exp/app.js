@@ -1750,29 +1750,68 @@ async function registerServiceWorker(appInstance) {
             }
         });
 
-        function _checkVersion() {
-            if (!pageBuildId) return;
-            fetch('./version.txt', { cache: 'no-store' })
-                .then(r => r.text())
-                .then(remote => {
-                    if (remote.trim() && remote.trim() !== pageBuildId) _maybeShowUpdateToast();
-                })
-                .catch(() => {});
+        let versionPollId = null;
+        let versionCheckInFlight = false;
+        let lastVersionCheckAt = 0;
+
+        async function _checkVersion(options = {}) {
+            const {
+                reloadOnUpdate = false,
+                minIntervalMs = 0,
+            } = options;
+
+            if (!pageBuildId) return false;
+            if (versionCheckInFlight) return false;
+
+            const now = Date.now();
+            if (minIntervalMs > 0 && now - lastVersionCheckAt < minIntervalMs) {
+                return false;
+            }
+
+            versionCheckInFlight = true;
+            lastVersionCheckAt = now;
+
+            try {
+                const response = await fetch('./version.txt', { cache: 'no-store' });
+                const remote = await response.text();
+                const remoteSha = remote.trim();
+
+                if (!remoteSha || remoteSha === pageBuildId) return true;
+
+                if (reloadOnUpdate) {
+                    window.location.reload();
+                } else {
+                    _maybeShowUpdateToast();
+                }
+
+                return true;
+            } catch {
+                return false;
+            } finally {
+                versionCheckInFlight = false;
+            }
         }
-        setInterval(_checkVersion, 5 * 60 * 1000);
+
+        versionPollId = setInterval(() => {
+            _checkVersion();
+        }, 5 * 60 * 1000);
+
+        window.addEventListener('beforeunload', () => {
+            if (versionPollId !== null) {
+                clearInterval(versionPollId);
+                versionPollId = null;
+            }
+        }, { once: true });
 
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState !== 'visible') return;
-            fetch('./version.txt', { cache: 'no-store' })
-                .then(r => r.text())
-                .then(remote => {
-                    const remoteSha = remote.trim();
-                    if (remoteSha && pageBuildId && remoteSha !== pageBuildId) {
-                        window.location.reload();
-                    }
-                })
-                .catch(() => {});
-            reg.update().catch(() => {});
+
+            _checkVersion({
+                reloadOnUpdate: true,
+                minIntervalMs: 60 * 1000,
+            }).then((didCheck) => {
+                if (didCheck) reg.update().catch(() => {});
+            });
         });
     } catch (err) {
         console.warn('SW registration failed', err);
