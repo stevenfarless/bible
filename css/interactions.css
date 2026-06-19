@@ -126,7 +126,7 @@ body.light-mode .verse-tools-trigger:focus-visible {
 /* ── Verse tools tray ── */
 
 .verse-tools-tray {
-    overflow: hidden;
+    overflow: visible;
     max-height: 0;
     opacity: 0;
     transition:
@@ -220,6 +220,34 @@ body.light-mode .verse-tool-letter {
     color: rgba(200, 100, 0, 0.8);
 }
 
+.has-tooltip {
+    position: relative;
+}
+
+.has-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    padding: 0.35rem 0.5rem;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 0.4rem;
+    background: #222;
+    color: #fff;
+    font-family: var(--font-ui, system-ui, sans-serif);
+    font-size: 0.75rem;
+    line-height: 1;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.has-tooltip:hover::after,
+.has-tooltip:focus-visible::after {
+    opacity: 1;
+}
 
 /* ================================
    9. ANIMATIONS

@@ -107,16 +107,16 @@ export function applyVerseGlow(app) {
     tray.className = 'verse-tools-tray';
     tray.setAttribute('aria-hidden', 'true');
     tray.innerHTML = `
-        <div class="verse-tools-actions verse-tools-actions--top">
-            <button class="verse-tool-btn verse-tool-btn--square" aria-label="Cross References"><span class="verse-tool-letter">R</span></button>
-        </div>
-        <div class="verse-tools-actions">
-            <button class="verse-tool-btn" aria-label="Highlight"><span class="verse-tool-letter">H</span></button>
-            <button class="verse-tool-btn" aria-label="Bookmark"><span class="verse-tool-letter">B</span></button>
-            <button class="verse-tool-btn" aria-label="Note"><span class="verse-tool-letter">N</span></button>
-            <button class="verse-tool-btn" aria-label="Copy"><span class="verse-tool-letter">C</span></button>
-            <button class="verse-tool-btn" aria-label="Share"><span class="verse-tool-letter">S</span></button>
-        </div>`;
+    <div class="verse-tools-actions verse-tools-actions--top">
+        <button class="verse-tool-btn verse-tool-btn--square has-tooltip" type="button" aria-label="References" title="References" data-tooltip="References"><span class="verse-tool-letter">R</span></button>
+    </div>
+    <div class="verse-tools-actions">
+        <button class="verse-tool-btn has-tooltip" type="button" aria-label="Highlight" title="Highlight" data-tooltip="Highlight"><span class="verse-tool-letter">H</span></button>
+        <button class="verse-tool-btn has-tooltip" type="button" aria-label="Bookmark" title="Bookmark" data-tooltip="Bookmark"><span class="verse-tool-letter">B</span></button>
+        <button class="verse-tool-btn has-tooltip" type="button" aria-label="Note" title="Note" data-tooltip="Note"><span class="verse-tool-letter">N</span></button>
+        <button class="verse-tool-btn has-tooltip" type="button" aria-label="Copy" title="Copy" data-tooltip="Copy"><span class="verse-tool-letter">C</span></button>
+        <button class="verse-tool-btn has-tooltip" type="button" aria-label="Share" title="Share" data-tooltip="Share"><span class="verse-tool-letter">S</span></button>
+    </div>`;
     wrapper.appendChild(tray);
 
     trigger.addEventListener('click', () => toggleVerseTray(wrapper, trigger, tray));
