@@ -73,10 +73,14 @@ body:not(.no-color-transition) *::after {
 }
 
 
-/*Vertical movement is still normal page scrolling.*/
-/*Reduces horizontal browser-level overscroll behavior during side swipes.*/
+/* Let vertical reading scroll stay native while preserving horizontal chapter swipes. */
+#swipeViewport,
+#swipeViewport .passage-text,
+#swipeViewport .verse {
+    touch-action: pan-y pinch-zoom;
+}
+
 #swipeViewport {
-    touch-action: pan-y;
     overscroll-behavior-x: contain;
 }
 
