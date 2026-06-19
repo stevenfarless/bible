@@ -36,18 +36,7 @@ jobs:
           api_path = Path('bible-api.js')
           text = api_path.read_text(encoding='utf-8')
 
-          old_build_stem = """function _buildStemRegex(q) {
-              const terms = q.split(/[^\p{L}\p{N}']+/u).filter(Boolean);
-              const regexes = terms.map((term) => {
-                  const stem = _normalizeTerm(term.toLowerCase());
-                  const escapedStem = stem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                  return new RegExp(`\\b${escapedStem}\\w*`, 'i');
-              });
-              return regexes;
-          }
-          """
-
-          new_text_matcher = """function _tokenizeSearchText(value) {
+          new_text_matcher = r"""function _tokenizeSearchText(value) {
               return String(value || '')
                   .toLowerCase()
                   .split(/[^\p{L}\p{N}']+/u)
@@ -67,10 +56,14 @@ jobs:
           }
           """
 
-          if old_build_stem in text:
-              text = text.replace(old_build_stem, new_text_matcher, 1)
+          helper_start = 'function _buildStemRegex(q) {'
+          helper_end = '\n\nexport async function loadTranslationIndex()'
+          if helper_start in text:
+              start = text.index(helper_start)
+              end = text.index(helper_end, start)
+              text = text[:start] + new_text_matcher + text[end:]
           elif 'function _buildTextMatcher(query)' not in text:
-              raise SystemExit('Expected _buildStemRegex block was not found.')
+              raise SystemExit('Expected search matcher helper block was not found.')
 
           old_eth_block = """    if (w.endsWith('eth') && w.length > 4) {
                   return _normalizeTerm(w.slice(0, -3));
@@ -118,7 +111,7 @@ jobs:
           api_path.write_text(text, encoding='utf-8')
 
           test_path = Path('tests/unit/bible-api-search.test.js')
-          test_path.write_text("""import { describe, it, expect } from 'vitest';
+          test_path.write_text(r"""import { describe, it, expect } from 'vitest';
           import { BibleApi } from '../../bible-api.js';
 
           function makeApi() {
