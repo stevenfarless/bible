@@ -300,27 +300,30 @@ export function initSwipe(app) {
             if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
 
             if (Math.abs(dy) > Math.abs(dx) * TAN_30 || Math.abs(dy) > Math.abs(dx)) {
+                app._dbgUserAction?.(`swipe vetoed: dx=${Math.round(dx)} dy=${Math.round(dy)}`);
                 _vetoed = true;
                 return;
             }
             _tracking = true;
             viewport.classList.add('swiping');
-
+        
             app.passageText.style.position = 'absolute';
             app.passageText.style.top      = '0';
             app.passageText.style.left     = '0';
             app.passageText.style.width    = '100%';
             viewport.style.height = app.passageText.offsetHeight + 'px';
         }
-
+        
         if (!e.cancelable) {
+            app._dbgUserAction?.('swipe canceled: touchmove not cancelable');
+        
             _cleanupDrag();
-
+        
             const W = vw();
             _setTranslateX(app.passageText, 0);
             _setTranslateX(app.swipe.prevPanel, -W);
             _setTranslateX(app.swipe.nextPanel, W);
-
+        
             _tracking = false;
             _vetoed = true;
             return;
