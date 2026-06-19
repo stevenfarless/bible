@@ -24,7 +24,7 @@ button,
 
 /* Eliminate 300ms tap delay on verses; scroll is unaffected. */
 .verse {
-    touch-action: manipulation;
+    touch-action: pan-y pinch-zoom;
     cursor: pointer;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
