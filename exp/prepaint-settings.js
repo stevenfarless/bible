@@ -224,6 +224,10 @@
         function closeModal() { setBugReportModalOpen(modal, false); }
 
         button.addEventListener('click', function () {
+            emailButton.disabled = true;
+            status.textContent = '';
+            manualLog.hidden = true;
+            manualLog.value = '';
             setBugReportModalOpen(modal, true);
         });
 
