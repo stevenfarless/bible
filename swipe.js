@@ -322,22 +322,11 @@ export function initSwipe(app) {
             viewport.style.height = app.passageText.offsetHeight + 'px';
         }
 
-        if (!e.cancelable) {
-            app._dbgUserAction?.(`swipe canceled: touchmove not cancelable dx=${Math.round(dx)} dy=${Math.round(dy)}`);
-
-            _cleanupDrag();
-
-            const W = vw();
-            _setTranslateX(app.passageText, 0);
-            _setTranslateX(app.swipe.prevPanel, -W);
-            _setTranslateX(app.swipe.nextPanel, W);
-
-            _tracking = false;
-            _vetoed = true;
-            return;
+        if (e.cancelable) {
+            e.preventDefault();
+        } else {
+            app._dbgUserAction?.(`swipe continuing: touchmove not cancelable dx=${Math.round(dx)} dy=${Math.round(dy)}`);
         }
-
-        e.preventDefault();
 
         const W         = vw();
         const effective = _applyResistance(dx);
