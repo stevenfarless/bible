@@ -16,7 +16,7 @@ const REQUIRED_IDS = [
 	'oldTestamentBooks', 'newTestamentBooks',
 	'chapterModalBook', 'chapterGrid', 'verseModalBook', 'verseGrid',
 	'themeSelector', 'verseNumbersToggle', 'coloredVerseNumbersToggle', 'headingsToggle', 'footnotesToggle',
-	'crossReferencesToggle', 'verseByVerseToggle', 'chapterArrowsToggle',
+	'crossReferencesToggle', 'verseByVerseToggle', 'chapterArrowsToggle', 'hapticsToggle',
 	'verseSelectionGestureSelect',
 	'fontSizeSlider', 'fontSizeValue',
 	'referencesModal', 'closeReferencesModal',
@@ -143,6 +143,7 @@ export function cacheElements(app) {
 	app.crossReferencesToggle = document.getElementById('crossReferencesToggle');
 	app.verseByVerseToggle = document.getElementById('verseByVerseToggle');
 	app.chapterArrowsToggle = document.getElementById('chapterArrowsToggle');
+	app.hapticsToggle = document.getElementById('hapticsToggle');
 	app.verseSelectionGestureSelect = document.getElementById('verseSelectionGestureSelect');
 	app.fontSizeSlider = document.getElementById('fontSizeSlider');
 	app.fontSizeValue = document.getElementById('fontSizeValue');
