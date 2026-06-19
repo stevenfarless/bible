@@ -149,22 +149,17 @@
         var body = [
             'Describe the issue here:',
             '',
-            'What happened?',
-            '',
-            'What did you expect to happen?',
-            '',
-            'Steps to reproduce:',
-            '1.',
-            '2.',
-            '3.',
             '',
             '',
-            '______________________________',
+            '__________________________________',
+            'PASTE the copied debug log below this line:',
+            '__________________________________',
             '',
-            'Paste the copied debug log below this line:',
+            '',
+            '',
             ''
         ].join('\n');
-
+    
         return 'mailto:' + encodeURIComponent(BUG_REPORT_EMAIL) +
             '?subject=' + encodeURIComponent('Bug Report') +
             '&body=' + encodeURIComponent(body);
