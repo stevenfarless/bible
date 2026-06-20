@@ -1,6 +1,30 @@
 // ui.js
 // Responsibility: DOM caching, theme management
 
+const LIQUID_GLASS_STYLESHEET_ID = 'liquid-glass-theme-stylesheet';
+
+function ensureLiquidGlassStylesheet() {
+	if (document.getElementById(LIQUID_GLASS_STYLESHEET_ID)) return;
+
+	const link = document.createElement('link');
+	link.id = LIQUID_GLASS_STYLESHEET_ID;
+	link.rel = 'stylesheet';
+	link.href = 'css/liquid-glass.css';
+	document.head.appendChild(link);
+}
+
+function ensureLiquidGlassThemeOption() {
+	const select = document.getElementById('themeSelector');
+	if (!select || select.querySelector('option[value="glass"]')) return;
+
+	const option = document.createElement('option');
+	option.value = 'glass';
+	option.textContent = 'Liquid Glass';
+	select.insertBefore(option, select.querySelector('option[value="basic"]') ?? null);
+}
+
+ensureLiquidGlassStylesheet();
+
 const REQUIRED_IDS = [
 	'topChrome',
 	'searchToggle', 'settingsBtn',
@@ -42,6 +66,8 @@ const REQUIRED_IDS = [
 // <html> to <body> so component CSS targeting body.X-theme continues to work,
 // then lift the transition guard from both elements.
 document.addEventListener('DOMContentLoaded', () => {
+	ensureLiquidGlassThemeOption();
+
 	const htmlClasses = [...document.documentElement.classList];
 	if (htmlClasses.length) document.body.classList.add(...htmlClasses);
 
@@ -250,7 +276,7 @@ export function updateThemeIcon(isLightMode) {
 	}
 }
 
-const ALL_THEME_CLASSES = ['lux-theme', 'vespers-theme', 'vigil-theme', 'dracula-theme', 'dracula2test-theme', 'onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme', 'gnome-theme', 'uxorem-amo-theme'];
+const ALL_THEME_CLASSES = ['lux-theme', 'vespers-theme', 'vigil-theme', 'dracula-theme', 'dracula2test-theme', 'onyx-theme', 'sage-theme', 'ember-theme', 'perplexity-theme', 'basic-theme', 'geek-theme', 'gnome-theme', 'uxorem-amo-theme', 'glass-theme'];
 
 // bg-base values sourced from css/tokens.css (Dracula/Alucard) and css/themes.css (all others).
 // dark = the theme's dark-mode --bg-base; light = the theme's light-mode --bg-base.
@@ -268,6 +294,7 @@ const THEME_BG = {
 	'vespers-theme':      { dark: '#1a1714', light: '#f5f2ec' },
 	'vigil-theme':        { dark: '#000000', light: '#f5f2ec' },
 	'uxorem-amo-theme':        { dark: '#161018', light: '#F9F2F6' },
+	'glass-theme':        { dark: '#09111f', light: '#eef5ff' },
 };
 
 export function updateThemeColor() {
