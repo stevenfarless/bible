@@ -1039,19 +1039,25 @@ class BibleApp {
 
     _startBackgroundAuthRestoration() {
         if (this._authRestorationScheduled) return;
-
+    
         this._authRestorationScheduled = true;
         this._dbg.t_auth_restore_scheduled = ms();
         this._dbgEvent('auth restoration: scheduled after reader reveal');
+    
+        const restore = () => {
+            void this._restoreAuthSession();
+        };
+    
+        const runWhenIdle = () => {
+            if ('requestIdleCallback' in window) {
+                window.requestIdleCallback(restore, { timeout: 10000 });
+            } else {
+                restore();
+            }
+        };
 
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                setTimeout(() => {
-                    void this._restoreAuthSession();
-                }, 0);
-            });
-        });
-    }
+    setTimeout(runWhenIdle, 8000);
+}
 
     async ensureInteractiveAuth() {
         try {
