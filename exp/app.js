@@ -1148,44 +1148,62 @@ class BibleApp {
         } catch (_) {}
     }
 
-    _restorePassageCache() {
-        try {
-            const raw = localStorage.getItem(PASSAGE_CACHE_KEY);
-            if (!raw) {
-                this._dbgEvent('cache restore: no passageCache entry');
-                return false;
-            }
-            const { book, chapter, translation, title, html } = JSON.parse(raw);
-
-            const stateBook    = this.state.currentBook;
-            const stateChapter = this.state.currentChapter;
-            const stateTrans   = this.state.translation || 'KJV';
-
-            if (
-                book                    !== stateBook    ||
-                parseInt(chapter, 10)  !== stateChapter ||
-                translation            !== stateTrans
-            ) {
-                this._dbgEvent(
-                    `cache MISS: cache=(${book} ${chapter} ${translation}) state=(${stateBook} ${stateChapter} ${stateTrans})`
-                );
-                return false;
-            }
-
-            if (this.passageTitle) this.passageTitle.textContent = title || '';
-            if (this.passageText) {
-                this.passageText.innerHTML = html;
-                this.originalPassageHtml   = html;
-                this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
-            }
-            document.body.classList.add('passage-ready');
-            updateNavigationState(this);
-            return true;
+        _restorePassageCache() {
+            try {
+                const raw = localStorage.getItem(PASSAGE_CACHE_KEY);
+                if (!raw) {
+                    this._dbgEvent('cache restore: no passageCache entry');
+                    return false;
+                }
+    
+                const { book, chapter, translation, title, html } = JSON.parse(raw);
+                const cachedHtml = typeof html === 'string' ? html : '';
+    
+                const hasLoadingPlaceholder =
+                    cachedHtml.includes('passage-loading-placeholder') ||
+                    cachedHtml.includes('class="loading"') ||
+                    cachedHtml.includes("class='loading'");
+    
+                const hasRenderablePassage =
+                    cachedHtml.includes('class="verse"') ||
+                    cachedHtml.includes("class='verse'");
+    
+                if (!cachedHtml.trim() || hasLoadingPlaceholder || !hasRenderablePassage) {
+                    this._dbgEvent('cache MISS: cached passage html was not renderable');
+                    localStorage.removeItem(PASSAGE_CACHE_KEY);
+                    return false;
+                }
+    
+                const stateBook    = this.state.currentBook;
+                const stateChapter = this.state.currentChapter;
+                const stateTrans   = this.state.translation || 'KJV';
+    
+                if (
+                    book                   !== stateBook    ||
+                    parseInt(chapter, 10)  !== stateChapter ||
+                    translation            !== stateTrans
+                ) {
+                    this._dbgEvent(
+                        `cache MISS: cache=(${book} ${chapter} ${translation}) state=(${stateBook} ${stateChapter} ${stateTrans})`
+                    );
+                    return false;
+                }
+    
+                if (this.passageTitle) this.passageTitle.textContent = title || '';
+                if (this.passageText) {
+                    this.passageText.innerHTML = cachedHtml;
+                    this.originalPassageHtml   = cachedHtml;
+                    this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
+                }
+    
+                document.body.classList.add('passage-ready');
+                updateNavigationState(this);
+                return true;
             } catch (err) {
                 this._dbgEvent(`cache restore failed: ${err?.message || err}`);
                 return false;
             }
-    }
+        }
 
     // ── Background prefetch ────────────────────────────────────────────────
 
@@ -1346,10 +1364,10 @@ class BibleApp {
 
             this._startBackgroundAuthRestoration();
 
-            withTimeout(this.loadSyncedTranslationLibrary(), 5000, null)
-                .then(() => {
-                    this.maybeShowTranslationSyncModal();
-    });
+            void withTimeout(this.loadSyncedTranslationLibrary(), 5000, null)
+            .then(() => {
+                this.maybeShowTranslationSyncModal();
+            });
         } catch (err) {
             console.error('BibleApp init error:', err);
             this._dbgEvent(`init error: ${err.message}`);
