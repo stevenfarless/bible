@@ -876,14 +876,11 @@
 
 	<script type="module" src="app.js"></script>
 	<script>
-		if ('serviceWorker' in navigator) {
-			navigator.serviceWorker.register('./sw.js');
-		}
-		// Hide raw build placeholder when pipeline substitution hasn't run.
-		document.addEventListener('DOMContentLoaded', function() {
-			var b = document.getElementById('build-info');
-			if (b && b.textContent.trim().startsWith('__')) b.style.visibility = 'hidden';
-		});
-	</script>
+    	// Hide raw build placeholder when pipeline substitution hasn't run.
+    	document.addEventListener('DOMContentLoaded', function() {
+    		var b = document.getElementById('build-info');
+    		if (b && b.textContent.trim().startsWith('__')) b.style.visibility = 'hidden';
+    	});
+</script>
 </body>
 </html>
