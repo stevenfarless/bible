@@ -62,7 +62,7 @@ import {
 import {
     loadLocalSettings, applySettings, toggleSetting,
     toggleVerseByVerse, updateFontSize, changeTranslation, updateCopyright,
-    initSubAccordions, populateAboutVersion,
+    initSubAccordions,
 } from './settings.js';
 import { handleKeyboardShortcuts } from './keyboard.js';
 import { attachEventListeners } from './events.js';
@@ -1418,7 +1418,6 @@ class BibleApp {
         });
 
         initSubAccordions();
-        populateAboutVersion();
         const openAccountBtn = document.getElementById('openAccountBtn');
         if (openAccountBtn) {
             openAccountBtn.addEventListener('click', () => {
