@@ -5,7 +5,7 @@
 import { setLightMode, changeColorTheme, applyLightMode } from './ui.js';
 import { attachDragToResize } from './bottom-sheet-drag.js';
 import { runMegasearch, performKeywordSearch } from './search.js';
-import { applyReadingFont } from './settings.js';
+import { applyReadingFont, populateAboutVersion } from './settings.js';
 import { initSwipe } from './swipe.js';
 import { handleChangeEmail, handleChangePassword, handleForgotPassword } from './auth.js';
 import { attachButtonHaptics, hapticFirm } from './haptics.js';
