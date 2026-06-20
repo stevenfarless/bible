@@ -12,6 +12,7 @@ const DEFAULTS = {
     showCrossReferences: false,
     verseByVerse:        false,
     showChapterArrows:   false,
+    hideInterfaceOnScroll: true,
     hapticsEnabled:      true,
     lightMode:           'system',
     colorTheme:          'vespers',
@@ -74,8 +75,9 @@ export function loadLocalSettings(app) {
     app.state.showFootnotes       = readBool('showFootnotes',       DEFAULTS.showFootnotes);
     app.state.showCrossReferences = readBool('showCrossReferences', DEFAULTS.showCrossReferences);
     app.state.verseByVerse        = readBool('verseByVerse',        DEFAULTS.verseByVerse);
-    app.state.showChapterArrows   = readBool('showChapterArrows',   DEFAULTS.showChapterArrows);
-    app.state.hapticsEnabled      = readBool('hapticsEnabled',      DEFAULTS.hapticsEnabled);
+    app.state.showChapterArrows      = readBool('showChapterArrows',      DEFAULTS.showChapterArrows);
+    app.state.hideInterfaceOnScroll  = readBool('hideInterfaceOnScroll',  DEFAULTS.hideInterfaceOnScroll);
+    app.state.hapticsEnabled         = readBool('hapticsEnabled',         DEFAULTS.hapticsEnabled);
     const _rawLightMode = (() => { try { return localStorage.getItem('lightMode'); } catch (_) { return null; } })();
     app.state.lightMode =
         _rawLightMode === 'light' || _rawLightMode === 'dark' || _rawLightMode === 'system'
@@ -155,8 +157,9 @@ export function applySettings(app) {
     if (app.verseNumbersToggle)    app.verseNumbersToggle.checked    = !!app.state.showVerseNumbers;
     if (app.coloredVerseNumbersToggle) app.coloredVerseNumbersToggle.checked = !!app.state.coloredVerseNumbers;
     if (app.headingsToggle)        app.headingsToggle.checked        = !!app.state.showHeadings;
-    if (app.chapterArrowsToggle)   app.chapterArrowsToggle.checked   = !!app.state.showChapterArrows;
-    if (app.hapticsToggle)        app.hapticsToggle.checked        = !!app.state.hapticsEnabled;
+    if (app.chapterArrowsToggle) app.chapterArrowsToggle.checked = !!app.state.showChapterArrows;
+    if (app.hideInterfaceOnScrollToggle) app.hideInterfaceOnScrollToggle.checked = !!app.state.hideInterfaceOnScroll;
+    if (app.hapticsToggle) app.hapticsToggle.checked = !!app.state.hapticsEnabled;
     const hapticsSetting = document.getElementById('hapticsSetting');
     if (hapticsSetting) hapticsSetting.hidden = false;
 
@@ -182,6 +185,7 @@ const TOGGLE_MAP = {
     coloredVerseNumbers: 'coloredVerseNumbersToggle',
     showHeadings:      'headingsToggle',
     showChapterArrows: 'chapterArrowsToggle',
+    hideInterfaceOnScroll: 'hideInterfaceOnScrollToggle',
     hapticsEnabled:    'hapticsToggle',
 };
 
@@ -215,6 +219,16 @@ export async function toggleSetting(app, setting) {
 
     if (setting === 'showChapterArrows') {
         document.body.classList.toggle('hide-chapter-arrows', !app.state.showChapterArrows);
+        return;
+    }
+
+    if (setting === 'hideInterfaceOnScroll') {
+        if (!app.state.hideInterfaceOnScroll) {
+            app.showChrome?.();
+            app.chromeScrollAnchorY = window.scrollY || window.pageYOffset || 0;
+            app.chromeLastY = app.chromeScrollAnchorY;
+            app.chromeLastDirection = null;
+        }
         return;
     }
 }

@@ -196,7 +196,7 @@ function buildDebugReport(app) {
         'fontSize', 'readingFont', 'verseSelectionGesture',
         'showVerseNumbers', 'coloredVerseNumbers', 'showHeadings',
         'showFootnotes', 'showCrossReferences', 'verseByVerse',
-        'showChapterArrows', 'hapticsEnabled',
+        'showChapterArrows', 'hideInterfaceOnScroll', 'hapticsEnabled',
     ];
     const ls = {};
     for (const k of LS_KEYS) {
@@ -247,6 +247,7 @@ function buildDebugReport(app) {
         showHeadings:        app?.state?.showHeadings,
         verseByVerse:        app?.state?.verseByVerse,
         showChapterArrows:   app?.state?.showChapterArrows,
+        hideInterfaceOnScroll: app?.state?.hideInterfaceOnScroll,
         scrollY:             window.scrollY,
     };
     for (const [k, v] of Object.entries(cur)) {
@@ -315,6 +316,11 @@ function buildDebugReport(app) {
             state: app?.state?.showChapterArrows,
             checked: app?.chapterArrowsToggle?.checked,
             stored: ls.showChapterArrows,
+        },
+        hideInterfaceOnScroll: {
+            state: app?.state?.hideInterfaceOnScroll,
+            checked: app?.hideInterfaceOnScrollToggle?.checked,
+            stored: ls.hideInterfaceOnScroll,
         },
     };
 
@@ -420,6 +426,7 @@ function buildDebugReport(app) {
         `  showHeadings: ${app?.state?.showHeadings}`,
         `  verseByVerse: ${app?.state?.verseByVerse}`,
         `  showChapterArrows: ${app?.state?.showChapterArrows}`,
+        `  hideInterfaceOnScroll: ${app?.state?.hideInterfaceOnScroll}`,
         `  hapticsEnabled: ${app?.state?.hapticsEnabled}`,
         `  scrollY: ${window.scrollY}`,
         `  currentUser: ${app?.currentUser?.email ?? 'not signed in'}`,
@@ -437,6 +444,7 @@ function buildDebugReport(app) {
         `  showHeadings: state=${readingToggleState.showHeadings.state} checked=${readingToggleState.showHeadings.checked} stored=${readingToggleState.showHeadings.stored}`,
         `  verseByVerse: state=${readingToggleState.verseByVerse.state} checked=${readingToggleState.verseByVerse.checked} stored=${readingToggleState.verseByVerse.stored}`,
         `  showChapterArrows: state=${readingToggleState.showChapterArrows.state} checked=${readingToggleState.showChapterArrows.checked} stored=${readingToggleState.showChapterArrows.stored}`,
+        `  hideInterfaceOnScroll: state=${readingToggleState.hideInterfaceOnScroll.state} checked=${readingToggleState.hideInterfaceOnScroll.checked} stored=${readingToggleState.hideInterfaceOnScroll.stored}`,
         `  selectedVerse: ${app?.state?.selectedVerse ?? '(none)'}`,
         `  viewport height: ${window.innerHeight}`,
         `  document height: ${document.documentElement.scrollHeight}`,
@@ -724,6 +732,15 @@ class BibleApp {
         };
 
         this.handleChromeScroll = () => {
+            if (!this.state.hideInterfaceOnScroll) {
+                this.showChrome();
+                this.chromeScrollAnchorY = window.scrollY || window.pageYOffset || 0;
+                this.chromeLastY = this.chromeScrollAnchorY;
+                this.chromeLastDirection = null;
+                this.chromeScrollTicking = false;
+                return;
+            }
+
             if (this.chromeScrollTicking) return;
             this.chromeScrollTicking = true;
             if (this.chromeSuspend) {
@@ -734,6 +751,15 @@ class BibleApp {
                 return;
             }
             window.requestAnimationFrame(() => {
+                if (!this.state.hideInterfaceOnScroll) {
+                    this.showChrome();
+                    this.chromeScrollAnchorY = window.scrollY || window.pageYOffset || 0;
+                    this.chromeLastY = this.chromeScrollAnchorY;
+                    this.chromeLastDirection = null;
+                    this.chromeScrollTicking = false;
+                    return;
+                }
+
                 const y           = window.scrollY || window.pageYOffset || 0;
                 const direction   = y > this.chromeLastY ? 'down' : y < this.chromeLastY ? 'up' : this.chromeLastDirection;
                 const modalOpen   = !!document.querySelector('.modal.active');
@@ -1212,6 +1238,7 @@ class BibleApp {
 
             cacheElements(this);
             loadTheme(this);
+            this.loadLocalSettings();
 
             const themeSelector = document.getElementById('themeSelector');
             const lightModeToggle = document.getElementById('lightModeToggle');
@@ -1227,7 +1254,6 @@ class BibleApp {
             this.initializeAccordion();
             document.body.setAttribute('data-app-ready', 'true');
 
-            this.loadLocalSettings();
             await this.prepareLocalTranslation();
             this.applySettings();
             this._dbg.t_settings_loaded = ms();
@@ -1246,6 +1272,7 @@ class BibleApp {
                 showHeadings:        this.state.showHeadings,
                 verseByVerse:        this.state.verseByVerse,
                 showChapterArrows:   this.state.showChapterArrows,
+                hideInterfaceOnScroll: this.state.hideInterfaceOnScroll,
                 scrollY:             window.scrollY,
             };
 
