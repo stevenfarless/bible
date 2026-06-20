@@ -4,6 +4,13 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#060b1a" media="(prefers-color-scheme: dark)" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Lege Lux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 	<title>Lege Lux</title>
 	<meta name="description" content="Lege Lux is a fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
 	<meta property="og:title" content="Lege Lux" />
@@ -12,7 +19,7 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="e70eee8" />
+	<meta name="build-id" content="dd79fcc" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement - always available in <head>) before the
@@ -38,30 +45,30 @@
 			if (isLight) el.classList.add('light-mode');
 		}());
 	</script>
-	<script src="prepaint-settings.js?v=e70eee8"></script>
+	<script src="prepaint-settings.js?v=dd79fcc"></script>
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
 	<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
 	<link rel="icon" href="./favicon.ico" />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=e70eee8">.
+	     before the parser reaches <script type="module" src="app.js?v=dd79fcc">.
 	     This eliminates the sequential module-discovery waterfall. -->
-	<link rel="modulepreload" href="app.js?v=e70eee8" />
-	<link rel="modulepreload" href="bible-api.js?v=e70eee8" />
-	<link rel="modulepreload" href="bsb-structure.js?v=e70eee8" />
-	<link rel="modulepreload" href="reading-state.js?v=e70eee8" />
-	<link rel="modulepreload" href="ui.js?v=e70eee8" />
-	<link rel="modulepreload" href="bible-structure.js?v=e70eee8" />
-	<link rel="modulepreload" href="navigation.js?v=e70eee8" />
-	<link rel="modulepreload" href="search.js?v=e70eee8" />
-	<link rel="modulepreload" href="sync-prompt.js?v=e70eee8" />
-	<link rel="modulepreload" href="translation-sync.js?v=e70eee8" />
-	<link rel="modulepreload" href="modals.js?v=e70eee8" />
-	<link rel="modulepreload" href="settings.js?v=e70eee8" />
-	<link rel="modulepreload" href="haptics.js?v=e70eee8" />
-	<link rel="modulepreload" href="keyboard.js?v=e70eee8" />
-	<link rel="modulepreload" href="events.js?v=e70eee8" />
+	<link rel="modulepreload" href="app.js?v=dd79fcc" />
+	<link rel="modulepreload" href="bible-api.js?v=dd79fcc" />
+	<link rel="modulepreload" href="bsb-structure.js?v=dd79fcc" />
+	<link rel="modulepreload" href="reading-state.js?v=dd79fcc" />
+	<link rel="modulepreload" href="ui.js?v=dd79fcc" />
+	<link rel="modulepreload" href="bible-structure.js?v=dd79fcc" />
+	<link rel="modulepreload" href="navigation.js?v=dd79fcc" />
+	<link rel="modulepreload" href="search.js?v=dd79fcc" />
+	<link rel="modulepreload" href="sync-prompt.js?v=dd79fcc" />
+	<link rel="modulepreload" href="translation-sync.js?v=dd79fcc" />
+	<link rel="modulepreload" href="modals.js?v=dd79fcc" />
+	<link rel="modulepreload" href="settings.js?v=dd79fcc" />
+	<link rel="modulepreload" href="haptics.js?v=dd79fcc" />
+	<link rel="modulepreload" href="keyboard.js?v=dd79fcc" />
+	<link rel="modulepreload" href="events.js?v=dd79fcc" />
 	<!-- CSS loaded as parallel <link> tags — @import chains are render-blocking
 	     and sequential; <link> tags are fetched in parallel by the browser. -->
 	<style id="startup-font-faces">
@@ -81,22 +88,22 @@
 			font-display: swap;
 		}
 	</style>
-	<link rel="preload" href="css/fonts.css?v=e70eee8" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/fonts.css?v=e70eee8" /></noscript>
-	<link rel="stylesheet" href="css/base.css?v=e70eee8" />
-	<link rel="stylesheet" href="css/tokens.css?v=e70eee8" />
-	<link rel="stylesheet" href="css/themes.css?v=e70eee8" />
-	<link rel="stylesheet" href="css/layout.css?v=e70eee8" />
-	<link rel="stylesheet" href="css/components.css?v=e70eee8" />
-	<link rel="preload" href="css/modals.css?v=e70eee8" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/modals.css?v=e70eee8" /></noscript>
-	<link rel="preload" href="css/interactions.css?v=e70eee8" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/interactions.css?v=e70eee8" /></noscript>
-	<link rel="preload" href="css/utilities.css?v=e70eee8" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/utilities.css?v=e70eee8" /></noscript>
-	<link rel="stylesheet" href="css/pericope.css?v=e70eee8" />
-	<link rel="preload" href="css/geek95.css?v=e70eee8" as="style" onload="this.onload=null;this.rel='stylesheet'">
-	<noscript><link rel="stylesheet" href="css/geek95.css?v=e70eee8"></noscript>
+	<link rel="preload" href="css/fonts.css?v=dd79fcc" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/fonts.css?v=dd79fcc" /></noscript>
+	<link rel="stylesheet" href="css/base.css?v=dd79fcc" />
+	<link rel="stylesheet" href="css/tokens.css?v=dd79fcc" />
+	<link rel="stylesheet" href="css/themes.css?v=dd79fcc" />
+	<link rel="stylesheet" href="css/layout.css?v=dd79fcc" />
+	<link rel="stylesheet" href="css/components.css?v=dd79fcc" />
+	<link rel="preload" href="css/modals.css?v=dd79fcc" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/modals.css?v=dd79fcc" /></noscript>
+	<link rel="preload" href="css/interactions.css?v=dd79fcc" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/interactions.css?v=dd79fcc" /></noscript>
+	<link rel="preload" href="css/utilities.css?v=dd79fcc" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/utilities.css?v=dd79fcc" /></noscript>
+	<link rel="stylesheet" href="css/pericope.css?v=dd79fcc" />
+	<link rel="preload" href="css/geek95.css?v=dd79fcc" as="style" onload="this.onload=null;this.rel='stylesheet'">
+	<noscript><link rel="stylesheet" href="css/geek95.css?v=dd79fcc"></noscript>
 	<!-- Firebase App Check loads reCAPTCHA v3 through ReCaptchaV3Provider. -->
 </head>
 
@@ -105,7 +112,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">e70eee8</span>
+				<span id="build-info">dd79fcc</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -869,7 +876,7 @@
 
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=e70eee8"></script>
+	<script type="module" src="app.js?v=dd79fcc"></script>
 	<script>
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('./sw.js');
