@@ -1056,8 +1056,8 @@ class BibleApp {
             }
         };
 
-    setTimeout(runWhenIdle, 8000);
-}
+        setTimeout(runWhenIdle, 8000);
+    }
 
     async ensureInteractiveAuth() {
         try {
