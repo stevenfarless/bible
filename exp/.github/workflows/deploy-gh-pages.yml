@@ -79,7 +79,6 @@ jobs:
           fi
           sed -i "s/__BUILD_ID__/${SHA7}/g" sw.js index.html
           sed -E -i "s|(<script[^>]*[[:space:]]src=\")([^\"]+\.js)(\")|\1\2?v=${SHA7}\3|g" index.html
-          sed -E -i "s|(<link[^>]*rel=\"modulepreload\"[^>]*href=\")([^\"]+\.js)(\")|\1\2?v=${SHA7}\3|g" index.html
           sed -E -i "s|(<link[^>]*[[:space:]]href=\"css/[^\"]+\.css)(\")|\1?v=${SHA7}\2|g" index.html
           echo "${SHA7}" > version.txt
 
