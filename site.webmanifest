@@ -1,7 +1,7 @@
 {
   "name": "Lege Lux",
   "short_name": "Lege Lux",
-  "description": "Lege Lux is a fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools built for focused Scripture reading.",
+  "description": "Lege Lux is a fast, offline capable Bible reader with multiple translations, themes, font options, and cross reference tools built for focused Scripture reading.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -19,20 +19,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Mobile reading view showing Scripture text and navigation controls"
-    },
-    {
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Wide reading view showing Scripture text in Lege Lux"
     }
   ]
 }
