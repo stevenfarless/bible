@@ -54,6 +54,7 @@ const APP_SHELL = [
   './css/tokens.css',
   './css/fonts.css',
   './css/themes.css',
+  './css/liquid-glass.css',
   './css/layout.css',
   './css/components.css',
   './css/modals.css',
