@@ -60,22 +60,28 @@ const REQUIRED_IDS = [
 	'translationSyncDownload',
 ];
 
-// The inline <script> in <head> stamps the theme class and no-color-transition
-// onto document.documentElement before first paint (document.body is null then).
-// Once DOMContentLoaded fires, body is available — mirror all classes from
-// <html> to <body> so component CSS targeting body.X-theme continues to work,
-// then lift the transition guard from both elements.
-document.addEventListener('DOMContentLoaded', () => {
+function finishStartupClassMirroring() {
 	ensureLiquidGlassThemeOption();
 
-	const htmlClasses = [...document.documentElement.classList];
-	if (htmlClasses.length) document.body.classList.add(...htmlClasses);
+	if (document.body) {
+		const htmlClasses = [...document.documentElement.classList];
+		if (htmlClasses.length) document.body.classList.add(...htmlClasses);
+	}
 
 	requestAnimationFrame(() => {
 		document.documentElement.classList.remove('no-color-transition');
-		document.body.classList.remove('no-color-transition');
+		document.body?.classList.remove('no-color-transition');
 	});
-}, { once: true });
+}
+
+// The inline <script> in <head> stamps the theme class and no-color-transition
+// onto document.documentElement before first paint (document.body is null then).
+// If this module loads after DOMContentLoaded, run the mirror work immediately.
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', finishStartupClassMirroring, { once: true });
+} else {
+	finishStartupClassMirroring();
+}
 
 export function cacheElements(app) {
 	// Validate all required IDs exist — warns immediately if HTML is stale or mismatched
@@ -162,6 +168,7 @@ export function cacheElements(app) {
 
 	// Settings
 	app.themeSelector = document.getElementById('themeSelector');
+	ensureLiquidGlassThemeOption();
 	app.verseNumbersToggle = document.getElementById('verseNumbersToggle');
 	app.coloredVerseNumbersToggle = document.getElementById('coloredVerseNumbersToggle');
 	app.headingsToggle = document.getElementById('headingsToggle');
@@ -268,7 +275,7 @@ export function updateThemeIcon(isLightMode) {
         <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
         <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
         <line x1="1" y1="12" x2="3" y2="12"></line>
-        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="21" y1="12" x2="23"></line>
         <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
         <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
       </svg>
