@@ -20,6 +20,7 @@ on:
       - "! Implement Sync Sign-In Prompt"
       - "! Implement Settings Sync Prompt"
       - "! Sync Translation Library"
+      - "! Lock UI"
     types:
       - completed
     branches:
