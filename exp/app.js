@@ -1829,3 +1829,144 @@ async function _promptInstall() {
         document.addEventListener('DOMContentLoaded', _attach, { once: true });
     }
 }());
+
+/* Service Worker & Update Toast */
+
+async function registerServiceWorker(appInstance) {
+    if (!('serviceWorker' in navigator)) return;
+
+    try {
+        const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+        const pageBuildId = document.querySelector('meta[name="build-id"]')?.content || '';
+
+        let updateToastShown = false;
+
+        function maybeShowUpdateToast() {
+            if (updateToastShown) return;
+            updateToastShown = true;
+            showUpdateToast(appInstance);
+        }
+
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data?.type === 'NEW_VERSION') {
+                maybeShowUpdateToast();
+            }
+
+            if (event.data?.type === 'NEW_BUILD') {
+                const swBuildId = event.data.buildId || '';
+                if (pageBuildId && swBuildId && pageBuildId !== swBuildId) {
+                    maybeShowUpdateToast();
+                }
+            }
+        });
+
+        let versionPollId = null;
+        let versionCheckInFlight = false;
+        let lastVersionCheckAt = 0;
+
+        async function checkVersion(options = {}) {
+            const {
+                reloadOnUpdate = false,
+                minIntervalMs = 0,
+            } = options;
+
+            if (!pageBuildId) return false;
+            if (versionCheckInFlight) return false;
+
+            const now = Date.now();
+            if (minIntervalMs > 0 && now - lastVersionCheckAt < minIntervalMs) {
+                return false;
+            }
+
+            versionCheckInFlight = true;
+            lastVersionCheckAt = now;
+
+            try {
+                const response = await fetch('./version.txt', { cache: 'no-store' });
+                const remoteSha = (await response.text()).trim();
+
+                if (!remoteSha || remoteSha === pageBuildId) return true;
+
+                if (reloadOnUpdate) {
+                    window.location.reload();
+                } else {
+                    maybeShowUpdateToast();
+                }
+
+                return true;
+            } catch {
+                return false;
+            } finally {
+                versionCheckInFlight = false;
+            }
+        }
+
+        versionPollId = setInterval(() => {
+            checkVersion();
+        }, 5 * 60 * 1000);
+
+        window.addEventListener('beforeunload', () => {
+            if (versionPollId !== null) {
+                clearInterval(versionPollId);
+                versionPollId = null;
+            }
+        }, { once: true });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState !== 'visible') return;
+
+            checkVersion({
+                reloadOnUpdate: true,
+                minIntervalMs: 60 * 1000,
+            }).then((didCheck) => {
+                if (didCheck) reg.update().catch(() => {});
+            });
+        });
+    } catch (err) {
+        console.warn('SW registration failed', err);
+    }
+}
+
+function showUpdateToast(appInstance) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+
+    toast.innerHTML = '';
+
+    const text = Object.assign(document.createElement('span'), {
+        textContent: 'A new version is available.',
+    });
+
+    const action = Object.assign(document.createElement('button'), {
+        textContent: 'Refresh',
+        className: 'toast-action',
+    });
+
+    const dismiss = Object.assign(document.createElement('button'), {
+        textContent: '\u00d7',
+        className: 'toast-dismiss',
+    });
+
+    text.style.flex = '1';
+
+    action.addEventListener('click', () => location.reload());
+    dismiss.addEventListener('click', () => toast.classList.remove('show'));
+
+    toast.append(text, action, dismiss);
+    toast.classList.add('show');
+
+    setTimeout(() => toast.classList.remove('show'), 30000);
+}
+
+(async () => {
+    await new Promise((resolve) => {
+        if (document.readyState !== 'loading') {
+            resolve();
+            return;
+        }
+
+        document.addEventListener('DOMContentLoaded', resolve, { once: true });
+    });
+
+    new BibleApp();
+})();
