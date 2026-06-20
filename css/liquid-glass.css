@@ -1,0 +1,320 @@
+/* ================================
+   Liquid Glass theme
+   Apple inspired translucent surfaces for Safari and modern browsers.
+   Kept separate from themes.css because this is an experimental visual system.
+   ================================ */
+
+:root.glass-theme,
+html.glass-theme,
+body.glass-theme {
+    --bg-base: #09111f;
+    --bg-card: rgba(24, 36, 58, 0.58);
+    --bg-raised: rgba(255, 255, 255, 0.12);
+
+    --text-heading: rgba(255, 255, 255, 0.96);
+    --text-body: rgba(236, 244, 255, 0.86);
+    --text-muted: rgba(206, 219, 240, 0.62);
+
+    --border-neutral: rgba(255, 255, 255, 0.22);
+    --highlight-border: rgba(255, 255, 255, 0.46);
+
+    --primary-color: #b9dcff;
+    --primary-dark: #78b8ff;
+    --primary-light: #ffffff;
+    --brand-secondary: #f3f8ff;
+    --section-heading-color: rgba(243, 248, 255, 0.84);
+    --accent-color: #9ed4ff;
+
+    --success-color: #7ee7b8;
+    --warning-color: #ffd68a;
+    --error-color: #ff9ea3;
+
+    --footnote-hover-bg: rgba(185, 220, 255, 0.16);
+
+    --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.22);
+    --shadow-md: 0 18px 46px rgba(0, 0, 0, 0.30);
+    --shadow-lg: 0 28px 72px rgba(0, 0, 0, 0.42);
+}
+
+:root.glass-theme.light-mode,
+html.glass-theme.light-mode,
+body.glass-theme.light-mode {
+    --bg-base: #eef5ff;
+    --bg-card: rgba(255, 255, 255, 0.62);
+    --bg-raised: rgba(255, 255, 255, 0.44);
+
+    --text-heading: rgba(8, 23, 45, 0.94);
+    --text-body: rgba(19, 35, 60, 0.82);
+    --text-muted: rgba(57, 76, 104, 0.66);
+
+    --border-neutral: rgba(255, 255, 255, 0.70);
+    --highlight-border: rgba(255, 255, 255, 0.95);
+
+    --primary-color: #075bb5;
+    --primary-dark: #034384;
+    --primary-light: #2f8df1;
+    --brand-secondary: #254b79;
+    --section-heading-color: rgba(37, 75, 121, 0.82);
+    --accent-color: #0b6fd3;
+
+    --success-color: #18794e;
+    --warning-color: #8a5b00;
+    --error-color: #a23b47;
+
+    --footnote-hover-bg: rgba(7, 91, 181, 0.12);
+
+    --shadow-sm: 0 10px 30px rgba(42, 67, 101, 0.14);
+    --shadow-md: 0 18px 46px rgba(42, 67, 101, 0.18);
+    --shadow-lg: 0 28px 72px rgba(42, 67, 101, 0.24);
+}
+
+:root.glass-theme body,
+body.glass-theme {
+    background:
+        radial-gradient(circle at 14% 6%, rgba(97, 178, 255, 0.28), transparent 28rem),
+        radial-gradient(circle at 88% 12%, rgba(221, 173, 255, 0.22), transparent 24rem),
+        radial-gradient(circle at 50% 92%, rgba(111, 255, 214, 0.14), transparent 26rem),
+        linear-gradient(145deg, #07101f 0%, #0d1830 48%, #050913 100%);
+    background-attachment: fixed;
+}
+
+:root.glass-theme.light-mode body,
+body.glass-theme.light-mode {
+    background:
+        radial-gradient(circle at 12% 4%, rgba(77, 160, 255, 0.28), transparent 30rem),
+        radial-gradient(circle at 86% 10%, rgba(202, 163, 255, 0.22), transparent 24rem),
+        radial-gradient(circle at 50% 96%, rgba(105, 224, 255, 0.22), transparent 28rem),
+        linear-gradient(145deg, #eef5ff 0%, #f7fbff 48%, #dbeafe 100%);
+}
+
+.glass-theme .header,
+.glass-theme .navigation,
+.glass-theme .search-container,
+.glass-theme .modal-content,
+.glass-theme #settingsModal .modal-content,
+.glass-theme .sync-prompt,
+.glass-theme .accordion-section,
+.glass-theme .accordion-panel .settings-group,
+.glass-theme .sub-accordion-section,
+.glass-theme .shortcut-item,
+.glass-theme .translation-sync-list,
+.glass-theme .user-info-box,
+.glass-theme .install-banner,
+.glass-theme .toast {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.08));
+    border-color: rgba(255, 255, 255, 0.26);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.34),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.08),
+        var(--shadow-md);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+}
+
+.glass-theme.light-mode .header,
+.glass-theme.light-mode .navigation,
+.glass-theme.light-mode .search-container,
+.glass-theme.light-mode .modal-content,
+.glass-theme.light-mode #settingsModal .modal-content,
+.glass-theme.light-mode .sync-prompt,
+.glass-theme.light-mode .accordion-section,
+.glass-theme.light-mode .accordion-panel .settings-group,
+.glass-theme.light-mode .sub-accordion-section,
+.glass-theme.light-mode .shortcut-item,
+.glass-theme.light-mode .translation-sync-list,
+.glass-theme.light-mode .user-info-box,
+.glass-theme.light-mode .install-banner,
+.glass-theme.light-mode .toast {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.34));
+    border-color: rgba(255, 255, 255, 0.76);
+}
+
+.glass-theme .top-chrome {
+    padding: 0.35rem;
+}
+
+.glass-theme .header {
+    border-radius: 18px 18px 0 0;
+    border: 1px solid var(--border-neutral);
+    border-bottom-width: 0;
+}
+
+.glass-theme .navigation {
+    border-radius: 0 0 18px 18px;
+    border: 1px solid var(--border-neutral);
+}
+
+.glass-theme .logo,
+.glass-theme .passage-title,
+.glass-theme .modal-header h2,
+.glass-theme .accordion-title {
+    color: var(--text-heading);
+    text-shadow: 0 1px 10px rgba(185, 220, 255, 0.22);
+}
+
+.glass-theme .passage-container {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(150deg, rgba(8, 16, 31, 0.84), rgba(18, 31, 52, 0.70));
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 24px;
+    box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+.glass-theme.light-mode .passage-container {
+    background: linear-gradient(150deg, rgba(255, 255, 255, 0.88), rgba(237, 246, 255, 0.76));
+    border-color: rgba(255, 255, 255, 0.82);
+    box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+.glass-theme .passage-container::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(120deg, rgba(255, 255, 255, 0.16), transparent 32%),
+        radial-gradient(circle at 88% 8%, rgba(255, 255, 255, 0.16), transparent 18rem);
+    opacity: 0.9;
+}
+
+.glass-theme .passage-header,
+.glass-theme .passage-text,
+.glass-theme .passage-extras-section,
+.glass-theme .passage-footer {
+    position: relative;
+    z-index: 1;
+}
+
+.glass-theme .selector-btn,
+.glass-theme .nav-btn,
+.glass-theme .icon-btn,
+.glass-theme .close-btn,
+.glass-theme .primary-btn,
+.glass-theme .secondary-btn,
+.glass-theme .book-testament-filter,
+.glass-theme .book-item,
+.glass-theme .chapter-item,
+.glass-theme .input-field,
+.glass-theme .downloaded-translation-item,
+.glass-theme .footnote-item,
+.glass-theme .crossref-item {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.07));
+    border-color: rgba(255, 255, 255, 0.24);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    backdrop-filter: blur(16px) saturate(160%);
+}
+
+.glass-theme.light-mode .selector-btn,
+.glass-theme.light-mode .nav-btn,
+.glass-theme.light-mode .icon-btn,
+.glass-theme.light-mode .close-btn,
+.glass-theme.light-mode .primary-btn,
+.glass-theme.light-mode .secondary-btn,
+.glass-theme.light-mode .book-testament-filter,
+.glass-theme.light-mode .book-item,
+.glass-theme.light-mode .chapter-item,
+.glass-theme.light-mode .input-field,
+.glass-theme.light-mode .downloaded-translation-item,
+.glass-theme.light-mode .footnote-item,
+.glass-theme.light-mode .crossref-item {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.38));
+    border-color: rgba(255, 255, 255, 0.78);
+}
+
+.glass-theme .selector-btn:hover,
+.glass-theme .nav-btn:hover,
+.glass-theme .icon-btn:hover,
+.glass-theme .close-btn:hover,
+.glass-theme .book-testament-filter:hover,
+.glass-theme .book-item:hover,
+.glass-theme .chapter-item:hover {
+    background: linear-gradient(135deg, rgba(185, 220, 255, 0.36), rgba(255, 255, 255, 0.12));
+    border-color: rgba(255, 255, 255, 0.48);
+    color: var(--primary-light);
+    transform: translateY(-1px);
+}
+
+.glass-theme .primary-btn,
+.glass-theme .secondary-btn:hover,
+.glass-theme .selector-btn--translation:hover,
+.glass-theme .book-testament-filter--active,
+.glass-theme .book-testament-filter--active:hover {
+    background: linear-gradient(135deg, rgba(185, 220, 255, 0.80), rgba(92, 158, 255, 0.48));
+    border-color: rgba(255, 255, 255, 0.62);
+    color: #06101f;
+}
+
+.glass-theme.light-mode .primary-btn,
+.glass-theme.light-mode .secondary-btn:hover,
+.glass-theme.light-mode .selector-btn--translation:hover,
+.glass-theme.light-mode .book-testament-filter--active,
+.glass-theme.light-mode .book-testament-filter--active:hover {
+    color: #ffffff;
+    background: linear-gradient(135deg, rgba(47, 141, 241, 0.92), rgba(7, 91, 181, 0.72));
+}
+
+.glass-theme .modal {
+    background-color: rgba(3, 8, 18, 0.46);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    backdrop-filter: blur(14px) saturate(140%);
+}
+
+.glass-theme.light-mode .modal,
+.glass-theme.light-mode #settingsModal.modal {
+    background-color: rgba(194, 215, 238, 0.38);
+}
+
+.glass-theme #settingsModal.modal {
+    background-color: rgba(3, 8, 18, 0.38);
+}
+
+.glass-theme #settingsModal .modal-content {
+    border-radius: 26px 26px 0 0;
+}
+
+.glass-theme .search-input {
+    background: transparent;
+    color: var(--text-heading);
+}
+
+.glass-theme .verse-num,
+.glass-theme .verse-by-verse .verse-num {
+    color: var(--accent-color) !important;
+}
+
+.glass-theme .passage-loading-line {
+    opacity: 0.14;
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .glass-theme .header,
+    .glass-theme .navigation,
+    .glass-theme .search-container,
+    .glass-theme .modal-content,
+    .glass-theme .passage-container {
+        background-color: var(--bg-card);
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .glass-theme .header,
+    .glass-theme .navigation,
+    .glass-theme .search-container,
+    .glass-theme .modal-content,
+    .glass-theme .passage-container,
+    .glass-theme .selector-btn,
+    .glass-theme .nav-btn,
+    .glass-theme .icon-btn,
+    .glass-theme .close-btn,
+    .glass-theme .primary-btn,
+    .glass-theme .secondary-btn,
+    .glass-theme .book-testament-filter,
+    .glass-theme .book-item,
+    .glass-theme .chapter-item,
+    .glass-theme .input-field {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}
