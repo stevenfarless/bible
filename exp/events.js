@@ -436,6 +436,7 @@ export function attachEventListeners(app) {
     const openSettings = () => {
         app.hideSyncPrompt();
         app.openModal(app.settingsModal);
+        populateAboutVersion();
 
         const canOfferSync = Boolean(
             app.authAvailable === true &&
