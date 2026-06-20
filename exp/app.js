@@ -1702,16 +1702,52 @@ class BibleApp {
     async loadUserData()    { await loadUserData(this, normalizeTranslation); }
 }
 
-/* ─── PWA Install Prompt ─── */
+/* PWA Install Prompt */
 
+const INSTALL_PROMPT_DISMISSED_KEY = 'legeLuxInstallPromptDismissed';
 let _deferredInstallPrompt = null;
 
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    _deferredInstallPrompt = e;
-    if (!window.matchMedia('(display-mode: standalone)').matches) {
-        _setInstallBannerVisible(true);
+function _isInstalledDisplayMode() {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true;
+}
+
+function _hasDismissedInstallPrompt() {
+    try {
+        return localStorage.getItem(INSTALL_PROMPT_DISMISSED_KEY) === 'true';
+    } catch (_) {
+        return false;
     }
+}
+
+function _dismissInstallPrompt() {
+    try {
+        localStorage.setItem(INSTALL_PROMPT_DISMISSED_KEY, 'true');
+    } catch (_) {}
+
+    _deferredInstallPrompt = null;
+    _setInstallBannerVisible(false);
+}
+
+function _setInstallBannerVisible(visible) {
+    const banner = document.getElementById('installBanner');
+    if (!banner) return;
+
+    banner.classList.toggle('hidden', !visible);
+    banner.setAttribute('aria-hidden', visible ? 'false' : 'true');
+}
+
+window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+
+    if (_isInstalledDisplayMode() || _hasDismissedInstallPrompt()) {
+        _deferredInstallPrompt = null;
+        _setInstallBannerVisible(false);
+        return;
+    }
+
+    _deferredInstallPrompt = event;
+    _setInstallBannerVisible(true);
 });
 
 window.addEventListener('appinstalled', () => {
@@ -1720,162 +1756,46 @@ window.addEventListener('appinstalled', () => {
     console.info('[PWA] installed');
 });
 
-function _setInstallBannerVisible(visible) {
-    const banner = document.getElementById('installBanner');
-    if (!banner) return;
-    banner.classList.toggle('hidden', !visible);
-}
-
 async function _promptInstall() {
     if (!_deferredInstallPrompt) return;
+
+    const promptEvent = _deferredInstallPrompt;
+
     try {
-        _deferredInstallPrompt.prompt();
-        const { outcome } = await _deferredInstallPrompt.userChoice;
+        promptEvent.prompt();
+
+        const { outcome } = await promptEvent.userChoice;
         console.info('[PWA] user choice:', outcome);
+
         _deferredInstallPrompt = null;
-        if (outcome === 'dismissed') _setInstallBannerVisible(false);
+        _setInstallBannerVisible(false);
+
+        if (outcome === 'dismissed') {
+            try {
+                localStorage.setItem(INSTALL_PROMPT_DISMISSED_KEY, 'true');
+            } catch (_) {}
+        }
     } catch (err) {
         console.error('[PWA] install prompt error', err);
     }
 }
 
-// Modules are deferred — DOM is already parsed by execution time.
-// Use readyState guard (same pattern as the app boot IIFE) to be safe.
 (function _wireInstallBanner() {
     function _attach() {
         const btn = document.getElementById('installBtn');
         if (btn) btn.addEventListener('click', _promptInstall);
+
         const dismiss = document.getElementById('installBannerDismiss');
-        if (dismiss) dismiss.addEventListener('click', () => _setInstallBannerVisible(false));
-        if (window.matchMedia('(display-mode: standalone)').matches) {
+        if (dismiss) dismiss.addEventListener('click', _dismissInstallPrompt);
+
+        if (_isInstalledDisplayMode() || _hasDismissedInstallPrompt()) {
             _setInstallBannerVisible(false);
         }
     }
+
     if (document.readyState !== 'loading') {
         _attach();
     } else {
         document.addEventListener('DOMContentLoaded', _attach, { once: true });
     }
 }());
-
-/* ─── Service Worker & Update Toast ─── */
-
-async function registerServiceWorker(appInstance) {
-    if (!('serviceWorker' in navigator)) return;
-    try {
-        const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
-        const pageBuildId = document.querySelector('meta[name="build-id"]')?.content || '';
-        console.info('[BUILD_ID]', pageBuildId || '__BUILD_ID__');
-
-        let _updateToastShown = false;
-        function _maybeShowUpdateToast() {
-            if (_updateToastShown) return;
-            _updateToastShown = true;
-            showUpdateToast(appInstance);
-        }
-
-        navigator.serviceWorker.addEventListener('message', (e) => {
-            if (e.data?.type === 'NEW_VERSION') _maybeShowUpdateToast();
-            if (e.data?.type === 'NEW_BUILD') {
-                const swBuildId = e.data.buildId || '';
-                if (pageBuildId && swBuildId && pageBuildId !== swBuildId) _maybeShowUpdateToast();
-            }
-        });
-
-        let versionPollId = null;
-        let versionCheckInFlight = false;
-        let lastVersionCheckAt = 0;
-
-        async function _checkVersion(options = {}) {
-            const {
-                reloadOnUpdate = false,
-                minIntervalMs = 0,
-            } = options;
-
-            if (!pageBuildId) return false;
-            if (versionCheckInFlight) return false;
-
-            const now = Date.now();
-            if (minIntervalMs > 0 && now - lastVersionCheckAt < minIntervalMs) {
-                return false;
-            }
-
-            versionCheckInFlight = true;
-            lastVersionCheckAt = now;
-
-            try {
-                const response = await fetch('./version.txt', { cache: 'no-store' });
-                const remote = await response.text();
-                const remoteSha = remote.trim();
-
-                if (!remoteSha || remoteSha === pageBuildId) return true;
-
-                if (reloadOnUpdate) {
-                    window.location.reload();
-                } else {
-                    _maybeShowUpdateToast();
-                }
-
-                return true;
-            } catch {
-                return false;
-            } finally {
-                versionCheckInFlight = false;
-            }
-        }
-
-        versionPollId = setInterval(() => {
-            _checkVersion();
-        }, 5 * 60 * 1000);
-
-        window.addEventListener('beforeunload', () => {
-            if (versionPollId !== null) {
-                clearInterval(versionPollId);
-                versionPollId = null;
-            }
-        }, { once: true });
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState !== 'visible') return;
-
-            _checkVersion({
-                reloadOnUpdate: true,
-                minIntervalMs: 60 * 1000,
-            }).then((didCheck) => {
-                if (didCheck) reg.update().catch(() => {});
-            });
-        });
-    } catch (err) {
-        console.warn('SW registration failed', err);
-    }
-}
-
-function showUpdateToast(appInstance) {
-    const toast = document.getElementById('toast');
-    if (!toast) return;
-    toast.innerHTML = '';
-    const text    = Object.assign(document.createElement('span'),  { textContent: 'A new version is available.' });
-    const action  = Object.assign(document.createElement('button'),{ textContent: 'Refresh', className: 'toast-action' });
-    const dismiss = Object.assign(document.createElement('button'),{ textContent: '\u00d7', className: 'toast-dismiss' });
-    text.style.flex = '1';
-    action.addEventListener('click',  () => location.reload());
-    dismiss.addEventListener('click', () => toast.classList.remove('show'));
-    toast.append(text, action, dismiss);
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 30000);
-}
-
-(async () => {
-    await new Promise((resolve) => {
-        if (document.readyState !== 'loading') {
-            resolve();
-            return;
-        }
-
-        document.addEventListener('DOMContentLoaded', resolve, {
-            once: true,
-        });
-    });
-
-    new BibleApp();
-})();
