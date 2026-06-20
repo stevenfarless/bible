@@ -29,7 +29,14 @@ jobs:
           node-version: "20"
 
       - name: Validate patch script
-        run: python3 -m py_compile .github/scripts/implement-lock-ui.py
+        run: |
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+
+          path = Path('.github/scripts/implement-lock-ui.py')
+          ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
+          PY
 
       - name: Apply issue 401 implementation
         run: |
