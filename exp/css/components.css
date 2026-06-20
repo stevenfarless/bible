@@ -1696,3 +1696,85 @@ body.hide-verse-numbers .verse .verse-num {
     min-height: 44px;
     touch-action: manipulation;
 }
+
+/* PWA install banner */
+#installBanner.hidden {
+    display: none;
+}
+
+.install-banner {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--bg-raised);
+    color: var(--text-body);
+    border: 1px solid var(--border-neutral);
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.install-banner__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.install-banner__text strong {
+    color: var(--primary-color);
+    font-size: 0.95rem;
+}
+
+.install-banner__text span {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1.35;
+}
+
+.install-banner__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-shrink: 0;
+}
+
+.install-banner__install {
+    min-height: 40px;
+    padding-inline: var(--spacing-md);
+    touch-action: manipulation;
+}
+
+.install-banner__dismiss {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border-neutral);
+    border-radius: 999px;
+    background: var(--bg-card);
+    color: var(--text-body);
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.install-banner__dismiss:focus-visible,
+.install-banner__install:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+@media (min-width: 720px) {
+    .install-banner {
+        left: auto;
+        right: 24px;
+        bottom: 24px;
+        max-width: 460px;
+    }
+}
