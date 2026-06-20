@@ -1345,8 +1345,11 @@ class BibleApp {
             }
 
             this._startBackgroundAuthRestoration();
-            await this.loadSyncedTranslationLibrary();
-            this.maybeShowTranslationSyncModal();
+
+            withTimeout(this.loadSyncedTranslationLibrary(), 5000, null)
+                .then(() => {
+                    this.maybeShowTranslationSyncModal();
+    });
         } catch (err) {
             console.error('BibleApp init error:', err);
             this._dbgEvent(`init error: ${err.message}`);
