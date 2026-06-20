@@ -196,6 +196,7 @@ export async function handleSignup(app) {
             showCrossReferences: app.state.showCrossReferences,
             verseByVerse: app.state.verseByVerse,
             showChapterArrows: app.state.showChapterArrows,
+            hideInterfaceOnScroll: app.state.hideInterfaceOnScroll,
             hapticsEnabled: app.state.hapticsEnabled,
             colorTheme: app.state.colorTheme,
             lightMode: app.state.lightMode ?? 'system',
@@ -258,6 +259,7 @@ export async function loadUserData(app, normalizeTranslation) {
     applySetting('showCrossReferences', s.showCrossReferences);
     applySetting('verseByVerse', s.verseByVerse);
     applySetting('showChapterArrows', s.showChapterArrows);
+    applySetting('hideInterfaceOnScroll', s.hideInterfaceOnScroll);
     applySetting('hapticsEnabled', s.hapticsEnabled);
     applySetting('colorTheme', s.colorTheme);
     applySetting('readingFont', s.readingFont);

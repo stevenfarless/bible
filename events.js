@@ -491,6 +491,7 @@ export function attachEventListeners(app) {
         syncReadingDisplay(app);
     });
     app.chapterArrowsToggle?.addEventListener('change', () => app.toggleSetting('showChapterArrows'));
+    app.hideInterfaceOnScrollToggle?.addEventListener('change', () => app.toggleSetting('hideInterfaceOnScroll'));
     app.hapticsToggle?.addEventListener('change', () => app.toggleSetting('hapticsEnabled'));
 
     app.crossReferencesToggle = document.getElementById('crossReferencesToggle');

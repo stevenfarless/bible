@@ -12,6 +12,7 @@ export function initializeState() {
         showFootnotes: false,
         showCrossReferences: false,
         verseByVerse: false,
+        hideInterfaceOnScroll: true,
         colorTheme: 'vespers',
         lightMode: 'system',
         translation: 'KJV'
