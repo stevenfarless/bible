@@ -1,4 +1,4 @@
-name: "! lock ui"
+name: "! Lock UI"
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   implement:
-    name: Add interface auto-hide setting
+    name: Apply issue 401 interface visibility setting
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -186,42 +186,19 @@ jobs:
           )
           PY
 
-      - name: Validate changed files and syntax
+      - name: Validate implementation
         run: |
           python3 - <<'PY'
           from pathlib import Path
 
           required = {
-              'reading-state.js': [
-                  'hideInterfaceOnScroll: true,',
-              ],
-              'index.html': [
-                  'id="hideInterfaceOnScrollToggle"',
-                  'Hide interface while scrolling',
-              ],
-              'ui.js': [
-                  "'hideInterfaceOnScrollToggle'",
-                  "app.hideInterfaceOnScrollToggle = document.getElementById('hideInterfaceOnScrollToggle');",
-              ],
-              'settings.js': [
-                  'hideInterfaceOnScroll: true,',
-                  "readBool('hideInterfaceOnScroll'",
-                  "hideInterfaceOnScroll: 'hideInterfaceOnScrollToggle'",
-                  "setting === 'hideInterfaceOnScroll'",
-              ],
-              'events.js': [
-                  "app.hideInterfaceOnScrollToggle?.addEventListener('change', () => app.toggleSetting('hideInterfaceOnScroll'));",
-              ],
-              'app.js': [
-                  "'hideInterfaceOnScroll'",
-                  'if (!this.state.hideInterfaceOnScroll)',
-                  'hideInterfaceOnScroll: this.state.hideInterfaceOnScroll,',
-                  '`  hideInterfaceOnScroll: ${app?.state?.hideInterfaceOnScroll}`',
-              ],
-              'auth.js': [
-                  'hideInterfaceOnScroll: app.state.hideInterfaceOnScroll,',
-                  "applySetting('hideInterfaceOnScroll', s.hideInterfaceOnScroll);",
-              ],
+              'reading-state.js': ['hideInterfaceOnScroll: true,'],
+              'index.html': ['id="hideInterfaceOnScrollToggle"', 'Hide interface while scrolling'],
+              'ui.js': ["'hideInterfaceOnScrollToggle'", "app.hideInterfaceOnScrollToggle = document.getElementById('hideInterfaceOnScrollToggle');"],
+              'settings.js': ['hideInterfaceOnScroll: true,', "readBool('hideInterfaceOnScroll'", "hideInterfaceOnScroll: 'hideInterfaceOnScrollToggle'", "setting === 'hideInterfaceOnScroll'"],
+              'events.js': ["app.hideInterfaceOnScrollToggle?.addEventListener('change', () => app.toggleSetting('hideInterfaceOnScroll'));"],
+              'app.js': ["'hideInterfaceOnScroll'", 'if (!this.state.hideInterfaceOnScroll)', 'hideInterfaceOnScroll: this.state.hideInterfaceOnScroll,', '`  hideInterfaceOnScroll: ${app?.state?.hideInterfaceOnScroll}`'],
+              'auth.js': ['hideInterfaceOnScroll: app.state.hideInterfaceOnScroll,', "applySetting('hideInterfaceOnScroll', s.hideInterfaceOnScroll);"],
           }
 
           for path_name, snippets in required.items():
@@ -231,9 +208,11 @@ jobs:
                       raise SystemExit(f'Missing from {path_name}: {snippet}')
 
           app = Path('app.js').read_text(encoding='utf-8')
-          call_count = app.count('this.loadLocalSettings();')
-          if call_count != 1:
-              raise SystemExit(f'app.js: expected one init loadLocalSettings call, found {call_count}')
+          init_start = app.find('    async init() {')
+          listener = app.find('            attachEventListeners(this);', init_start)
+          local = app.find('            this.loadLocalSettings();', init_start)
+          if init_start < 0 or listener < 0 or local < 0 or not local < listener:
+              raise SystemExit('app.js: loadLocalSettings must run before attachEventListeners in init')
           PY
 
           node --check app.js
