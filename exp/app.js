@@ -1260,7 +1260,16 @@ class BibleApp {
             this.initializeAccordion();
             document.body.setAttribute('data-app-ready', 'true');
 
-            await this.prepareLocalTranslation();
+            const localTranslationResult = await withTimeout(
+                this.prepareLocalTranslation(),
+                800,
+                null
+            );
+            
+            if (localTranslationResult === null) {
+                this._dbgEvent('prepareLocalTranslation: timed out, continuing with current translation');
+            }
+            
             this.applySettings();
             this._dbg.t_settings_loaded = ms();
 
