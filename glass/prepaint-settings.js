@@ -6,7 +6,8 @@
         'lux-theme', 'vespers-theme', 'vigil-theme',
         'dracula-theme', 'dracula2test-theme', 'onyx-theme',
         'sage-theme', 'ember-theme', 'perplexity-theme',
-        'basic-theme', 'geek-theme', 'gnome-theme', 'uxorem-amo-theme'
+        'basic-theme', 'geek-theme', 'gnome-theme', 'uxorem-amo-theme',
+        'glass-theme'
     ];
     var VALID_THEMES = {
         dracula: 1,
@@ -21,7 +22,8 @@
         lux: 1,
         vespers: 1,
         vigil: 1,
-        'uxorem-amo': 1
+        'uxorem-amo': 1,
+        glass: 1
     };
 
     function get(key) {
