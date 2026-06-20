@@ -23,14 +23,12 @@
   ],
   "screenshots": [
     {
-      "src": "./screenshots/mobile-reading.png",
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Mobile reading view showing Scripture text and navigation controls"
     },
     {
-      "src": "./screenshots/desktop-reading.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
