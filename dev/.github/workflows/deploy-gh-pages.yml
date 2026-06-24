@@ -44,7 +44,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ env.DEPLOY_BRANCH }}
           fetch-depth: 0
@@ -79,6 +79,7 @@ jobs:
           fi
           sed -i "s/__BUILD_ID__/${SHA7}/g" sw.js index.html
           sed -E -i "s|(<script[^>]*[[:space:]]src=\")([^\"]+\.js)(\")|\1\2?v=${SHA7}\3|g" index.html
+          sed -E -i "s|(<link[^>]*rel=\"modulepreload\"[^>]*href=\")app\.js(\")|\1app.js?v=${SHA7}\2|g" index.html
           sed -E -i "s|(<link[^>]*[[:space:]]href=\"css/[^\"]+\.css)(\")|\1?v=${SHA7}\2|g" index.html
           echo "${SHA7}" > version.txt
 
