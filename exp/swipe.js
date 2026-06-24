@@ -494,20 +494,25 @@ export function initSwipe(app) {
         _lastX = e.clientX;
         _lastT = e.timeStamp;
 
-        if (!_tracking) {
-            const absDx = Math.abs(dx);
-            const absDy = Math.abs(dy);
-
-            if (absDx < 6 && absDy < 6) return;
-
-            if (absDy > absDx * 1.25) {
-                app._dbgUserAction?.(`swipe vetoed: dx=${Math.round(dx)} dy=${Math.round(dy)}`);
-                _vetoed = true;
-                return;
-            }
-
-            if (absDx < 8) return;
-
+            if (!_tracking) {
+                const absDx = Math.abs(dx);
+                const absDy = Math.abs(dy);
+            
+                const INTENT_MIN_PX = 12;
+                const HORIZONTAL_BIAS = 1.05;
+                const VERTICAL_BIAS = 1.75;
+                const VERTICAL_MIN_PX = 18;
+            
+                if (absDx < INTENT_MIN_PX && absDy < INTENT_MIN_PX) return;
+            
+                if (absDy >= VERTICAL_MIN_PX && absDy > absDx * VERTICAL_BIAS) {
+                    app._dbgUserAction?.(`swipe vetoed: vertical intent dx=${Math.round(dx)} dy=${Math.round(dy)}`);
+                    _vetoed = true;
+                    return;
+                }
+    
+            if (absDx < INTENT_MIN_PX || absDx < absDy * HORIZONTAL_BIAS) return;
+        
             _startTracking();
         }
 
