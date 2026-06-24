@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout exp
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: exp
           fetch-depth: 0

@@ -4,6 +4,11 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#060b1a" media="(prefers-color-scheme: dark)" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Lege Lux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 	<title>Lege Lux</title>
 	<meta name="description" content="Lege Lux is a fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
 	<meta property="og:title" content="Lege Lux" />
@@ -55,7 +60,6 @@
 	<link rel="modulepreload" href="bible-structure.js" />
 	<link rel="modulepreload" href="navigation.js" />
 	<link rel="modulepreload" href="search.js" />
-	<link rel="modulepreload" href="auth.js" />
 	<link rel="modulepreload" href="sync-prompt.js" />
 	<link rel="modulepreload" href="translation-sync.js" />
 	<link rel="modulepreload" href="modals.js" />
@@ -853,18 +857,30 @@
 		</div>
     </div>
 
+    <div id="installBanner" class="install-banner hidden" role="region" aria-label="Install Lege Lux" aria-hidden="true">
+    	<div class="install-banner__text">
+    		<strong>Install Lege Lux</strong>
+    		<span>Open it from your home screen for a faster app-like reading experience.</span>
+    	</div>
+    	<div class="install-banner__actions">
+    		<button id="installBtn" class="primary-btn install-banner__install" type="button">
+    			Install
+    		</button>
+    		<button id="installBannerDismiss" class="install-banner__dismiss" type="button" aria-label="Dismiss install prompt">
+    			×
+    		</button>
+    	</div>
+    </div>
+
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 	<script type="module" src="app.js"></script>
 	<script>
-		if ('serviceWorker' in navigator) {
-			navigator.serviceWorker.register('./sw.js');
-		}
-		// Hide raw build placeholder when pipeline substitution hasn't run.
-		document.addEventListener('DOMContentLoaded', function() {
-			var b = document.getElementById('build-info');
-			if (b && b.textContent.trim().startsWith('__')) b.style.visibility = 'hidden';
-		});
-	</script>
+    	// Hide raw build placeholder when pipeline substitution hasn't run.
+    	document.addEventListener('DOMContentLoaded', function() {
+    		var b = document.getElementById('build-info');
+    		if (b && b.textContent.trim().startsWith('__')) b.style.visibility = 'hidden';
+    	});
+</script>
 </body>
 </html>

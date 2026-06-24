@@ -846,7 +846,7 @@ test('cold startup: passage space stays reserved until the first passage renders
         await expect(page.locator('.passage-loading-placeholder')).toHaveCount(0);
 });
 
-test('startup: GitHub release checks wait for browser idle time', async ({ page }) => {
+test('about: GitHub release checks wait for browser idle time after settings opens', async ({ page }) => {
         const releaseRequests = [];
 
         await page.addInitScript(() => {
@@ -864,7 +864,7 @@ test('startup: GitHub release checks wait for browser idle time', async ({ page 
                         contentType: 'application/json',
                         body: JSON.stringify({
                                 tag_name: 'v-test',
-                                body: 'Test release',
+                                body: '',
                         }),
                 });
         });
@@ -880,6 +880,10 @@ test('startup: GitHub release checks wait for browser idle time', async ({ page 
 
         await page.goto('/');
         await waitForPassage(page);
+        
+        expect(releaseRequests).toHaveLength(0);
+
+        await page.click('#settingsBtn');
 
         expect(releaseRequests).toHaveLength(0);
 
@@ -894,7 +898,7 @@ test('startup: GitHub release checks wait for browser idle time', async ({ page 
         expect(releaseRequests[1]).toContain('/releases?per_page=10');
 });
 
-test('startup: marked loads only after delayed release metadata', async ({ page }) => {
+test('about: marked loads only after delayed release metadata', async ({ page }) => {
         const markedRequests = [];
 
         await page.addInitScript(() => {
@@ -945,7 +949,11 @@ test('startup: marked loads only after delayed release metadata', async ({ page 
         await waitForPassage(page);
 
         expect(markedRequests).toHaveLength(0);
-
+        
+        await page.click('#settingsBtn');
+        
+        expect(markedRequests).toHaveLength(0);
+        
         await page.evaluate(() => {
                 for (const callback of window.__idleCallbacks.splice(0)) {
                         callback({ didTimeout: false, timeRemaining: () => 50 });

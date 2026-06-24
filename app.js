@@ -62,7 +62,7 @@ import {
 import {
     loadLocalSettings, applySettings, toggleSetting,
     toggleVerseByVerse, updateFontSize, changeTranslation, updateCopyright,
-    initSubAccordions, populateAboutVersion,
+    initSubAccordions,
 } from './settings.js';
 import { handleKeyboardShortcuts } from './keyboard.js';
 import { attachEventListeners } from './events.js';
@@ -1039,18 +1039,24 @@ class BibleApp {
 
     _startBackgroundAuthRestoration() {
         if (this._authRestorationScheduled) return;
-
+    
         this._authRestorationScheduled = true;
         this._dbg.t_auth_restore_scheduled = ms();
         this._dbgEvent('auth restoration: scheduled after reader reveal');
+    
+        const restore = () => {
+            void this._restoreAuthSession();
+        };
+    
+        const runWhenIdle = () => {
+            if ('requestIdleCallback' in window) {
+                window.requestIdleCallback(restore, { timeout: 10000 });
+            } else {
+                restore();
+            }
+        };
 
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                setTimeout(() => {
-                    void this._restoreAuthSession();
-                }, 0);
-            });
-        });
+        setTimeout(runWhenIdle, 8000);
     }
 
     async ensureInteractiveAuth() {
@@ -1142,44 +1148,62 @@ class BibleApp {
         } catch (_) {}
     }
 
-    _restorePassageCache() {
-        try {
-            const raw = localStorage.getItem(PASSAGE_CACHE_KEY);
-            if (!raw) {
-                this._dbgEvent('cache restore: no passageCache entry');
-                return false;
-            }
-            const { book, chapter, translation, title, html } = JSON.parse(raw);
-
-            const stateBook    = this.state.currentBook;
-            const stateChapter = this.state.currentChapter;
-            const stateTrans   = this.state.translation || 'KJV';
-
-            if (
-                book                    !== stateBook    ||
-                parseInt(chapter, 10)  !== stateChapter ||
-                translation            !== stateTrans
-            ) {
-                this._dbgEvent(
-                    `cache MISS: cache=(${book} ${chapter} ${translation}) state=(${stateBook} ${stateChapter} ${stateTrans})`
-                );
-                return false;
-            }
-
-            if (this.passageTitle) this.passageTitle.textContent = title || '';
-            if (this.passageText) {
-                this.passageText.innerHTML = html;
-                this.originalPassageHtml   = html;
-                this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
-            }
-            document.body.classList.add('passage-ready');
-            updateNavigationState(this);
-            return true;
+        _restorePassageCache() {
+            try {
+                const raw = localStorage.getItem(PASSAGE_CACHE_KEY);
+                if (!raw) {
+                    this._dbgEvent('cache restore: no passageCache entry');
+                    return false;
+                }
+    
+                const { book, chapter, translation, title, html } = JSON.parse(raw);
+                const cachedHtml = typeof html === 'string' ? html : '';
+    
+                const hasLoadingPlaceholder =
+                    cachedHtml.includes('passage-loading-placeholder') ||
+                    cachedHtml.includes('class="loading"') ||
+                    cachedHtml.includes("class='loading'");
+    
+                const hasRenderablePassage =
+                    cachedHtml.includes('class="verse"') ||
+                    cachedHtml.includes("class='verse'");
+    
+                if (!cachedHtml.trim() || hasLoadingPlaceholder || !hasRenderablePassage) {
+                    this._dbgEvent('cache MISS: cached passage html was not renderable');
+                    localStorage.removeItem(PASSAGE_CACHE_KEY);
+                    return false;
+                }
+    
+                const stateBook    = this.state.currentBook;
+                const stateChapter = this.state.currentChapter;
+                const stateTrans   = this.state.translation || 'KJV';
+    
+                if (
+                    book                   !== stateBook    ||
+                    parseInt(chapter, 10)  !== stateChapter ||
+                    translation            !== stateTrans
+                ) {
+                    this._dbgEvent(
+                        `cache MISS: cache=(${book} ${chapter} ${translation}) state=(${stateBook} ${stateChapter} ${stateTrans})`
+                    );
+                    return false;
+                }
+    
+                if (this.passageTitle) this.passageTitle.textContent = title || '';
+                if (this.passageText) {
+                    this.passageText.innerHTML = cachedHtml;
+                    this.originalPassageHtml   = cachedHtml;
+                    this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
+                }
+    
+                document.body.classList.add('passage-ready');
+                updateNavigationState(this);
+                return true;
             } catch (err) {
                 this._dbgEvent(`cache restore failed: ${err?.message || err}`);
                 return false;
             }
-    }
+        }
 
     // ── Background prefetch ────────────────────────────────────────────────
 
@@ -1254,7 +1278,16 @@ class BibleApp {
             this.initializeAccordion();
             document.body.setAttribute('data-app-ready', 'true');
 
-            await this.prepareLocalTranslation();
+            const localTranslationResult = await withTimeout(
+                this.prepareLocalTranslation(),
+                800,
+                null
+            );
+            
+            if (localTranslationResult === null) {
+                this._dbgEvent('prepareLocalTranslation: timed out, continuing with current translation');
+            }
+            
             this.applySettings();
             this._dbg.t_settings_loaded = ms();
 
@@ -1330,8 +1363,11 @@ class BibleApp {
             }
 
             this._startBackgroundAuthRestoration();
-            await this.loadSyncedTranslationLibrary();
-            this.maybeShowTranslationSyncModal();
+
+            void withTimeout(this.loadSyncedTranslationLibrary(), 5000, null)
+            .then(() => {
+                this.maybeShowTranslationSyncModal();
+            });
         } catch (err) {
             console.error('BibleApp init error:', err);
             this._dbgEvent(`init error: ${err.message}`);
@@ -1412,7 +1448,6 @@ class BibleApp {
         });
 
         initSubAccordions();
-        populateAboutVersion();
         const openAccountBtn = document.getElementById('openAccountBtn');
         if (openAccountBtn) {
             openAccountBtn.addEventListener('click', () => {
@@ -1697,16 +1732,52 @@ class BibleApp {
     async loadUserData()    { await loadUserData(this, normalizeTranslation); }
 }
 
-/* ─── PWA Install Prompt ─── */
+/* PWA Install Prompt */
 
+const INSTALL_PROMPT_DISMISSED_KEY = 'legeLuxInstallPromptDismissed';
 let _deferredInstallPrompt = null;
 
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    _deferredInstallPrompt = e;
-    if (!window.matchMedia('(display-mode: standalone)').matches) {
-        _setInstallBannerVisible(true);
+function _isInstalledDisplayMode() {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true;
+}
+
+function _hasDismissedInstallPrompt() {
+    try {
+        return localStorage.getItem(INSTALL_PROMPT_DISMISSED_KEY) === 'true';
+    } catch (_) {
+        return false;
     }
+}
+
+function _dismissInstallPrompt() {
+    try {
+        localStorage.setItem(INSTALL_PROMPT_DISMISSED_KEY, 'true');
+    } catch (_) {}
+
+    _deferredInstallPrompt = null;
+    _setInstallBannerVisible(false);
+}
+
+function _setInstallBannerVisible(visible) {
+    const banner = document.getElementById('installBanner');
+    if (!banner) return;
+
+    banner.classList.toggle('hidden', !visible);
+    banner.setAttribute('aria-hidden', visible ? 'false' : 'true');
+}
+
+window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+
+    if (_isInstalledDisplayMode() || _hasDismissedInstallPrompt()) {
+        _deferredInstallPrompt = null;
+        _setInstallBannerVisible(false);
+        return;
+    }
+
+    _deferredInstallPrompt = event;
+    _setInstallBannerVisible(true);
 });
 
 window.addEventListener('appinstalled', () => {
@@ -1715,37 +1786,43 @@ window.addEventListener('appinstalled', () => {
     console.info('[PWA] installed');
 });
 
-function _setInstallBannerVisible(visible) {
-    const banner = document.getElementById('installBanner');
-    if (!banner) return;
-    banner.classList.toggle('hidden', !visible);
-}
-
 async function _promptInstall() {
     if (!_deferredInstallPrompt) return;
+
+    const promptEvent = _deferredInstallPrompt;
+
     try {
-        _deferredInstallPrompt.prompt();
-        const { outcome } = await _deferredInstallPrompt.userChoice;
+        promptEvent.prompt();
+
+        const { outcome } = await promptEvent.userChoice;
         console.info('[PWA] user choice:', outcome);
+
         _deferredInstallPrompt = null;
-        if (outcome === 'dismissed') _setInstallBannerVisible(false);
+        _setInstallBannerVisible(false);
+
+        if (outcome === 'dismissed') {
+            try {
+                localStorage.setItem(INSTALL_PROMPT_DISMISSED_KEY, 'true');
+            } catch (_) {}
+        }
     } catch (err) {
         console.error('[PWA] install prompt error', err);
     }
 }
 
-// Modules are deferred — DOM is already parsed by execution time.
-// Use readyState guard (same pattern as the app boot IIFE) to be safe.
 (function _wireInstallBanner() {
     function _attach() {
         const btn = document.getElementById('installBtn');
         if (btn) btn.addEventListener('click', _promptInstall);
+
         const dismiss = document.getElementById('installBannerDismiss');
-        if (dismiss) dismiss.addEventListener('click', () => _setInstallBannerVisible(false));
-        if (window.matchMedia('(display-mode: standalone)').matches) {
+        if (dismiss) dismiss.addEventListener('click', _dismissInstallPrompt);
+
+        if (_isInstalledDisplayMode() || _hasDismissedInstallPrompt()) {
             _setInstallBannerVisible(false);
         }
     }
+
     if (document.readyState !== 'loading') {
         _attach();
     } else {
@@ -1753,27 +1830,33 @@ async function _promptInstall() {
     }
 }());
 
-/* ─── Service Worker & Update Toast ─── */
+/* Service Worker & Update Toast */
 
 async function registerServiceWorker(appInstance) {
     if (!('serviceWorker' in navigator)) return;
+
     try {
         const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
         const pageBuildId = document.querySelector('meta[name="build-id"]')?.content || '';
-        console.info('[BUILD_ID]', pageBuildId || '__BUILD_ID__');
 
-        let _updateToastShown = false;
-        function _maybeShowUpdateToast() {
-            if (_updateToastShown) return;
-            _updateToastShown = true;
+        let updateToastShown = false;
+
+        function maybeShowUpdateToast() {
+            if (updateToastShown) return;
+            updateToastShown = true;
             showUpdateToast(appInstance);
         }
 
-        navigator.serviceWorker.addEventListener('message', (e) => {
-            if (e.data?.type === 'NEW_VERSION') _maybeShowUpdateToast();
-            if (e.data?.type === 'NEW_BUILD') {
-                const swBuildId = e.data.buildId || '';
-                if (pageBuildId && swBuildId && pageBuildId !== swBuildId) _maybeShowUpdateToast();
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data?.type === 'NEW_VERSION') {
+                maybeShowUpdateToast();
+            }
+
+            if (event.data?.type === 'NEW_BUILD') {
+                const swBuildId = event.data.buildId || '';
+                if (pageBuildId && swBuildId && pageBuildId !== swBuildId) {
+                    maybeShowUpdateToast();
+                }
             }
         });
 
@@ -1781,7 +1864,7 @@ async function registerServiceWorker(appInstance) {
         let versionCheckInFlight = false;
         let lastVersionCheckAt = 0;
 
-        async function _checkVersion(options = {}) {
+        async function checkVersion(options = {}) {
             const {
                 reloadOnUpdate = false,
                 minIntervalMs = 0,
@@ -1800,15 +1883,14 @@ async function registerServiceWorker(appInstance) {
 
             try {
                 const response = await fetch('./version.txt', { cache: 'no-store' });
-                const remote = await response.text();
-                const remoteSha = remote.trim();
+                const remoteSha = (await response.text()).trim();
 
                 if (!remoteSha || remoteSha === pageBuildId) return true;
 
                 if (reloadOnUpdate) {
                     window.location.reload();
                 } else {
-                    _maybeShowUpdateToast();
+                    maybeShowUpdateToast();
                 }
 
                 return true;
@@ -1820,7 +1902,7 @@ async function registerServiceWorker(appInstance) {
         }
 
         versionPollId = setInterval(() => {
-            _checkVersion();
+            checkVersion();
         }, 5 * 60 * 1000);
 
         window.addEventListener('beforeunload', () => {
@@ -1833,7 +1915,7 @@ async function registerServiceWorker(appInstance) {
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState !== 'visible') return;
 
-            _checkVersion({
+            checkVersion({
                 reloadOnUpdate: true,
                 minIntervalMs: 60 * 1000,
             }).then((didCheck) => {
@@ -1848,15 +1930,31 @@ async function registerServiceWorker(appInstance) {
 function showUpdateToast(appInstance) {
     const toast = document.getElementById('toast');
     if (!toast) return;
+
     toast.innerHTML = '';
-    const text    = Object.assign(document.createElement('span'),  { textContent: 'A new version is available.' });
-    const action  = Object.assign(document.createElement('button'),{ textContent: 'Refresh', className: 'toast-action' });
-    const dismiss = Object.assign(document.createElement('button'),{ textContent: '\u00d7', className: 'toast-dismiss' });
+
+    const text = Object.assign(document.createElement('span'), {
+        textContent: 'A new version is available.',
+    });
+
+    const action = Object.assign(document.createElement('button'), {
+        textContent: 'Refresh',
+        className: 'toast-action',
+    });
+
+    const dismiss = Object.assign(document.createElement('button'), {
+        textContent: '\u00d7',
+        className: 'toast-dismiss',
+    });
+
     text.style.flex = '1';
-    action.addEventListener('click',  () => location.reload());
+
+    action.addEventListener('click', () => location.reload());
     dismiss.addEventListener('click', () => toast.classList.remove('show'));
+
     toast.append(text, action, dismiss);
     toast.classList.add('show');
+
     setTimeout(() => toast.classList.remove('show'), 30000);
 }
 
@@ -1867,9 +1965,7 @@ function showUpdateToast(appInstance) {
             return;
         }
 
-        document.addEventListener('DOMContentLoaded', resolve, {
-            once: true,
-        });
+        document.addEventListener('DOMContentLoaded', resolve, { once: true });
     });
 
     new BibleApp();
