@@ -259,6 +259,12 @@ export function initSwipe(app) {
         return _atBoundary(dx) ? dx * RESISTANCE : dx;
     }
 
+    function _snapPanelsToSlots() {
+        _clearTranslateX(app.passageText);
+        _setTranslateX(app.swipe.prevPanel, -vw());
+        _setTranslateX(app.swipe.nextPanel,  vw());
+    }
+
     function _cleanupDrag() {
         viewport.classList.remove('swiping');
         _removeTransition(app.passageText);
@@ -269,6 +275,7 @@ export function initSwipe(app) {
         app.passageText.style.left     = '';
         app.passageText.style.width    = '';
         viewport.style.height          = '';
+        _snapPanelsToSlots();
     }
 
     function _resetPointer() {
@@ -293,6 +300,7 @@ export function initSwipe(app) {
 
     function _startTracking() {
         _tracking = true;
+        _capturePointer(_pointerId);
         viewport.classList.add('swiping');
 
         app.passageText.style.position = 'absolute';
@@ -340,8 +348,6 @@ export function initSwipe(app) {
 
             setTimeout(() => {
                 _cleanupDrag();
-                _setTranslateX(app.swipe.prevPanel, -W);
-                _setTranslateX(app.swipe.nextPanel, +W);
             }, animMs);
         };
 
@@ -418,6 +424,7 @@ export function initSwipe(app) {
             }
 
             viewport.style.height = '';
+            _snapPanelsToSlots();
 
             app.state.currentBook    = incomingPos.book;
             app.state.currentChapter = incomingPos.chapter;
@@ -472,8 +479,6 @@ export function initSwipe(app) {
         _tracking        = false;
         _vetoed          = false;
         _currentOffsetPx = 0;
-
-        _capturePointer(e.pointerId);
     });
 
     viewport.addEventListener('pointermove', (e) => {
