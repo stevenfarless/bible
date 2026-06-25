@@ -447,6 +447,8 @@ export function updateCopyright(app) {
  */
 export function initSubAccordions() {
     const sections = Array.from(document.querySelectorAll('.sub-accordion-section'));
+    const aboutSection = document.querySelector('.accordion-section[data-section="about"]');
+    const aboutHeader = aboutSection?.querySelector('.accordion-header');
 
     const syncSection = (section) => {
         const button = section.querySelector('.sub-accordion-header');
@@ -473,17 +475,31 @@ export function initSubAccordions() {
             siblings.forEach((entry) => entry.classList.remove('active'));
             if (!isActive) section.classList.add('active');
             siblings.forEach(syncSection);
+
+            if (section.classList.contains('active')) {
+                const sectionName = section.getAttribute('data-section');
+                if (sectionName === 'whats-new') populateWhatsNew();
+                if (sectionName === 'coming-soon') populateComingSoon();
+            }
         });
     });
+
+    aboutHeader?.addEventListener('click', () => {
+        if (aboutSection?.classList.contains('active')) populateAboutVersion();
+    });
+
+    if (aboutSection?.classList.contains('active')) populateAboutVersion();
 }
 
 /**
- * Fetch the latest GitHub release, populate #aboutVersion with the tag name,
- * and render the release body markdown into #whatsNewContent.
- *
- * Falls back to the build-info SHA if the API request fails.
+ * Fetch release metadata only after the About section is opened. Release body
+ * markdown is rendered later when the user expands the related sub-section.
  */
 let markedLoadPromise = null;
+let latestReleasePromise = null;
+let aboutVersionScheduled = false;
+let whatsNewScheduled = false;
+let comingSoonScheduled = false;
 
 function loadMarked() {
     if (typeof window.marked !== 'undefined') {
@@ -520,77 +536,92 @@ function loadMarked() {
     return markedLoadPromise;
 }
 
-let aboutVersionScheduled = false;
+function fetchLatestRelease() {
+    if (!latestReleasePromise) {
+        latestReleasePromise = fetch(
+            'https://api.github.com/repos/stevenfarless/lege-lux/releases/latest',
+            { headers: { Accept: 'application/vnd.github+json' } }
+        ).then((res) => {
+            if (!res.ok) throw new Error(`GitHub release request failed: ${res.status}`);
+            return res.json();
+        });
+    }
+
+    return latestReleasePromise;
+}
+
+async function fallbackToBuildSha() {
+    const versionEl = document.getElementById('aboutVersion');
+    if (!versionEl) return;
+    const buildInfo = document.getElementById('build-info');
+    if (!buildInfo) return;
+    const raw = buildInfo.textContent.trim();
+    const sha = raw.split(/[\s·]/)[0];
+    if (sha && sha !== '__BUILD_INFO__') versionEl.textContent = sha;
+}
 
 export function populateAboutVersion() {
+    const aboutSection = document.querySelector('.accordion-section[data-section="about"]');
+    if (aboutSection && !aboutSection.classList.contains('active')) return;
     if (aboutVersionScheduled) return;
 
     aboutVersionScheduled = true;
-
-    const load = () => {
-        void loadAboutVersion();
-    };
-
-    if ('requestIdleCallback' in window) {
-        window.requestIdleCallback(load, { timeout: 5000 });
-        return;
-    }
-
-    window.setTimeout(load, 3000);
+    void loadAboutVersion();
 }
 
 async function loadAboutVersion() {
-    const versionEl   = document.getElementById('aboutVersion');
-    const contentEl   = document.getElementById('whatsNewContent');
-    const whatsNewBtn = document.querySelector('[data-section="whats-new"] .sub-accordion-header');
-
-    async function _fallbackToBuildSha() {
-        if (!versionEl) return;
-        const buildInfo = document.getElementById('build-info');
-        if (!buildInfo) return;
-        const raw = buildInfo.textContent.trim();
-        const sha = raw.split(/[\s·]/)[0];
-        if (sha && sha !== '__BUILD_INFO__') versionEl.textContent = sha;
-    }
+    const versionEl = document.getElementById('aboutVersion');
+    await fallbackToBuildSha();
 
     try {
-        const res = await fetch(
-            'https://api.github.com/repos/stevenfarless/lege-lux/releases/latest',
-            { headers: { Accept: 'application/vnd.github+json' } }
-        );
-        if (!res.ok) { await _fallbackToBuildSha(); return; }
-
-        const release = await res.json();
+        const release = await fetchLatestRelease();
 
         if (versionEl && release.tag_name) {
             versionEl.textContent = release.tag_name;
-        } else {
-            await _fallbackToBuildSha();
         }
+    } catch (_) {
+        await fallbackToBuildSha();
+    }
+}
 
-        if (contentEl && release.body) {
+function populateWhatsNew() {
+    if (whatsNewScheduled) return;
+
+    whatsNewScheduled = true;
+    void loadWhatsNew();
+}
+
+async function loadWhatsNew() {
+    const contentEl = document.getElementById('whatsNewContent');
+    const section = contentEl?.closest('.sub-accordion-section');
+    if (!contentEl) return;
+
+    try {
+        const release = await fetchLatestRelease();
+
+        if (release.body) {
             try {
                 const marked = await loadMarked();
                 contentEl.innerHTML = marked.parse(release.body);
             } catch (_) {
                 contentEl.textContent = release.body;
             }
-
-            if (whatsNewBtn) {
-                whatsNewBtn
-                    .closest('.sub-accordion-section')
-                    .removeAttribute('hidden');
-            }
         }
 
-        // Fetch the latest prerelease for the Coming Soon section
-        _populateComingSoon();
+        section?.removeAttribute('hidden');
     } catch (_) {
-        await _fallbackToBuildSha();
+        contentEl.textContent = 'Release notes unavailable.';
     }
 }
 
-async function _populateComingSoon() {
+function populateComingSoon() {
+    if (comingSoonScheduled) return;
+
+    comingSoonScheduled = true;
+    void loadComingSoon();
+}
+
+async function loadComingSoon() {
     const el = document.getElementById('comingSoonContent');
     if (!el) return;
     try {

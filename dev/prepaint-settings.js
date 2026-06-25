@@ -2,6 +2,7 @@
     var root = document.documentElement;
     var systemLightQuery = window.matchMedia('(prefers-color-scheme: light)');
     var DEFAULT_COLOR_THEME = 'vespers';
+    var OPTIONAL_FONT_CSS_ID = 'optional-font-faces';
     var THEME_CLASSES = [
         'lux-theme', 'vespers-theme', 'vigil-theme',
         'dracula-theme', 'dracula2test-theme', 'onyx-theme',
@@ -54,6 +55,16 @@
         document.body.classList.add('no-color-transition');
     }
 
+    function ensureOptionalFontFaces() {
+        if (document.getElementById(OPTIONAL_FONT_CSS_ID)) return;
+
+        var link = document.createElement('link');
+        link.id = OPTIONAL_FONT_CSS_ID;
+        link.rel = 'stylesheet';
+        link.href = './css/optional-fonts.css';
+        document.head.appendChild(link);
+    }
+
     applyStartupTheme();
 
     var fontFiles = {
@@ -66,6 +77,7 @@
     };
     var activeFont = get('readingFont') || 'gentium';
     var activeFontFile = fontFiles[activeFont];
+    if (activeFont !== 'gentium') ensureOptionalFontFaces();
     if (activeFontFile) {
         var fontPreload = document.createElement('link');
         fontPreload.rel = 'preload';
@@ -171,6 +183,17 @@
         applyStartupTheme();
         mirrorStartupClassesToBody();
         applyLightMode(readLightMode());
+
+        var settingsButton = document.getElementById('settingsBtn');
+        if (settingsButton) {
+            settingsButton.addEventListener('click', ensureOptionalFontFaces, { once: true });
+        }
+
+        var readingFontSelector = document.getElementById('readingFontSelector');
+        if (readingFontSelector) {
+            readingFontSelector.addEventListener('focus', ensureOptionalFontFaces, { once: true });
+            readingFontSelector.addEventListener('pointerdown', ensureOptionalFontFaces, { once: true });
+        }
 
         var selector = document.getElementById('lightModeSelect');
         if (!selector) return;
