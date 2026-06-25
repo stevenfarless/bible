@@ -197,6 +197,7 @@ function buildDebugReport(app) {
         'showVerseNumbers', 'coloredVerseNumbers', 'showHeadings',
         'showFootnotes', 'showCrossReferences', 'verseByVerse',
         'showChapterArrows', 'hideInterfaceOnScroll', 'hapticsEnabled',
+        'installPromptInstalledV1', 'installPromptDismissedUntilV1',
     ];
     const ls = {};
     for (const k of LS_KEYS) {
@@ -324,6 +325,40 @@ function buildDebugReport(app) {
         },
     };
 
+        const installPromptEl = document.getElementById('installPrompt');
+        const installPromptInstall = document.getElementById('installPromptInstall');
+        const iosInstallSteps = document.getElementById('iosInstallSteps');
+        const installDismissedUntil = Number(ls.installPromptDismissedUntilV1);
+        const installDismissedActive = Number.isFinite(installDismissedUntil) && installDismissedUntil > Date.now();
+        const installBlockingUi = document.querySelector('.modal.active')
+            ? 'modal'
+            : document.querySelector('.search-container.active')
+                ? 'search'
+                : 'none';
+        const installUa = navigator.userAgent || '';
+        const installIos = /iPad|iPhone|iPod/.test(installUa) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const installSafari = /Safari/.test(installUa) &&
+            !/CriOS|FxiOS|EdgiOS|OPiOS/.test(installUa);
+        const installIosSafari = installIos && installSafari;
+        const installPromptDiagnostics = [
+            `  ready: ${document.body.dataset.installPromptReady ?? '(not set)'}`,
+            `  beforeinstallpromptFired: ${document.body.dataset.beforeinstallpromptFired ?? '(not set)'}`,
+            `  nativePromptAvailable: ${document.body.dataset.installPromptNativeAvailable ?? '(not set)'}`,
+            `  visible: ${document.body.dataset.installPromptVisible ?? '(not set)'}`,
+            `  hiddenAttribute: ${installPromptEl ? String(installPromptEl.hidden) : 'n/a'}`,
+            `  ariaHidden: ${installPromptEl?.getAttribute('aria-hidden') ?? 'n/a'}`,
+            `  installButtonText: ${installPromptInstall?.textContent?.trim() || 'n/a'}`,
+            `  iosInstructionsVisible: ${iosInstallSteps ? String(!iosInstallSteps.hidden) : 'n/a'}`,
+            `  standaloneDisplayMode: ${window.matchMedia('(display-mode: standalone)').matches}`,
+            `  navigatorStandalone: ${window.navigator.standalone ?? 'n/a'}`,
+            `  iOS Safari path: ${installIosSafari}`,
+            `  blocking UI: ${installBlockingUi}`,
+            `  installPromptInstalledV1: ${ls.installPromptInstalledV1}`,
+            `  installPromptDismissedUntilV1: ${ls.installPromptDismissedUntilV1}`,
+            `  dismissedActive: ${installDismissedActive}`,
+        ];
+
     const timings = [
         `  scriptStart:          ${ts(dbg.t_script_start)}`,
         `  domReady:             ${ts(dbg.t_dom_ready)}`,
@@ -367,8 +402,11 @@ function buildDebugReport(app) {
         '=== state changes since load ===',
         diffs.length ? diffs.join('\n') : '  (none)',
         '',
-        '=== localStorage ===',
+                '=== localStorage ===',
         ...Object.entries(ls).map(([k, v]) => `  ${k}: ${v}`),
+        '',
+        '=== install prompt diagnostics ===',
+        ...installPromptDiagnostics,
         '',
         '=== passage cache match (now) ===',
         `  ${cacheMatch}`,
