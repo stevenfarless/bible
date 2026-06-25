@@ -25,7 +25,7 @@
 //     the next drag always moves the correct nodes
 //
 // _animating is set true from the moment a commit animation starts until the
-// setTimeout callback completes. Any pointerdown while _animating is true is
+// setTimeout callback completes. Any touchstart while _animating is true is
 // dropped, preventing concurrent panel swaps from corrupting the slot refs.
 //
 // Callers outside this module only need:
@@ -236,9 +236,8 @@ export function initSwipe(app) {
     });
     ro.observe(viewport);
 
-    // ── Pointer handling ──────────────────────────────────────────────────
+    // ── Touch handling ────────────────────────────────────────────────────
 
-    let _pointerId = null;
     let _startX = 0;
     let _startY = 0;
     let _lastX  = 0;
@@ -259,12 +258,6 @@ export function initSwipe(app) {
         return _atBoundary(dx) ? dx * RESISTANCE : dx;
     }
 
-    function _snapPanelsToSlots() {
-        _clearTranslateX(app.passageText);
-        _setTranslateX(app.swipe.prevPanel, -vw());
-        _setTranslateX(app.swipe.nextPanel,  vw());
-    }
-
     function _cleanupDrag() {
         viewport.classList.remove('swiping');
         _removeTransition(app.passageText);
@@ -275,42 +268,66 @@ export function initSwipe(app) {
         app.passageText.style.left     = '';
         app.passageText.style.width    = '';
         viewport.style.height          = '';
-        _snapPanelsToSlots();
     }
 
-    function _resetPointer() {
-        _pointerId = null;
-        _tracking = false;
-        _vetoed   = false;
-    }
+    viewport.addEventListener('touchstart', (e) => {
+        if (_animating) {
+            _vetoed = true;
+            return;
+        }
+        _startX          = e.changedTouches[0].screenX;
+        _startY          = e.changedTouches[0].screenY;
+        _lastX           = _startX;
+        _lastT           = e.timeStamp;
+        _velocity        = 0;
+        _tracking        = false;
+        _vetoed          = false;
+        _currentOffsetPx = 0;
+    }, { passive: true });
 
-    function _capturePointer(pointerId) {
-        try {
-            if (viewport.hasPointerCapture?.(pointerId)) return;
-            viewport.setPointerCapture?.(pointerId);
-        } catch (_) {}
-    }
+    viewport.addEventListener('touchmove', (e) => {
+        if (_vetoed) return;
+        if (_isModalOpen() || _isSearchOpen(app)) return;
 
-    function _releasePointer(pointerId) {
-        try {
-            if (!viewport.hasPointerCapture?.(pointerId)) return;
-            viewport.releasePointerCapture?.(pointerId);
-        } catch (_) {}
-    }
+        const touch = e.changedTouches[0];
+        const dx = touch.screenX - _startX;
+        const dy = touch.screenY - _startY;
 
-    function _startTracking() {
-        _tracking = true;
-        _capturePointer(_pointerId);
-        viewport.classList.add('swiping');
+        const dt = e.timeStamp - _lastT;
+        if (dt > 0) _velocity = (touch.screenX - _lastX) / dt;
+        _lastX = touch.screenX;
+        _lastT = e.timeStamp;
 
-        app.passageText.style.position = 'absolute';
-        app.passageText.style.top      = '0';
-        app.passageText.style.left     = '0';
-        app.passageText.style.width    = '100%';
-        viewport.style.height = app.passageText.offsetHeight + 'px';
-    }
+        if (!_tracking) {
+            const absDx = Math.abs(dx);
+            const absDy = Math.abs(dy);
 
-    function _movePanels(dx) {
+            if (absDx < 6 && absDy < 6) return;
+
+            if (absDy > absDx * 1.25) {
+                app._dbgUserAction?.(`swipe vetoed: dx=${Math.round(dx)} dy=${Math.round(dy)}`);
+                _vetoed = true;
+                return;
+            }
+
+            if (absDx < 8) return;
+
+            _tracking = true;
+            viewport.classList.add('swiping');
+
+            app.passageText.style.position = 'absolute';
+            app.passageText.style.top      = '0';
+            app.passageText.style.left     = '0';
+            app.passageText.style.width    = '100%';
+            viewport.style.height = app.passageText.offsetHeight + 'px';
+        }
+
+        if (e.cancelable) {
+            e.preventDefault();
+        } else {
+            app._dbgUserAction?.(`swipe continuing: touchmove not cancelable dx=${Math.round(dx)} dy=${Math.round(dy)}`);
+        }
+
         const W         = vw();
         const effective = _applyResistance(dx);
         _currentOffsetPx = dx;
@@ -324,9 +341,17 @@ export function initSwipe(app) {
             _setTranslateX(app.swipe.prevPanel, effective - W + (effective - effective * PARALLAX));
             _setTranslateX(app.swipe.nextPanel, W + effective);
         }
-    }
+    }, { passive: false });
 
-    function _finishSwipe() {
+    viewport.addEventListener('touchend', (e) => {
+        if (_vetoed || !_tracking) {
+            if (_tracking) _cleanupDrag();
+            _tracking = false;
+            _vetoed   = false;
+            return;
+        }
+        _tracking = false;
+
         const dx    = _currentOffsetPx;
         const W     = vw();
         const absDx = Math.abs(dx);
@@ -348,6 +373,8 @@ export function initSwipe(app) {
 
             setTimeout(() => {
                 _cleanupDrag();
+                _setTranslateX(app.swipe.prevPanel, -W);
+                _setTranslateX(app.swipe.nextPanel, +W);
             }, animMs);
         };
 
@@ -424,7 +451,6 @@ export function initSwipe(app) {
             }
 
             viewport.style.height = '';
-            _snapPanelsToSlots();
 
             app.state.currentBook    = incomingPos.book;
             app.state.currentChapter = incomingPos.chapter;
@@ -458,99 +484,5 @@ export function initSwipe(app) {
                 });
             });
         }, animMs);
-    }
-
-    viewport.addEventListener('pointerdown', (e) => {
-        if (e.pointerType === 'mouse') return;
-
-        if (_animating) {
-            _vetoed = true;
-            return;
-        }
-
-        if (_isModalOpen() || _isSearchOpen(app)) return;
-
-        _pointerId       = e.pointerId;
-        _startX          = e.clientX;
-        _startY          = e.clientY;
-        _lastX           = _startX;
-        _lastT           = e.timeStamp;
-        _velocity        = 0;
-        _tracking        = false;
-        _vetoed          = false;
-        _currentOffsetPx = 0;
-    });
-
-    viewport.addEventListener('pointermove', (e) => {
-        if (e.pointerId !== _pointerId) return;
-        if (_vetoed) return;
-        if (_isModalOpen() || _isSearchOpen(app)) return;
-
-        const dx = e.clientX - _startX;
-        const dy = e.clientY - _startY;
-
-        const dt = e.timeStamp - _lastT;
-        if (dt > 0) _velocity = (e.clientX - _lastX) / dt;
-        _lastX = e.clientX;
-        _lastT = e.timeStamp;
-
-            if (!_tracking) {
-                const absDx = Math.abs(dx);
-                const absDy = Math.abs(dy);
-            
-                const INTENT_MIN_PX = 12;
-                const HORIZONTAL_BIAS = 1.05;
-                const VERTICAL_BIAS = 1.75;
-                const VERTICAL_MIN_PX = 18;
-            
-                if (absDx < INTENT_MIN_PX && absDy < INTENT_MIN_PX) return;
-            
-                if (absDy >= VERTICAL_MIN_PX && absDy > absDx * VERTICAL_BIAS) {
-                    app._dbgUserAction?.(`swipe vetoed: vertical intent dx=${Math.round(dx)} dy=${Math.round(dy)}`);
-                    _vetoed = true;
-                    return;
-                }
-    
-            if (absDx < INTENT_MIN_PX || absDx < absDy * HORIZONTAL_BIAS) return;
-        
-            _startTracking();
-        }
-
-        if (e.cancelable) {
-            e.preventDefault();
-        } else {
-            app._dbgUserAction?.(`swipe continuing: pointermove not cancelable dx=${Math.round(dx)} dy=${Math.round(dy)}`);
-        }
-
-        _movePanels(dx);
-    });
-
-    viewport.addEventListener('pointerup', (e) => {
-        if (e.pointerId !== _pointerId) return;
-
-        _releasePointer(e.pointerId);
-
-        if (_vetoed || !_tracking) {
-            if (_tracking) _cleanupDrag();
-            _resetPointer();
-            return;
-        }
-
-        _tracking = false;
-        _pointerId = null;
-        _finishSwipe();
-    });
-
-    viewport.addEventListener('pointercancel', (e) => {
-        if (e.pointerId !== _pointerId) return;
-
-        _releasePointer(e.pointerId);
-
-        if (_tracking) {
-            app._dbgUserAction?.('swipe canceled: pointercancel');
-            _cleanupDrag();
-        }
-
-        _resetPointer();
-    });
+    }, { passive: true });
 }
