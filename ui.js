@@ -51,6 +51,18 @@ document.addEventListener('DOMContentLoaded', () => {
 	});
 }, { once: true });
 
+const GEEK_THEME_CSS_ID = 'geek-theme-css';
+
+function ensureGeekThemeCss() {
+	if (document.getElementById(GEEK_THEME_CSS_ID)) return;
+
+	const link = document.createElement('link');
+	link.id = GEEK_THEME_CSS_ID;
+	link.rel = 'stylesheet';
+	link.href = './css/geek95.css';
+	document.head.appendChild(link);
+}
+
 export function cacheElements(app) {
 	// Validate all required IDs exist — warns immediately if HTML is stale or mismatched
 	const missing = REQUIRED_IDS.filter(id => !document.getElementById(id));
@@ -296,6 +308,7 @@ export async function changeColorTheme(app, theme) {
 	const valid = ALL_THEME_CLASSES.includes(theme + '-theme');
 	const resolved = valid ? theme : 'basic';
 	const cls = resolved + '-theme';
+	if (resolved === 'geek') ensureGeekThemeCss();
 
 	document.documentElement.classList.add(cls);
 	document.body.classList.add(cls);
