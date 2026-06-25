@@ -117,21 +117,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html css/components.css app.js sw.js playwright.config.js install-prompt.js tests/install-prompt.spec.js
-          cat > /tmp/install-prompt-commit-message <<'EOF'
-          feat(pwa): add smart install prompt
-
-          Replace the eager install banner with a delayed bottom-sheet prompt that
-          appears only when Lege Lux is not already installed, waits until the
-          reader is available, respects dismissal cooldowns, uses the Chromium
-          beforeinstallprompt flow when available, and shows iOS Add to Home
-          Screen instructions on Safari.
-
-          Add browser coverage for repeat-visit gating, install acceptance,
-          dismissal cooldowns, standalone suppression, and the iOS instruction path.
-
-          Refs #415
-          EOF
-          git commit -F /tmp/install-prompt-commit-message
+          git commit \
+            -m "feat(pwa): add smart install prompt" \
+            -m "Replace the eager install banner with a delayed bottom-sheet prompt that appears only when Lege Lux is not already installed, waits until the reader is available, respects dismissal cooldowns, uses the Chromium beforeinstallprompt flow when available, and shows iOS Add to Home Screen instructions on Safari." \
+            -m "Add browser coverage for repeat-visit gating, install acceptance, dismissal cooldowns, standalone suppression, and the iOS instruction path." \
+            -m "Refs #415"
           git push origin exp
 
       - name: Dispatch GitHub Pages deploy
