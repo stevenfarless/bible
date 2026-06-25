@@ -3,6 +3,7 @@
     var systemLightQuery = window.matchMedia('(prefers-color-scheme: light)');
     var DEFAULT_COLOR_THEME = 'vespers';
     var OPTIONAL_FONT_CSS_ID = 'optional-font-faces';
+    var GEEK_THEME_CSS_ID = 'geek-theme-css';
     var THEME_CLASSES = [
         'lux-theme', 'vespers-theme', 'vigil-theme',
         'dracula-theme', 'dracula2test-theme', 'onyx-theme',
@@ -36,6 +37,7 @@
     function applyStartupTheme() {
         var theme = get('colorTheme') || DEFAULT_COLOR_THEME;
         if (!VALID_THEMES[theme]) theme = DEFAULT_COLOR_THEME;
+        if (theme === 'geek') ensureGeekThemeCss();
 
         root.classList.remove.apply(root.classList, THEME_CLASSES);
         root.classList.add(theme + '-theme', 'no-color-transition');
@@ -62,6 +64,16 @@
         link.id = OPTIONAL_FONT_CSS_ID;
         link.rel = 'stylesheet';
         link.href = './css/optional-fonts.css';
+        document.head.appendChild(link);
+    }
+
+    function ensureGeekThemeCss() {
+        if (document.getElementById(GEEK_THEME_CSS_ID)) return;
+
+        var link = document.createElement('link');
+        link.id = GEEK_THEME_CSS_ID;
+        link.rel = 'stylesheet';
+        link.href = './css/geek95.css';
         document.head.appendChild(link);
     }
 
