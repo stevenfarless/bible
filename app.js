@@ -1362,6 +1362,13 @@ class BibleApp {
                 this._prefetchAdjacentBooks();
             }
 
+            void import('./install-prompt.js')
+                .then(({ initInstallPrompt }) => initInstallPrompt(this))
+                .catch((error) => {
+                    console.warn('Install prompt unavailable:', error);
+                    this._dbgEvent(`install prompt unavailable: ${error.message}`);
+                });
+
             this._startBackgroundAuthRestoration();
 
             void withTimeout(this.loadSyncedTranslationLibrary(), 5000, null)
@@ -1731,104 +1738,6 @@ class BibleApp {
     async handleLogout()    { await handleLogout(this); }
     async loadUserData()    { await loadUserData(this, normalizeTranslation); }
 }
-
-/* PWA Install Prompt */
-
-const INSTALL_PROMPT_DISMISSED_KEY = 'legeLuxInstallPromptDismissed';
-let _deferredInstallPrompt = null;
-
-function _isInstalledDisplayMode() {
-    return window.matchMedia('(display-mode: standalone)').matches ||
-        window.navigator.standalone === true;
-}
-
-function _hasDismissedInstallPrompt() {
-    try {
-        return localStorage.getItem(INSTALL_PROMPT_DISMISSED_KEY) === 'true';
-    } catch (_) {
-        return false;
-    }
-}
-
-function _dismissInstallPrompt() {
-    try {
-        localStorage.setItem(INSTALL_PROMPT_DISMISSED_KEY, 'true');
-    } catch (_) {}
-
-    _deferredInstallPrompt = null;
-    _setInstallBannerVisible(false);
-}
-
-function _setInstallBannerVisible(visible) {
-    const banner = document.getElementById('installBanner');
-    if (!banner) return;
-
-    banner.classList.toggle('hidden', !visible);
-    banner.setAttribute('aria-hidden', visible ? 'false' : 'true');
-}
-
-window.addEventListener('beforeinstallprompt', (event) => {
-    event.preventDefault();
-
-    if (_isInstalledDisplayMode() || _hasDismissedInstallPrompt()) {
-        _deferredInstallPrompt = null;
-        _setInstallBannerVisible(false);
-        return;
-    }
-
-    _deferredInstallPrompt = event;
-    _setInstallBannerVisible(true);
-});
-
-window.addEventListener('appinstalled', () => {
-    _deferredInstallPrompt = null;
-    _setInstallBannerVisible(false);
-    console.info('[PWA] installed');
-});
-
-async function _promptInstall() {
-    if (!_deferredInstallPrompt) return;
-
-    const promptEvent = _deferredInstallPrompt;
-
-    try {
-        promptEvent.prompt();
-
-        const { outcome } = await promptEvent.userChoice;
-        console.info('[PWA] user choice:', outcome);
-
-        _deferredInstallPrompt = null;
-        _setInstallBannerVisible(false);
-
-        if (outcome === 'dismissed') {
-            try {
-                localStorage.setItem(INSTALL_PROMPT_DISMISSED_KEY, 'true');
-            } catch (_) {}
-        }
-    } catch (err) {
-        console.error('[PWA] install prompt error', err);
-    }
-}
-
-(function _wireInstallBanner() {
-    function _attach() {
-        const btn = document.getElementById('installBtn');
-        if (btn) btn.addEventListener('click', _promptInstall);
-
-        const dismiss = document.getElementById('installBannerDismiss');
-        if (dismiss) dismiss.addEventListener('click', _dismissInstallPrompt);
-
-        if (_isInstalledDisplayMode() || _hasDismissedInstallPrompt()) {
-            _setInstallBannerVisible(false);
-        }
-    }
-
-    if (document.readyState !== 'loading') {
-        _attach();
-    } else {
-        document.addEventListener('DOMContentLoaded', _attach, { once: true });
-    }
-}());
 
 /* Service Worker & Update Toast */
 

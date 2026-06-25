@@ -857,20 +857,30 @@
 		</div>
     </div>
 
-    <div id="installBanner" class="install-banner hidden" role="region" aria-label="Install Lege Lux" aria-hidden="true">
-    	<div class="install-banner__text">
-    		<strong>Install Lege Lux</strong>
-    		<span>Open it from your home screen for a faster app-like reading experience.</span>
-    	</div>
-    	<div class="install-banner__actions">
-    		<button id="installBtn" class="primary-btn install-banner__install" type="button">
-    			Install
-    		</button>
-    		<button id="installBannerDismiss" class="install-banner__dismiss" type="button" aria-label="Dismiss install prompt">
-    			×
-    		</button>
-    	</div>
-    </div>
+	<div id="installPrompt" class="install-prompt" role="dialog" aria-modal="true" aria-labelledby="installPromptTitle" aria-hidden="true" hidden>
+		<div class="install-prompt__sheet">
+			<div class="install-prompt__handle" aria-hidden="true"></div>
+			<h2 id="installPromptTitle">Install Lege Lux?</h2>
+			<p class="install-prompt__body">Open Lege Lux from your home screen, load faster, and keep your Bible reader available offline.</p>
+			<ul class="install-prompt__benefits">
+				<li>Home screen access</li>
+				<li>Standalone app window</li>
+				<li>Offline reading support</li>
+			</ul>
+			<div id="iosInstallSteps" class="install-prompt__ios" hidden>
+				<p>On iPhone, install manually:</p>
+				<ol>
+					<li>Tap Share</li>
+					<li>Tap Add to Home Screen</li>
+					<li>Tap Add</li>
+				</ol>
+			</div>
+			<div class="install-prompt__actions">
+				<button id="installPromptInstall" class="primary-btn" type="button">Install</button>
+				<button id="installPromptLater" class="secondary-btn" type="button">Not now</button>
+			</div>
+		</div>
+	</div>
 
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 

@@ -62,6 +62,7 @@ const APP_SHELL = [
   './css/utilities.css',
   './css/pericope.css',
   './app.js',
+  './install-prompt.js',
   './bible-api.js',
   './bible-structure.js',
   './bsb-structure.js',
