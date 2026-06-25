@@ -3,7 +3,6 @@ import { test, expect } from '@playwright/test';
 
 const DISMISSED_UNTIL_KEY = 'installPromptDismissedUntilV1';
 const INSTALLED_KEY = 'installPromptInstalledV1';
-const VISIT_COUNT_KEY = 'installPromptVisitCountV1';
 
 async function waitForApp(page) {
     await page.waitForSelector('body[data-app-ready]', { timeout: 10000 });
@@ -22,11 +21,7 @@ async function waitForPassage(page) {
 }
 
 async function waitForInstallPromptReady(page) {
-    await page.waitForFunction(
-        key => localStorage.getItem(key) !== null,
-        VISIT_COUNT_KEY,
-        { timeout: 10000 }
-    );
+    await page.waitForSelector('body[data-install-prompt-ready="true"]', { timeout: 10000 });
 }
 
 async function fireBeforeInstallPrompt(page, outcome = 'accepted') {
@@ -45,22 +40,16 @@ test.beforeEach(async ({ page }) => {
     });
 });
 
-test('install prompt waits until a repeat visit qualifies', async ({ page }) => {
+test('install prompt stays hidden without an install path', async ({ page }) => {
     await page.goto('/');
     await waitForPassage(page);
     await waitForInstallPromptReady(page);
-    await fireBeforeInstallPrompt(page);
     await page.waitForTimeout(3000);
 
     await expect(page.locator('#installPrompt')).toBeHidden();
-    await expect.poll(() => page.evaluate(key => localStorage.getItem(key), VISIT_COUNT_KEY)).toBe('1');
 });
 
-test('install prompt shows benefits after beforeinstallprompt on repeat visits', async ({ page }) => {
-    await page.addInitScript(key => {
-        try { localStorage.setItem(key, '1'); } catch (_) {}
-    }, VISIT_COUNT_KEY);
-
+test('install prompt shows benefits after the browser install event delay', async ({ page }) => {
     await page.goto('/');
     await waitForPassage(page);
     await waitForInstallPromptReady(page);
@@ -75,10 +64,6 @@ test('install prompt shows benefits after beforeinstallprompt on repeat visits',
 });
 
 test('install prompt button invokes the browser install prompt', async ({ page }) => {
-    await page.addInitScript(key => {
-        try { localStorage.setItem(key, '1'); } catch (_) {}
-    }, VISIT_COUNT_KEY);
-
     await page.goto('/');
     await waitForPassage(page);
     await waitForInstallPromptReady(page);
@@ -93,10 +78,6 @@ test('install prompt button invokes the browser install prompt', async ({ page }
 });
 
 test('install prompt dismissal stores a cooldown', async ({ page }) => {
-    await page.addInitScript(key => {
-        try { localStorage.setItem(key, '1'); } catch (_) {}
-    }, VISIT_COUNT_KEY);
-
     await page.goto('/');
     await waitForPassage(page);
     await waitForInstallPromptReady(page);
@@ -110,7 +91,7 @@ test('install prompt dismissal stores a cooldown', async ({ page }) => {
 });
 
 test('install prompt is suppressed in standalone display mode', async ({ page }) => {
-    await page.addInitScript((visitKey) => {
+    await page.addInitScript(() => {
         const originalMatchMedia = window.matchMedia.bind(window);
         window.matchMedia = query => {
             if (query === '(display-mode: standalone)') {
@@ -127,11 +108,11 @@ test('install prompt is suppressed in standalone display mode', async ({ page })
             }
             return originalMatchMedia(query);
         };
-        try { localStorage.setItem(visitKey, '1'); } catch (_) {}
-    }, VISIT_COUNT_KEY);
+    });
 
     await page.goto('/');
     await waitForPassage(page);
+    await waitForInstallPromptReady(page);
     await fireBeforeInstallPrompt(page);
     await page.waitForTimeout(3000);
 
@@ -139,15 +120,14 @@ test('install prompt is suppressed in standalone display mode', async ({ page })
     await expect.poll(() => page.evaluate(key => localStorage.getItem(key), INSTALLED_KEY)).toBe('true');
 });
 
-test('iOS Safari path shows Add to Home Screen instructions', async ({ page }) => {
-    await page.addInitScript(visitKey => {
+test('iOS Safari path shows Add to Home Screen instructions after the delay', async ({ page }) => {
+    await page.addInitScript(() => {
         Object.defineProperty(navigator, 'userAgent', {
             get: () => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
         });
         Object.defineProperty(navigator, 'platform', { get: () => 'iPhone' });
         Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 5 });
-        try { localStorage.setItem(visitKey, '1'); } catch (_) {}
-    }, VISIT_COUNT_KEY);
+    });
 
     await page.goto('/');
     await waitForPassage(page);
