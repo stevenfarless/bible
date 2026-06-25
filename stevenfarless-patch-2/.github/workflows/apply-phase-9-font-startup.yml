@@ -1,0 +1,51 @@
+name: Phase 9 Font Startup
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: phase-9-font-startup-exp
+  cancel-in-progress: false
+
+jobs:
+  phase-9:
+    name: Apply Phase 9 font startup fix
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v7
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Apply Phase 9 font startup fix
+        run: python3 .github/scripts/phase9_font_startup.py
+
+      - name: Validate Phase 9 changes
+        run: |
+          git diff --check
+          grep -q '<style id="startup-font-faces">' index.html
+          grep -q 'rel="preload" href="css/fonts.css" as="style"' index.html
+
+      - name: Commit Phase 9
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No Phase 9 changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -F - <<'EOF'
+          perf(fonts): defer full font catalog from startup
+
+          Inline the startup Cinzel and Gentium regular font faces while loading
+          the full font catalog stylesheet after first paint.
+          EOF
+          git push origin exp
