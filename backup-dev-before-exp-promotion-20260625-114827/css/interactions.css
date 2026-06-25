@@ -1,0 +1,297 @@
+/* ================================
+   8. INTERACTIVE STATES & EFFECTS
+   ================================ */
+
+html,
+body,
+#topChrome,
+.main-content,
+.passage-container,
+.passage-text,
+.verse,
+.selected-verse-glow,
+button,
+[role='button'] {
+    -webkit-tap-highlight-color: transparent;
+}
+
+button,
+[role='button'],
+.verse-tools-trigger,
+.verse-tool-btn {
+    -webkit-touch-callout: none;
+}
+
+/* Eliminate 300ms tap delay on verses; scroll is unaffected. */
+.verse {
+    touch-action: pan-y pinch-zoom;
+    cursor: pointer;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.verse-number,
+.verse-tools-trigger,
+.verse-tool-btn,
+.verse-tool-letter {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.selected-verse-glow {
+    display: block;
+    box-sizing: border-box;
+    width: calc(100% - 20px);
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05));
+    border-left: 4px solid rgba(255, 215, 0, 0.6);
+    border-radius: 8px;
+    padding: 12px;
+    padding-bottom: 0;
+    margin: 8px 0;
+    box-shadow:
+        0 0 20px rgba(255, 215, 0, 0.3),
+        inset 0 0 10px rgba(255, 215, 0, 0.1);
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    animation: verseGlowPulse 0.5s ease-out;
+}
+
+.selected-verse-glow+h2,
+.selected-verse-glow+h3,
+.selected-verse-glow+h4 {
+    margin-top: 0.25rem;
+}
+
+body.light-mode .selected-verse-glow {
+    box-shadow: 0 0 12px rgba(255, 165, 0, 0.4),
+        0 0 20px rgba(255, 165, 0, 0.2);
+    background-color: rgba(255, 165, 0, 0.08);
+    border-left: 3px solid rgba(255, 165, 0, 0.8);
+    animation: verse-highlight-light 0.6s ease;
+}
+
+/* ── Verse tools trigger (chevron) ── */
+
+.verse-tools-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 6px 0 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(255, 215, 0, 0.55);
+    transition: color 0.2s ease;
+}
+
+.verse-tools-trigger:hover,
+.verse-tools-trigger:focus-visible {
+    color: rgba(255, 215, 0, 0.9);
+    outline: none;
+}
+
+.verse-tools-trigger svg {
+    transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    flex-shrink: 0;
+}
+
+.verse-tools-trigger--open svg {
+    transform: rotate(180deg);
+}
+
+/* "or press Enter" hint — desktop pointer devices only */
+@media (hover: hover) and (pointer: fine) {
+    .verse-tools-trigger::after {
+        content: 'or press Enter';
+        font-size: 0.7rem;
+        letter-spacing: 0.04em;
+        opacity: 0.5;
+        white-space: nowrap;
+    }
+    .verse-tools-trigger--open::after {
+        content: 'or press Enter';
+    }
+}
+
+body.light-mode .verse-tools-trigger {
+    color: rgba(255, 140, 0, 0.5);
+}
+body.light-mode .verse-tools-trigger:hover,
+body.light-mode .verse-tools-trigger:focus-visible {
+    color: rgba(255, 140, 0, 0.9);
+}
+
+/* ── Verse tools tray ── */
+
+.verse-tools-tray {
+    overflow: visible;
+    max-height: 0;
+    opacity: 0;
+    transition:
+        max-height 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        opacity    0.25s ease;
+    border-top: 1px solid rgba(255, 215, 0, 0.15);
+    margin: 0 -12px;
+    padding: 0 12px;
+}
+
+.verse-tools-tray--open {
+    max-height: 400px;
+    opacity: 1;
+}
+
+body.light-mode .verse-tools-tray {
+    border-top-color: rgba(255, 140, 0, 0.2);
+}
+
+/* ── Tool action rows ── */
+
+.verse-tools-actions {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: center;
+    justify-items: center;
+    padding: 10px 0 12px;
+    gap: 4px;
+}
+
+.verse-tools-actions--top {
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+    margin-bottom: 2px;
+}
+
+body.light-mode .verse-tools-actions--top {
+    border-bottom-color: rgba(255, 140, 0, 0.15);
+}
+
+.verse-tool-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 215, 0, 0.08);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    cursor: pointer;
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        transform 0.15s ease;
+    touch-action: manipulation;
+}
+
+.verse-tool-btn--square {
+    border-radius: 6px;
+}
+
+.verse-tool-btn:hover,
+.verse-tool-btn:focus-visible {
+    background: rgba(255, 215, 0, 0.18);
+    border-color: rgba(255, 215, 0, 0.5);
+    outline: none;
+}
+
+.verse-tool-btn:active {
+    transform: scale(0.92);
+}
+
+.verse-tool-letter {
+    font-family: var(--font-ui, system-ui, sans-serif);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(255, 215, 0, 0.75);
+    line-height: 1;
+}
+
+body.light-mode .verse-tool-btn {
+    background: rgba(255, 140, 0, 0.08);
+    border-color: rgba(255, 140, 0, 0.25);
+}
+body.light-mode .verse-tool-btn:hover,
+body.light-mode .verse-tool-btn:focus-visible {
+    background: rgba(255, 140, 0, 0.18);
+    border-color: rgba(255, 140, 0, 0.5);
+}
+body.light-mode .verse-tool-letter {
+    color: rgba(200, 100, 0, 0.8);
+}
+
+.has-tooltip {
+    position: relative;
+}
+
+.has-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    padding: 0.35rem 0.5rem;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 0.4rem;
+    background: #222;
+    color: #fff;
+    font-family: var(--font-ui, system-ui, sans-serif);
+    font-size: 0.75rem;
+    line-height: 1;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.has-tooltip:hover::after,
+.has-tooltip:focus-visible::after {
+    opacity: 1;
+}
+
+/* ================================
+   9. ANIMATIONS
+   ================================ */
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideUpFromBottom {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDownToBottom {
+    from { transform: translateY(0); opacity: 1; }
+    to { transform: translateY(100%); opacity: 0; }
+}
+
+@keyframes verseGlowPulse {
+    0% { box-shadow: 0 0 0 rgba(255, 215, 0, 0); }
+    50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.6); }
+    100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+}
+
+@keyframes verse-highlight {
+    0% { box-shadow: 0 0 0 rgba(255, 215, 0, 0); background-color: transparent; }
+    50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); background-color: rgba(255, 215, 0, 0.1); }
+    100% { box-shadow: 0 0 12px rgba(255, 215, 0, 0.35), 0 0 24px rgba(255, 215, 0, 0.15); background-color: rgba(255, 215, 0, 0.05); }
+}
+
+@keyframes verse-highlight-light {
+    0% { box-shadow: 0 0 0 rgba(255, 165, 0, 0); background-color: transparent; }
+    50% { box-shadow: 0 0 24px rgba(255, 165, 0, 0.6); background-color: rgba(255, 165, 0, 0.15); }
+    100% { box-shadow: 0 0 12px rgba(255, 165, 0, 0.4), 0 0 20px rgba(255, 165, 0, 0.2); background-color: rgba(255, 165, 0, 0.08); }
+}
