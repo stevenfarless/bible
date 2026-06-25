@@ -65,6 +65,9 @@ jobs:
             exit 1
           }
 
+      - name: Install offline audit dependencies
+        run: npm install --no-save --package-lock=false esbuild
+
       - name: Run offline build audit
         run: node scripts/prepare-offline-build.mjs
 
