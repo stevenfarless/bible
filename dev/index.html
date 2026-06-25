@@ -4,11 +4,13 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+	<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#060b1a" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="Lege Lux" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-title" content="Lege Lux" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 	<title>Lege Lux</title>
 	<meta name="description" content="Lege Lux is a fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
 	<meta property="og:title" content="Lege Lux" />
@@ -17,7 +19,7 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="63a5795" />
+	<meta name="build-id" content="9e3d41b" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement - always available in <head>) before the
@@ -43,16 +45,16 @@
 			if (isLight) el.classList.add('light-mode');
 		}());
 	</script>
-	<script src="prepaint-settings.js?v=63a5795"></script>
+	<script src="prepaint-settings.js?v=9e3d41b"></script>
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
 	<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
 	<link rel="icon" href="./favicon.ico" />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=63a5795">.
+	     before the parser reaches <script type="module" src="app.js?v=9e3d41b">.
 	     This eliminates the sequential module-discovery waterfall. -->
-	<link rel="modulepreload" href="app.js?v=63a5795" />
+	<link rel="modulepreload" href="app.js?v=9e3d41b" />
 	<link rel="modulepreload" href="bible-api.js" />
 	<link rel="modulepreload" href="bsb-structure.js" />
 	<link rel="modulepreload" href="reading-state.js" />
@@ -86,22 +88,20 @@
 			font-display: swap;
 		}
 	</style>
-	<link rel="preload" href="css/fonts.css?v=63a5795" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/fonts.css?v=63a5795" /></noscript>
-	<link rel="stylesheet" href="css/base.css?v=63a5795" />
-	<link rel="stylesheet" href="css/tokens.css?v=63a5795" />
-	<link rel="stylesheet" href="css/themes.css?v=63a5795" />
-	<link rel="stylesheet" href="css/layout.css?v=63a5795" />
-	<link rel="stylesheet" href="css/components.css?v=63a5795" />
-	<link rel="preload" href="css/modals.css?v=63a5795" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/modals.css?v=63a5795" /></noscript>
-	<link rel="preload" href="css/interactions.css?v=63a5795" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/interactions.css?v=63a5795" /></noscript>
-	<link rel="preload" href="css/utilities.css?v=63a5795" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/utilities.css?v=63a5795" /></noscript>
-	<link rel="stylesheet" href="css/pericope.css?v=63a5795" />
-	<link rel="preload" href="css/geek95.css?v=63a5795" as="style" onload="this.onload=null;this.rel='stylesheet'">
-	<noscript><link rel="stylesheet" href="css/geek95.css?v=63a5795"></noscript>
+	<link rel="preload" href="css/fonts.css?v=9e3d41b" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/fonts.css?v=9e3d41b" /></noscript>
+	<link rel="stylesheet" href="css/base.css?v=9e3d41b" />
+	<link rel="stylesheet" href="css/tokens.css?v=9e3d41b" />
+	<link rel="stylesheet" href="css/themes.css?v=9e3d41b" />
+	<link rel="stylesheet" href="css/layout.css?v=9e3d41b" />
+	<link rel="stylesheet" href="css/components.css?v=9e3d41b" />
+	<link rel="preload" href="css/modals.css?v=9e3d41b" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/modals.css?v=9e3d41b" /></noscript>
+	<link rel="preload" href="css/interactions.css?v=9e3d41b" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/interactions.css?v=9e3d41b" /></noscript>
+	<link rel="preload" href="css/utilities.css?v=9e3d41b" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/utilities.css?v=9e3d41b" /></noscript>
+	<link rel="stylesheet" href="css/pericope.css?v=9e3d41b" />
 	<!-- Firebase App Check loads reCAPTCHA v3 through ReCaptchaV3Provider. -->
 </head>
 
@@ -110,7 +110,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">63a5795</span>
+				<span id="build-info">9e3d41b</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -857,24 +857,34 @@
 		</div>
     </div>
 
-    <div id="installBanner" class="install-banner hidden" role="region" aria-label="Install Lege Lux" aria-hidden="true">
-    	<div class="install-banner__text">
-    		<strong>Install Lege Lux</strong>
-    		<span>Open it from your home screen for a faster app-like reading experience.</span>
-    	</div>
-    	<div class="install-banner__actions">
-    		<button id="installBtn" class="primary-btn install-banner__install" type="button">
-    			Install
-    		</button>
-    		<button id="installBannerDismiss" class="install-banner__dismiss" type="button" aria-label="Dismiss install prompt">
-    			×
-    		</button>
-    	</div>
-    </div>
+	<div id="installPrompt" class="install-prompt" role="dialog" aria-modal="true" aria-labelledby="installPromptTitle" aria-hidden="true" hidden>
+		<div class="install-prompt__sheet">
+			<div class="install-prompt__handle" aria-hidden="true"></div>
+			<h2 id="installPromptTitle">Install Lege Lux?</h2>
+			<p class="install-prompt__body">Open Lege Lux from your home screen, load faster, and keep your Bible reader available offline.</p>
+			<ul class="install-prompt__benefits">
+				<li>Home screen access</li>
+				<li>Standalone app window</li>
+				<li>Offline reading support</li>
+			</ul>
+			<div id="iosInstallSteps" class="install-prompt__ios" hidden>
+				<p>On iPhone, install manually:</p>
+				<ol>
+					<li>Tap Share</li>
+					<li>Tap Add to Home Screen</li>
+					<li>Tap Add</li>
+				</ol>
+			</div>
+			<div class="install-prompt__actions">
+				<button id="installPromptInstall" class="primary-btn" type="button">Install</button>
+				<button id="installPromptLater" class="secondary-btn" type="button">Not now</button>
+			</div>
+		</div>
+	</div>
 
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=63a5795"></script>
+	<script type="module" src="app.js?v=9e3d41b"></script>
 	<script>
     	// Hide raw build placeholder when pipeline substitution hasn't run.
     	document.addEventListener('DOMContentLoaded', function() {

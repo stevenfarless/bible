@@ -4,7 +4,7 @@ import { build } from 'esbuild';
 
 const root = process.cwd();
 const outputRoot = path.join(root, '_site');
-const cssSources = [
+const startupCssSources = [
     'css/fonts.css',
     'css/base.css',
     'css/tokens.css',
@@ -15,6 +15,9 @@ const cssSources = [
     'css/interactions.css',
     'css/utilities.css',
     'css/pericope.css',
+];
+const cssSources = [
+    ...startupCssSources,
     'css/geek95.css',
 ];
 const excludedTopLevel = new Set([
@@ -91,8 +94,8 @@ function stylesheetPaths(indexHtml) {
 
 async function validateCssSources(sourceIndex) {
     const linkedCss = stylesheetPaths(sourceIndex);
-    if (linkedCss.length !== cssSources.length || linkedCss.some((source, index) => source !== cssSources[index])) {
-        throw new Error(`Expected separate CSS links in this order:\n${cssSources.join('\n')}\nFound:\n${linkedCss.join('\n')}`);
+    if (linkedCss.length !== startupCssSources.length || linkedCss.some((source, index) => source !== startupCssSources[index])) {
+        throw new Error(`Expected startup CSS links in this order:\n${startupCssSources.join('\n')}\nFound:\n${linkedCss.join('\n')}`);
     }
 
     const missingUrls = [];
@@ -190,7 +193,7 @@ async function localizeMarked() {
 }
 
 function rewriteMarkedLoader(source) {
-    const markedPattern = /https:\/\/cdn\.jsdelivr\.net\/npm\/marked@9\/marked\.min\.js(?:\?[^\"]*)?/;
+    const markedPattern = /https:\/\/cdn\.jsdelivr\.net\/npm\/marked@9\/marked\.min\.js(?:\?[^"]*)?/;
     if (!markedPattern.test(source)) {
         throw new Error('Could not find the hosted Marked URL in settings.js.');
     }
@@ -267,8 +270,8 @@ async function writeOfflineManifest() {
 async function verifyOutput(assets) {
     const outputIndex = await fs.readFile(path.join(outputRoot, 'index.html'), 'utf8');
     const linkedCss = stylesheetPaths(outputIndex);
-    if (linkedCss.length !== cssSources.length || linkedCss.some((source, index) => source !== cssSources[index])) {
-        throw new Error(`Offline artifact did not preserve the separate CSS files: ${linkedCss.join(', ')}`);
+    if (linkedCss.length !== startupCssSources.length || linkedCss.some((source, index) => source !== startupCssSources[index])) {
+        throw new Error(`Offline artifact did not preserve the startup CSS files: ${linkedCss.join(', ')}`);
     }
     if (await exists(path.join(outputRoot, 'css/app.min.css'))) {
         throw new Error('Offline artifact unexpectedly contains css/app.min.css.');

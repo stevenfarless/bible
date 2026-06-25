@@ -73,6 +73,10 @@ function normalizeTranslation(t) { return TRANSLATION_ALIASES[t] || t; }
 
 const PASSAGE_CACHE_KEY = 'passageCache';
 
+const installPromptModulePromise = import('./install-prompt.js')
+    .then((module) => ({ module, error: null }))
+    .catch((error) => ({ module: null, error }));
+
 function withTimeout(promise, ms, fallback = null) {
     return Promise.race([
         promise.catch(() => fallback),
@@ -197,6 +201,7 @@ function buildDebugReport(app) {
         'showVerseNumbers', 'coloredVerseNumbers', 'showHeadings',
         'showFootnotes', 'showCrossReferences', 'verseByVerse',
         'showChapterArrows', 'hideInterfaceOnScroll', 'hapticsEnabled',
+        'installPromptInstalledV1', 'installPromptDismissedUntilV1',
     ];
     const ls = {};
     for (const k of LS_KEYS) {
@@ -324,6 +329,40 @@ function buildDebugReport(app) {
         },
     };
 
+        const installPromptEl = document.getElementById('installPrompt');
+        const installPromptInstall = document.getElementById('installPromptInstall');
+        const iosInstallSteps = document.getElementById('iosInstallSteps');
+        const installDismissedUntil = Number(ls.installPromptDismissedUntilV1);
+        const installDismissedActive = Number.isFinite(installDismissedUntil) && installDismissedUntil > Date.now();
+        const installBlockingUi = document.querySelector('.modal.active')
+            ? 'modal'
+            : document.querySelector('.search-container.active')
+                ? 'search'
+                : 'none';
+        const installUa = navigator.userAgent || '';
+        const installIos = /iPad|iPhone|iPod/.test(installUa) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const installSafari = /Safari/.test(installUa) &&
+            !/CriOS|FxiOS|EdgiOS|OPiOS/.test(installUa);
+        const installIosSafari = installIos && installSafari;
+        const installPromptDiagnostics = [
+            `  ready: ${document.body.dataset.installPromptReady ?? '(not set)'}`,
+            `  beforeinstallpromptFired: ${document.body.dataset.beforeinstallpromptFired ?? '(not set)'}`,
+            `  nativePromptAvailable: ${document.body.dataset.installPromptNativeAvailable ?? '(not set)'}`,
+            `  visible: ${document.body.dataset.installPromptVisible ?? '(not set)'}`,
+            `  hiddenAttribute: ${installPromptEl ? String(installPromptEl.hidden) : 'n/a'}`,
+            `  ariaHidden: ${installPromptEl?.getAttribute('aria-hidden') ?? 'n/a'}`,
+            `  installButtonText: ${installPromptInstall?.textContent?.trim() || 'n/a'}`,
+            `  iosInstructionsVisible: ${iosInstallSteps ? String(!iosInstallSteps.hidden) : 'n/a'}`,
+            `  standaloneDisplayMode: ${window.matchMedia('(display-mode: standalone)').matches}`,
+            `  navigatorStandalone: ${window.navigator.standalone ?? 'n/a'}`,
+            `  iOS Safari path: ${installIosSafari}`,
+            `  blocking UI: ${installBlockingUi}`,
+            `  installPromptInstalledV1: ${ls.installPromptInstalledV1}`,
+            `  installPromptDismissedUntilV1: ${ls.installPromptDismissedUntilV1}`,
+            `  dismissedActive: ${installDismissedActive}`,
+        ];
+
     const timings = [
         `  scriptStart:          ${ts(dbg.t_script_start)}`,
         `  domReady:             ${ts(dbg.t_dom_ready)}`,
@@ -367,8 +406,11 @@ function buildDebugReport(app) {
         '=== state changes since load ===',
         diffs.length ? diffs.join('\n') : '  (none)',
         '',
-        '=== localStorage ===',
+                '=== localStorage ===',
         ...Object.entries(ls).map(([k, v]) => `  ${k}: ${v}`),
+        '',
+        '=== install prompt diagnostics ===',
+        ...installPromptDiagnostics,
         '',
         '=== passage cache match (now) ===',
         `  ${cacheMatch}`,
@@ -1362,6 +1404,17 @@ class BibleApp {
                 this._prefetchAdjacentBooks();
             }
 
+            void installPromptModulePromise
+                .then(({ module, error }) => {
+                    if (error) {
+                        console.warn('Install prompt unavailable:', error);
+                        this._dbgEvent(`install prompt unavailable: ${error.message}`);
+                        return;
+                    }
+
+                    module.initInstallPrompt(this);
+                });
+
             this._startBackgroundAuthRestoration();
 
             void withTimeout(this.loadSyncedTranslationLibrary(), 5000, null)
@@ -1731,104 +1784,6 @@ class BibleApp {
     async handleLogout()    { await handleLogout(this); }
     async loadUserData()    { await loadUserData(this, normalizeTranslation); }
 }
-
-/* PWA Install Prompt */
-
-const INSTALL_PROMPT_DISMISSED_KEY = 'legeLuxInstallPromptDismissed';
-let _deferredInstallPrompt = null;
-
-function _isInstalledDisplayMode() {
-    return window.matchMedia('(display-mode: standalone)').matches ||
-        window.navigator.standalone === true;
-}
-
-function _hasDismissedInstallPrompt() {
-    try {
-        return localStorage.getItem(INSTALL_PROMPT_DISMISSED_KEY) === 'true';
-    } catch (_) {
-        return false;
-    }
-}
-
-function _dismissInstallPrompt() {
-    try {
-        localStorage.setItem(INSTALL_PROMPT_DISMISSED_KEY, 'true');
-    } catch (_) {}
-
-    _deferredInstallPrompt = null;
-    _setInstallBannerVisible(false);
-}
-
-function _setInstallBannerVisible(visible) {
-    const banner = document.getElementById('installBanner');
-    if (!banner) return;
-
-    banner.classList.toggle('hidden', !visible);
-    banner.setAttribute('aria-hidden', visible ? 'false' : 'true');
-}
-
-window.addEventListener('beforeinstallprompt', (event) => {
-    event.preventDefault();
-
-    if (_isInstalledDisplayMode() || _hasDismissedInstallPrompt()) {
-        _deferredInstallPrompt = null;
-        _setInstallBannerVisible(false);
-        return;
-    }
-
-    _deferredInstallPrompt = event;
-    _setInstallBannerVisible(true);
-});
-
-window.addEventListener('appinstalled', () => {
-    _deferredInstallPrompt = null;
-    _setInstallBannerVisible(false);
-    console.info('[PWA] installed');
-});
-
-async function _promptInstall() {
-    if (!_deferredInstallPrompt) return;
-
-    const promptEvent = _deferredInstallPrompt;
-
-    try {
-        promptEvent.prompt();
-
-        const { outcome } = await promptEvent.userChoice;
-        console.info('[PWA] user choice:', outcome);
-
-        _deferredInstallPrompt = null;
-        _setInstallBannerVisible(false);
-
-        if (outcome === 'dismissed') {
-            try {
-                localStorage.setItem(INSTALL_PROMPT_DISMISSED_KEY, 'true');
-            } catch (_) {}
-        }
-    } catch (err) {
-        console.error('[PWA] install prompt error', err);
-    }
-}
-
-(function _wireInstallBanner() {
-    function _attach() {
-        const btn = document.getElementById('installBtn');
-        if (btn) btn.addEventListener('click', _promptInstall);
-
-        const dismiss = document.getElementById('installBannerDismiss');
-        if (dismiss) dismiss.addEventListener('click', _dismissInstallPrompt);
-
-        if (_isInstalledDisplayMode() || _hasDismissedInstallPrompt()) {
-            _setInstallBannerVisible(false);
-        }
-    }
-
-    if (document.readyState !== 'loading') {
-        _attach();
-    } else {
-        document.addEventListener('DOMContentLoaded', _attach, { once: true });
-    }
-}());
 
 /* Service Worker & Update Toast */
 

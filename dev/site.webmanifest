@@ -2,11 +2,13 @@
   "name": "Lege Lux",
   "short_name": "Lege Lux",
   "description": "Lege Lux is a fast, offline capable Bible reader with multiple translations, themes, font options, and cross reference tools built for focused Scripture reading.",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "theme_color": "#ffffff",
   "background_color": "#ffffff",
+  "categories": ["books", "education", "reference"],
   "icons": [
     {
       "src": "./android-chrome-192x192.png",
@@ -19,6 +21,22 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "./screenshots/lege-lux-mobile-reading.png",
+      "sizes": "780x1688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Lege Lux reading view on mobile"
+    },
+    {
+      "src": "./screenshots/lege-lux-desktop-reading.png",
+      "sizes": "2560x1440",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Lege Lux reading view on desktop"
     }
   ]
 }
