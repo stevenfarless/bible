@@ -31,8 +31,9 @@ jobs:
         run: |
           git diff --check
 
-          grep -q 'class="source-code-section"' index.html
-          grep -q 'id="sourceCodeTitle"' index.html
+          grep -q 'data-section="source-code"' index.html
+          grep -q 'data-target="source-code"' index.html
+          grep -q 'data-panel="source-code"' index.html
           grep -q 'Source Code' index.html
           grep -q 'https://github.com/stevenfarless/lege-lux' index.html
           grep -q 'https://gitlab.com/stevenfarless/lege-lux' index.html
@@ -41,9 +42,17 @@ jobs:
           grep -q 'target="_blank" rel="noopener noreferrer"' index.html
           grep -q 'class="source-code-icon"' index.html
 
-          grep -q '.source-code-section' css/components.css
+          if grep -q 'class="source-code-section"' index.html; then
+            echo "Source Code should be an About sub-accordion, not a standalone section."
+            exit 1
+          fi
+
+          grep -q '.source-code-group' css/components.css
+          grep -q '.source-code-links' css/components.css
+          grep -q 'grid-template-columns: repeat(2, minmax(0, 1fr));' css/components.css
           grep -q '.source-code-link' css/components.css
           grep -q '.source-code-link:focus-visible' css/components.css
+          grep -q 'justify-content: center;' css/components.css
           grep -q 'min-height: 48px;' css/components.css
           grep -q 'touch-action: manipulation;' css/components.css
           grep -q 'fill: currentColor;' css/components.css
@@ -72,7 +81,7 @@ jobs:
           git add index.html css/components.css
           git commit \
             -m "feat(about): add source code repository links" \
-            -m "Add a Source Code section to the About modal with full-row GitHub and GitLab links." \
+            -m "Add a final Source Code accordion to the About section with side-by-side GitHub and GitLab links." \
             -m "The links use inline SVG icons, existing theme variables, accessible labels, and external-link attributes without adding dependencies or runtime icon requests." \
             -m "Closes #398"
           git push origin exp
