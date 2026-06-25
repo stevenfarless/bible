@@ -33,6 +33,15 @@ function setStoredValue(key, value) {
 }
 
 function markReady() {
+    if (!document.body.hasAttribute('data-beforeinstallprompt-fired')) {
+        document.body.setAttribute('data-beforeinstallprompt-fired', 'false');
+    }
+    if (!document.body.hasAttribute('data-install-prompt-native-available')) {
+        document.body.setAttribute('data-install-prompt-native-available', 'false');
+    }
+    if (!document.body.hasAttribute('data-install-prompt-visible')) {
+        document.body.setAttribute('data-install-prompt-visible', 'false');
+    }
     document.body.setAttribute('data-install-prompt-ready', 'true');
 }
 
@@ -91,6 +100,7 @@ function hidePrompt() {
 
     prompt.hidden = true;
     prompt.setAttribute('aria-hidden', 'true');
+    document.body.setAttribute('data-install-prompt-visible', 'false');
 
     if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
         lastFocusedElement.focus({ preventScroll: true });
@@ -119,8 +129,9 @@ function showPrompt() {
 
     prompt.hidden = false;
     prompt.setAttribute('aria-hidden', 'false');
+    document.body.setAttribute('data-install-prompt-visible', 'true');
     install.focus({ preventScroll: true });
-}
+    }
 
 function schedulePrompt(delay = SHOW_DELAY_MS) {
     if (showTimer) return;
@@ -138,6 +149,7 @@ async function installApp() {
 
     const promptEvent = deferredInstallPrompt;
     deferredInstallPrompt = null;
+    document.body.setAttribute('data-install-prompt-native-available', 'false');
 
     try {
         promptEvent.prompt();
@@ -185,6 +197,8 @@ export function initInstallPrompt() {
     }
 
     window.addEventListener('beforeinstallprompt', (event) => {
+        document.body.setAttribute('data-beforeinstallprompt-fired', 'true');
+        document.body.setAttribute('data-install-prompt-native-available', 'true');
         event.preventDefault();
         deferredInstallPrompt = event;
         schedulePrompt();
@@ -192,6 +206,8 @@ export function initInstallPrompt() {
 
     window.addEventListener('appinstalled', () => {
         deferredInstallPrompt = null;
+        document.body.setAttribute('data-install-prompt-native-available', 'false');
+        document.body.setAttribute('data-install-prompt-visible', 'false');
         setStoredValue(INSTALLED_KEY, 'true');
         hidePrompt();
     });
