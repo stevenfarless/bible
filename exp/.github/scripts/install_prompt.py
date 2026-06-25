@@ -138,7 +138,7 @@ INSTALL_PROMPT_JS = '''const DISMISSED_UNTIL_KEY = 'installPromptDismissedUntilV
 const INSTALLED_KEY = 'installPromptInstalledV1';
 
 const DISMISS_DAYS = 30;
-const SHOW_DELAY_MS = 2500;
+const IOS_SHOW_DELAY_MS = 2500;
 const MODAL_RETRY_MS = 1500;
 
 let deferredInstallPrompt = null;
@@ -258,7 +258,7 @@ function showPrompt() {
     install.focus({ preventScroll: true });
 }
 
-function schedulePrompt(delay = SHOW_DELAY_MS) {
+function schedulePrompt(delay = 0) {
     if (showTimer) return;
     showTimer = window.setTimeout(showPrompt, delay);
 }
@@ -335,7 +335,7 @@ export function initInstallPrompt() {
     wireDomEvents();
     markReady();
 
-    if (isIosSafari()) schedulePrompt();
+    if (isIosSafari()) schedulePrompt(IOS_SHOW_DELAY_MS);
 }
 '''
 
@@ -391,14 +391,14 @@ test('install prompt stays hidden without an install path', async ({ page }) => 
     await expect(page.locator('#installPrompt')).toBeHidden();
 });
 
-test('install prompt shows benefits after the browser install event delay', async ({ page }) => {
+test('install prompt shows benefits when the browser install event fires', async ({ page }) => {
     await page.goto('/');
     await waitForPassage(page);
     await waitForInstallPromptReady(page);
     await fireBeforeInstallPrompt(page);
 
     const prompt = page.locator('#installPrompt');
-    await expect(prompt).toBeVisible({ timeout: 5000 });
+    await expect(prompt).toBeVisible({ timeout: 1000 });
     await expect(prompt).toContainText('Install Lege Lux?');
     await expect(prompt).toContainText('Home screen access');
     await expect(prompt).toContainText('Standalone app window');
@@ -411,7 +411,7 @@ test('install prompt button invokes the browser install prompt', async ({ page }
     await waitForInstallPromptReady(page);
     await fireBeforeInstallPrompt(page, 'accepted');
 
-    await expect(page.locator('#installPrompt')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#installPrompt')).toBeVisible({ timeout: 1000 });
     await page.locator('#installPromptInstall').click();
 
     await expect.poll(() => page.evaluate(() => window.__installPromptWasPrompted === true)).toBe(true);
@@ -425,7 +425,7 @@ test('install prompt dismissal stores a cooldown', async ({ page }) => {
     await waitForInstallPromptReady(page);
     await fireBeforeInstallPrompt(page, 'dismissed');
 
-    await expect(page.locator('#installPrompt')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#installPrompt')).toBeVisible({ timeout: 1000 });
     await page.locator('#installPromptLater').click();
 
     await expect(page.locator('#installPrompt')).toBeHidden();
