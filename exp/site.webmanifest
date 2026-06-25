@@ -26,14 +26,14 @@
   "screenshots": [
     {
       "src": "./screenshots/lege-lux-mobile-reading.png",
-      "sizes": "390x844",
+      "sizes": "780x1688",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Lege Lux reading view on mobile"
     },
     {
       "src": "./screenshots/lege-lux-desktop-reading.png",
-      "sizes": "1280x720",
+      "sizes": "2560x1440",
       "type": "image/png",
       "form_factor": "wide",
       "label": "Lege Lux reading view on desktop"
