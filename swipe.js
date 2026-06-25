@@ -302,24 +302,30 @@ export function initSwipe(app) {
             const absDx = Math.abs(dx);
             const absDy = Math.abs(dy);
 
-            if (absDx < 6 && absDy < 6) return;
+            const JITTER_PX = 6;
+            const SWIPE_MIN_X = 10;
+            const HORIZONTAL_DRIFT_RATIO = 1.35;
+            const VERTICAL_MIN_Y = 20;
+            const VERTICAL_DOMINANCE_RATIO = 1.75;
 
-            if (absDy > absDx * 1.25) {
-                app._dbgUserAction?.(`swipe vetoed: dx=${Math.round(dx)} dy=${Math.round(dy)}`);
+            if (absDx < JITTER_PX && absDy < JITTER_PX) return;
+
+            if (absDx >= SWIPE_MIN_X && absDy <= absDx * HORIZONTAL_DRIFT_RATIO) {
+                _tracking = true;
+                viewport.classList.add('swiping');
+
+                app.passageText.style.position = 'absolute';
+                app.passageText.style.top      = '0';
+                app.passageText.style.left     = '0';
+                app.passageText.style.width    = '100%';
+                viewport.style.height = app.passageText.offsetHeight + 'px';
+            } else if (absDy >= VERTICAL_MIN_Y && absDy > absDx * VERTICAL_DOMINANCE_RATIO) {
+                app._dbgUserAction?.(`swipe vetoed: vertical intent dx=${Math.round(dx)} dy=${Math.round(dy)}`);
                 _vetoed = true;
                 return;
+            } else {
+                return;
             }
-
-            if (absDx < 8) return;
-
-            _tracking = true;
-            viewport.classList.add('swiping');
-
-            app.passageText.style.position = 'absolute';
-            app.passageText.style.top      = '0';
-            app.passageText.style.left     = '0';
-            app.passageText.style.width    = '100%';
-            viewport.style.height = app.passageText.offsetHeight + 'px';
         }
 
         if (e.cancelable) {
