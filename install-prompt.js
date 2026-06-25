@@ -138,6 +138,17 @@ function schedulePrompt(delay = SHOW_DELAY_MS) {
     showTimer = window.setTimeout(showPrompt, delay);
 }
 
+function handleBeforeInstallPrompt(event) {
+    document.body.setAttribute('data-beforeinstallprompt-fired', 'true');
+    document.body.setAttribute('data-install-prompt-native-available', 'true');
+    event.preventDefault();
+    deferredInstallPrompt = event;
+
+    if (initialized) schedulePrompt();
+}
+
+window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
 async function installApp() {
     if (isIosSafari()) {
         dismissForCooldown();
@@ -196,14 +207,6 @@ export function initInstallPrompt() {
         return;
     }
 
-    window.addEventListener('beforeinstallprompt', (event) => {
-        document.body.setAttribute('data-beforeinstallprompt-fired', 'true');
-        document.body.setAttribute('data-install-prompt-native-available', 'true');
-        event.preventDefault();
-        deferredInstallPrompt = event;
-        schedulePrompt();
-    });
-
     window.addEventListener('appinstalled', () => {
         deferredInstallPrompt = null;
         document.body.setAttribute('data-install-prompt-native-available', 'false');
@@ -215,5 +218,5 @@ export function initInstallPrompt() {
     wireDomEvents();
     markReady();
 
-    if (isIosSafari()) schedulePrompt();
+    if (hasInstallPath() || isIosSafari()) schedulePrompt();
 }

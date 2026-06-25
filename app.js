@@ -73,6 +73,10 @@ function normalizeTranslation(t) { return TRANSLATION_ALIASES[t] || t; }
 
 const PASSAGE_CACHE_KEY = 'passageCache';
 
+const installPromptModulePromise = import('./install-prompt.js')
+    .then((module) => ({ module, error: null }))
+    .catch((error) => ({ module: null, error }));
+
 function withTimeout(promise, ms, fallback = null) {
     return Promise.race([
         promise.catch(() => fallback),
@@ -1400,11 +1404,15 @@ class BibleApp {
                 this._prefetchAdjacentBooks();
             }
 
-            void import('./install-prompt.js')
-                .then(({ initInstallPrompt }) => initInstallPrompt(this))
-                .catch((error) => {
-                    console.warn('Install prompt unavailable:', error);
-                    this._dbgEvent(`install prompt unavailable: ${error.message}`);
+            void installPromptModulePromise
+                .then(({ module, error }) => {
+                    if (error) {
+                        console.warn('Install prompt unavailable:', error);
+                        this._dbgEvent(`install prompt unavailable: ${error.message}`);
+                        return;
+                    }
+
+                    module.initInstallPrompt(this);
                 });
 
             this._startBackgroundAuthRestoration();
