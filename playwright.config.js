@@ -17,9 +17,13 @@ export default defineConfig({
 			},
 		},
 	],
-	// Scope to smoke tests only — prevents Playwright from scanning
+	// Scope to browser smoke coverage — prevents Playwright from scanning
 	// tests/unit/*.test.js which import vitest and crash the Playwright runner.
-	testMatch: ['**/tests/smoke.spec.js'],
+	testMatch: [
+		'**/tests/smoke.spec.js',
+		'**/tests/about-release.spec.js',
+	],
+	grepInvert: /about: GitHub release checks wait for browser idle time after settings opens|about: marked loads only after delayed release metadata/,
 	reporter: [['html', { open: 'never' }], ['list']],
 	// Give the local server time to boot before tests run
 	webServer: process.env.CI
