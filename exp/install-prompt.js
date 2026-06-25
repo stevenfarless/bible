@@ -1,9 +1,7 @@
 const DISMISSED_UNTIL_KEY = 'installPromptDismissedUntilV1';
 const INSTALLED_KEY = 'installPromptInstalledV1';
-const VISIT_COUNT_KEY = 'installPromptVisitCountV1';
 
 const DISMISS_DAYS = 30;
-const MIN_VISITS = 2;
 const SHOW_DELAY_MS = 2500;
 const MODAL_RETRY_MS = 1500;
 
@@ -32,6 +30,10 @@ function getStoredValue(key) {
 
 function setStoredValue(key, value) {
     try { localStorage.setItem(key, String(value)); } catch (_) {}
+}
+
+function markReady() {
+    document.body.setAttribute('data-install-prompt-ready', 'true');
 }
 
 function isStandalone() {
@@ -71,8 +73,7 @@ function shouldShowPrompt() {
     if (isStandalone()) return false;
     if (getStoredValue(INSTALLED_KEY) === 'true') return false;
     if (isDismissed()) return false;
-    if (!hasInstallPath()) return false;
-    return getStoredNumber(VISIT_COUNT_KEY) >= MIN_VISITS;
+    return hasInstallPath();
 }
 
 function getElements() {
@@ -179,10 +180,9 @@ export function initInstallPrompt() {
 
     if (isStandalone()) {
         setStoredValue(INSTALLED_KEY, 'true');
+        markReady();
         return;
     }
-
-    setStoredValue(VISIT_COUNT_KEY, getStoredNumber(VISIT_COUNT_KEY) + 1);
 
     window.addEventListener('beforeinstallprompt', (event) => {
         event.preventDefault();
@@ -197,6 +197,7 @@ export function initInstallPrompt() {
     });
 
     wireDomEvents();
+    markReady();
 
     if (isIosSafari()) schedulePrompt();
 }
