@@ -22,6 +22,8 @@ export default defineConfig({
 	testMatch: [
 		'**/tests/smoke.spec.js',
 		'**/tests/about-release.spec.js',
+		'**/tests/geek95-lazy-load.spec.js',
+		'**/tests/install-prompt.spec.js',
 	],
 	grepInvert: /about: GitHub release checks wait for browser idle time after settings opens|about: marked loads only after delayed release metadata/,
 	reporter: [['html', { open: 'never' }], ['list']],
