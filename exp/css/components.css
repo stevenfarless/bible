@@ -448,6 +448,65 @@ body.light-mode .crossref-item {
     border-left-color: var(--primary-color);
 }
 
+
+/* Source code links */
+.source-code-section {
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-neutral);
+}
+
+.source-code-section h3 {
+    margin: 0 0 var(--spacing-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-heading);
+}
+
+.source-code-links {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.source-code-link {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    min-height: 48px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--border-neutral);
+    border-radius: 6px;
+    background-color: var(--bg-raised);
+    color: var(--text-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+        background-color var(--transition-fast),
+        border-color var(--transition-fast),
+        color var(--transition-fast);
+}
+
+.source-code-link:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.source-code-link:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.source-code-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    fill: currentColor;
+}
+
 /* Help & Shortcuts */
 .shortcut-list {
     display: flex;
