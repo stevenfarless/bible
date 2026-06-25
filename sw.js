@@ -53,6 +53,7 @@ const APP_SHELL = [
   './css/base.css',
   './css/tokens.css',
   './css/fonts.css',
+  './css/optional-fonts.css',
   './css/themes.css',
   './css/layout.css',
   './css/components.css',
