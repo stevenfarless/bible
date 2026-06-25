@@ -58,11 +58,17 @@ jobs:
           grep -q "export function initInstallPrompt" install-prompt.js
           grep -q "beforeinstallprompt" install-prompt.js
           grep -q "appinstalled" install-prompt.js
+          grep -q "data-install-prompt-ready" install-prompt.js
           grep -q "'**/tests/install-prompt.spec.js'" playwright.config.js
           test -f tests/install-prompt.spec.js
 
           if grep -q 'INSTALL_PROMPT_DISMISSED_KEY' app.js; then
             echo "Old app.js install prompt implementation is still present."
+            exit 1
+          fi
+
+          if grep -q 'installPromptVisitCount\|VISIT_COUNT_KEY' install-prompt.js tests/install-prompt.spec.js; then
+            echo "Visit-count install prompt gating is still present."
             exit 1
           fi
 
@@ -119,8 +125,8 @@ jobs:
           git add index.html css/components.css app.js sw.js playwright.config.js install-prompt.js tests/install-prompt.spec.js
           git commit \
             -m "feat(pwa): add smart install prompt" \
-            -m "Replace the eager install banner with a delayed bottom-sheet prompt that appears only when Lege Lux is not already installed, waits until the reader is available, respects dismissal cooldowns, uses the Chromium beforeinstallprompt flow when available, and shows iOS Add to Home Screen instructions on Safari." \
-            -m "Add browser coverage for repeat-visit gating, install acceptance, dismissal cooldowns, standalone suppression, and the iOS instruction path." \
+            -m "Replace the eager install banner with a delayed bottom-sheet prompt that appears when Lege Lux is not already installed, waits until the reader is available, respects dismissal cooldowns, uses the Chromium beforeinstallprompt flow when available, and shows iOS Add to Home Screen instructions on Safari." \
+            -m "Add browser coverage for delay-based display, install acceptance, dismissal cooldowns, standalone suppression, and the iOS instruction path." \
             -m "Refs #415"
           git push origin exp
 
