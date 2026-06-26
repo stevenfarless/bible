@@ -1064,3 +1064,81 @@ body.uxorem-amo-theme .help-text,
 body.uxorem-amo-theme .verse-number {
     color: var(--text-muted);
 }
+
+/* Luna Lux theme */
+:root.luna-lux-theme,
+html.luna-lux-theme,
+body.luna-lux-theme {
+    --bg-base: #01051B;
+    --bg-card: #030A2C;
+    --bg-raised: #051149;
+
+    --text-heading: #F0A84A;
+    --text-body: #E7EAF6;
+    --text-muted: #9BA4C6;
+
+    --border-neutral: #2F3A6C;
+    --highlight-border: #655962;
+
+    --primary-color: #D29A36;
+    --primary-dark: #B68429;
+    --primary-light: #DBAF60;
+    --brand-secondary: #B979F2;
+    --section-heading-color: var(--brand-secondary);
+    --accent-color: #4BA6F7;
+
+    --success-color: #6FBF73;
+    --warning-color: #F2C14E;
+    --error-color: #E57373;
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.50);
+}
+
+body.luna-lux-theme,
+body.luna-lux-theme .main-content {
+    background-color: var(--bg-base);
+    color: var(--text-body);
+}
+
+body.luna-lux-theme .passage-container {
+    background-color: var(--bg-card);
+    color: var(--text-body);
+}
+
+body.luna-lux-theme .passage-title,
+body.luna-lux-theme .passage-text,
+body.luna-lux-theme .verse {
+    color: var(--text-body);
+}
+
+body.luna-lux-theme .top-chrome,
+body.luna-lux-theme .header,
+body.luna-lux-theme .navigation,
+body.luna-lux-theme .modal-content,
+body.luna-lux-theme .accordion-section,
+body.luna-lux-theme .accordion-panel,
+body.luna-lux-theme .settings-group,
+body.luna-lux-theme .input-field {
+    background-color: var(--bg-card);
+    color: var(--text-body);
+    border-color: var(--border-neutral);
+}
+
+body.luna-lux-theme .modal-header,
+body.luna-lux-theme .accordion-header,
+body.luna-lux-theme .selector-btn,
+body.luna-lux-theme .nav-btn,
+body.luna-lux-theme .icon-btn {
+    background-color: var(--bg-raised);
+    color: var(--text-heading);
+    border-color: var(--border-neutral);
+}
+
+body.luna-lux-theme .help-text,
+body.luna-lux-theme .verse-number {
+    color: var(--text-muted);
+}
