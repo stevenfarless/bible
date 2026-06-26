@@ -110,6 +110,17 @@ def remove_index_theme(index, theme_id):
     return index
 
 
+def add_index_theme_allowlist(index, theme_id):
+    pattern = re.compile(r"(var valid = \{)([^}]*)(\};)")
+    match = pattern.search(index)
+    if not match:
+        raise SystemExit("Could not find insertion point for prepaint theme allowlist")
+
+    body = match.group(2).strip()
+    updated_body = f"{body}, '{theme_id}': 1" if body else f"'{theme_id}': 1"
+    return index[:match.start()] + f"{match.group(1)} {updated_body} {match.group(3)}" + index[match.end():]
+
+
 def remove_ui_theme(ui, theme_id):
     theme_class = f"{theme_id}-theme"
     ui = ui.replace(f", '{theme_class}'", "")
@@ -249,7 +260,7 @@ body.{theme_id}-theme .verse-number {{
     mode_label = "Light | Dark" if mode == "both" else mode.title()
     option = f'\t\t\t\t\t\t\t\t\t<option value="{option_value}">{html.escape(name)} ({mode_label})</option>\n'
     index = replace_once(index, '\t\t\t\t\t\t\t\t</select>', option + '\t\t\t\t\t\t\t\t</select>', "theme selector option")
-    index = replace_once(index, "vigil: 1 };", f"vigil: 1, '{theme_id}': 1 }};", "prepaint theme allowlist")
+    index = add_index_theme_allowlist(index, theme_id)
     INDEX_FILE.write_text(index)
 
     theme_class = f"{theme_id}-theme"
