@@ -61,6 +61,7 @@ const APP_SHELL = [
   './css/interactions.css',
   './css/utilities.css',
   './css/pericope.css',
+  './css/luna-lux.css',
   './css/geek95.css',
   './app.js',
   './install-prompt.js',
