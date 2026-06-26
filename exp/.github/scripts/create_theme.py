@@ -128,6 +128,17 @@ def remove_ui_theme(ui, theme_id):
     return ui
 
 
+def add_ui_theme_class(ui, theme_class):
+    pattern = re.compile(r"(const ALL_THEME_CLASSES = \[)([^\]]*)(\];)", re.S)
+    match = pattern.search(ui)
+    if not match:
+        raise SystemExit("Could not find insertion point for theme class list")
+
+    body = match.group(2).strip()
+    updated_body = f"{body}, '{theme_class}'" if body else f"'{theme_class}'"
+    return ui[:match.start()] + f"{match.group(1)}{updated_body}{match.group(3)}" + ui[match.end():]
+
+
 def resolve_theme_id(initial_theme_id):
     action = optional("EXISTING_THEME_ACTION") or "stop"
     if action not in {"stop", "overwrite", "rename"}:
@@ -264,7 +275,7 @@ body.{theme_id}-theme .verse-number {{
     INDEX_FILE.write_text(index)
 
     theme_class = f"{theme_id}-theme"
-    ui = replace_once(ui, "'gnome-theme'];", f"'gnome-theme', '{theme_class}'];", "theme class list")
+    ui = add_ui_theme_class(ui, theme_class)
     light_bg = light_values["bg_base"] if light_values else dark_values["bg_base"]
     bg_entry = f"\t'{theme_class}':        {{ dark: '{dark_values['bg_base']}', light: '{light_bg}' }},\n"
     ui = replace_once(ui, "};\n\nexport function updateThemeColor()", bg_entry + "};\n\nexport function updateThemeColor()", "theme-color background map")
