@@ -280,7 +280,7 @@ const THEME_BG = {
 	'vespers-theme':      { dark: '#1a1714', light: '#f5f2ec' },
 	'vigil-theme':        { dark: '#000000', light: '#f5f2ec' },
 	'uxorem-amo-theme':        { dark: '#161018', light: '#F9F2F6' },
-	'luna-lux-theme':        { dark: '#02051C', light: '#F3F7FF' },
+	'luna-lux-theme':        { dark: '#000816', light: '#F5F8FF' },
 };
 
 export function updateThemeColor() {
