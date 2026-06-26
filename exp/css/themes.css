@@ -1069,23 +1069,23 @@ body.uxorem-amo-theme .verse-number {
 :root.luna-lux-theme,
 html.luna-lux-theme,
 body.luna-lux-theme {
-    --bg-base: #02051C;
+    --bg-base: #000816;
     --bg-card: #030A2C;
     --bg-raised: #051149;
 
-    --text-heading: #EFA15A;
-    --text-body: #DCE2F4;
-    --text-muted: #A3ABCC;
+    --text-heading: #D8DCEE;
+    --text-body: #E4E8F4;
+    --text-muted: #8790AE;
 
-    --border-neutral: #313C6E;
-    --highlight-border: #665868;
+    --border-neutral: #293565;
+    --highlight-border: #5A648B;
 
-    --primary-color: #B27634;
-    --primary-dark: #92612B;
-    --primary-light: #CB8F4E;
-    --brand-secondary: #A47BD8;
+    --primary-color: #DEA052;
+    --primary-dark: #D78D30;
+    --primary-light: #E6B87D;
+    --brand-secondary: #A66FD8;
     --section-heading-color: var(--brand-secondary);
-    --accent-color: #4C91D1;
+    --accent-color: #63B5E6;
 
     --success-color: #6FBF73;
     --warning-color: #F2C14E;
@@ -1101,23 +1101,23 @@ body.luna-lux-theme {
 :root.luna-lux-theme.light-mode,
 html.luna-lux-theme.light-mode,
 body.luna-lux-theme.light-mode {
-    --bg-base: #F3F7FF;
-    --bg-card: #E9F0FA;
-    --bg-raised: #D8E5F6;
+    --bg-base: #F5F8FF;
+    --bg-card: #EAF0FA;
+    --bg-raised: #DAE4F6;
 
-    --text-heading: #8B5525;
-    --text-body: #17213E;
-    --text-muted: #66718F;
+    --text-heading: #24304A;
+    --text-body: #18233C;
+    --text-muted: #68718A;
 
-    --border-neutral: #C3D0E3;
-    --highlight-border: #B3AEAE;
+    --border-neutral: #C5CFE3;
+    --highlight-border: #98A2B8;
 
-    --primary-color: #B27634;
-    --primary-dark: #92612B;
-    --primary-light: #CB8F4E;
-    --brand-secondary: #7459AA;
+    --primary-color: #B87534;
+    --primary-dark: #98612B;
+    --primary-light: #CE8F51;
+    --brand-secondary: #7651B8;
     --section-heading-color: var(--brand-secondary);
-    --accent-color: #2F78B7;
+    --accent-color: #2F7FAF;
 
     --success-color: #2E7D32;
     --warning-color: #9A6700;
