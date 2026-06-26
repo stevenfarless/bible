@@ -1069,23 +1069,23 @@ body.uxorem-amo-theme .verse-number {
 :root.luna-lux-theme,
 html.luna-lux-theme,
 body.luna-lux-theme {
-    --bg-base: #01051B;
+    --bg-base: #02051C;
     --bg-card: #030A2C;
     --bg-raised: #051149;
 
-    --text-heading: #F0A84A;
-    --text-body: #E7EAF6;
-    --text-muted: #9BA4C6;
+    --text-heading: #EFA15A;
+    --text-body: #DCE2F4;
+    --text-muted: #A3ABCC;
 
-    --border-neutral: #2F3A6C;
-    --highlight-border: #655962;
+    --border-neutral: #313C6E;
+    --highlight-border: #665868;
 
-    --primary-color: #D29A36;
-    --primary-dark: #B68429;
-    --primary-light: #DBAF60;
-    --brand-secondary: #B979F2;
+    --primary-color: #B27634;
+    --primary-dark: #92612B;
+    --primary-light: #CB8F4E;
+    --brand-secondary: #A47BD8;
     --section-heading-color: var(--brand-secondary);
-    --accent-color: #4BA6F7;
+    --accent-color: #4C91D1;
 
     --success-color: #6FBF73;
     --warning-color: #F2C14E;
@@ -1096,6 +1096,38 @@ body.luna-lux-theme {
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
     --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.45);
     --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.50);
+}
+
+:root.luna-lux-theme.light-mode,
+html.luna-lux-theme.light-mode,
+body.luna-lux-theme.light-mode {
+    --bg-base: #F3F7FF;
+    --bg-card: #E9F0FA;
+    --bg-raised: #D8E5F6;
+
+    --text-heading: #8B5525;
+    --text-body: #17213E;
+    --text-muted: #66718F;
+
+    --border-neutral: #C3D0E3;
+    --highlight-border: #B3AEAE;
+
+    --primary-color: #B27634;
+    --primary-dark: #92612B;
+    --primary-light: #CB8F4E;
+    --brand-secondary: #7459AA;
+    --section-heading-color: var(--brand-secondary);
+    --accent-color: #2F78B7;
+
+    --success-color: #2E7D32;
+    --warning-color: #9A6700;
+    --error-color: #B3261E;
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.16);
 }
 
 body.luna-lux-theme,
