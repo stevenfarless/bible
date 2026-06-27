@@ -73,14 +73,14 @@ function writeJsonStorage(storage, key, value) {
 }
 
 function removeStorage(storage, key) {
-    try { storage?.removeItem(key); } catch (_) {}
+    try { storage?.removeItem(key); } catch (_) { }
 }
 
 function getFallbackPreference() {
     try {
         const stored = localStorage.getItem('translationFallback');
         if (BUILT_IN_TRANSLATIONS.has(stored)) return stored;
-    } catch (_) {}
+    } catch (_) { }
     return 'KJV';
 }
 
@@ -88,7 +88,7 @@ function setActiveTranslationWithoutLoading(app, translation) {
     app.state.translation = translation;
     app.bibleApi.setTranslation(translation);
 
-    try { localStorage.setItem('translation', translation); } catch (_) {}
+    try { localStorage.setItem('translation', translation); } catch (_) { }
 
     if (app.currentTranslationSpan) {
         app.currentTranslationSpan.textContent = translation;
@@ -632,7 +632,7 @@ async function downloadSelectedTranslations(app) {
 async function useFallback(app, translation) {
     if (!BUILT_IN_TRANSLATIONS.has(translation)) return;
 
-    try { localStorage.setItem('translationFallback', translation); } catch (_) {}
+    try { localStorage.setItem('translationFallback', translation); } catch (_) { }
     dismissTranslationSyncForSession(app);
     app.closeModal(app.translationSyncModal);
     await app.changeTranslation(translation, { syncPreference: false });

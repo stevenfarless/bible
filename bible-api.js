@@ -28,25 +28,25 @@ const REPO_TRANSLATIONS = new Set([
 ]);
 
 const BOOK_LOAD_ORDER = [
-    'Genesis','Exodus','Leviticus','Numbers','Deuteronomy',
-    'Joshua','Judges','Ruth','1 Samuel','2 Samuel',
-    '1 Kings','2 Kings','1 Chronicles','2 Chronicles',
-    'Ezra','Nehemiah','Esther','Job','Psalm','Proverbs',
-    'Ecclesiastes','Song of Solomon','Isaiah','Jeremiah',
-    'Lamentations','Ezekiel','Daniel','Hosea','Joel','Amos',
-    'Obadiah','Jonah','Micah','Nahum','Habakkuk','Zephaniah',
-    'Haggai','Zechariah','Malachi','Matthew','Mark','Luke',
-    'John','Acts','Romans','1 Corinthians','2 Corinthians',
-    'Galatians','Ephesians','Philippians','Colossians',
-    '1 Thessalonians','2 Thessalonians','1 Timothy','2 Timothy',
-    'Titus','Philemon','Hebrews','James','1 Peter','2 Peter',
-    '1 John','2 John','3 John','Jude','Revelation',
+    'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
+    'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
+    '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles',
+    'Ezra', 'Nehemiah', 'Esther', 'Job', 'Psalm', 'Proverbs',
+    'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah',
+    'Lamentations', 'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos',
+    'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk', 'Zephaniah',
+    'Haggai', 'Zechariah', 'Malachi', 'Matthew', 'Mark', 'Luke',
+    'John', 'Acts', 'Romans', '1 Corinthians', '2 Corinthians',
+    'Galatians', 'Ephesians', 'Philippians', 'Colossians',
+    '1 Thessalonians', '2 Thessalonians', '1 Timothy', '2 Timothy',
+    'Titus', 'Philemon', 'Hebrews', 'James', '1 Peter', '2 Peter',
+    '1 John', '2 John', '3 John', 'Jude', 'Revelation',
     // Deuterocanon
-    'Additions to Esther','Bel and the Dragon','Prayer of Manasseh','Letter of Jeremiah',
-    'Prayer of Azariah','Wisdom of Solomon','2 Maccabees','4 Maccabees',
-    '3 Maccabees','1 Maccabees','Psalm 151','1 Esdras',
-    '2 Esdras','Susanna','Sirach','Baruch',
-    'Judith','Tobit',
+    'Additions to Esther', 'Bel and the Dragon', 'Prayer of Manasseh', 'Letter of Jeremiah',
+    'Prayer of Azariah', 'Wisdom of Solomon', '2 Maccabees', '4 Maccabees',
+    '3 Maccabees', '1 Maccabees', 'Psalm 151', '1 Esdras',
+    '2 Esdras', 'Susanna', 'Sirach', 'Baruch',
+    'Judith', 'Tobit',
 ];
 
 const REFERENCE_PATTERN_RE = /^(?:\*|(?:[1-3]\s+)?[A-Za-z][A-Za-z ]*?)\s+(?:\*|\d+)(?::(?:\*|\d+))?$/i;
@@ -387,7 +387,7 @@ export class BibleApi {
                 const index = (data && typeof data === 'object' && Object.keys(data).length > 0) ? data : null;
                 this._searchIndexCache.set(translation, index);
                 if (isRepo && !PRECACHED_TRANSLATIONS.has(translation) && index !== null) {
-                    idbPutSearchIndex(translation, index).catch(() => {});
+                    idbPutSearchIndex(translation, index).catch(() => { });
                 }
                 return index;
             } catch (err) {
@@ -515,10 +515,10 @@ export class BibleApi {
             const m = str.match(re);
             if (m) {
                 return {
-                    book:       name,
-                    chapter:    parseInt(m[2], 10),
+                    book: name,
+                    chapter: parseInt(m[2], 10),
                     verseStart: m[3] ? parseInt(m[3], 10) : null,
-                    verseEnd:   m[4] ? parseInt(m[4], 10) : null,
+                    verseEnd: m[4] ? parseInt(m[4], 10) : null,
                 };
             }
         }
@@ -526,10 +526,10 @@ export class BibleApi {
         const m = str.match(/^((?:[1-3]\s+)?[A-Za-z ]+?)\s+(\d+)(?:[:\s](\d+)(?:-(\d+))?)?$/);
         if (!m) return null;
         return {
-            book:       m[1].trim(),
-            chapter:    parseInt(m[2], 10),
+            book: m[1].trim(),
+            chapter: parseInt(m[2], 10),
             verseStart: m[3] ? parseInt(m[3], 10) : null,
-            verseEnd:   m[4] ? parseInt(m[4], 10) : null,
+            verseEnd: m[4] ? parseInt(m[4], 10) : null,
         };
     }
 
@@ -648,9 +648,9 @@ export class BibleApi {
             const spaceIdx = ref.lastIndexOf(' ', colonIdx);
             matched.push({
                 ref,
-                book:    ref.slice(0, spaceIdx),
+                book: ref.slice(0, spaceIdx),
                 chapter: Number(ref.slice(spaceIdx + 1, colonIdx)),
-                verse:   Number(ref.slice(colonIdx + 1)),
+                verse: Number(ref.slice(colonIdx + 1)),
             });
         }
         matched.sort((a, b) => {
@@ -782,11 +782,11 @@ export class BibleApi {
                         if (!isMatch) continue;
                         batchResults.push({
                             reference,
-                            content:   verseText,
+                            content: verseText,
                             book,
-                            chapter:   Number(chapterStr),
-                            verse:     Number(verseStr),
-                            text:      verseText,
+                            chapter: Number(chapterStr),
+                            verse: Number(verseStr),
+                            text: verseText,
                         });
                     }
                 }
@@ -853,8 +853,8 @@ export class BibleApi {
                     const originalText = resolvedBookData?.[String(chapter)]?.[String(verse)];
                     const text = originalText != null ? String(originalText) : searchIndex[ref];
                     supplemental.push({
-                        reference:         ref,
-                        content:           text,
+                        reference: ref,
+                        content: text,
                         book,
                         chapter,
                         verse,

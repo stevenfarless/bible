@@ -24,13 +24,13 @@
         font-size: 0.8rem;
     }
 
-    .selector-btn > span {
+    .selector-btn>span {
         flex: 1 1 auto;
         min-width: 0;
         text-align: center;
     }
 
-    .selector-btn > svg {
+    .selector-btn>svg {
         display: none;
     }
 
@@ -150,6 +150,7 @@
 }
 
 @media (max-width: 380px) {
+
     .nav-content,
     .passage-selector {
         gap: 3px;
@@ -181,8 +182,13 @@
    ================================ */
 
 /* Mobile default: show abbr, hide full */
-#currentBook .book-abbr { display: inline; }
-#currentBook .book-full { display: none; }
+#currentBook .book-abbr {
+    display: inline;
+}
+
+#currentBook .book-full {
+    display: none;
+}
 
 /* Truncate long book names rather than wrapping or overflowing */
 #currentBook {
@@ -194,8 +200,13 @@
 }
 
 @media (min-width: 640px) {
-    #currentBook .book-abbr { display: none; }
-    #currentBook .book-full { display: inline; }
+    #currentBook .book-abbr {
+        display: none;
+    }
+
+    #currentBook .book-full {
+        display: inline;
+    }
 }
 
 /* Modal scrollbars */
@@ -233,7 +244,9 @@
    11. UTILITY CLASSES
    ================================ */
 
-.hidden { display: none !important; }
+.hidden {
+    display: none !important;
+}
 
 .auth-switch a {
     text-decoration: underline;
@@ -388,6 +401,7 @@ html .passage-text {
    ================================ */
 
 @media print {
+
     .header,
     .navigation,
     .modal,

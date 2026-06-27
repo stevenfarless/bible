@@ -155,14 +155,14 @@ describe('clampVerseRange', () => {
 // filterVerseNumbers — verse range filtering
 // ---------------------------------------------------------------------------
 describe('filterVerseNumbers', () => {
-    const keys = ['1','2','3','4','5','6','7','8'];
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
     it('returns all verses when range is null', () => {
-        expect(filterVerseNumbers(keys, null, null)).toEqual([1,2,3,4,5,6,7,8]);
+        expect(filterVerseNumbers(keys, null, null)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
     });
 
     it('returns only verses in range', () => {
-        expect(filterVerseNumbers(keys, 3, 5)).toEqual([3,4,5]);
+        expect(filterVerseNumbers(keys, 3, 5)).toEqual([3, 4, 5]);
     });
 
     it('returns empty array when range is out of bounds', () => {

@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 
                 try {
                         localStorage.setItem('syncPromptDismissedV1', '1');
-                } catch (_) {}
+                } catch (_) { }
         });
 });
 

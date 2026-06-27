@@ -27,7 +27,7 @@ async function waitForInstallPromptReady(page) {
 async function fireBeforeInstallPrompt(page, outcome = 'accepted') {
     await page.evaluate((choice) => {
         const event = new Event('beforeinstallprompt');
-        event.preventDefault = () => {};
+        event.preventDefault = () => { };
         event.prompt = () => { window.__installPromptWasPrompted = true; };
         event.userChoice = Promise.resolve({ outcome: choice, platform: 'web' });
         window.dispatchEvent(event);
@@ -36,7 +36,7 @@ async function fireBeforeInstallPrompt(page, outcome = 'accepted') {
 
 test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-        try { localStorage.setItem('syncPromptDismissedV1', '1'); } catch (_) {}
+        try { localStorage.setItem('syncPromptDismissedV1', '1'); } catch (_) { }
     });
 });
 
@@ -99,10 +99,10 @@ test('install prompt is suppressed in standalone display mode', async ({ page })
                     matches: true,
                     media: query,
                     onchange: null,
-                    addListener() {},
-                    removeListener() {},
-                    addEventListener() {},
-                    removeEventListener() {},
+                    addListener() { },
+                    removeListener() { },
+                    addEventListener() { },
+                    removeEventListener() { },
                     dispatchEvent() { return false; },
                 };
             }

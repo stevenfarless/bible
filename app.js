@@ -125,14 +125,14 @@ function _classifyFetchUrl(rawUrl) {
 const _fetchLog = [];
 const _originalFetch = window.fetch.bind(window);
 window.fetch = async function patchedFetch(input, init) {
-    const url   = typeof input === 'string' ? input : (input?.url ?? String(input));
+    const url = typeof input === 'string' ? input : (input?.url ?? String(input));
     const start = ms();
-    let status  = '?';
-    let ok      = false;
+    let status = '?';
+    let ok = false;
     try {
         const res = await _originalFetch(input, init);
         status = res.status;
-        ok     = res.ok;
+        ok = res.ok;
         return res;
     } catch (err) {
         status = `ERR(${err.message})`;
@@ -175,23 +175,23 @@ function buildDebugReport(app) {
     const now = ms();
 
     // ── Device / browser ──────────────────────────────────────────────────
-    const ua        = navigator.userAgent;
-    const platform  = navigator.platform || 'unknown';
-    const vw        = window.innerWidth;
-    const vh        = window.innerHeight;
-    const dpr       = window.devicePixelRatio ?? 1;
-    const touchDev  = ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 'yes' : 'no';
-    const online    = navigator.onLine ? 'online' : 'OFFLINE';
-    const connType  = navigator.connection?.effectiveType ?? 'unknown';
-    const connDown  = navigator.connection?.downlink != null ? `${navigator.connection.downlink} Mbps` : 'unknown';
-    const buildId   = document.querySelector('meta[name="build-id"]')?.content || '__BUILD_ID__';
+    const ua = navigator.userAgent;
+    const platform = navigator.platform || 'unknown';
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const dpr = window.devicePixelRatio ?? 1;
+    const touchDev = ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 'yes' : 'no';
+    const online = navigator.onLine ? 'online' : 'OFFLINE';
+    const connType = navigator.connection?.effectiveType ?? 'unknown';
+    const connDown = navigator.connection?.downlink != null ? `${navigator.connection.downlink} Mbps` : 'unknown';
+    const buildId = document.querySelector('meta[name="build-id"]')?.content || '__BUILD_ID__';
     const swController = navigator.serviceWorker?.controller?.scriptURL ?? 'none';
     const hapticsDebug = getHapticsDebugState(app);
 
     // ── Firebase connectivity ─────────────────────────────────────────────
-    const fbConnected = dbg.firebaseConnected === true  ? 'connected ✓'
-                      : dbg.firebaseConnected === false ? 'DISCONNECTED ✗'
-                      : 'unknown (listener not yet fired)';
+    const fbConnected = dbg.firebaseConnected === true ? 'connected ✓'
+        : dbg.firebaseConnected === false ? 'DISCONNECTED ✗'
+            : 'unknown (listener not yet fired)';
 
     const LS_KEYS = [
         'readingPosition', 'passageCache',
@@ -239,21 +239,21 @@ function buildDebugReport(app) {
     const snap = dbg.stateAtLoad || {};
     const diffs = [];
     const cur = {
-        book:        app?.state?.currentBook,
-        chapter:     app?.state?.currentChapter,
+        book: app?.state?.currentBook,
+        chapter: app?.state?.currentChapter,
         translation: app?.state?.translation,
-        colorTheme:  app?.state?.colorTheme,
-        lightMode:   app?.state?.lightMode,
-        fontSize:            app?.state?.fontSize,
-        readingFont:         app?.state?.readingFont,
+        colorTheme: app?.state?.colorTheme,
+        lightMode: app?.state?.lightMode,
+        fontSize: app?.state?.fontSize,
+        readingFont: app?.state?.readingFont,
         verseSelectionGesture: app?.state?.verseSelectionGesture,
-        showVerseNumbers:    app?.state?.showVerseNumbers,
+        showVerseNumbers: app?.state?.showVerseNumbers,
         coloredVerseNumbers: app?.state?.coloredVerseNumbers,
-        showHeadings:        app?.state?.showHeadings,
-        verseByVerse:        app?.state?.verseByVerse,
-        showChapterArrows:   app?.state?.showChapterArrows,
+        showHeadings: app?.state?.showHeadings,
+        verseByVerse: app?.state?.verseByVerse,
+        showChapterArrows: app?.state?.showChapterArrows,
         hideInterfaceOnScroll: app?.state?.hideInterfaceOnScroll,
-        scrollY:             window.scrollY,
+        scrollY: window.scrollY,
     };
     for (const [k, v] of Object.entries(cur)) {
         const was = snap[k];
@@ -261,14 +261,14 @@ function buildDebugReport(app) {
     }
 
     const api = app?.bibleApi;
-    const bookCacheKeys   = api?._bookCache         ? [...api._bookCache.keys()]         : [];
-    const searchCacheKeys = api?._searchIndexCache  ? [...api._searchIndexCache.keys()]  : [];
+    const bookCacheKeys = api?._bookCache ? [...api._bookCache.keys()] : [];
+    const searchCacheKeys = api?._searchIndexCache ? [...api._searchIndexCache.keys()] : [];
 
     // ── Network log: group by source ──────────────────────────────────────
-    const localFetches    = _fetchLog.filter(f => f.src === 'local');
+    const localFetches = _fetchLog.filter(f => f.src === 'local');
     const firebaseFetches = _fetchLog.filter(f => f.src === 'firebase');
-    const otherFetches    = _fetchLog.filter(f => f.src === 'other');
-    const errorFetches    = _fetchLog.filter(f => !f.ok);
+    const otherFetches = _fetchLog.filter(f => f.src === 'other');
+    const errorFetches = _fetchLog.filter(f => !f.ok);
 
     const fmtFetch = (f) => {
         const shortUrl = f.url.replace(/^https?:\/\/[^/]+/, '').replace(/\.json(\?.*)?$/, '.json');
@@ -329,39 +329,39 @@ function buildDebugReport(app) {
         },
     };
 
-        const installPromptEl = document.getElementById('installPrompt');
-        const installPromptInstall = document.getElementById('installPromptInstall');
-        const iosInstallSteps = document.getElementById('iosInstallSteps');
-        const installDismissedUntil = Number(ls.installPromptDismissedUntilV1);
-        const installDismissedActive = Number.isFinite(installDismissedUntil) && installDismissedUntil > Date.now();
-        const installBlockingUi = document.querySelector('.modal.active')
-            ? 'modal'
-            : document.querySelector('.search-container.active')
-                ? 'search'
-                : 'none';
-        const installUa = navigator.userAgent || '';
-        const installIos = /iPad|iPhone|iPod/.test(installUa) ||
-            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        const installSafari = /Safari/.test(installUa) &&
-            !/CriOS|FxiOS|EdgiOS|OPiOS/.test(installUa);
-        const installIosSafari = installIos && installSafari;
-        const installPromptDiagnostics = [
-            `  ready: ${document.body.dataset.installPromptReady ?? '(not set)'}`,
-            `  beforeinstallpromptFired: ${document.body.dataset.beforeinstallpromptFired ?? '(not set)'}`,
-            `  nativePromptAvailable: ${document.body.dataset.installPromptNativeAvailable ?? '(not set)'}`,
-            `  visible: ${document.body.dataset.installPromptVisible ?? '(not set)'}`,
-            `  hiddenAttribute: ${installPromptEl ? String(installPromptEl.hidden) : 'n/a'}`,
-            `  ariaHidden: ${installPromptEl?.getAttribute('aria-hidden') ?? 'n/a'}`,
-            `  installButtonText: ${installPromptInstall?.textContent?.trim() || 'n/a'}`,
-            `  iosInstructionsVisible: ${iosInstallSteps ? String(!iosInstallSteps.hidden) : 'n/a'}`,
-            `  standaloneDisplayMode: ${window.matchMedia('(display-mode: standalone)').matches}`,
-            `  navigatorStandalone: ${window.navigator.standalone ?? 'n/a'}`,
-            `  iOS Safari path: ${installIosSafari}`,
-            `  blocking UI: ${installBlockingUi}`,
-            `  installPromptInstalledV1: ${ls.installPromptInstalledV1}`,
-            `  installPromptDismissedUntilV1: ${ls.installPromptDismissedUntilV1}`,
-            `  dismissedActive: ${installDismissedActive}`,
-        ];
+    const installPromptEl = document.getElementById('installPrompt');
+    const installPromptInstall = document.getElementById('installPromptInstall');
+    const iosInstallSteps = document.getElementById('iosInstallSteps');
+    const installDismissedUntil = Number(ls.installPromptDismissedUntilV1);
+    const installDismissedActive = Number.isFinite(installDismissedUntil) && installDismissedUntil > Date.now();
+    const installBlockingUi = document.querySelector('.modal.active')
+        ? 'modal'
+        : document.querySelector('.search-container.active')
+            ? 'search'
+            : 'none';
+    const installUa = navigator.userAgent || '';
+    const installIos = /iPad|iPhone|iPod/.test(installUa) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const installSafari = /Safari/.test(installUa) &&
+        !/CriOS|FxiOS|EdgiOS|OPiOS/.test(installUa);
+    const installIosSafari = installIos && installSafari;
+    const installPromptDiagnostics = [
+        `  ready: ${document.body.dataset.installPromptReady ?? '(not set)'}`,
+        `  beforeinstallpromptFired: ${document.body.dataset.beforeinstallpromptFired ?? '(not set)'}`,
+        `  nativePromptAvailable: ${document.body.dataset.installPromptNativeAvailable ?? '(not set)'}`,
+        `  visible: ${document.body.dataset.installPromptVisible ?? '(not set)'}`,
+        `  hiddenAttribute: ${installPromptEl ? String(installPromptEl.hidden) : 'n/a'}`,
+        `  ariaHidden: ${installPromptEl?.getAttribute('aria-hidden') ?? 'n/a'}`,
+        `  installButtonText: ${installPromptInstall?.textContent?.trim() || 'n/a'}`,
+        `  iosInstructionsVisible: ${iosInstallSteps ? String(!iosInstallSteps.hidden) : 'n/a'}`,
+        `  standaloneDisplayMode: ${window.matchMedia('(display-mode: standalone)').matches}`,
+        `  navigatorStandalone: ${window.navigator.standalone ?? 'n/a'}`,
+        `  iOS Safari path: ${installIosSafari}`,
+        `  blocking UI: ${installBlockingUi}`,
+        `  installPromptInstalledV1: ${ls.installPromptInstalledV1}`,
+        `  installPromptDismissedUntilV1: ${ls.installPromptDismissedUntilV1}`,
+        `  dismissedActive: ${installDismissedActive}`,
+    ];
 
     const timings = [
         `  scriptStart:          ${ts(dbg.t_script_start)}`,
@@ -406,7 +406,7 @@ function buildDebugReport(app) {
         '=== state changes since load ===',
         diffs.length ? diffs.join('\n') : '  (none)',
         '',
-                '=== localStorage ===',
+        '=== localStorage ===',
         ...Object.entries(ls).map(([k, v]) => `  ${k}: ${v}`),
         '',
         '=== install prompt diagnostics ===',
@@ -543,7 +543,7 @@ function showDebugPanel(app) {
             const allKeys = [];
             for (const name of cacheNames) {
                 const cache = await caches.open(name);
-                const keys  = await cache.keys();
+                const keys = await cache.keys();
                 allKeys.push(`  [${name}] ${keys.length} entries`);
                 for (const req of keys.slice(0, 20)) {
                     const shortUrl = req.url.replace(/^https?:\/\/[^/]+/, '');
@@ -684,7 +684,7 @@ function _readSavedPosition() {
         if (!raw) return null;
         const pos = JSON.parse(raw);
         if (pos?.book && pos?.chapter) return { book: pos.book, chapter: parseInt(pos.chapter, 10) };
-    } catch (_) {}
+    } catch (_) { }
     return null;
 }
 
@@ -753,13 +753,13 @@ class BibleApp {
         this.scrollTimeout = null;
         this.lastScrollPosition = 0;
         this.chromeHidden = false;
-        this.chromeScrollAnchorY  = 0;
-        this.chromeLastY          = 0;
-        this.chromeLastDirection  = null;
-        this.chromeDelta          = 8;
-        this.chromeHideOffset     = 80;
-        this.chromeScrollTicking  = false;
-        this.chromeSuspend        = false;
+        this.chromeScrollAnchorY = 0;
+        this.chromeLastY = 0;
+        this.chromeLastDirection = null;
+        this.chromeDelta = 8;
+        this.chromeHideOffset = 80;
+        this.chromeScrollTicking = false;
+        this.chromeSuspend = false;
 
         this.showChrome = () => {
             if (!this.chromeHidden) return;
@@ -787,7 +787,7 @@ class BibleApp {
             this.chromeScrollTicking = true;
             if (this.chromeSuspend) {
                 this.chromeScrollAnchorY = window.scrollY || window.pageYOffset || 0;
-                this.chromeLastY         = window.scrollY || window.pageYOffset || 0;
+                this.chromeLastY = window.scrollY || window.pageYOffset || 0;
                 this.chromeLastDirection = null;
                 this.chromeScrollTicking = false;
                 return;
@@ -802,10 +802,10 @@ class BibleApp {
                     return;
                 }
 
-                const y           = window.scrollY || window.pageYOffset || 0;
-                const direction   = y > this.chromeLastY ? 'down' : y < this.chromeLastY ? 'up' : this.chromeLastDirection;
-                const modalOpen   = !!document.querySelector('.modal.active');
-                const searchOpen  = !!this.searchContainer?.classList.contains('active');
+                const y = window.scrollY || window.pageYOffset || 0;
+                const direction = y > this.chromeLastY ? 'down' : y < this.chromeLastY ? 'up' : this.chromeLastDirection;
+                const modalOpen = !!document.querySelector('.modal.active');
+                const searchOpen = !!this.searchContainer?.classList.contains('active');
 
                 if (y <= 0 || modalOpen || searchOpen) {
                     this.showChrome();
@@ -817,7 +817,7 @@ class BibleApp {
                         this.chromeLastDirection = direction;
                     }
                     const movement = y - this.chromeScrollAnchorY;
-                    if (movement >  this.chromeDelta && y > this.chromeHideOffset) this.hideChrome();
+                    if (movement > this.chromeDelta && y > this.chromeHideOffset) this.hideChrome();
                     if (movement < -this.chromeDelta) this.showChrome();
                 }
 
@@ -929,10 +929,9 @@ class BibleApp {
                             database.onConnected((connected) => {
                                 this._dbg.firebaseConnected = connected;
                                 this._dbgEvent(
-                                    `firebase: ${
-                                        connected
-                                            ? 'connected'
-                                            : 'disconnected'
+                                    `firebase: ${connected
+                                        ? 'connected'
+                                        : 'disconnected'
                                     }`
                                 );
                             });
@@ -1081,15 +1080,15 @@ class BibleApp {
 
     _startBackgroundAuthRestoration() {
         if (this._authRestorationScheduled) return;
-    
+
         this._authRestorationScheduled = true;
         this._dbg.t_auth_restore_scheduled = ms();
         this._dbgEvent('auth restoration: scheduled after reader reveal');
-    
+
         const restore = () => {
             void this._restoreAuthSession();
         };
-    
+
         const runWhenIdle = () => {
             if ('requestIdleCallback' in window) {
                 window.requestIdleCallback(restore, { timeout: 10000 });
@@ -1153,10 +1152,10 @@ class BibleApp {
         );
     }
 
-    getAllBooks()          { return getAllBooks(this); }
+    getAllBooks() { return getAllBooks(this); }
     getChapterCount(book) { return getChapterCount(this, book); }
-    getTestament(book)    { return getTestament(this, book); }
-    getDisplayName(book)  { return getDisplayName(this, book); }
+    getTestament(book) { return getTestament(this, book); }
+    getDisplayName(book) { return getDisplayName(this, book); }
 
     /**
      * Rebuild app.bibleBooks from a translation's meta.json.
@@ -1187,70 +1186,70 @@ class BibleApp {
                 title,
                 html,
             }));
-        } catch (_) {}
+        } catch (_) { }
     }
 
-        _restorePassageCache() {
-            try {
-                const raw = localStorage.getItem(PASSAGE_CACHE_KEY);
-                if (!raw) {
-                    this._dbgEvent('cache restore: no passageCache entry');
-                    return false;
-                }
-    
-                const { book, chapter, translation, title, html } = JSON.parse(raw);
-                const cachedHtml = typeof html === 'string' ? html : '';
-    
-                const hasLoadingPlaceholder =
-                    cachedHtml.includes('passage-loading-placeholder') ||
-                    cachedHtml.includes('class="loading"') ||
-                    cachedHtml.includes("class='loading'");
-    
-                const hasRenderablePassage =
-                    cachedHtml.includes('class="verse"') ||
-                    cachedHtml.includes("class='verse'");
-    
-                if (!cachedHtml.trim() || hasLoadingPlaceholder || !hasRenderablePassage) {
-                    this._dbgEvent('cache MISS: cached passage html was not renderable');
-                    localStorage.removeItem(PASSAGE_CACHE_KEY);
-                    return false;
-                }
-    
-                const stateBook    = this.state.currentBook;
-                const stateChapter = this.state.currentChapter;
-                const stateTrans   = this.state.translation || 'KJV';
-    
-                if (
-                    book                   !== stateBook    ||
-                    parseInt(chapter, 10)  !== stateChapter ||
-                    translation            !== stateTrans
-                ) {
-                    this._dbgEvent(
-                        `cache MISS: cache=(${book} ${chapter} ${translation}) state=(${stateBook} ${stateChapter} ${stateTrans})`
-                    );
-                    return false;
-                }
-    
-                if (this.passageTitle) this.passageTitle.textContent = title || '';
-                if (this.passageText) {
-                    this.passageText.innerHTML = cachedHtml;
-                    this.originalPassageHtml   = cachedHtml;
-                    this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
-                }
-    
-                document.body.classList.add('passage-ready');
-                updateNavigationState(this);
-                return true;
-            } catch (err) {
-                this._dbgEvent(`cache restore failed: ${err?.message || err}`);
+    _restorePassageCache() {
+        try {
+            const raw = localStorage.getItem(PASSAGE_CACHE_KEY);
+            if (!raw) {
+                this._dbgEvent('cache restore: no passageCache entry');
                 return false;
             }
+
+            const { book, chapter, translation, title, html } = JSON.parse(raw);
+            const cachedHtml = typeof html === 'string' ? html : '';
+
+            const hasLoadingPlaceholder =
+                cachedHtml.includes('passage-loading-placeholder') ||
+                cachedHtml.includes('class="loading"') ||
+                cachedHtml.includes("class='loading'");
+
+            const hasRenderablePassage =
+                cachedHtml.includes('class="verse"') ||
+                cachedHtml.includes("class='verse'");
+
+            if (!cachedHtml.trim() || hasLoadingPlaceholder || !hasRenderablePassage) {
+                this._dbgEvent('cache MISS: cached passage html was not renderable');
+                localStorage.removeItem(PASSAGE_CACHE_KEY);
+                return false;
+            }
+
+            const stateBook = this.state.currentBook;
+            const stateChapter = this.state.currentChapter;
+            const stateTrans = this.state.translation || 'KJV';
+
+            if (
+                book !== stateBook ||
+                parseInt(chapter, 10) !== stateChapter ||
+                translation !== stateTrans
+            ) {
+                this._dbgEvent(
+                    `cache MISS: cache=(${book} ${chapter} ${translation}) state=(${stateBook} ${stateChapter} ${stateTrans})`
+                );
+                return false;
+            }
+
+            if (this.passageTitle) this.passageTitle.textContent = title || '';
+            if (this.passageText) {
+                this.passageText.innerHTML = cachedHtml;
+                this.originalPassageHtml = cachedHtml;
+                this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
+            }
+
+            document.body.classList.add('passage-ready');
+            updateNavigationState(this);
+            return true;
+        } catch (err) {
+            this._dbgEvent(`cache restore failed: ${err?.message || err}`);
+            return false;
         }
+    }
 
     // ── Background prefetch ────────────────────────────────────────────────
 
     _prefetchCurrentBook() {
-        const book   = this.state.currentBook;
+        const book = this.state.currentBook;
 
         // Deuterocanonical books are only in a subset of translations.
         // Prefetching them across all LOCAL_TRANSLATIONS causes a flood of
@@ -1267,7 +1266,7 @@ class BibleApp {
             if (i >= others.length) return;
             const t = others[i++];
             this.bibleApi._loadBook(t, book)
-                .catch(() => {})
+                .catch(() => { })
                 .finally(() => setTimeout(next, 300));
         };
         setTimeout(next, 1000);
@@ -1280,12 +1279,12 @@ class BibleApp {
         const books = this.getAllBooks();
         const idx = books.indexOf(currentBook);
         const toFetch = [
-            idx > 0              ? books[idx - 1] : null,
-            idx < books.length-1 ? books[idx + 1] : null,
+            idx > 0 ? books[idx - 1] : null,
+            idx < books.length - 1 ? books[idx + 1] : null,
         ].filter(Boolean);
         setTimeout(() => {
             for (const book of toFetch) {
-                this.bibleApi._loadBook(translation, book).catch(() => {});
+                this.bibleApi._loadBook(translation, book).catch(() => { });
             }
         }, 3000);
     }
@@ -1310,7 +1309,7 @@ class BibleApp {
             const lightModeToggle = document.getElementById('lightModeToggle');
             if (themeSelector) {
                 let saved = 'basic';
-                try { saved = localStorage.getItem('colorTheme') || 'basic'; } catch (_) {}
+                try { saved = localStorage.getItem('colorTheme') || 'basic'; } catch (_) { }
                 themeSelector.value = saved;
             }
             if (lightModeToggle) lightModeToggle.checked = document.body.classList.contains('light-mode');
@@ -1325,30 +1324,30 @@ class BibleApp {
                 800,
                 null
             );
-            
+
             if (localTranslationResult === null) {
                 this._dbgEvent('prepareLocalTranslation: timed out, continuing with current translation');
             }
-            
+
             this.applySettings();
             this._dbg.t_settings_loaded = ms();
 
             this._dbg.stateAtLoad = {
-                book:        this.state.currentBook,
-                chapter:     this.state.currentChapter,
+                book: this.state.currentBook,
+                chapter: this.state.currentChapter,
                 translation: this.state.translation,
-                colorTheme:  this.state.colorTheme,
-                lightMode:   this.state.lightMode,
-                fontSize:            this.state.fontSize,
-                readingFont:         this.state.readingFont,
+                colorTheme: this.state.colorTheme,
+                lightMode: this.state.lightMode,
+                fontSize: this.state.fontSize,
+                readingFont: this.state.readingFont,
                 verseSelectionGesture: this.state.verseSelectionGesture,
-                showVerseNumbers:    this.state.showVerseNumbers,
+                showVerseNumbers: this.state.showVerseNumbers,
                 coloredVerseNumbers: this.state.coloredVerseNumbers,
-                showHeadings:        this.state.showHeadings,
-                verseByVerse:        this.state.verseByVerse,
-                showChapterArrows:   this.state.showChapterArrows,
+                showHeadings: this.state.showHeadings,
+                verseByVerse: this.state.verseByVerse,
+                showChapterArrows: this.state.showChapterArrows,
                 hideInterfaceOnScroll: this.state.hideInterfaceOnScroll,
-                scrollY:             window.scrollY,
+                scrollY: window.scrollY,
             };
 
             const cacheHit = this._restorePassageCache();
@@ -1368,8 +1367,8 @@ class BibleApp {
             if (cacheHit && posMatchesCache) {
                 this._dbg.t_reveal_first = ms();
                 this._dbg.t_passage_fetch_start = null;
-                this._dbg.t_passage_fetch_end   = null;
-                this._dbg.passageFetchMs         = null;
+                this._dbg.t_passage_fetch_end = null;
+                this._dbg.passageFetchMs = null;
                 revealApp();
                 this._dbgEvent('init: cache hit + position match — skipping fetch');
                 this._loadTranslationRegistry();
@@ -1418,9 +1417,9 @@ class BibleApp {
             this._startBackgroundAuthRestoration();
 
             void withTimeout(this.loadSyncedTranslationLibrary(), 5000, null)
-            .then(() => {
-                this.maybeShowTranslationSyncModal();
-            });
+                .then(() => {
+                    this.maybeShowTranslationSyncModal();
+                });
         } catch (err) {
             console.error('BibleApp init error:', err);
             this._dbgEvent(`init error: ${err.message}`);
@@ -1467,7 +1466,7 @@ class BibleApp {
                         this._dbgEvent(`setBookList: ${startingTranslation} (${meta.books.length} books)`);
                     }
                 })
-                .catch(() => {});
+                .catch(() => { });
         } catch (err) {
             console.error('BibleApp: failed to load translation index', err);
         }
@@ -1511,8 +1510,8 @@ class BibleApp {
     }
 
     async _loadSavedPositionIfChanged() { await loadSavedPositionIfChanged(this, withTimeout); }
-    async loadSavedReadingPosition()    { await loadSavedReadingPosition(this, withTimeout); }
-    saveReadingPosition()               { saveReadingPosition(this); }
+    async loadSavedReadingPosition() { await loadSavedReadingPosition(this, withTimeout); }
+    saveReadingPosition() { saveReadingPosition(this); }
 
     async loadPassage(book, chapter, restoreScroll = false) {
         // Guard: if the requested book is not present in the current canon
@@ -1521,13 +1520,13 @@ class BibleApp {
         const allBooks = this.getAllBooks();
         if (!allBooks.includes(book)) {
             this._dbgEvent(`loadPassage: "${book}" not in canon — redirecting to Genesis 1`);
-            book    = 'Genesis';
+            book = 'Genesis';
             chapter = 1;
         }
 
         if (!restoreScroll) this.saveReadingPosition?.();
 
-        this.state.currentBook    = book;
+        this.state.currentBook = book;
         this.state.currentChapter = chapter;
 
         const alreadyCached =
@@ -1579,7 +1578,7 @@ class BibleApp {
             : `${this.getDisplayName(book)} ${chapter}`;
         this.passageTitle.textContent = title;
         this.passageText.innerHTML = data.passages[0];
-        this.originalPassageHtml   = this.passageText.innerHTML;
+        this.originalPassageHtml = this.passageText.innerHTML;
         this.passageText.classList.toggle('verse-by-verse', !!this.state.verseByVerse);
         document.body.classList.add('passage-ready');
 
@@ -1592,7 +1591,7 @@ class BibleApp {
 
         requestAnimationFrame(() => {
             this.chromeScrollAnchorY = window.scrollY || window.pageYOffset || 0;
-            this.chromeLastY         = window.scrollY || window.pageYOffset || 0;
+            this.chromeLastY = window.scrollY || window.pageYOffset || 0;
             this.chromeLastDirection = null;
             this.chromeSuspend = false;
             document.body.classList.remove('chrome-no-transition');
@@ -1608,57 +1607,57 @@ class BibleApp {
         _logUserAction(`navigateChapter: ${direction > 0 ? 'next' : 'prev'} (${this.state.currentBook} ${this.state.currentChapter})`);
         navChapter(this, direction);
     }
-    updateNavigationState()    { updateNavigationState(this); }
-    navigateToNextVerse()      { navigateToNextVerse(this); }
-    navigateToPreviousVerse()  { navigateToPreviousVerse(this); }
+    updateNavigationState() { updateNavigationState(this); }
+    navigateToNextVerse() { navigateToNextVerse(this); }
+    navigateToPreviousVerse() { navigateToPreviousVerse(this); }
 
     toggleSearch() {
         _logUserAction('toggleSearch');
         toggleSearch(this);
     }
-    closeSearch()                           { closeSearch(this); }
+    closeSearch() { closeSearch(this); }
     handleSearch(query, source = 'type') {
         _logUserAction(`search (${source}): "${query}"`);
         handleSearch(this, query);
     }
-    handleSearchKeydown(e)                  { handleSearchKeydown(this, e); }
-    refreshSearchResultItems(autoSelect)    { refreshSearchResultItems(this, autoSelect); }
-    setSearchSelectedIndex(i, scroll)       { setSearchSelectedIndex(this, i, scroll); }
-    activateSelectedSearchResult()          { activateSelectedSearchResult(this); }
-    isPassageReference(q)                   { return isPassageReference(q); }
-    async handlePassageReference(ref)       { await handlePassageReference(this, ref); }
+    handleSearchKeydown(e) { handleSearchKeydown(this, e); }
+    refreshSearchResultItems(autoSelect) { refreshSearchResultItems(this, autoSelect); }
+    setSearchSelectedIndex(i, scroll) { setSearchSelectedIndex(this, i, scroll); }
+    activateSelectedSearchResult() { activateSelectedSearchResult(this); }
+    isPassageReference(q) { return isPassageReference(q); }
+    async handlePassageReference(ref) { await handlePassageReference(this, ref); }
     async fetchAllSearchResults(q, onBatch) { return fetchAllSearchResults(this, q, onBatch); }
-    groupSearchResultsByCanon(results)      { return groupSearchResultsByCanon(this, results); }
-    async performKeywordSearch(q)           { await performKeywordSearch(this, q); }
-    displaySearchResults(results, q)        { displaySearchResults(this, results, q); }
-    parseReference(ref)                     { return parseReference(ref); }
-    async loadPassageFromReference(ref)     { await loadPassageFromReference(this, ref); }
-    escapeRegExp(str)                       { return escapeRegExp(str); }
-    highlightSearchTerm(text, term)         { return highlightSearchTerm(text, term); }
-    stripHTML(html)                         { return stripHTML(html); }
+    groupSearchResultsByCanon(results) { return groupSearchResultsByCanon(this, results); }
+    async performKeywordSearch(q) { await performKeywordSearch(this, q); }
+    displaySearchResults(results, q) { displaySearchResults(this, results, q); }
+    parseReference(ref) { return parseReference(ref); }
+    async loadPassageFromReference(ref) { await loadPassageFromReference(this, ref); }
+    escapeRegExp(str) { return escapeRegExp(str); }
+    highlightSearchTerm(text, term) { return highlightSearchTerm(text, term); }
+    stripHTML(html) { return stripHTML(html); }
 
     openModal(modal) {
         _logUserAction(`openModal: ${modal?.id ?? 'unknown'}`);
         openModal(this, modal);
     }
-    closeModal(modal)          { closeModal(this, modal); }
-    openBookModal()            { openBookModal(this); }
-    populateBookModal()        { populateBookModal(this); }
-    openChapterModal()         { openChapterModal(this); }
-    populateChapterModal()     { populateChapterModal(this); }
-    openVerseModal()           { openVerseModal(this); }
-    populateVerseModal()       { populateVerseModal(this); }
-    openTranslationModal()     { openTranslationModal(this); }
+    closeModal(modal) { closeModal(this, modal); }
+    openBookModal() { openBookModal(this); }
+    populateBookModal() { populateBookModal(this); }
+    openChapterModal() { openChapterModal(this); }
+    populateChapterModal() { populateChapterModal(this); }
+    openVerseModal() { openVerseModal(this); }
+    populateVerseModal() { populateVerseModal(this); }
+    openTranslationModal() { openTranslationModal(this); }
     populateTranslationModal() { populateTranslationModal(this); }
-    translationKbMove(delta)   { translationKbMove(this, delta); }
-    translationKbSelect()      { translationKbSelect(this); }
-    getCurrentVerseCount()     { return getCurrentVerseCount(this); }
-    scrollToVerse(n)           { scrollVerse(this, n); }
-    applyVerseGlow()           { glowVerse(this); }
-    toggleVerseTray()          { trayToggle(this); }
+    translationKbMove(delta) { translationKbMove(this, delta); }
+    translationKbSelect() { translationKbSelect(this); }
+    getCurrentVerseCount() { return getCurrentVerseCount(this); }
+    scrollToVerse(n) { scrollVerse(this, n); }
+    applyVerseGlow() { glowVerse(this); }
+    toggleVerseTray() { trayToggle(this); }
 
-    loadLocalSettings()        { loadLocalSettings(this); }
-    applySettings()            { applySettings(this); }
+    loadLocalSettings() { loadLocalSettings(this); }
+    applySettings() { applySettings(this); }
     async toggleSetting(s) {
         _logUserAction(`toggleSetting: ${s}`);
         await toggleSetting(this, s);
@@ -1675,14 +1674,14 @@ class BibleApp {
         _logUserAction(`changeTranslation: ${t}`);
         await changeTranslation(this, t, options);
     }
-    updateCopyright()            { updateCopyright(this); }
+    updateCopyright() { updateCopyright(this); }
 
-    handleKeyboardShortcuts(e)   { handleKeyboardShortcuts(this, e); }
+    handleKeyboardShortcuts(e) { handleKeyboardShortcuts(this, e); }
 
     maybeShowSyncPrompt() { return maybeShowSyncPrompt(this); }
-    hideSyncPrompt()      { return hideSyncPrompt(this); }
-    dismissSyncPrompt()   { return dismissSyncPrompt(this); }
-    completeSyncPrompt()  { return completeSyncPrompt(this); }
+    hideSyncPrompt() { return hideSyncPrompt(this); }
+    dismissSyncPrompt() { return dismissSyncPrompt(this); }
+    completeSyncPrompt() { return completeSyncPrompt(this); }
     openSyncPromptLogin() { return openSyncPromptLogin(this); }
 
     async prepareLocalTranslation() {
@@ -1718,8 +1717,8 @@ class BibleApp {
 
     copyPassage() {
         _logUserAction('copyPassage');
-        const text    = this.stripHTML(this.passageText.innerHTML);
-        const ref     = this.passageTitle.textContent;
+        const text = this.stripHTML(this.passageText.innerHTML);
+        const ref = this.passageTitle.textContent;
         const content = `${ref}\n\n${text}\n\n${this.copyright?.textContent ?? ''}`;
 
         const btn = document.getElementById('copyPassage');
@@ -1779,10 +1778,10 @@ class BibleApp {
     }
 
     handleUserButtonClick() { handleUserButtonClick(this); }
-    async handleLogin()     { await handleLogin(this); }
-    async handleSignup()    { await handleSignup(this); }
-    async handleLogout()    { await handleLogout(this); }
-    async loadUserData()    { await loadUserData(this, normalizeTranslation); }
+    async handleLogin() { await handleLogin(this); }
+    async handleSignup() { await handleSignup(this); }
+    async handleLogout() { await handleLogout(this); }
+    async loadUserData() { await loadUserData(this, normalizeTranslation); }
 }
 
 /* Service Worker & Update Toast */
@@ -1874,7 +1873,7 @@ async function registerServiceWorker(appInstance) {
                 reloadOnUpdate: true,
                 minIntervalMs: 60 * 1000,
             }).then((didCheck) => {
-                if (didCheck) reg.update().catch(() => {});
+                if (didCheck) reg.update().catch(() => { });
             });
         });
     } catch (err) {
