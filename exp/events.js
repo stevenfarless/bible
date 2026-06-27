@@ -485,7 +485,6 @@ export function attachEventListeners(app) {
     });
 
     app.headingsToggle?.addEventListener('change', () => app.toggleSetting('showHeadings'));
-    app.footnotesToggle?.addEventListener('change', () => app.toggleSetting('showFootnotes'));
 
     app.chapterArrowsToggle?.addEventListener('input', (e) => {
         app.state.showChapterArrows = e.currentTarget.checked;
@@ -494,9 +493,6 @@ export function attachEventListeners(app) {
     app.chapterArrowsToggle?.addEventListener('change', () => app.toggleSetting('showChapterArrows'));
     app.hideInterfaceOnScrollToggle?.addEventListener('change', () => app.toggleSetting('hideInterfaceOnScroll'));
     app.hapticsToggle?.addEventListener('change', () => app.toggleSetting('hapticsEnabled'));
-
-    app.crossReferencesToggle = document.getElementById('crossReferencesToggle');
-    app.crossReferencesToggle?.addEventListener('change', () => app.toggleSetting('showCrossReferences'));
 
     app.verseByVerseToggle?.addEventListener('input', (e) => {
         app.state.verseByVerse = e.currentTarget.checked;

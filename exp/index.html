@@ -22,7 +22,7 @@
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description"
 		content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="f99a2ee" />
+	<meta name="build-id" content="883db10" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement - always available in <head>) before the
@@ -48,16 +48,16 @@
 			if (isLight) el.classList.add('light-mode');
 		}());
 	</script>
-	<script src="prepaint-settings.js?v=f99a2ee"></script>
+	<script src="prepaint-settings.js?v=883db10"></script>
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
 	<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
 	<link rel="icon" href="./favicon.ico" />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=f99a2ee">.
+	     before the parser reaches <script type="module" src="app.js?v=883db10">.
 	     This eliminates the sequential module-discovery waterfall. -->
-	<link rel="modulepreload" href="app.js?v=f99a2ee" />
+	<link rel="modulepreload" href="app.js?v=883db10" />
 	<link rel="modulepreload" href="bible-api.js" />
 	<link rel="modulepreload" href="bsb-structure.js" />
 	<link rel="modulepreload" href="reading-state.js" />
@@ -91,29 +91,29 @@
 			font-display: swap;
 		}
 	</style>
-	<link rel="preload" href="css/fonts.css?v=f99a2ee" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<link rel="preload" href="css/fonts.css?v=883db10" as="style" onload="this.onload=null;this.rel='stylesheet'" />
 	<noscript>
-		<link rel="stylesheet" href="css/fonts.css?v=f99a2ee" />
+		<link rel="stylesheet" href="css/fonts.css?v=883db10" />
 	</noscript>
-	<link rel="stylesheet" href="css/base.css?v=f99a2ee" />
-	<link rel="stylesheet" href="css/tokens.css?v=f99a2ee" />
-	<link rel="stylesheet" href="css/themes.css?v=f99a2ee" />
-	<link rel="stylesheet" href="css/layout.css?v=f99a2ee" />
-	<link rel="stylesheet" href="css/components.css?v=f99a2ee" />
-	<link rel="preload" href="css/modals.css?v=f99a2ee" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<link rel="stylesheet" href="css/base.css?v=883db10" />
+	<link rel="stylesheet" href="css/tokens.css?v=883db10" />
+	<link rel="stylesheet" href="css/themes.css?v=883db10" />
+	<link rel="stylesheet" href="css/layout.css?v=883db10" />
+	<link rel="stylesheet" href="css/components.css?v=883db10" />
+	<link rel="preload" href="css/modals.css?v=883db10" as="style" onload="this.onload=null;this.rel='stylesheet'" />
 	<noscript>
-		<link rel="stylesheet" href="css/modals.css?v=f99a2ee" />
+		<link rel="stylesheet" href="css/modals.css?v=883db10" />
 	</noscript>
-	<link rel="preload" href="css/interactions.css?v=f99a2ee" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<link rel="preload" href="css/interactions.css?v=883db10" as="style" onload="this.onload=null;this.rel='stylesheet'" />
 	<noscript>
-		<link rel="stylesheet" href="css/interactions.css?v=f99a2ee" />
+		<link rel="stylesheet" href="css/interactions.css?v=883db10" />
 	</noscript>
-	<link rel="preload" href="css/utilities.css?v=f99a2ee" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<link rel="preload" href="css/utilities.css?v=883db10" as="style" onload="this.onload=null;this.rel='stylesheet'" />
 	<noscript>
-		<link rel="stylesheet" href="css/utilities.css?v=f99a2ee" />
+		<link rel="stylesheet" href="css/utilities.css?v=883db10" />
 	</noscript>
-	<link rel="stylesheet" href="css/pericope.css?v=f99a2ee" />
-	<link rel="stylesheet" href="css/luna-lux.css?v=f99a2ee" />
+	<link rel="stylesheet" href="css/pericope.css?v=883db10" />
+	<link rel="stylesheet" href="css/luna-lux.css?v=883db10" />
 	<!-- Firebase App Check loads reCAPTCHA v3 through ReCaptchaV3Provider. -->
 </head>
 
@@ -122,7 +122,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">f99a2ee</span>
+				<span id="build-info">883db10</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -443,13 +443,19 @@
 							<div class="setting-item">
 								<label id="fontSizeLabel">Font Size</label>
 								<div class="font-size-stepper" role="group" aria-labelledby="fontSizeLabel">
-									<button type="button" id="fontSizeDecrease" class="font-size-stepper__button font-size-stepper__button--decrease" aria-label="Decrease font size">
+									<button type="button" id="fontSizeDecrease"
+										class="font-size-stepper__button font-size-stepper__button--decrease"
+										aria-label="Decrease font size">
 										<span class="font-size-stepper__glyph" aria-hidden="true">Aa−</span>
 									</button>
 
-									<output id="fontSizeValue" class="font-size-stepper__value" for="fontSizeDecrease fontSizeIncrease" aria-live="polite" aria-label="20 pixels">20</output>
+									<output id="fontSizeValue" class="font-size-stepper__value"
+										for="fontSizeDecrease fontSizeIncrease" aria-live="polite"
+										aria-label="20 pixels">20</output>
 
-									<button type="button" id="fontSizeIncrease" class="font-size-stepper__button font-size-stepper__button--increase" aria-label="Increase font size">
+									<button type="button" id="fontSizeIncrease"
+										class="font-size-stepper__button font-size-stepper__button--increase"
+										aria-label="Increase font size">
 										<span class="font-size-stepper__glyph" aria-hidden="true">Aa+</span>
 									</button>
 								</div>
@@ -484,20 +490,6 @@
 									<input type="checkbox" id="headingsToggle" checked />
 									<span>Show section headings</span>
 								</label>
-							</div>
-							<div class="setting-item setting-item--disabled">
-								<label class="checkbox-label">
-									<input type="checkbox" id="footnotesToggle" disabled />
-									<span>Show footnotes</span>
-								</label>
-								<small class="help-text">Coming soon.</small>
-							</div>
-							<div class="setting-item setting-item--disabled">
-								<label class="checkbox-label">
-									<input type="checkbox" id="crossReferencesToggle" disabled />
-									<span>Show cross-references</span>
-								</label>
-								<small class="help-text">Coming soon.</small>
 							</div>
 							<div class="setting-item">
 								<label class="checkbox-label">
@@ -958,7 +950,7 @@
 
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=f99a2ee"></script>
+	<script type="module" src="app.js?v=883db10"></script>
 	<script>
 		// Hide raw build placeholder when pipeline substitution hasn't run.
 		document.addEventListener('DOMContentLoaded', function () {
