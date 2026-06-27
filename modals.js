@@ -501,7 +501,7 @@ const _SVG_TRASH = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.or
 const _downloading = new Set();
 const _hasHover = window.matchMedia('(hover: hover)').matches;
 
-const _FLY_EASING   = 'cubic-bezier(0.4, 0, 0.2, 1)';
+const _FLY_EASING = 'cubic-bezier(0.4, 0, 0.2, 1)';
 const _FLY_DURATION = '420ms';
 
 export function openTranslationModal(app) {
@@ -694,12 +694,12 @@ async function _flyItem(app, t, sourceWrapper) {
     document.body.appendChild(clone);
 
     const dx = toRect.left - fromRect.left;
-    const dy = toRect.top  - fromRect.top;
+    const dy = toRect.top - fromRect.top;
 
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-            clone.style.transform  = `translate(${dx}px,${dy}px)`;
-            clone.style.boxShadow  = 'var(--shadow-sm,0 1px 2px rgba(0,0,0,.06))';
+            clone.style.transform = `translate(${dx}px,${dy}px)`;
+            clone.style.boxShadow = 'var(--shadow-sm,0 1px 2px rgba(0,0,0,.06))';
         });
     });
 
@@ -718,7 +718,7 @@ async function _flyToAvailable(app, t, sourceWrapper) {
 }
 
 const _SWIPE_THRESHOLD = 60;
-const _DELETE_BTN_W   = 72;
+const _DELETE_BTN_W = 72;
 
 let _openWrapper = null;
 
@@ -763,12 +763,12 @@ function _attachSwipe(wrapper, li) {
     };
 
     let _onMove = null;
-    let _onEnd  = null;
+    let _onEnd = null;
 
     function cleanup() {
         if (_onMove) { li.removeEventListener('touchmove', _onMove); _onMove = null; }
-        if (_onEnd)  {
-            li.removeEventListener('touchend',    _onEnd);
+        if (_onEnd) {
+            li.removeEventListener('touchend', _onEnd);
             li.removeEventListener('touchcancel', _onEnd);
             _onEnd = null;
         }
@@ -817,9 +817,9 @@ function _attachSwipe(wrapper, li) {
             cleanup();
         };
 
-        li.addEventListener('touchmove',   _onMove, { passive: false });
-        li.addEventListener('touchend',    _onEnd,  { passive: true });
-        li.addEventListener('touchcancel', _onEnd,  { passive: true });
+        li.addEventListener('touchmove', _onMove, { passive: false });
+        li.addEventListener('touchend', _onEnd, { passive: true });
+        li.addEventListener('touchcancel', _onEnd, { passive: true });
     }, { passive: true });
 }
 
@@ -865,7 +865,7 @@ async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progre
             const meta = await metaRes.json();
             if (meta?.books?.length) bookList = meta.books.map((b) => b.name);
         }
-    } catch (_) {}
+    } catch (_) { }
 
     try {
         await app.bibleApi.downloadTranslation(t.id, bookList, (done, tot) => {
@@ -938,15 +938,15 @@ export function translationKbMove(app, delta) {
 
 export function translationKbSelect(app) {
     const items = _translationItems(app);
-    const idx   = app._translationKbIndex ?? -1;
+    const idx = app._translationKbIndex ?? -1;
     if (idx < 0 || idx >= items.length) return;
     items[idx].click();
 }
 
 function attachDragHandlers(app, modal, dismissOnDrag = true) {
     const content = modal.querySelector('.modal-content');
-    const header  = modal.querySelector('.modal-header');
-    const body    = modal.querySelector('.modal-body');
+    const header = modal.querySelector('.modal-header');
+    const body = modal.querySelector('.modal-body');
 
     if (!content || !header) return;
 
@@ -1014,6 +1014,6 @@ function attachDragHandlers(app, modal, dismissOnDrag = true) {
 }
 
 export function attachDragToResize(app) {
-    if (app.settingsModal)   attachDragHandlers(app, app.settingsModal);
+    if (app.settingsModal) attachDragHandlers(app, app.settingsModal);
     if (app.referencesModal) attachDragHandlers(app, app.referencesModal);
 }

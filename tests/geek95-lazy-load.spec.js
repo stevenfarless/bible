@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 
 		try {
 			localStorage.setItem('syncPromptDismissedV1', '1');
-		} catch (_) {}
+		} catch (_) { }
 	});
 });
 
@@ -31,7 +31,7 @@ test('startup: Vespers does not load Geek95 CSS', async ({ page }) => {
 	const geekRequests = [];
 
 	await page.addInitScript(() => {
-		try { localStorage.setItem('colorTheme', 'vespers'); } catch (_) {}
+		try { localStorage.setItem('colorTheme', 'vespers'); } catch (_) { }
 	});
 
 	await page.route('**/css/geek95.css*', route => {
@@ -50,7 +50,7 @@ test('startup: restored Geek theme loads Geek95 CSS', async ({ page }) => {
 	const geekRequests = [];
 
 	await page.addInitScript(() => {
-		try { localStorage.setItem('colorTheme', 'geek'); } catch (_) {}
+		try { localStorage.setItem('colorTheme', 'geek'); } catch (_) { }
 	});
 
 	await page.route('**/css/geek95.css*', route => {

@@ -31,8 +31,8 @@ export default defineConfig({
 	webServer: process.env.CI
 		? undefined // CI starts the server in a separate step
 		: {
-				command: 'python3 -m http.server 8080',
-				port: 8080,
-				reuseExistingServer: true,
-			},
+			command: 'python3 -m http.server 8080',
+			port: 8080,
+			reuseExistingServer: true,
+		},
 });

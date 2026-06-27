@@ -58,20 +58,20 @@ function _isSearchOpen(app) {
 
 function _adjacentPosition(app, direction) {
     const books = app.getAllBooks();
-    const idx   = books.indexOf(app.state.currentBook);
+    const idx = books.indexOf(app.state.currentBook);
     if (idx === -1) return null;
 
-    let book    = app.state.currentBook;
+    let book = app.state.currentBook;
     let chapter = app.state.currentChapter + direction;
     const count = app.getChapterCount(book);
 
     if (chapter < 1) {
         if (idx === 0) return null;
-        book    = books[idx - 1];
+        book = books[idx - 1];
         chapter = app.getChapterCount(book);
     } else if (chapter > count) {
         if (idx === books.length - 1) return null;
-        book    = books[idx + 1];
+        book = books[idx + 1];
         chapter = 1;
     }
 
@@ -81,7 +81,7 @@ function _adjacentPosition(app, direction) {
 async function _renderIntoPanel(app, panel, pos) {
     if (!pos) {
         panel.innerHTML = '';
-        panel.dataset.book    = '';
+        panel.dataset.book = '';
         panel.dataset.chapter = '';
         return false;
     }
@@ -90,8 +90,8 @@ async function _renderIntoPanel(app, panel, pos) {
         let scaffoldEvents = [];
         try {
             const allEvents = await loadStructure(pos.book);
-            scaffoldEvents  = eventsForChapter(allEvents, pos.chapter);
-        } catch (_) {}
+            scaffoldEvents = eventsForChapter(allEvents, pos.chapter);
+        } catch (_) { }
 
         const data = await app.bibleApi.fetchPassage(
             `${pos.book} ${pos.chapter}`,
@@ -101,19 +101,19 @@ async function _renderIntoPanel(app, panel, pos) {
 
         if (!data) {
             panel.innerHTML = '';
-            panel.dataset.book    = '';
+            panel.dataset.book = '';
             panel.dataset.chapter = '';
             return false;
         }
 
         panel.innerHTML = data.passages[0];
         panel.classList.toggle('verse-by-verse', !!app.state.verseByVerse);
-        panel.dataset.book    = pos.book;
+        panel.dataset.book = pos.book;
         panel.dataset.chapter = String(pos.chapter);
         return true;
     } catch (_) {
         panel.innerHTML = '';
-        panel.dataset.book    = '';
+        panel.dataset.book = '';
         panel.dataset.chapter = '';
         return false;
     }
@@ -160,7 +160,7 @@ export function initSwipe(app) {
     Object.assign(viewport.style, {
         position: 'relative',
         overflow: 'hidden',
-        width:    '100%',
+        width: '100%',
         touchAction: 'pan-y pinch-zoom',
         overscrollBehaviorX: 'contain',
     });
@@ -169,26 +169,26 @@ export function initSwipe(app) {
     viewport.appendChild(currentPanel);
 
     const prevPanel = document.createElement('div');
-    prevPanel.id        = 'swipePrev';
+    prevPanel.id = 'swipePrev';
     prevPanel.className = currentPanel.className;
     Object.assign(prevPanel.style, {
-        position:   'absolute',
-        top:        '0',
-        left:       '0',
-        width:      '100%',
-        transform:  `translateX(${-vw()}px)`,
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        width: '100%',
+        transform: `translateX(${-vw()}px)`,
         transition: 'none',
     });
 
     const nextPanel = document.createElement('div');
-    nextPanel.id        = 'swipeNext';
+    nextPanel.id = 'swipeNext';
     nextPanel.className = currentPanel.className;
     Object.assign(nextPanel.style, {
-        position:   'absolute',
-        top:        '0',
-        left:       '0',
-        width:      '100%',
-        transform:  `translateX(${vw()}px)`,
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        width: '100%',
+        transform: `translateX(${vw()}px)`,
         transition: 'none',
     });
 
@@ -202,7 +202,7 @@ export function initSwipe(app) {
         _syncClasses() {
             const src = app.passageText;
             for (const panel of [this.prevPanel, this.nextPanel]) {
-                panel.className      = src.className;
+                panel.className = src.className;
                 panel.style.fontSize = src.style.fontSize;
             }
         },
@@ -232,7 +232,7 @@ export function initSwipe(app) {
         if (_tracking || _animating) return;
         const W = vw();
         _setTranslateX(app.swipe.prevPanel, -W);
-        _setTranslateX(app.swipe.nextPanel,  W);
+        _setTranslateX(app.swipe.nextPanel, W);
     });
     ro.observe(viewport);
 
@@ -240,12 +240,12 @@ export function initSwipe(app) {
 
     let _startX = 0;
     let _startY = 0;
-    let _lastX  = 0;
-    let _lastT  = 0;
-    let _velocity        = 0;
-    let _tracking        = false;
-    let _vetoed          = false;
-    let _animating       = false;
+    let _lastX = 0;
+    let _lastT = 0;
+    let _velocity = 0;
+    let _tracking = false;
+    let _vetoed = false;
+    let _animating = false;
     let _currentOffsetPx = 0;
 
     function _atBoundary(dx) {
@@ -264,10 +264,10 @@ export function initSwipe(app) {
         _removeTransition(app.swipe.prevPanel);
         _removeTransition(app.swipe.nextPanel);
         app.passageText.style.position = '';
-        app.passageText.style.top      = '';
-        app.passageText.style.left     = '';
-        app.passageText.style.width    = '';
-        viewport.style.height          = '';
+        app.passageText.style.top = '';
+        app.passageText.style.left = '';
+        app.passageText.style.width = '';
+        viewport.style.height = '';
     }
 
     viewport.addEventListener('touchstart', (e) => {
@@ -275,13 +275,13 @@ export function initSwipe(app) {
             _vetoed = true;
             return;
         }
-        _startX          = e.changedTouches[0].screenX;
-        _startY          = e.changedTouches[0].screenY;
-        _lastX           = _startX;
-        _lastT           = e.timeStamp;
-        _velocity        = 0;
-        _tracking        = false;
-        _vetoed          = false;
+        _startX = e.changedTouches[0].screenX;
+        _startY = e.changedTouches[0].screenY;
+        _lastX = _startX;
+        _lastT = e.timeStamp;
+        _velocity = 0;
+        _tracking = false;
+        _vetoed = false;
         _currentOffsetPx = 0;
     }, { passive: true });
 
@@ -315,9 +315,9 @@ export function initSwipe(app) {
                 viewport.classList.add('swiping');
 
                 app.passageText.style.position = 'absolute';
-                app.passageText.style.top      = '0';
-                app.passageText.style.left     = '0';
-                app.passageText.style.width    = '100%';
+                app.passageText.style.top = '0';
+                app.passageText.style.left = '0';
+                app.passageText.style.width = '100%';
                 viewport.style.height = app.passageText.offsetHeight + 'px';
             } else if (absDy >= VERTICAL_MIN_Y && absDy > absDx * VERTICAL_DOMINANCE_RATIO) {
                 app._dbgUserAction?.(`swipe vetoed: vertical intent dx=${Math.round(dx)} dy=${Math.round(dy)}`);
@@ -334,7 +334,7 @@ export function initSwipe(app) {
             app._dbgUserAction?.(`swipe continuing: touchmove not cancelable dx=${Math.round(dx)} dy=${Math.round(dy)}`);
         }
 
-        const W         = vw();
+        const W = vw();
         const effective = _applyResistance(dx);
         _currentOffsetPx = dx;
 
@@ -353,19 +353,19 @@ export function initSwipe(app) {
         if (_vetoed || !_tracking) {
             if (_tracking) _cleanupDrag();
             _tracking = false;
-            _vetoed   = false;
+            _vetoed = false;
             return;
         }
         _tracking = false;
 
-        const dx    = _currentOffsetPx;
-        const W     = vw();
+        const dx = _currentOffsetPx;
+        const W = vw();
         const absDx = Math.abs(dx);
-        const absV  = Math.abs(_velocity);
+        const absV = Math.abs(_velocity);
 
-        const commit    = (absDx >= W * COMMIT_DISTANCE || absV >= COMMIT_VELOCITY) && absDx >= 50;
+        const commit = (absDx >= W * COMMIT_DISTANCE || absV >= COMMIT_VELOCITY) && absDx >= 50;
         const direction = dx < 0 ? 1 : -1;
-        const animMs    = _animDuration(_velocity);
+        const animMs = _animDuration(_velocity);
 
         const cancelSwipe = () => {
             viewport.classList.remove('swiping');
@@ -390,11 +390,11 @@ export function initSwipe(app) {
             return;
         }
 
-        const incomingPanel   = direction === 1 ? app.swipe.nextPanel : app.swipe.prevPanel;
+        const incomingPanel = direction === 1 ? app.swipe.nextPanel : app.swipe.prevPanel;
         const uninvolvedPanel = direction === 1 ? app.swipe.prevPanel : app.swipe.nextPanel;
-        const incomingPos     = direction === 1
+        const incomingPos = direction === 1
             ? { book: app.swipe.nextPanel.dataset.book, chapter: parseInt(app.swipe.nextPanel.dataset.chapter, 10) }
-            : { book: app.swipe.prevPanel.dataset.book,  chapter: parseInt(app.swipe.prevPanel.dataset.chapter,  10) };
+            : { book: app.swipe.prevPanel.dataset.book, chapter: parseInt(app.swipe.prevPanel.dataset.chapter, 10) };
 
         if (!incomingPos.book) {
             hapticFirm(app);
@@ -428,24 +428,24 @@ export function initSwipe(app) {
             const outgoingPanel = app.passageText;
 
             incomingPanel.style.fontSize = outgoingPanel.style.fontSize;
-            incomingPanel.scrollTop      = 0;
+            incomingPanel.scrollTop = 0;
 
             _clearTranslateX(incomingPanel);
             incomingPanel.style.position = '';
-            incomingPanel.style.top      = '';
-            incomingPanel.style.left     = '';
-            incomingPanel.style.width    = '';
+            incomingPanel.style.top = '';
+            incomingPanel.style.left = '';
+            incomingPanel.style.width = '';
 
-            const oldId      = incomingPanel.id;
+            const oldId = incomingPanel.id;
             incomingPanel.id = 'passageText';
             outgoingPanel.id = oldId;
-            app.passageText  = incomingPanel;
+            app.passageText = incomingPanel;
 
             _clearTranslateX(outgoingPanel);
             outgoingPanel.style.position = 'absolute';
-            outgoingPanel.style.top      = '0';
-            outgoingPanel.style.left     = '0';
-            outgoingPanel.style.width    = '100%';
+            outgoingPanel.style.top = '0';
+            outgoingPanel.style.left = '0';
+            outgoingPanel.style.width = '100%';
             _setTranslateX(outgoingPanel, direction === 1 ? -W : +W);
 
             if (direction === 1) {
@@ -458,7 +458,7 @@ export function initSwipe(app) {
 
             viewport.style.height = '';
 
-            app.state.currentBook    = incomingPos.book;
+            app.state.currentBook = incomingPos.book;
             app.state.currentChapter = incomingPos.chapter;
 
             const title = incomingPos.book === 'Psalm'

@@ -8,7 +8,7 @@
 // A "downloaded" record stores the translation id so we can check presence
 // without reading every book.
 
-const DB_NAME    = 'bibleTranslations';
+const DB_NAME = 'bibleTranslations';
 const DB_VERSION = 1;
 
 let _db = null;
@@ -30,7 +30,7 @@ function _open() {
             }
         };
         req.onsuccess = (e) => { _db = e.target.result; resolve(_db); };
-        req.onerror   = (e) => reject(e.target.error);
+        req.onerror = (e) => reject(e.target.error);
     });
 }
 
@@ -42,7 +42,7 @@ function _idbGet(store, key) {
     return new Promise((resolve, reject) => {
         const req = store.get(key);
         req.onsuccess = () => resolve(req.result ?? null);
-        req.onerror   = (e) => reject(e.target.error);
+        req.onerror = (e) => reject(e.target.error);
     });
 }
 
@@ -50,7 +50,7 @@ function _idbPut(store, key, value) {
     return new Promise((resolve, reject) => {
         const req = store.put(value, key);
         req.onsuccess = () => resolve();
-        req.onerror   = (e) => reject(e.target.error);
+        req.onerror = (e) => reject(e.target.error);
     });
 }
 
@@ -58,7 +58,7 @@ function _idbDelete(store, key) {
     return new Promise((resolve, reject) => {
         const req = store.delete(key);
         req.onsuccess = () => resolve();
-        req.onerror   = (e) => reject(e.target.error);
+        req.onerror = (e) => reject(e.target.error);
     });
 }
 
@@ -66,7 +66,7 @@ function _idbGetAllKeys(store) {
     return new Promise((resolve, reject) => {
         const req = store.getAllKeys();
         req.onsuccess = () => resolve(req.result ?? []);
-        req.onerror   = (e) => reject(e.target.error);
+        req.onerror = (e) => reject(e.target.error);
     });
 }
 
