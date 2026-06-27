@@ -15,8 +15,8 @@ const REQUIRED_IDS = [
 	'closeSignupModal', 'closeUserMenuModal',
 	'oldTestamentBooks', 'newTestamentBooks',
 	'chapterModalBook', 'chapterGrid', 'verseModalBook', 'verseGrid',
-	'themeSelector', 'verseNumbersToggle', 'coloredVerseNumbersToggle', 'headingsToggle', 'footnotesToggle',
-	'crossReferencesToggle', 'verseByVerseToggle', 'chapterArrowsToggle', 'hideInterfaceOnScrollToggle', 'hapticsToggle',
+	'themeSelector', 'verseNumbersToggle', 'coloredVerseNumbersToggle', 'headingsToggle',
+	'verseByVerseToggle', 'chapterArrowsToggle', 'hideInterfaceOnScrollToggle', 'hapticsToggle',
 	'verseSelectionGestureSelect',
 	'fontSizeDecrease', 'fontSizeValue', 'fontSizeIncrease',
 	'referencesModal', 'closeReferencesModal',
@@ -151,8 +151,6 @@ export function cacheElements(app) {
 	app.verseNumbersToggle = document.getElementById('verseNumbersToggle');
 	app.coloredVerseNumbersToggle = document.getElementById('coloredVerseNumbersToggle');
 	app.headingsToggle = document.getElementById('headingsToggle');
-	app.footnotesToggle = document.getElementById('footnotesToggle');
-	app.crossReferencesToggle = document.getElementById('crossReferencesToggle');
 	app.verseByVerseToggle = document.getElementById('verseByVerseToggle');
 	app.chapterArrowsToggle = document.getElementById('chapterArrowsToggle');
 	app.hideInterfaceOnScrollToggle = document.getElementById('hideInterfaceOnScrollToggle');
