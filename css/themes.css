@@ -1064,3 +1064,113 @@ body.uxorem-amo-theme .help-text,
 body.uxorem-amo-theme .verse-number {
     color: var(--text-muted);
 }
+
+/* Luna Lux theme */
+:root.luna-lux-theme,
+html.luna-lux-theme,
+body.luna-lux-theme {
+    --bg-base: #000816;
+    --bg-card: #030A2C;
+    --bg-raised: #051149;
+
+    --text-heading: #D8DCEE;
+    --text-body: #E4E8F4;
+    --text-muted: #8790AE;
+
+    --border-neutral: #293565;
+    --highlight-border: #5A648B;
+
+    --primary-color: #DEA052;
+    --primary-dark: #D78D30;
+    --primary-light: #E6B87D;
+    --brand-secondary: #A66FD8;
+    --section-heading-color: var(--brand-secondary);
+    --accent-color: #63B5E6;
+
+    --success-color: #6FBF73;
+    --warning-color: #F2C14E;
+    --error-color: #E57373;
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.50);
+}
+
+:root.luna-lux-theme.light-mode,
+html.luna-lux-theme.light-mode,
+body.luna-lux-theme.light-mode {
+    --bg-base: #F5F8FF;
+    --bg-card: #EAF0FA;
+    --bg-raised: #DAE4F6;
+
+    --text-heading: #24304A;
+    --text-body: #18233C;
+    --text-muted: #68718A;
+
+    --border-neutral: #C5CFE3;
+    --highlight-border: #98A2B8;
+
+    --primary-color: #B87534;
+    --primary-dark: #98612B;
+    --primary-light: #CE8F51;
+    --brand-secondary: #7651B8;
+    --section-heading-color: var(--brand-secondary);
+    --accent-color: #2F7FAF;
+
+    --success-color: #2E7D32;
+    --warning-color: #9A6700;
+    --error-color: #B3261E;
+
+    --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.16);
+}
+
+body.luna-lux-theme,
+body.luna-lux-theme .main-content {
+    background-color: var(--bg-base);
+    color: var(--text-body);
+}
+
+body.luna-lux-theme .passage-container {
+    background-color: var(--bg-card);
+    color: var(--text-body);
+}
+
+body.luna-lux-theme .passage-title,
+body.luna-lux-theme .passage-text,
+body.luna-lux-theme .verse {
+    color: var(--text-body);
+}
+
+body.luna-lux-theme .top-chrome,
+body.luna-lux-theme .header,
+body.luna-lux-theme .navigation,
+body.luna-lux-theme .modal-content,
+body.luna-lux-theme .accordion-section,
+body.luna-lux-theme .accordion-panel,
+body.luna-lux-theme .settings-group,
+body.luna-lux-theme .input-field {
+    background-color: var(--bg-card);
+    color: var(--text-body);
+    border-color: var(--border-neutral);
+}
+
+body.luna-lux-theme .modal-header,
+body.luna-lux-theme .accordion-header,
+body.luna-lux-theme .selector-btn,
+body.luna-lux-theme .nav-btn,
+body.luna-lux-theme .icon-btn {
+    background-color: var(--bg-raised);
+    color: var(--text-heading);
+    border-color: var(--border-neutral);
+}
+
+body.luna-lux-theme .help-text,
+body.luna-lux-theme .verse-number {
+    color: var(--text-muted);
+}
