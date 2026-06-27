@@ -22,7 +22,7 @@
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description"
 		content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="4ef1b47" />
+	<meta name="build-id" content="70d921a" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement - always available in <head>) before the
@@ -48,16 +48,16 @@
 			if (isLight) el.classList.add('light-mode');
 		}());
 	</script>
-	<script src="prepaint-settings.js?v=4ef1b47"></script>
+	<script src="prepaint-settings.js?v=70d921a"></script>
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
 	<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
 	<link rel="icon" href="./favicon.ico" />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=4ef1b47">.
+	     before the parser reaches <script type="module" src="app.js?v=70d921a">.
 	     This eliminates the sequential module-discovery waterfall. -->
-	<link rel="modulepreload" href="app.js?v=4ef1b47" />
+	<link rel="modulepreload" href="app.js?v=70d921a" />
 	<link rel="modulepreload" href="bible-api.js" />
 	<link rel="modulepreload" href="bsb-structure.js" />
 	<link rel="modulepreload" href="reading-state.js" />
@@ -91,29 +91,29 @@
 			font-display: swap;
 		}
 	</style>
-	<link rel="preload" href="css/fonts.css?v=4ef1b47" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<link rel="preload" href="css/fonts.css?v=70d921a" as="style" onload="this.onload=null;this.rel='stylesheet'" />
 	<noscript>
-		<link rel="stylesheet" href="css/fonts.css?v=4ef1b47" />
+		<link rel="stylesheet" href="css/fonts.css?v=70d921a" />
 	</noscript>
-	<link rel="stylesheet" href="css/base.css?v=4ef1b47" />
-	<link rel="stylesheet" href="css/tokens.css?v=4ef1b47" />
-	<link rel="stylesheet" href="css/themes.css?v=4ef1b47" />
-	<link rel="stylesheet" href="css/layout.css?v=4ef1b47" />
-	<link rel="stylesheet" href="css/components.css?v=4ef1b47" />
-	<link rel="preload" href="css/modals.css?v=4ef1b47" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<link rel="stylesheet" href="css/base.css?v=70d921a" />
+	<link rel="stylesheet" href="css/tokens.css?v=70d921a" />
+	<link rel="stylesheet" href="css/themes.css?v=70d921a" />
+	<link rel="stylesheet" href="css/layout.css?v=70d921a" />
+	<link rel="stylesheet" href="css/components.css?v=70d921a" />
+	<link rel="preload" href="css/modals.css?v=70d921a" as="style" onload="this.onload=null;this.rel='stylesheet'" />
 	<noscript>
-		<link rel="stylesheet" href="css/modals.css?v=4ef1b47" />
+		<link rel="stylesheet" href="css/modals.css?v=70d921a" />
 	</noscript>
-	<link rel="preload" href="css/interactions.css?v=4ef1b47" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<link rel="preload" href="css/interactions.css?v=70d921a" as="style" onload="this.onload=null;this.rel='stylesheet'" />
 	<noscript>
-		<link rel="stylesheet" href="css/interactions.css?v=4ef1b47" />
+		<link rel="stylesheet" href="css/interactions.css?v=70d921a" />
 	</noscript>
-	<link rel="preload" href="css/utilities.css?v=4ef1b47" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<link rel="preload" href="css/utilities.css?v=70d921a" as="style" onload="this.onload=null;this.rel='stylesheet'" />
 	<noscript>
-		<link rel="stylesheet" href="css/utilities.css?v=4ef1b47" />
+		<link rel="stylesheet" href="css/utilities.css?v=70d921a" />
 	</noscript>
-	<link rel="stylesheet" href="css/pericope.css?v=4ef1b47" />
-	<link rel="stylesheet" href="css/luna-lux.css?v=4ef1b47" />
+	<link rel="stylesheet" href="css/pericope.css?v=70d921a" />
+	<link rel="stylesheet" href="css/luna-lux.css?v=70d921a" />
 	<!-- Firebase App Check loads reCAPTCHA v3 through ReCaptchaV3Provider. -->
 </head>
 
@@ -122,7 +122,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">4ef1b47</span>
+				<span id="build-info">70d921a</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -428,15 +428,14 @@
 								<small class="help-text">Choose your preferred color scheme.</small>
 							</div>
 							<div class="setting-item">
-								<label id="lightModeLabel">Appearance</label>
-								<fieldset class="segmented-toggle" role="radiogroup" aria-labelledby="lightModeLabel">
+								<fieldset class="segmented-toggle" aria-label="Appearance">
 									<input type="radio" id="lm-light" name="lightMode" value="light" />
 									<label for="lm-light">Light</label>
 
 									<input type="radio" id="lm-dark" name="lightMode" value="dark" />
 									<label for="lm-dark">Dark</label>
 
-									<input type="radio" id="lm-system" name="lightMode" value="system" />
+									<input type="radio" id="lm-system" name="lightMode" value="system" checked />
 									<label for="lm-system">System</label>
 								</fieldset>
 								<small class="help-text">Follow your device setting or choose a fixed mode.</small>
@@ -622,11 +621,14 @@
 										<ul class="tips-list">
 											<li>Click the book, chapter, or verse selector to jump to any location.</li>
 											<li>Search by reference (examples: <code>John 3</code>,
-												<code>John 3:16</code>, <code>jn 3 16</code>).</li>
+												<code>John 3:16</code>, <code>jn 3 16</code>).
+											</li>
 											<li>Search by keywords to find mentions across the Bible (example:
-												<code>covenant</code>).</li>
+												<code>covenant</code>).
+											</li>
 											<li>Wrap a phrase in double quotes to search exactly (example:
-												<code>"in love"</code>).</li>
+												<code>"in love"</code>).
+											</li>
 											<li>Enable "Search all translations" in the search bar to find verses unique
 												to other translations.</li>
 											<li>Settings sync across devices when signed in.</li>
@@ -947,7 +949,7 @@
 
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=4ef1b47"></script>
+	<script type="module" src="app.js?v=70d921a"></script>
 	<script>
 		// Hide raw build placeholder when pipeline substitution hasn't run.
 		document.addEventListener('DOMContentLoaded', function () {
