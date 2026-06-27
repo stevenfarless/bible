@@ -22,7 +22,7 @@
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description"
 		content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="883db10" />
+	<meta name="build-id" content="ac2f643" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement - always available in <head>) before the
@@ -48,16 +48,16 @@
 			if (isLight) el.classList.add('light-mode');
 		}());
 	</script>
-	<script src="prepaint-settings.js?v=883db10"></script>
+	<script src="prepaint-settings.js?v=ac2f643"></script>
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
 	<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
 	<link rel="icon" href="./favicon.ico" />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=883db10">.
+	     before the parser reaches <script type="module" src="app.js?v=ac2f643">.
 	     This eliminates the sequential module-discovery waterfall. -->
-	<link rel="modulepreload" href="app.js?v=883db10" />
+	<link rel="modulepreload" href="app.js?v=ac2f643" />
 	<link rel="modulepreload" href="bible-api.js" />
 	<link rel="modulepreload" href="bsb-structure.js" />
 	<link rel="modulepreload" href="reading-state.js" />
@@ -91,29 +91,29 @@
 			font-display: swap;
 		}
 	</style>
-	<link rel="preload" href="css/fonts.css?v=883db10" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<link rel="preload" href="css/fonts.css?v=ac2f643" as="style" onload="this.onload=null;this.rel='stylesheet'" />
 	<noscript>
-		<link rel="stylesheet" href="css/fonts.css?v=883db10" />
+		<link rel="stylesheet" href="css/fonts.css?v=ac2f643" />
 	</noscript>
-	<link rel="stylesheet" href="css/base.css?v=883db10" />
-	<link rel="stylesheet" href="css/tokens.css?v=883db10" />
-	<link rel="stylesheet" href="css/themes.css?v=883db10" />
-	<link rel="stylesheet" href="css/layout.css?v=883db10" />
-	<link rel="stylesheet" href="css/components.css?v=883db10" />
-	<link rel="preload" href="css/modals.css?v=883db10" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<link rel="stylesheet" href="css/base.css?v=ac2f643" />
+	<link rel="stylesheet" href="css/tokens.css?v=ac2f643" />
+	<link rel="stylesheet" href="css/themes.css?v=ac2f643" />
+	<link rel="stylesheet" href="css/layout.css?v=ac2f643" />
+	<link rel="stylesheet" href="css/components.css?v=ac2f643" />
+	<link rel="preload" href="css/modals.css?v=ac2f643" as="style" onload="this.onload=null;this.rel='stylesheet'" />
 	<noscript>
-		<link rel="stylesheet" href="css/modals.css?v=883db10" />
+		<link rel="stylesheet" href="css/modals.css?v=ac2f643" />
 	</noscript>
-	<link rel="preload" href="css/interactions.css?v=883db10" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<link rel="preload" href="css/interactions.css?v=ac2f643" as="style" onload="this.onload=null;this.rel='stylesheet'" />
 	<noscript>
-		<link rel="stylesheet" href="css/interactions.css?v=883db10" />
+		<link rel="stylesheet" href="css/interactions.css?v=ac2f643" />
 	</noscript>
-	<link rel="preload" href="css/utilities.css?v=883db10" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<link rel="preload" href="css/utilities.css?v=ac2f643" as="style" onload="this.onload=null;this.rel='stylesheet'" />
 	<noscript>
-		<link rel="stylesheet" href="css/utilities.css?v=883db10" />
+		<link rel="stylesheet" href="css/utilities.css?v=ac2f643" />
 	</noscript>
-	<link rel="stylesheet" href="css/pericope.css?v=883db10" />
-	<link rel="stylesheet" href="css/luna-lux.css?v=883db10" />
+	<link rel="stylesheet" href="css/pericope.css?v=ac2f643" />
+	<link rel="stylesheet" href="css/luna-lux.css?v=ac2f643" />
 	<!-- Firebase App Check loads reCAPTCHA v3 through ReCaptchaV3Provider. -->
 </head>
 
@@ -122,7 +122,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">883db10</span>
+				<span id="build-info">ac2f643</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -425,7 +425,7 @@
 									<option value="uxorem-amo">Uxorem Amo</option>
 									<option value="luna-lux">Luna Lux (Light | Dark)</option>
 								</select>
-								<small class="help-text">Choose your preferred color scheme.</small>
+								<!-- <small class="help-text">Choose your preferred color scheme.</small> -->
 							</div>
 							<div class="setting-item">
 								<fieldset class="segmented-toggle" aria-label="Appearance">
@@ -438,11 +438,9 @@
 									<input type="radio" id="lm-system" name="lightMode" value="system" checked />
 									<label for="lm-system">System</label>
 								</fieldset>
-								<small class="help-text">Follow your device setting or choose a fixed mode.</small>
 							</div>
 							<div class="setting-item">
-								<label id="fontSizeLabel">Font Size</label>
-								<div class="font-size-stepper" role="group" aria-labelledby="fontSizeLabel">
+								<div class="font-size-stepper" role="group" aria-label="Font size">
 									<button type="button" id="fontSizeDecrease"
 										class="font-size-stepper__button font-size-stepper__button--decrease"
 										aria-label="Decrease font size">
@@ -470,8 +468,6 @@
 									<option value="ia-quattro">iA Writer Quattro S</option>
 									<option value="adwaitasans">Adwaita Sans</option>
 								</select>
-								<small class="help-text" id="readingFontHelpText">Choose the typeface used for passage
-									text.</small>
 							</div>
 							<div class="setting-item">
 								<label class="checkbox-label">
@@ -510,7 +506,7 @@
 									<input type="checkbox" id="hapticsToggle" checked />
 									<span>Haptic feedback</span>
 								</label>
-								<small class="help-text">Vibrate for supported interactions on Android.</small>
+								<small class="help-text">Currently only available on Android.</small>
 							</div>
 							<div class="setting-item">
 								<label class="checkbox-label">
@@ -523,7 +519,6 @@
 									<input type="checkbox" id="hideInterfaceOnScrollToggle" checked />
 									<span>Full screen while scrolling</span>
 								</label>
-								<!-- <small class="help-text">Turn off to keep the top controls visible while reading.</small> -->
 							</div>
 						</div>
 					</div>
@@ -950,7 +945,7 @@
 
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=883db10"></script>
+	<script type="module" src="app.js?v=ac2f643"></script>
 	<script>
 		// Hide raw build placeholder when pipeline substitution hasn't run.
 		document.addEventListener('DOMContentLoaded', function () {
