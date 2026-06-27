@@ -26,6 +26,17 @@ def replace_once(content, old, new, file_name, description):
     raise SystemExit(f'{file_name}: could not find {description}')
 
 
+def replace_any_once(content, old_values, new, file_name, description):
+    for old in old_values:
+        if old in content:
+            return content.replace(old, new, 1)
+
+    if new in content:
+        return content
+
+    raise SystemExit(f'{file_name}: could not find {description}')
+
+
 def insert_before_once(content, marker, addition, file_name, description):
     if addition.strip() in content:
         return content
@@ -227,9 +238,12 @@ def update_settings_js():
         file_name,
         'font size helpers',
     )
-    content = replace_once(
+    content = replace_any_once(
         content,
-        "    const fontSize = app.state.fontSize || DEFAULTS.fontSize;\n    if (app.fontSizeSlider) app.fontSizeSlider.value = fontSize;\n    if (app.fontSizeValue)  app.fontSizeValue.textContent = `${fontSize}px`;\n    if (app.passageText)    app.passageText.style.fontSize = `${fontSize}px`;",
+        [
+            "    const fontSize = app.state.fontSize || DEFAULTS.fontSize;\n    if (app.fontSizeSlider) app.fontSizeSlider.value = fontSize;\n    if (app.fontSizeValue) app.fontSizeValue.textContent = `${fontSize}px`;\n    if (app.passageText) app.passageText.style.fontSize = `${fontSize}px`;",
+            "    const fontSize = app.state.fontSize || DEFAULTS.fontSize;\n    if (app.fontSizeSlider) app.fontSizeSlider.value = fontSize;\n    if (app.fontSizeValue)  app.fontSizeValue.textContent = `${fontSize}px`;\n    if (app.passageText)    app.passageText.style.fontSize = `${fontSize}px`;",
+        ],
         "    const fontSize = clampFontSize(app.state.fontSize || DEFAULTS.fontSize);\n    app.state.fontSize = fontSize;\n    syncFontSizeControls(app, fontSize);\n    if (app.passageText) app.passageText.style.fontSize = `${fontSize}px`;",
         file_name,
         'applySettings font size sync',
