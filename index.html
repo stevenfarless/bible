@@ -425,7 +425,7 @@
 									<option value="uxorem-amo">Uxorem Amo</option>
 									<option value="luna-lux">Luna Lux (Light | Dark)</option>
 								</select>
-								<small class="help-text">Choose your preferred color scheme.</small>
+								<!-- <small class="help-text">Choose your preferred color scheme.</small> -->
 							</div>
 							<div class="setting-item">
 								<fieldset class="segmented-toggle" aria-label="Appearance">
@@ -438,11 +438,9 @@
 									<input type="radio" id="lm-system" name="lightMode" value="system" checked />
 									<label for="lm-system">System</label>
 								</fieldset>
-								<small class="help-text">Follow your device setting or choose a fixed mode.</small>
 							</div>
 							<div class="setting-item">
-								<label id="fontSizeLabel">Font Size</label>
-								<div class="font-size-stepper" role="group" aria-labelledby="fontSizeLabel">
+								<div class="font-size-stepper" role="group" aria-label="Font size">
 									<button type="button" id="fontSizeDecrease"
 										class="font-size-stepper__button font-size-stepper__button--decrease"
 										aria-label="Decrease font size">
@@ -470,8 +468,6 @@
 									<option value="ia-quattro">iA Writer Quattro S</option>
 									<option value="adwaitasans">Adwaita Sans</option>
 								</select>
-								<small class="help-text" id="readingFontHelpText">Choose the typeface used for passage
-									text.</small>
 							</div>
 							<div class="setting-item">
 								<label class="checkbox-label">
@@ -510,7 +506,7 @@
 									<input type="checkbox" id="hapticsToggle" checked />
 									<span>Haptic feedback</span>
 								</label>
-								<small class="help-text">Vibrate for supported interactions on Android.</small>
+								<small class="help-text">Currently only available on Android.</small>
 							</div>
 							<div class="setting-item">
 								<label class="checkbox-label">
@@ -523,7 +519,6 @@
 									<input type="checkbox" id="hideInterfaceOnScrollToggle" checked />
 									<span>Full screen while scrolling</span>
 								</label>
-								<!-- <small class="help-text">Turn off to keep the top controls visible while reading.</small> -->
 							</div>
 						</div>
 					</div>
