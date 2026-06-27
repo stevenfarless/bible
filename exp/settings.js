@@ -21,6 +21,33 @@ const DEFAULTS = {
     verseSelectionGesture: 'hold',
 };
 
+const FONT_SIZE_MIN = 12;
+const FONT_SIZE_MAX = 32;
+
+function clampFontSize(size) {
+    const parsed = parseInt(size, 10);
+    if (!Number.isFinite(parsed)) return DEFAULTS.fontSize;
+
+    return Math.min(FONT_SIZE_MAX, Math.max(FONT_SIZE_MIN, parsed));
+}
+
+function syncFontSizeControls(app, fontSize) {
+    const value = String(fontSize);
+
+    if (app.fontSizeValue) {
+        app.fontSizeValue.textContent = value;
+        app.fontSizeValue.setAttribute('aria-label', `${value} pixels`);
+    }
+
+    if (app.fontSizeDecrease) {
+        app.fontSizeDecrease.disabled = fontSize <= FONT_SIZE_MIN;
+    }
+
+    if (app.fontSizeIncrease) {
+        app.fontSizeIncrease.disabled = fontSize >= FONT_SIZE_MAX;
+    }
+}
+
 const READING_FONT_FAMILIES = {
     gentium: 'Gentium Book Plus',
     andika: 'Andika',
@@ -170,9 +197,9 @@ export function applySettings(app) {
     syncVerseByVerseMode(app);
     if (app.verseByVerseToggle) app.verseByVerseToggle.checked = !!app.state.verseByVerse;
 
-    const fontSize = app.state.fontSize || DEFAULTS.fontSize;
-    if (app.fontSizeSlider) app.fontSizeSlider.value = fontSize;
-    if (app.fontSizeValue) app.fontSizeValue.textContent = `${fontSize}px`;
+    const fontSize = clampFontSize(app.state.fontSize || DEFAULTS.fontSize);
+    app.state.fontSize = fontSize;
+    syncFontSizeControls(app, fontSize);
     if (app.passageText) app.passageText.style.fontSize = `${fontSize}px`;
     const readingFont = app.state.readingFont || DEFAULTS.readingFont;
     applyReadingFont(app, readingFont);
@@ -299,16 +326,21 @@ export async function applyReadingFont(app, font) {
 }
 
 export async function updateFontSize(app, size) {
-    app.state.fontSize = parseInt(size, 10);
-    app.fontSizeValue.textContent = `${size}px`;
-    app.passageText.style.fontSize = `${size}px`;
+    const fontSize = clampFontSize(size);
 
-    lsSet('fontSize', size);
+    app.state.fontSize = fontSize;
+    syncFontSizeControls(app, fontSize);
+
+    if (app.passageText) {
+        app.passageText.style.fontSize = `${fontSize}px`;
+    }
+
+    lsSet('fontSize', fontSize);
 
     if (app.canWriteRemoteState()) {
         await app.database
             .ref(`users/${app.currentUser.uid}/settings/fontSize`)
-            .set(parseInt(size, 10));
+            .set(fontSize);
     }
 }
 

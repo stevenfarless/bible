@@ -503,7 +503,13 @@ export function attachEventListeners(app) {
         syncReadingDisplay(app);
     });
     app.verseByVerseToggle?.addEventListener('change', () => app.toggleVerseByVerse());
-    app.fontSizeSlider?.addEventListener('input', (e) => app.updateFontSize(e.target.value));
+    app.fontSizeDecrease?.addEventListener('click', () => {
+        void app.updateFontSize((app.state.fontSize || 20) - 1);
+    });
+
+    app.fontSizeIncrease?.addEventListener('click', () => {
+        void app.updateFontSize((app.state.fontSize || 20) + 1);
+    });
 
     app.verseSelectionGestureSelect?.addEventListener('change', async (event) => {
         const gesture = event.currentTarget.value === 'tap' ? 'tap' : 'hold';
