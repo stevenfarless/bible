@@ -14,7 +14,7 @@ test.beforeEach(async ({ page }) => {
                         } else {
                                 localStorage.setItem('syncPromptDismissedV1', '1');
                         }
-                } catch (_) {}
+                } catch (_) { }
         });
 });
 
@@ -356,15 +356,24 @@ test('settings: color theme selector applies theme to body', async ({ page }) =>
         await expect(page.locator('body')).toHaveClass(/onyx-theme/);
 });
 
-test('theme switch: toggling light mode changes body class', async ({ page }) => {
+test('theme switch: segmented appearance control changes body class', async ({ page }) => {
         await page.goto('/');
         await waitForPassage(page);
         await openSettingsSection(page, 'appearance');
 
-        const select = page.locator('#lightModeSelect');
-        const initial = await select.inputValue();
-        await select.selectOption(initial === 'light' ? 'dark' : 'light');
-        await expect(page.locator('body')).toHaveClass(initial === 'light' ? /^(?!.*light-mode)/ : /light-mode/);
+        await page.locator('label[for="lm-light"]').click();
+        await expect(page.locator('#lm-light')).toBeChecked();
+        await expect(page.locator('body')).toHaveClass(/light-mode/);
+        await expect.poll(() => page.evaluate(() => localStorage.getItem('lightMode'))).toBe('light');
+
+        await page.locator('label[for="lm-dark"]').click();
+        await expect(page.locator('#lm-dark')).toBeChecked();
+        await expect(page.locator('body')).not.toHaveClass(/light-mode/);
+        await expect.poll(() => page.evaluate(() => localStorage.getItem('lightMode'))).toBe('dark');
+
+        await page.locator('label[for="lm-system"]').click();
+        await expect(page.locator('#lm-system')).toBeChecked();
+        await expect.poll(() => page.evaluate(() => localStorage.getItem('lightMode'))).toBe('system');
 });
 
 test('keyboard: ArrowRight advances to next chapter', async ({ page }) => {
@@ -880,7 +889,7 @@ test('about: GitHub release checks wait for browser idle time after settings ope
 
         await page.goto('/');
         await waitForPassage(page);
-        
+
         expect(releaseRequests).toHaveLength(0);
 
         await page.click('#settingsBtn');
@@ -949,11 +958,11 @@ test('about: marked loads only after delayed release metadata', async ({ page })
         await waitForPassage(page);
 
         expect(markedRequests).toHaveLength(0);
-        
+
         await page.click('#settingsBtn');
-        
+
         expect(markedRequests).toHaveLength(0);
-        
+
         await page.evaluate(() => {
                 for (const callback of window.__idleCallbacks.splice(0)) {
                         callback({ didTimeout: false, timeRemaining: () => 50 });

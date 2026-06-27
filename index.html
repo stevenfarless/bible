@@ -5,20 +5,23 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#060b1a" media="(prefers-color-scheme: dark)" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="theme-color" content="#060b1a" media="(prefers-color-scheme: dark)" />
+	<meta name="mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-title" content="Lege Lux" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 	<title>Lege Lux</title>
-	<meta name="description" content="Lege Lux is a fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
+	<meta name="description"
+		content="Lege Lux is a fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
 	<meta property="og:title" content="Lege Lux" />
-	<meta property="og:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
+	<meta property="og:description"
+		content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
 	<meta property="og:type" content="website" />
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
-	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
+	<meta name="twitter:description"
+		content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
 	<meta name="build-id" content="__BUILD_ID__" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
@@ -30,7 +33,7 @@
 		(function () {
 			var el = document.documentElement;
 			var theme = 'basic';
-			try { theme = localStorage.getItem('colorTheme') || 'basic'; } catch (_) {}
+			try { theme = localStorage.getItem('colorTheme') || 'basic'; } catch (_) { }
 			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1, lux: 1, vespers: 1, vigil: 1, 'uxorem-amo': 1, 'luna-lux': 1 };
 			if (!valid[theme]) theme = 'basic';
 			el.classList.add(theme + '-theme', 'no-color-transition');
@@ -38,9 +41,9 @@
 			var mode = 'system';
 			try {
 				var raw = localStorage.getItem('lightMode');
-				if (raw === 'true' || raw === 'light')       mode = 'light';
+				if (raw === 'true' || raw === 'light') mode = 'light';
 				else if (raw === 'false' || raw === 'dark') mode = 'dark';
-			} catch (_) {}
+			} catch (_) { }
 			var isLight = mode === 'light' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches);
 			if (isLight) el.classList.add('light-mode');
 		}());
@@ -89,18 +92,26 @@
 		}
 	</style>
 	<link rel="preload" href="css/fonts.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/fonts.css" /></noscript>
+	<noscript>
+		<link rel="stylesheet" href="css/fonts.css" />
+	</noscript>
 	<link rel="stylesheet" href="css/base.css" />
 	<link rel="stylesheet" href="css/tokens.css" />
 	<link rel="stylesheet" href="css/themes.css" />
 	<link rel="stylesheet" href="css/layout.css" />
 	<link rel="stylesheet" href="css/components.css" />
 	<link rel="preload" href="css/modals.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/modals.css" /></noscript>
+	<noscript>
+		<link rel="stylesheet" href="css/modals.css" />
+	</noscript>
 	<link rel="preload" href="css/interactions.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/interactions.css" /></noscript>
+	<noscript>
+		<link rel="stylesheet" href="css/interactions.css" />
+	</noscript>
 	<link rel="preload" href="css/utilities.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/utilities.css" /></noscript>
+	<noscript>
+		<link rel="stylesheet" href="css/utilities.css" />
+	</noscript>
 	<link rel="stylesheet" href="css/pericope.css" />
 	<link rel="stylesheet" href="css/luna-lux.css" />
 	<!-- Firebase App Check loads reCAPTCHA v3 through ReCaptchaV3Provider. -->
@@ -178,7 +189,8 @@
 						</svg>
 					</button>
 
-					<button id="translationSelectorBtn" class="selector-btn selector-btn--translation" title="Change translation">
+					<button id="translationSelectorBtn" class="selector-btn selector-btn--translation"
+						title="Change translation">
 						<span id="currentTranslation">KJV</span>
 						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 							stroke-width="2">
@@ -202,11 +214,12 @@
 			<div class="search-input-row">
 				<input type="text" id="searchInput" class="search-input"
 					placeholder="Search passages or enter reference (e.g., John 3:16)" />
-				<button id="closeSearch" class="close-btn close-control" aria-label="Close search" title="Close search" type="button">
-<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M7 7L17 17M17 7L7 17"></path>
-</svg>
-</button>
+				<button id="closeSearch" class="close-btn close-control" aria-label="Close search" title="Close search"
+					type="button">
+					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<path d="M7 7L17 17M17 7L7 17"></path>
+					</svg>
+				</button>
 			</div>
 			<div class="search-options-row">
 				<label class="search-toggle-label" for="megasearchToggle">
@@ -254,22 +267,19 @@
 		</div>
 	</main>
 
-	<div id="bookModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="bookModalTitle" aria-hidden="true" inert>
+	<div id="bookModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="bookModalTitle"
+		aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="bookModalTitle" tabindex="-1">Select a Book</h2>
 				<button class="close-btn close-control" id="closeBookModal" aria-label="Close" type="button">
-<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M7 7L17 17M17 7L7 17"></path>
-</svg>
-</button>
+					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<path d="M7 7L17 17M17 7L7 17"></path>
+					</svg>
+				</button>
 			</div>
-			<div
-				id="bookTestamentFilters"
-				class="book-testament-filters"
-				role="group"
-				aria-label="Filter books by testament"
-			></div>
+			<div id="bookTestamentFilters" class="book-testament-filters" role="group"
+				aria-label="Filter books by testament"></div>
 			<div class="modal-body">
 				<div class="book-category">
 					<h3>Old Testament</h3>
@@ -283,15 +293,16 @@
 		</div>
 	</div>
 
-	<div id="chapterModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="chapterModalTitle" aria-hidden="true" inert>
+	<div id="chapterModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="chapterModalTitle"
+		aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="chapterModalTitle" tabindex="-1"><span id="chapterModalBook">Genesis</span></h2>
 				<button class="close-btn close-control" id="closeChapterModal" aria-label="Close" type="button">
-<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M7 7L17 17M17 7L7 17"></path>
-</svg>
-</button>
+					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<path d="M7 7L17 17M17 7L7 17"></path>
+					</svg>
+				</button>
 			</div>
 			<div class="modal-body">
 				<div id="chapterGrid" class="chapter-grid"></div>
@@ -299,15 +310,16 @@
 		</div>
 	</div>
 
-	<div id="verseModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="verseModalTitle" aria-hidden="true" inert>
+	<div id="verseModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="verseModalTitle"
+		aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="verseModalTitle" tabindex="-1"><span id="verseModalBook">Genesis 1</span></h2>
 				<button class="close-btn close-control" id="closeVerseModal" aria-label="Close" type="button">
-<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M7 7L17 17M17 7L7 17"></path>
-</svg>
-</button>
+					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<path d="M7 7L17 17M17 7L7 17"></path>
+					</svg>
+				</button>
 			</div>
 			<div class="modal-body">
 				<div id="verseGrid" class="chapter-grid"></div>
@@ -315,15 +327,16 @@
 		</div>
 	</div>
 
-	<div id="translationModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="translationModalTitle" aria-hidden="true" inert>
+	<div id="translationModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="translationModalTitle"
+		aria-hidden="true" inert>
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
 				<h2 id="translationModalTitle" tabindex="-1">Translation</h2>
 				<button class="close-btn close-control" id="closeTranslationModal" aria-label="Close" type="button">
-<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M7 7L17 17M17 7L7 17"></path>
-</svg>
-</button>
+					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<path d="M7 7L17 17M17 7L7 17"></path>
+					</svg>
+				</button>
 			</div>
 			<div class="modal-body">
 				<ul id="translationList" class="translation-modal-list"></ul>
@@ -331,16 +344,8 @@
 		</div>
 	</div>
 
-	<div
-		id="translationSyncModal"
-		class="modal"
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="translationSyncTitle"
-		aria-describedby="translationSyncDescription"
-		aria-hidden="true"
-		inert
-	>
+	<div id="translationSyncModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="translationSyncTitle"
+		aria-describedby="translationSyncDescription" aria-hidden="true" inert>
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
 				<h2 id="translationSyncTitle" tabindex="-1">Download your translations?</h2>
@@ -369,32 +374,24 @@
 		</div>
 	</div>
 
-	<div id="settingsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle" aria-hidden="true" inert>
+	<div id="settingsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle"
+		aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="settingsModalTitle" tabindex="-1">Settings</h2>
 				<button class="close-btn close-control" id="closeSettingsModal" aria-label="Close" type="button">
-<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M7 7L17 17M17 7L7 17"></path>
-</svg>
-</button>
+					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<path d="M7 7L17 17M17 7L7 17"></path>
+					</svg>
+				</button>
 			</div>
 			<div class="modal-body">
-				<aside
-					id="syncPrompt"
-					class="sync-prompt"
-					aria-labelledby="syncPromptTitle"
-					aria-describedby="syncPromptDescription"
-					hidden
-				>
+				<aside id="syncPrompt" class="sync-prompt" aria-labelledby="syncPromptTitle"
+					aria-describedby="syncPromptDescription" hidden>
 					<div class="sync-prompt-header">
 						<h3 id="syncPromptTitle">Sync your reading</h3>
-						<button
-							id="syncPromptDismiss"
-							class="sync-prompt-dismiss"
-							type="button"
-							aria-label="Dismiss sign-in prompt"
-						>&times;</button>
+						<button id="syncPromptDismiss" class="sync-prompt-dismiss" type="button"
+							aria-label="Dismiss sign-in prompt">&times;</button>
 					</div>
 					<p id="syncPromptDescription">
 						Sign in to keep your reading position and settings synchronized across devices.
@@ -431,12 +428,17 @@
 								<small class="help-text">Choose your preferred color scheme.</small>
 							</div>
 							<div class="setting-item">
-								<label for="lightModeSelect">Appearance</label>
-								<select id="lightModeSelect" class="input-field">
-									<option value="system">System Default</option>
-									<option value="light">Light</option>
-									<option value="dark">Dark</option>
-								</select>
+								<label id="lightModeLabel">Appearance</label>
+								<fieldset class="segmented-toggle" role="radiogroup" aria-labelledby="lightModeLabel">
+									<input type="radio" id="lm-light" name="lightMode" value="light" />
+									<label for="lm-light">Light</label>
+
+									<input type="radio" id="lm-dark" name="lightMode" value="dark" />
+									<label for="lm-dark">Dark</label>
+
+									<input type="radio" id="lm-system" name="lightMode" value="system" />
+									<label for="lm-system">System</label>
+								</fieldset>
 								<small class="help-text">Follow your device setting or choose a fixed mode.</small>
 							</div>
 							<div class="setting-item">
@@ -454,7 +456,8 @@
 									<option value="ia-quattro">iA Writer Quattro S</option>
 									<option value="adwaitasans">Adwaita Sans</option>
 								</select>
-								<small class="help-text" id="readingFontHelpText">Choose the typeface used for passage text.</small>
+								<small class="help-text" id="readingFontHelpText">Choose the typeface used for passage
+									text.</small>
 							</div>
 							<div class="setting-item">
 								<label class="checkbox-label">
@@ -463,11 +466,11 @@
 								</label>
 							</div>
 							<div class="setting-item">
-    <label class="checkbox-label">
-        <input type="checkbox" id="coloredVerseNumbersToggle" checked />
-        <span>Colored verse numbers</span>
-    </label>
-			</div>
+								<label class="checkbox-label">
+									<input type="checkbox" id="coloredVerseNumbersToggle" checked />
+									<span>Colored verse numbers</span>
+								</label>
+							</div>
 							<div class="setting-item">
 								<label class="checkbox-label">
 									<input type="checkbox" id="headingsToggle" checked />
@@ -537,7 +540,8 @@
 					<div class="accordion-panel" data-panel="account">
 						<div class="settings-group">
 							<p class="help-text">
-								Account settings (email, theme, translation, reading position) are automatically synced via Firebase when you're signed in.
+								Account settings (email, theme, translation, reading position) are automatically synced
+								via Firebase when you're signed in.
 							</p>
 							<button id="openAccountBtn" class="primary-btn account-manage-btn">
 								Manage Account
@@ -564,8 +568,8 @@
 							<div class="sub-accordion-section" data-section="whats-new">
 								<button class="sub-accordion-header" data-target="whats-new" aria-expanded="false">
 									<span>What's new</span>
-									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
-										stroke="currentColor" stroke-width="2">
+									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24"
+										fill="none" stroke="currentColor" stroke-width="2">
 										<polyline points="6 9 12 15 18 9"></polyline>
 									</svg>
 								</button>
@@ -579,8 +583,8 @@
 							<div class="sub-accordion-section" data-section="coming-soon">
 								<button class="sub-accordion-header" data-target="coming-soon" aria-expanded="false">
 									<span>Coming soon</span>
-									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
-										stroke="currentColor" stroke-width="2">
+									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24"
+										fill="none" stroke="currentColor" stroke-width="2">
 										<polyline points="6 9 12 15 18 9"></polyline>
 									</svg>
 								</button>
@@ -589,11 +593,18 @@
 										<!-- populated by settings.js -->
 									</div>
 									<div class="dev-branch-link">
-										<a href="https://stevenfarless.github.io/bible/dev/" target="_blank" rel="noopener noreferrer">
+										<a href="https://stevenfarless.github.io/bible/dev/" target="_blank"
+											rel="noopener noreferrer">
 											Open dev build
-											<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+											<svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+												stroke="currentColor" stroke-width="2">
+												<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+												<polyline points="15 3 21 3 21 9" />
+												<line x1="10" y1="14" x2="21" y2="3" />
+											</svg>
 										</a>
-										<span class="dev-branch-disclaimer">Still being tested — may contain bugs.</span>
+										<span class="dev-branch-disclaimer">Still being tested — may contain
+											bugs.</span>
 									</div>
 								</div>
 							</div>
@@ -601,8 +612,8 @@
 							<div class="sub-accordion-section" data-section="tips">
 								<button class="sub-accordion-header" data-target="tips" aria-expanded="false">
 									<span>Help &amp; Tips</span>
-									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
-										stroke="currentColor" stroke-width="2">
+									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24"
+										fill="none" stroke="currentColor" stroke-width="2">
 										<polyline points="6 9 12 15 18 9"></polyline>
 									</svg>
 								</button>
@@ -610,10 +621,14 @@
 									<div class="settings-group">
 										<ul class="tips-list">
 											<li>Click the book, chapter, or verse selector to jump to any location.</li>
-											<li>Search by reference (examples: <code>John 3</code>, <code>John 3:16</code>, <code>jn 3 16</code>).</li>
-											<li>Search by keywords to find mentions across the Bible (example: <code>covenant</code>).</li>
-											<li>Wrap a phrase in double quotes to search exactly (example: <code>"in love"</code>).</li>
-											<li>Enable "Search all translations" in the search bar to find verses unique to other translations.</li>
+											<li>Search by reference (examples: <code>John 3</code>,
+												<code>John 3:16</code>, <code>jn 3 16</code>).</li>
+											<li>Search by keywords to find mentions across the Bible (example:
+												<code>covenant</code>).</li>
+											<li>Wrap a phrase in double quotes to search exactly (example:
+												<code>"in love"</code>).</li>
+											<li>Enable "Search all translations" in the search bar to find verses unique
+												to other translations.</li>
 											<li>Settings sync across devices when signed in.</li>
 										</ul>
 									</div>
@@ -624,36 +639,46 @@
 							<div class="sub-accordion-section" data-section="source-code">
 								<button class="sub-accordion-header" data-target="source-code" aria-expanded="false">
 									<span>Source Code</span>
-									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
-										stroke="currentColor" stroke-width="2">
+									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24"
+										fill="none" stroke="currentColor" stroke-width="2">
 										<polyline points="6 9 12 15 18 9"></polyline>
 									</svg>
 								</button>
 								<div class="sub-accordion-panel" data-panel="source-code">
 									<div class="settings-group source-code-group">
-									<div class="source-code-links">
-										<a class="source-code-link" href="https://github.com/stevenfarless/lege-lux" target="_blank" rel="noopener noreferrer" aria-label="View Lege Lux on GitHub">
-											<svg class="source-code-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-												<path d="M12 .297C5.373.297 0 5.67 0 12.297c0 5.303 3.438 9.8 8.207 11.387.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.725-4.042-1.61-4.042-1.61-.547-1.387-1.335-1.757-1.335-1.757-1.09-.745.083-.73.083-.73 1.205.085 1.84 1.238 1.84 1.238 1.073 1.835 2.815 1.305 3.5.997.108-.777.42-1.305.763-1.605-2.665-.303-5.467-1.332-5.467-5.93 0-1.31.467-2.382 1.235-3.222-.123-.303-.535-1.523.118-3.177 0 0 1.008-.322 3.3 1.23a11.49 11.49 0 0 1 3.003-.403c1.018.005 2.045.138 3.003.403 2.29-1.552 3.295-1.23 3.295-1.23.655 1.654.243 2.874.12 3.177.77.84 1.233 1.912 1.233 3.222 0 4.61-2.807 5.623-5.48 5.92.432.372.817 1.103.817 2.222 0 1.605-.015 2.898-.015 3.292 0 .32.217.695.825.577C20.565 22.092 24 17.597 24 12.297c0-6.627-5.373-12-12-12z"></path>
-											</svg>
-											<span>GitHub</span>
-										</a>
+										<div class="source-code-links">
+											<a class="source-code-link" href="https://github.com/stevenfarless/lege-lux"
+												target="_blank" rel="noopener noreferrer"
+												aria-label="View Lege Lux on GitHub">
+												<svg class="source-code-icon" viewBox="0 0 24 24" aria-hidden="true"
+													focusable="false">
+													<path
+														d="M12 .297C5.373.297 0 5.67 0 12.297c0 5.303 3.438 9.8 8.207 11.387.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.725-4.042-1.61-4.042-1.61-.547-1.387-1.335-1.757-1.335-1.757-1.09-.745.083-.73.083-.73 1.205.085 1.84 1.238 1.84 1.238 1.073 1.835 2.815 1.305 3.5.997.108-.777.42-1.305.763-1.605-2.665-.303-5.467-1.332-5.467-5.93 0-1.31.467-2.382 1.235-3.222-.123-.303-.535-1.523.118-3.177 0 0 1.008-.322 3.3 1.23a11.49 11.49 0 0 1 3.003-.403c1.018.005 2.045.138 3.003.403 2.29-1.552 3.295-1.23 3.295-1.23.655 1.654.243 2.874.12 3.177.77.84 1.233 1.912 1.233 3.222 0 4.61-2.807 5.623-5.48 5.92.432.372.817 1.103.817 2.222 0 1.605-.015 2.898-.015 3.292 0 .32.217.695.825.577C20.565 22.092 24 17.597 24 12.297c0-6.627-5.373-12-12-12z">
+													</path>
+												</svg>
+												<span>GitHub</span>
+											</a>
 
-										<a class="source-code-link" href="https://gitlab.com/stevenfarless/lege-lux" target="_blank" rel="noopener noreferrer" aria-label="View Lege Lux on GitLab">
-											<svg class="source-code-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-												<path d="M23.955 13.587 20.703 3.58a.85.85 0 0 0-1.612-.087l-2.2 6.757H7.109l-2.2-6.757a.85.85 0 0 0-1.612.087L.045 13.587a1.7 1.7 0 0 0 .617 1.903L12 23.734 23.338 15.49a1.7 1.7 0 0 0 .617-1.903z"></path>
-											</svg>
-											<span>GitLab</span>
-										</a>
-									</div>
+											<a class="source-code-link" href="https://gitlab.com/stevenfarless/lege-lux"
+												target="_blank" rel="noopener noreferrer"
+												aria-label="View Lege Lux on GitLab">
+												<svg class="source-code-icon" viewBox="0 0 24 24" aria-hidden="true"
+													focusable="false">
+													<path
+														d="M23.955 13.587 20.703 3.58a.85.85 0 0 0-1.612-.087l-2.2 6.757H7.109l-2.2-6.757a.85.85 0 0 0-1.612.087L.045 13.587a1.7 1.7 0 0 0 .617 1.903L12 23.734 23.338 15.49a1.7 1.7 0 0 0 .617-1.903z">
+													</path>
+												</svg>
+												<span>GitLab</span>
+											</a>
+										</div>
 									</div>
 								</div>
 							</div>
 							<div class="sub-accordion-section" data-section="shortcuts">
 								<button class="sub-accordion-header" data-target="shortcuts" aria-expanded="false">
 									<span>Keyboard Shortcuts</span>
-									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
-										stroke="currentColor" stroke-width="2">
+									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24"
+										fill="none" stroke="currentColor" stroke-width="2">
 										<polyline points="6 9 12 15 18 9"></polyline>
 									</svg>
 								</button>
@@ -718,73 +743,63 @@
 		</div>
 	</div>
 
-	<div id="loginModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle" aria-hidden="true" inert>
+	<div id="loginModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle"
+		aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="loginModalTitle" tabindex="-1">Sign In</h2>
 				<button class="close-btn close-control" id="closeLoginModal" aria-label="Close" type="button">
-<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M7 7L17 17M17 7L7 17"></path>
-</svg>
-</button>
+					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<path d="M7 7L17 17M17 7L7 17"></path>
+					</svg>
+				</button>
 			</div>
 
-<div class="modal-body">
-	<form id="loginForm" class="auth-form">
-		<div class="setting-item">
-			<label for="loginEmail">Email</label>
-			<input
-				type="email"
-				id="loginEmail"
-				class="input-field"
-				placeholder="your@email.com"
-				autocomplete="email"
-				required
-			/>
-		</div>
+			<div class="modal-body">
+				<form id="loginForm" class="auth-form">
+					<div class="setting-item">
+						<label for="loginEmail">Email</label>
+						<input type="email" id="loginEmail" class="input-field" placeholder="your@email.com"
+							autocomplete="email" required />
+					</div>
 
-		<div class="setting-item">
-			<label for="loginPassword">Password</label>
-			<input
-				type="password"
-				id="loginPassword"
-				class="input-field"
-				placeholder="Password"
-				autocomplete="current-password"
-				required
-			/>
-		</div>
+					<div class="setting-item">
+						<label for="loginPassword">Password</label>
+						<input type="password" id="loginPassword" class="input-field" placeholder="Password"
+							autocomplete="current-password" required />
+					</div>
 
-		<button type="submit" class="primary-btn auth-form-submit">
-			Sign In
-		</button>
+					<button type="submit" class="primary-btn auth-form-submit">
+						Sign In
+					</button>
 
-		<p class="recaptcha-notice">
-			This site is protected by reCAPTCHA.
-		</p>
-	</form>
+					<p class="recaptcha-notice">
+						This site is protected by reCAPTCHA.
+					</p>
+				</form>
 
-	<p class="auth-switch">
-		<a href="#" id="forgotPasswordLink">Forgot password?</a>
-	</p>
+				<p class="auth-switch">
+					<a href="#" id="forgotPasswordLink">Forgot password?</a>
+				</p>
 
-	<p class="auth-switch">
-		Don't have an account?
-		<a href="#" id="showSignupLink">Sign up</a>
-	</p>
-</div>
+				<p class="auth-switch">
+					Don't have an account?
+					<a href="#" id="showSignupLink">Sign up</a>
+				</p>
+			</div>
 		</div>
 	</div>
 
-	<div id="signupModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="signupModalTitle" aria-hidden="true" inert>
+	<div id="signupModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="signupModalTitle"
+		aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="signupModalTitle" tabindex="-1">Create Account</h2>
 				<button class="close-btn close-control" id="closeSignupModal" aria-label="Close" type="button">
-<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M7 7L17 17M17 7L7 17"></path>
-</svg>
-</button>
+					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<path d="M7 7L17 17M17 7L7 17"></path>
+					</svg>
+				</button>
 			</div>
 			<div class="modal-body">
 				<form id="signupForm" class="auth-form">
@@ -808,15 +823,16 @@
 		</div>
 	</div>
 
-	<div id="userMenuModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="userMenuModalTitle" aria-hidden="true" inert>
+	<div id="userMenuModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="userMenuModalTitle"
+		aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="userMenuModalTitle" tabindex="-1">Account</h2>
 				<button class="close-btn close-control" id="closeUserMenuModal" aria-label="Close" type="button">
-<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M7 7L17 17M17 7L7 17"></path>
-</svg>
-</button>
+					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<path d="M7 7L17 17M17 7L7 17"></path>
+					</svg>
+				</button>
 			</div>
 			<div class="modal-body">
 				<div class="user-info-box">
@@ -838,61 +854,76 @@
 		</div>
 	</div>
 
-	<div id="referencesModal" class="modal modal--bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="referencesModalTitle" aria-hidden="true" inert>
+	<div id="referencesModal" class="modal modal--bottom-sheet" role="dialog" aria-modal="true"
+		aria-labelledby="referencesModalTitle" aria-hidden="true" inert>
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2 id="referencesModalTitle" tabindex="-1">References</h2>
 				<button class="close-btn close-control" id="closeReferencesModal" aria-label="Close" type="button">
-<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M7 7L17 17M17 7L7 17"></path>
-</svg>
-</button>
+					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<path d="M7 7L17 17M17 7L7 17"></path>
+					</svg>
+				</button>
 			</div>
 			<div class="modal-body"></div>
 		</div>
 	</div>
 
-	<div id="deuterocanonInfoModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="deuterocanonInfoModalTitle" aria-hidden="true" inert>
+	<div id="deuterocanonInfoModal" class="modal" role="dialog" aria-modal="true"
+		aria-labelledby="deuterocanonInfoModalTitle" aria-hidden="true" inert>
 		<div class="modal-content modal-content--sm">
 			<div class="modal-header">
 				<h2 id="deuterocanonInfoModalTitle" tabindex="-1">About the Apocrypha</h2>
-				<button class="close-btn close-control" id="closeDeuterocanonInfoModal" aria-label="Close" type="button">
-<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M7 7L17 17M17 7L7 17"></path>
-</svg>
-</button>
+				<button class="close-btn close-control" id="closeDeuterocanonInfoModal" aria-label="Close"
+					type="button">
+					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<path d="M7 7L17 17M17 7L7 17"></path>
+					</svg>
+				</button>
 			</div>
 			<div class="modal-body">
 				<div class="deuterocanon-info-content">
 					<h3>What is the Deuterocanon?</h3>
-					<p>The Deuterocanon, also called the Apocrypha, is a set of Jewish writings from roughly 400&#x2013;50 BC, the period between the Old and New Testaments. It includes books such as Tobit, Judith, 1 &amp; 2 Maccabees, Sirach, and Wisdom of Solomon.</p>
+					<p>The Deuterocanon, also called the Apocrypha, is a set of Jewish writings from roughly
+						400&#x2013;50 BC, the period between the Old and New Testaments. It includes books such as
+						Tobit, Judith, 1 &amp; 2 Maccabees, Sirach, and Wisdom of Solomon.</p>
 
 					<h3>Who accepts them as Scripture?</h3>
-					<p>Catholic and Orthodox Christians consider these books canonical. Most Protestants do not, following the Hebrew Bible&#x2019;s narrower canon. The books were never cited as Scripture by Jesus or the Apostles, and some passages are difficult to reconcile with the rest of Scripture, for example prayers for the dead in 2 Maccabees 12.</p>
+					<p>Catholic and Orthodox Christians consider these books canonical. Most Protestants do not,
+						following the Hebrew Bible&#x2019;s narrower canon. The books were never cited as Scripture by
+						Jesus or the Apostles, and some passages are difficult to reconcile with the rest of Scripture,
+						for example prayers for the dead in 2 Maccabees 12.</p>
 
 					<h3>What did the Protestant Reformers say?</h3>
 					<blockquote>
-						<strong>Martin Luther (1534):</strong> &#x201C;Apocrypha, that is, books not considered equal to Holy Scripture, but which are still useful and good to read.&#x201D;
+						<strong>Martin Luther (1534):</strong> &#x201C;Apocrypha, that is, books not considered equal to
+						Holy Scripture, but which are still useful and good to read.&#x201D;
 					</blockquote>
 					<blockquote>
-						<strong>Thirty-Nine Articles (1563):</strong> &#x201C;The other books the Church doth read for example of life and instruction of manners; but yet doth it not apply them to establish any doctrine.&#x201D;
+						<strong>Thirty-Nine Articles (1563):</strong> &#x201C;The other books the Church doth read for
+						example of life and instruction of manners; but yet doth it not apply them to establish any
+						doctrine.&#x201D;
 					</blockquote>
 					<blockquote>
-						<strong>Belgic Confession (1561):</strong> &#x201C;The church may certainly read these books and learn from them as far as they agree with the canonical books.&#x201D;
+						<strong>Belgic Confession (1561):</strong> &#x201C;The church may certainly read these books and
+						learn from them as far as they agree with the canonical books.&#x201D;
 					</blockquote>
 
 					<h3>Why are they here?</h3>
-					<p>They are included for study and historical interest. These writings shaped Jewish thought in the centuries before Christ and appear in translations used by billions of Christians worldwide.</p>
+					<p>They are included for study and historical interest. These writings shaped Jewish thought in the
+						centuries before Christ and appear in translations used by billions of Christians worldwide.</p>
 				</div>
 			</div>
 		</div>
-    </div>
+	</div>
 
-	<div id="installPrompt" class="install-prompt" role="dialog" aria-modal="true" aria-labelledby="installPromptTitle" aria-hidden="true" hidden>
+	<div id="installPrompt" class="install-prompt" role="dialog" aria-modal="true" aria-labelledby="installPromptTitle"
+		aria-hidden="true" hidden>
 		<div class="install-prompt__sheet">
 			<div class="install-prompt__handle" aria-hidden="true"></div>
 			<h2 id="installPromptTitle">Install Lege Lux?</h2>
-			<p class="install-prompt__body">Open Lege Lux from your home screen, load faster, and keep your Bible reader available offline.</p>
+			<p class="install-prompt__body">Open Lege Lux from your home screen, load faster, and keep your Bible reader
+				available offline.</p>
 			<ul class="install-prompt__benefits">
 				<li>Home screen access</li>
 				<li>Standalone app window</li>
@@ -900,12 +931,12 @@
 			</ul>
 			<div id="iosInstallSteps" class="install-prompt__ios" hidden>
 				<p>For iPhone or iPad, install from Safari:</p>
-					<ol>
-					    <li>Open this page in Safari</li>
-					    <li>Tap Share</li>
-					    <li>Tap Add to Home Screen</li>
-					    <li>Tap Add</li>
-					</ol>
+				<ol>
+					<li>Open this page in Safari</li>
+					<li>Tap Share</li>
+					<li>Tap Add to Home Screen</li>
+					<li>Tap Add</li>
+				</ol>
 			</div>
 			<div class="install-prompt__actions">
 				<button id="installPromptInstall" class="primary-btn" type="button">Install</button>
@@ -918,11 +949,12 @@
 
 	<script type="module" src="app.js"></script>
 	<script>
-    	// Hide raw build placeholder when pipeline substitution hasn't run.
-    	document.addEventListener('DOMContentLoaded', function() {
-    		var b = document.getElementById('build-info');
-    		if (b && b.textContent.trim().startsWith('__')) b.style.visibility = 'hidden';
-    	});
-</script>
+		// Hide raw build placeholder when pipeline substitution hasn't run.
+		document.addEventListener('DOMContentLoaded', function () {
+			var b = document.getElementById('build-info');
+			if (b && b.textContent.trim().startsWith('__')) b.style.visibility = 'hidden';
+		});
+	</script>
 </body>
+
 </html>
