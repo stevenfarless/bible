@@ -29,7 +29,7 @@ function getStoredValue(key) {
 }
 
 function setStoredValue(key, value) {
-    try { localStorage.setItem(key, String(value)); } catch (_) {}
+    try { localStorage.setItem(key, String(value)); } catch (_) { }
 }
 
 function markReady() {
@@ -131,7 +131,7 @@ function showPrompt() {
     prompt.setAttribute('aria-hidden', 'false');
     document.body.setAttribute('data-install-prompt-visible', 'true');
     install.focus({ preventScroll: true });
-    }
+}
 
 function schedulePrompt(delay = SHOW_DELAY_MS) {
     if (showTimer) return;

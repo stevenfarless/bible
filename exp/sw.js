@@ -1,5 +1,5 @@
 // BUILD_ID is injected at deploy time by the CI workflow:
-//   sed -i "s/f30b07e/$GITHUB_SHA/g" sw.js
+//   sed -i "s/94e218b/$GITHUB_SHA/g" sw.js
 // The placeholder below is replaced with the full commit SHA before
 // the file is published to GitHub Pages. Never edit the placeholder
 // directly — changes here are overwritten on every deploy.
@@ -14,19 +14,19 @@ const PRECACHED_TRANSLATIONS = new Set(['KJV', 'BSB']);
 const installedTranslations = new Set(PRECACHED_TRANSLATIONS);
 
 const CANONICAL_BOOKS = [
-  'Genesis','Exodus','Leviticus','Numbers','Deuteronomy',
-  'Joshua','Judges','Ruth','1 Samuel','2 Samuel',
-  '1 Kings','2 Kings','1 Chronicles','2 Chronicles',
-  'Ezra','Nehemiah','Esther','Job','Psalm','Proverbs',
-  'Ecclesiastes','Song of Solomon','Isaiah','Jeremiah',
-  'Lamentations','Ezekiel','Daniel','Hosea','Joel','Amos',
-  'Obadiah','Jonah','Micah','Nahum','Habakkuk','Zephaniah',
-  'Haggai','Zechariah','Malachi','Matthew','Mark','Luke',
-  'John','Acts','Romans','1 Corinthians','2 Corinthians',
-  'Galatians','Ephesians','Philippians','Colossians',
-  '1 Thessalonians','2 Thessalonians','1 Timothy','2 Timothy',
-  'Titus','Philemon','Hebrews','James','1 Peter','2 Peter',
-  '1 John','2 John','3 John','Jude','Revelation',
+  'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
+  'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
+  '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles',
+  'Ezra', 'Nehemiah', 'Esther', 'Job', 'Psalm', 'Proverbs',
+  'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah',
+  'Lamentations', 'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos',
+  'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk', 'Zephaniah',
+  'Haggai', 'Zechariah', 'Malachi', 'Matthew', 'Mark', 'Luke',
+  'John', 'Acts', 'Romans', '1 Corinthians', '2 Corinthians',
+  'Galatians', 'Ephesians', 'Philippians', 'Colossians',
+  '1 Thessalonians', '2 Thessalonians', '1 Timothy', '2 Timothy',
+  'Titus', 'Philemon', 'Hebrews', 'James', '1 Peter', '2 Peter',
+  '1 John', '2 John', '3 John', 'Jude', 'Revelation',
 ];
 
 const PER_BOOK_PRECACHE = [...PRECACHED_TRANSLATIONS].flatMap(t =>
@@ -150,7 +150,7 @@ function translationFromUrl(pathname) {
 }
 
 function resolveBuildId() {
-  return 'f30b07e';
+  return '94e218b';
 }
 
 async function precacheFiles() {
@@ -209,8 +209,8 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   if (url.origin !== self.location.origin &&
-      !url.hostname.endsWith('.firebaseio.com') &&
-      !url.hostname.endsWith('.firebase.google.com')) {
+    !url.hostname.endsWith('.firebaseio.com') &&
+    !url.hostname.endsWith('.firebase.google.com')) {
     return;
   }
 
@@ -241,29 +241,29 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-      if (APP_SHELL_PATTERN.test(url.pathname)) {
-          event.respondWith((async () => {
-            const cache = await caches.open(CACHE_NAME);
+  if (APP_SHELL_PATTERN.test(url.pathname)) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
 
-            try {
-              const response = await fetch(new Request(event.request, { cache: 'no-store' }));
+      try {
+        const response = await fetch(new Request(event.request, { cache: 'no-store' }));
 
-              if (response.ok) {
-                const cacheResponse = isLongLivedStaticAsset(url)
-                  ? withLongLivedStaticHeaders(response.clone())
-                  : response.clone();
+        if (response.ok) {
+          const cacheResponse = isLongLivedStaticAsset(url)
+            ? withLongLivedStaticHeaders(response.clone())
+            : response.clone();
 
-                await cache.put(event.request, cacheResponse);
-              }
-
-              return response;
-            } catch {
-              const cached = await cache.match(event.request);
-              return cached || new Response('Offline', { status: 503 });
-            }
-          })());
-          return;
+          await cache.put(event.request, cacheResponse);
         }
+
+        return response;
+      } catch {
+        const cached = await cache.match(event.request);
+        return cached || new Response('Offline', { status: 503 });
+      }
+    })());
+    return;
+  }
 
   const isRoot = url.pathname === '/' || url.pathname.endsWith('/index.html');
 

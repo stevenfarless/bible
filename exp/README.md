@@ -27,21 +27,25 @@ Full copyright and attribution information is in [NOTICE](NOTICE).
 ## Features
 
 **Reading**
+
 - Section headings and paragraph breaks sourced from BSB structure data
 - Footnotes and inline cross-references
 - Verse-by-verse mode
 - Adjustable font size and multiple color themes (dark and light)
 
 **Navigation**
+
 - Book, chapter, and verse picker modals
 - Swipe left/right for chapter navigation on touch devices
 - Keyboard shortcuts: `<-` `->` chapter navigation, `^` `v` verse navigation, `Ctrl+K` search, `?` help
 
 **Search**
+
 - Full-text search across all translations with results grouped by testament and book
 - Direct passage reference lookup (e.g. `John 3:16`, `Romans 8`)
 
 **Sync and Offline**
+
 - Firebase Authentication (email/password)
 - Reading position and settings synced across devices via Firebase Realtime Database
 - Service worker for full offline use after first load

@@ -2,11 +2,11 @@
 // Firebase auth, user data, and reading-position persistence for BibleApp.
 
 function lsSet(key, value) {
-    try { localStorage.setItem(key, String(value)); } catch (_) {}
+    try { localStorage.setItem(key, String(value)); } catch (_) { }
 }
 
 function lsSetJSON(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) {}
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) { }
 }
 
 export async function loadSavedPositionIfChanged(app, withTimeout) {
@@ -92,7 +92,7 @@ export async function loadSavedReadingPosition(app, withTimeout) {
 
 export function saveReadingPosition(app) {
     const pos = {
-        book:    app.state.currentBook,
+        book: app.state.currentBook,
         chapter: app.state.currentChapter,
         scrollY: window.scrollY || 0,
     };
@@ -116,16 +116,16 @@ export function handleUserButtonClick(app) {
         const isLight = document.body.classList.contains('light-mode');
         let colorTheme = app.state?.colorTheme || '';
 
-        try { colorTheme = app.state?.colorTheme || localStorage.getItem('colorTheme') || ''; } catch (_) {}
+        try { colorTheme = app.state?.colorTheme || localStorage.getItem('colorTheme') || ''; } catch (_) { }
         const themeNameMap = {
-            dracula:    'Dracula (Purple/Pink)',
-            onyx:       'Onyx (Gold/OLED)',
-            sage:       'Sage (Green/Forest)',
-            ember:      'Ember (Amber/Candlelit)',
+            dracula: 'Dracula (Purple/Pink)',
+            onyx: 'Onyx (Gold/OLED)',
+            sage: 'Sage (Green/Forest)',
+            ember: 'Ember (Amber/Candlelit)',
             perplexity: 'Perplexity (Teal/Minimal)',
-            basic:      'Basic (Black & White)',
-            geek:       'The Geek Shall Inherit The Earth',
-            gnome:      'GNOME 3 (Adwaita)',
+            basic: 'Basic (Black & White)',
+            geek: 'The Geek Shall Inherit The Earth',
+            gnome: 'GNOME 3 (Adwaita)',
         };
         document.getElementById('userTheme').textContent =
             themeNameMap[colorTheme] || colorTheme;
@@ -268,8 +268,8 @@ export async function loadUserData(app, normalizeTranslation) {
     if (s.lightMode != null) {
         app.state.lightMode =
             s.lightMode === 'light' ||
-            s.lightMode === 'dark' ||
-            s.lightMode === 'system'
+                s.lightMode === 'dark' ||
+                s.lightMode === 'system'
                 ? s.lightMode
                 : s.lightMode === true
                     ? 'light'
