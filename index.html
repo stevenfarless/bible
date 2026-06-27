@@ -441,9 +441,18 @@
 								<small class="help-text">Follow your device setting or choose a fixed mode.</small>
 							</div>
 							<div class="setting-item">
-								<label for="fontSizeSlider">Font Size</label>
-								<input type="range" id="fontSizeSlider" class="slider" min="12" max="32" value="18" />
-								<span id="fontSizeValue">18px</span>
+								<label id="fontSizeLabel">Font Size</label>
+								<div class="font-size-stepper" role="group" aria-labelledby="fontSizeLabel">
+									<button type="button" id="fontSizeDecrease" class="font-size-stepper__button font-size-stepper__button--decrease" aria-label="Decrease font size">
+										<span class="font-size-stepper__glyph" aria-hidden="true">Aa−</span>
+									</button>
+
+									<output id="fontSizeValue" class="font-size-stepper__value" for="fontSizeDecrease fontSizeIncrease" aria-live="polite" aria-label="20 pixels">20</output>
+
+									<button type="button" id="fontSizeIncrease" class="font-size-stepper__button font-size-stepper__button--increase" aria-label="Increase font size">
+										<span class="font-size-stepper__glyph" aria-hidden="true">Aa+</span>
+									</button>
+								</div>
 							</div>
 							<div class="setting-item">
 								<label for="readingFontSelector">Reading Font</label>

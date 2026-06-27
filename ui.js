@@ -18,7 +18,7 @@ const REQUIRED_IDS = [
 	'themeSelector', 'verseNumbersToggle', 'coloredVerseNumbersToggle', 'headingsToggle', 'footnotesToggle',
 	'crossReferencesToggle', 'verseByVerseToggle', 'chapterArrowsToggle', 'hideInterfaceOnScrollToggle', 'hapticsToggle',
 	'verseSelectionGestureSelect',
-	'fontSizeSlider', 'fontSizeValue',
+	'fontSizeDecrease', 'fontSizeValue', 'fontSizeIncrease',
 	'referencesModal', 'closeReferencesModal',
 	'deuterocanonInfoModal', 'closeDeuterocanonInfoModal',
 	'footnotesSection', 'footnotesContent',
@@ -158,8 +158,9 @@ export function cacheElements(app) {
 	app.hideInterfaceOnScrollToggle = document.getElementById('hideInterfaceOnScrollToggle');
 	app.hapticsToggle = document.getElementById('hapticsToggle');
 	app.verseSelectionGestureSelect = document.getElementById('verseSelectionGestureSelect');
-	app.fontSizeSlider = document.getElementById('fontSizeSlider');
+	app.fontSizeDecrease = document.getElementById('fontSizeDecrease');
 	app.fontSizeValue = document.getElementById('fontSizeValue');
+	app.fontSizeIncrease = document.getElementById('fontSizeIncrease');
 	// translationSelector (<select>) was removed from the settings modal;
 	// translation switching is handled exclusively by the translationModal.
 	app.translationSelector = document.getElementById('translationSelector') ?? null;

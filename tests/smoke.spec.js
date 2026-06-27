@@ -338,13 +338,30 @@ test('settings: verse-by-verse mode toggles passage layout class', async ({ page
         await expect(page.locator('#passageText')).toHaveClass(initial ? /^(?!.*verse-by-verse)/ : /verse-by-verse/);
 });
 
-test('settings: font size change updates passage font size', async ({ page }) => {
+test('settings: font size buttons update passage font size', async ({ page }) => {
         await page.goto('/');
         await waitForPassage(page);
         await openSettingsSection(page, 'appearance');
 
-        await page.locator('#fontSizeSlider').fill('24');
-        await expect(page.locator('#passageText')).toHaveCSS('font-size', '24px');
+        await page.evaluate(() => {
+                window._bibleApp.state.fontSize = 22;
+                localStorage.setItem('fontSize', '22');
+                window._bibleApp.applySettings();
+        });
+
+        await expect(page.locator('#fontSizeValue')).toHaveText('22');
+
+        await page.locator('#fontSizeIncrease').click();
+
+        await expect(page.locator('#fontSizeValue')).toHaveText('23');
+        await expect(page.locator('#passageText')).toHaveCSS('font-size', '23px');
+        await expect.poll(() => page.evaluate(() => localStorage.getItem('fontSize'))).toBe('23');
+
+        await page.locator('#fontSizeDecrease').click();
+
+        await expect(page.locator('#fontSizeValue')).toHaveText('22');
+        await expect(page.locator('#passageText')).toHaveCSS('font-size', '22px');
+        await expect.poll(() => page.evaluate(() => localStorage.getItem('fontSize'))).toBe('22');
 });
 
 test('settings: color theme selector applies theme to body', async ({ page }) => {
