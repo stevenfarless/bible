@@ -1,0 +1,149 @@
+name: "! Font changer"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: font-changer-exp
+  cancel-in-progress: false
+
+jobs:
+  font-changer:
+    name: Replace font size slider
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v7
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Apply font size stepper implementation
+        run: python3 .github/scripts/font_changer.py
+
+      - name: Validate font size stepper changes
+        run: |
+          git diff --check
+
+          grep -q 'id="fontSizeDecrease"' index.html
+          grep -q 'id="fontSizeValue"' index.html
+          grep -q 'id="fontSizeIncrease"' index.html
+          grep -q 'class="font-size-stepper"' index.html
+          grep -q 'aria-labelledby="fontSizeLabel"' index.html
+
+          grep -q '.font-size-stepper' css/components.css
+          grep -q '.font-size-stepper__button--decrease' css/components.css
+          grep -q '.font-size-stepper__button--increase' css/components.css
+          grep -q '.font-size-stepper__value' css/components.css
+
+          grep -q "'fontSizeDecrease', 'fontSizeValue', 'fontSizeIncrease'" ui.js
+          grep -q "app.fontSizeDecrease = document.getElementById('fontSizeDecrease')" ui.js
+          grep -q "app.fontSizeIncrease = document.getElementById('fontSizeIncrease')" ui.js
+
+          grep -q 'const FONT_SIZE_MIN = 12;' settings.js
+          grep -q 'const FONT_SIZE_MAX = 32;' settings.js
+          grep -q 'function clampFontSize' settings.js
+          grep -q 'function syncFontSizeControls' settings.js
+          grep -q 'syncFontSizeControls(app, fontSize)' settings.js
+          grep -q '.set(fontSize)' settings.js
+
+          grep -q 'app.fontSizeDecrease' events.js
+          grep -q 'app.fontSizeIncrease' events.js
+          grep -q 'settings: font size buttons update passage font size' tests/smoke.spec.js
+          grep -q "#fontSizeIncrease" tests/smoke.spec.js
+          grep -q "#fontSizeDecrease" tests/smoke.spec.js
+
+          if grep -q 'fontSizeSlider' index.html ui.js events.js settings.js tests/smoke.spec.js; then
+            echo "Old fontSizeSlider references remain in runtime or tests."
+            exit 1
+          fi
+
+          UNEXPECTED="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev '^(index.html|css/components.css|ui.js|settings.js|events.js|tests/smoke.spec.js)$' || true)"
+          test -z "$UNEXPECTED" || {
+            echo "Unexpected changed files:"
+            echo "$UNEXPECTED"
+            exit 1
+          }
+
+      - name: Install dependencies
+        run: |
+          npm install --package-lock=false
+          npm install --no-save --package-lock=false @playwright/test esbuild firebase marked
+          npx playwright install chromium --with-deps
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Run Chromium smoke tests
+        env:
+          BASE_URL: http://localhost:8080
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+        run: |
+          python3 -m http.server 8080 > /tmp/lege-lux-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+
+          for i in $(seq 1 10); do
+            curl -fsS http://localhost:8080 > /dev/null && break
+            sleep 1
+          done
+
+          curl -fsS http://localhost:8080 > /dev/null || {
+            cat /tmp/lege-lux-http.log
+            exit 1
+          }
+
+          npx playwright test tests/smoke.spec.js --project=chromium
+
+      - name: Commit font size stepper implementation
+        run: |
+          if git diff --quiet -- index.html css/components.css ui.js settings.js events.js tests/smoke.spec.js; then
+            echo "No font size stepper changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html css/components.css ui.js settings.js events.js tests/smoke.spec.js
+          git commit \
+            -m "feat(settings): replace font size slider with stepper control" \
+            -m "Replace the Appearance panel font size slider with a segmented Aa−, current size, and Aa+ stepper." \
+            -m "Keep the existing updateFontSize path for local storage, passage styling, and remote sync while updating DOM caching, event wiring, and smoke coverage."
+          git push origin exp
+
+      - name: Dispatch GitHub Pages deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RESPONSE_FILE="$(mktemp)"
+          STATUS="$({
+            curl -sS \
+              -o "$RESPONSE_FILE" \
+              -w '%{http_code}' \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/deploy-gh-pages.yml/dispatches" \
+              -d '{"ref":"exp"}'
+          })"
+
+          if [ "$STATUS" != "204" ]; then
+            echo "Deploy to GitHub Pages workflow dispatch failed with HTTP $STATUS."
+            cat "$RESPONSE_FILE"
+            exit 1
+          fi
+
+          echo "Deploy to GitHub Pages dispatched for exp."
