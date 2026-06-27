@@ -1,3 +1,5 @@
+// prepaint-settings.js
+
 (function () {
     var root = document.documentElement;
     var systemLightQuery = window.matchMedia('(prefers-color-scheme: light)');
@@ -31,7 +33,7 @@
     }
 
     function set(key, value) {
-        try { localStorage.setItem(key, String(value)); } catch (_) {}
+        try { localStorage.setItem(key, String(value)); } catch (_) { }
     }
 
     function applyStartupTheme() {
@@ -145,7 +147,7 @@
                         : fn;
                 }
             });
-        } catch (_) {}
+        } catch (_) { }
 
         function redactDebugPanel() {
             var panel = document.getElementById('debugPanel');
@@ -207,21 +209,32 @@
             readingFontSelector.addEventListener('pointerdown', ensureOptionalFontFaces, { once: true });
         }
 
-        var selector = document.getElementById('lightModeSelect');
-        if (!selector) return;
+        var radios = document.querySelectorAll('input[name="lightMode"]');
+        if (!radios.length) return;
 
-        selector.value = readLightMode();
+        function syncLightModeRadios(mode) {
+            for (var i = 0; i < radios.length; i += 1) {
+                radios[i].checked = radios[i].value === mode;
+            }
+        }
 
-        function updateFromSelector() {
-            var mode = selector.value === 'light' || selector.value === 'dark' || selector.value === 'system'
-                ? selector.value
+        syncLightModeRadios(readLightMode());
+
+        function updateFromRadio(event) {
+            var radio = event.currentTarget;
+            if (!radio.checked) return;
+
+            var mode = radio.value === 'light' || radio.value === 'dark' || radio.value === 'system'
+                ? radio.value
                 : 'system';
+
             set('lightMode', mode);
             applyLightMode(mode);
         }
 
-        selector.addEventListener('input', updateFromSelector);
-        selector.addEventListener('change', updateFromSelector);
+        for (var i = 0; i < radios.length; i += 1) {
+            radios[i].addEventListener('change', updateFromRadio);
+        }
     });
 
     systemLightQuery.addEventListener('change', function () {

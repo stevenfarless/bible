@@ -273,10 +273,10 @@ export function attachEventListeners(app) {
     installBugReportUi(app);
 
     app.searchToggleBtn?.addEventListener('click', () => app.toggleSearch());
-    app.closeSearchBtn?.addEventListener('click',  () => app.closeSearch());
-    app.searchInput?.addEventListener('input',     (e) => app.handleSearch(e.target.value, 'type'));
-    app.searchInput?.addEventListener('keydown',   (e) => app.handleSearchKeydown(e));
-    app.searchInput?.addEventListener('paste',     ()  => setTimeout(() => app.handleSearch(app.searchInput.value, 'paste'), 0));
+    app.closeSearchBtn?.addEventListener('click', () => app.closeSearch());
+    app.searchInput?.addEventListener('input', (e) => app.handleSearch(e.target.value, 'type'));
+    app.searchInput?.addEventListener('keydown', (e) => app.handleSearchKeydown(e));
+    app.searchInput?.addEventListener('paste', () => setTimeout(() => app.handleSearch(app.searchInput.value, 'paste'), 0));
 
     document.getElementById('megasearchToggle')?.addEventListener('change', (e) => {
         const query = app.searchLastQuery || '';
@@ -289,11 +289,11 @@ export function attachEventListeners(app) {
         }
     });
 
-    app.prevChapterBtn?.addEventListener('click',  () => app.navigateChapter(-1));
-    app.nextChapterBtn?.addEventListener('click',  () => app.navigateChapter(1));
-    app.bookSelector?.addEventListener('click',    () => app.openBookModal());
+    app.prevChapterBtn?.addEventListener('click', () => app.navigateChapter(-1));
+    app.nextChapterBtn?.addEventListener('click', () => app.navigateChapter(1));
+    app.bookSelector?.addEventListener('click', () => app.openBookModal());
     app.chapterSelector?.addEventListener('click', () => app.openChapterModal());
-    app.verseSelector?.addEventListener('click',   () => app.openVerseModal());
+    app.verseSelector?.addEventListener('click', () => app.openVerseModal());
 
     initSwipe(app);
 
@@ -415,10 +415,10 @@ export function attachEventListeners(app) {
         });
     }
 
-    app.referencesModal        = document.getElementById('referencesModal');
-    app.closeReferencesModal   = document.getElementById('closeReferencesModal');
-    app.footnotesSection       = document.getElementById('footnotesSection');
-    app.footnotesContent       = document.getElementById('footnotesContent');
+    app.referencesModal = document.getElementById('referencesModal');
+    app.closeReferencesModal = document.getElementById('closeReferencesModal');
+    app.footnotesSection = document.getElementById('footnotesSection');
+    app.footnotesContent = document.getElementById('footnotesContent');
     app.crossReferencesSection = document.getElementById('crossReferencesSection');
     app.crossReferencesContent = document.getElementById('crossReferencesContent');
 
@@ -457,10 +457,10 @@ export function attachEventListeners(app) {
     };
 
     app.settingsBtn?.addEventListener('click', openSettings);
-    app.closeVerseModal?.addEventListener('click',    () => app.closeModal(app.verseModal));
-    app.closeBookModal?.addEventListener('click',     () => app.closeModal(app.bookModal));
+    app.closeVerseModal?.addEventListener('click', () => app.closeModal(app.verseModal));
+    app.closeBookModal?.addEventListener('click', () => app.closeModal(app.bookModal));
     app.closeDeuterocanonInfoModal?.addEventListener('click', () => app.closeModal(app.deuterocanonInfoModal));
-    app.closeChapterModal?.addEventListener('click',  () => app.closeModal(app.chapterModal));
+    app.closeChapterModal?.addEventListener('click', () => app.closeModal(app.chapterModal));
     app.closeSettingsModal?.addEventListener('click', () => app.closeModal(app.settingsModal));
     app.closeLoginModal?.addEventListener('click', () => app.closeModal(app.loginModal));
     app.closeSignupModal?.addEventListener('click', () => app.closeModal(app.signupModal));
@@ -533,9 +533,13 @@ export function attachEventListeners(app) {
         });
     }
 
-    document.getElementById('lightModeSelect')?.addEventListener('change', (event) => {
-        app._dbgUserAction?.(`changeAppearance: ${event.currentTarget.value}`);
-        setLightMode(app, event.currentTarget.value);
+    document.querySelectorAll('input[name="lightMode"]').forEach((radio) => {
+        radio.addEventListener('change', (event) => {
+            if (!event.currentTarget.checked) return;
+
+            app._dbgUserAction?.(`changeAppearance: ${event.currentTarget.value}`);
+            setLightMode(app, event.currentTarget.value);
+        });
     });
 
     const themeSelector = document.getElementById('themeSelector');

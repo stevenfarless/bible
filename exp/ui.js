@@ -191,17 +191,17 @@ export function loadTheme() {
 	try {
 		const raw = localStorage.getItem('lightMode');
 		// migrate old boolean strings
-		if (raw === 'true')  mode = 'light';
+		if (raw === 'true') mode = 'light';
 		else if (raw === 'false') mode = 'dark';
 		else if (raw === 'light' || raw === 'dark' || raw === 'system') mode = raw;
-	} catch (_) {}
+	} catch (_) { }
 	applyLightMode(mode);
 }
 
 
 export function resolveLightMode(mode) {
 	if (mode === 'light') return true;
-	if (mode === 'dark')  return false;
+	if (mode === 'dark') return false;
 	return window.matchMedia('(prefers-color-scheme: light)').matches;
 }
 
@@ -216,10 +216,12 @@ export function applyLightMode(mode) {
 export async function setLightMode(app, mode) {
 	const normalized = mode === 'light' || mode === 'dark' || mode === 'system' ? mode : 'system';
 	app.state.lightMode = normalized;
-	try { localStorage.setItem('lightMode', normalized); } catch (_) {}
+	try { localStorage.setItem('lightMode', normalized); } catch (_) { }
 	applyLightMode(normalized);
-	const sel = document.getElementById('lightModeSelect');
-	if (sel) sel.value = normalized;
+	const radio = document.querySelector(
+		`input[name="lightMode"][value="${normalized}"]`
+	);
+	if (radio) radio.checked = true;
 	if (app.canWriteRemoteState()) {
 		await app.database.ref(`users/${app.currentUser.uid}/settings/lightMode`).set(normalized);
 	}
@@ -267,20 +269,20 @@ const ALL_THEME_CLASSES = ['lux-theme', 'vespers-theme', 'vigil-theme', 'dracula
 // bg-base values sourced from css/tokens.css (Dracula/Alucard) and css/themes.css (all others).
 // dark = the theme's dark-mode --bg-base; light = the theme's light-mode --bg-base.
 const THEME_BG = {
-	'basic-theme':        { dark: '#000000', light: '#ffffff' },
-	'dracula-theme':      { dark: '#191A21', light: '#FFFBEB' },
+	'basic-theme': { dark: '#000000', light: '#ffffff' },
+	'dracula-theme': { dark: '#191A21', light: '#FFFBEB' },
 	'dracula2test-theme': { dark: '#191A21', light: '#FFFBEB' },
-	'onyx-theme':         { dark: '#000000', light: '#faf9f7' },
-	'sage-theme':         { dark: '#0d1710', light: '#f6f8f5' },
-	'ember-theme':        { dark: '#161009', light: '#faf8f3' },
-	'perplexity-theme':   { dark: '#0A1616', light: '#f5f5f5' },
-	'geek-theme':         { dark: '#000000', light: '#000000' },
-	'gnome-theme':        { dark: '#1e1e1e', light: '#f6f5f4' },
-	'lux-theme':		  { dark: '#1a1614', light: '#f5f2ec' },
-	'vespers-theme':      { dark: '#1a1714', light: '#f5f2ec' },
-	'vigil-theme':        { dark: '#000000', light: '#f5f2ec' },
-	'uxorem-amo-theme':        { dark: '#161018', light: '#F9F2F6' },
-	'luna-lux-theme':        { dark: '#000816', light: '#F5F8FF' },
+	'onyx-theme': { dark: '#000000', light: '#faf9f7' },
+	'sage-theme': { dark: '#0d1710', light: '#f6f8f5' },
+	'ember-theme': { dark: '#161009', light: '#faf8f3' },
+	'perplexity-theme': { dark: '#0A1616', light: '#f5f5f5' },
+	'geek-theme': { dark: '#000000', light: '#000000' },
+	'gnome-theme': { dark: '#1e1e1e', light: '#f6f5f4' },
+	'lux-theme': { dark: '#1a1614', light: '#f5f2ec' },
+	'vespers-theme': { dark: '#1a1714', light: '#f5f2ec' },
+	'vigil-theme': { dark: '#000000', light: '#f5f2ec' },
+	'uxorem-amo-theme': { dark: '#161018', light: '#F9F2F6' },
+	'luna-lux-theme': { dark: '#000816', light: '#F5F8FF' },
 };
 
 export function updateThemeColor() {
@@ -316,7 +318,7 @@ export async function changeColorTheme(app, theme) {
 
 	updateThemeColor();
 
-	try { localStorage.setItem('colorTheme', resolved); } catch (_) {}
+	try { localStorage.setItem('colorTheme', resolved); } catch (_) { }
 
 	if (app.canWriteRemoteState()) {
 		await app.database
