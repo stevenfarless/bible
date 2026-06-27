@@ -1310,6 +1310,189 @@ body.hide-verse-numbers .verse .verse-num {
     margin-bottom: var(--spacing-xs);
 }
 
+.segmented-toggle {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    width: min(100%, 22rem);
+    margin: 0;
+    padding: 4px;
+    border: 1px solid var(--border-neutral);
+    border-radius: 999px;
+    background-color: var(--bg-raised);
+    isolation: isolate;
+    transition:
+        background-color var(--transition-fast),
+        border-color var(--transition-fast);
+}
+
+.segmented-toggle::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc((100% - 8px) / 3);
+    border-radius: 999px;
+    background-color: var(--bg-card);
+    box-shadow: var(--shadow-sm);
+    transform: translateX(200%);
+    transition:
+        transform var(--transition-normal),
+        background-color var(--transition-fast),
+        box-shadow var(--transition-fast);
+}
+
+.segmented-toggle:has(#lm-light:checked)::before {
+    transform: translateX(0);
+}
+
+.segmented-toggle:has(#lm-dark:checked)::before {
+    transform: translateX(100%);
+}
+
+.segmented-toggle:has(#lm-system:checked)::before {
+    transform: translateX(200%);
+}
+
+.segmented-toggle input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.segmented-toggle label {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 var(--spacing-md);
+    border-radius: 999px;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: color var(--transition-fast);
+}
+
+.segmented-toggle input[type="radio"]:checked+label {
+    color: var(--text-heading);
+}
+
+.segmented-toggle input[type="radio"]:focus-visible+label {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.segmented-toggle label:hover {
+    color: var(--primary-color);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .segmented-toggle::before,
+    .segmented-toggle,
+    .segmented-toggle label {
+        transition: none;
+    }
+}
+
+.font-size-stepper {
+    display: grid;
+    grid-template-columns: 1fr 0.85fr 1fr;
+    width: min(100%, 22rem);
+    min-inline-size: 0;
+    margin: 0;
+    padding: 4px;
+    border: 1px solid var(--border-neutral);
+    border-radius: 999px;
+    background-color: var(--bg-raised);
+    transition:
+        background-color var(--transition-fast),
+        border-color var(--transition-fast);
+}
+
+.font-size-stepper__button,
+.font-size-stepper__value {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    margin: 0;
+    padding: 0 var(--spacing-md);
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    line-height: 1;
+    text-align: center;
+}
+
+.font-size-stepper__button {
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+        color var(--transition-fast),
+        background-color var(--transition-fast),
+        opacity var(--transition-fast);
+}
+
+.font-size-stepper__button:hover:not(:disabled) {
+    color: var(--primary-color);
+}
+
+.font-size-stepper__button:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.font-size-stepper__button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.font-size-stepper__button--decrease .font-size-stepper__glyph {
+    font-size: 0.82rem;
+}
+
+.font-size-stepper__button--increase .font-size-stepper__glyph {
+    font-size: 1.05rem;
+}
+
+.font-size-stepper__value {
+    background-color: var(--bg-card);
+    color: var(--text-heading);
+    box-shadow: var(--shadow-sm);
+    font-size: 0.95rem;
+    font-weight: 700;
+    transition:
+        background-color var(--transition-fast),
+        color var(--transition-fast),
+        box-shadow var(--transition-fast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .font-size-stepper,
+    .font-size-stepper__button,
+    .font-size-stepper__value {
+        transition: none;
+    }
+}
+
 /* Toast Notifications */
 .toast {
     position: fixed;

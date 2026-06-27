@@ -57,14 +57,15 @@ body:not(.no-color-transition) *::before,
 body:not(.no-color-transition) *::after {
     transition:
         background-color 300ms ease,
-        color            300ms ease,
-        border-color     300ms ease,
-        fill             300ms ease,
-        stroke           300ms ease,
-        transform        var(--transition-normal);
+        color 300ms ease,
+        border-color 300ms ease,
+        fill 300ms ease,
+        stroke 300ms ease,
+        transform var(--transition-normal);
 }
 
 @media (prefers-reduced-motion: reduce) {
+
     body:not(.no-color-transition) *,
     body:not(.no-color-transition) *::before,
     body:not(.no-color-transition) *::after {

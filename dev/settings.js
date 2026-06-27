@@ -4,22 +4,49 @@
 import { changeColorTheme, applyLightMode } from './ui.js';
 
 const DEFAULTS = {
-    fontSize:            20,
-    showVerseNumbers:    true,
+    fontSize: 20,
+    showVerseNumbers: true,
     coloredVerseNumbers: true,
-    showHeadings:        true,
-    showFootnotes:       false,
+    showHeadings: true,
+    showFootnotes: false,
     showCrossReferences: false,
-    verseByVerse:        false,
-    showChapterArrows:   false,
+    verseByVerse: false,
+    showChapterArrows: false,
     hideInterfaceOnScroll: true,
-    hapticsEnabled:      true,
-    lightMode:           'system',
-    colorTheme:          'vespers',
-    translation:         'KJV',
-    readingFont:         'gentium',
+    hapticsEnabled: true,
+    lightMode: 'system',
+    colorTheme: 'vespers',
+    translation: 'KJV',
+    readingFont: 'gentium',
     verseSelectionGesture: 'hold',
 };
+
+const FONT_SIZE_MIN = 12;
+const FONT_SIZE_MAX = 32;
+
+function clampFontSize(size) {
+    const parsed = parseInt(size, 10);
+    if (!Number.isFinite(parsed)) return DEFAULTS.fontSize;
+
+    return Math.min(FONT_SIZE_MAX, Math.max(FONT_SIZE_MIN, parsed));
+}
+
+function syncFontSizeControls(app, fontSize) {
+    const value = String(fontSize);
+
+    if (app.fontSizeValue) {
+        app.fontSizeValue.textContent = value;
+        app.fontSizeValue.setAttribute('aria-label', `${value} pixels`);
+    }
+
+    if (app.fontSizeDecrease) {
+        app.fontSizeDecrease.disabled = fontSize <= FONT_SIZE_MIN;
+    }
+
+    if (app.fontSizeIncrease) {
+        app.fontSizeIncrease.disabled = fontSize >= FONT_SIZE_MAX;
+    }
+}
 
 const READING_FONT_FAMILIES = {
     gentium: 'Gentium Book Plus',
@@ -44,7 +71,7 @@ function readBool(key, defaultValue) {
 }
 
 function lsSet(key, value) {
-    try { localStorage.setItem(key, String(value)); } catch (_) {}
+    try { localStorage.setItem(key, String(value)); } catch (_) { }
 }
 
 function escapeHtml(value) {
@@ -69,15 +96,15 @@ export function loadLocalSettings(app) {
     try { app.state.fontSize = parseInt(localStorage.getItem('fontSize') || String(DEFAULTS.fontSize), 10); }
     catch (_) { app.state.fontSize = DEFAULTS.fontSize; }
 
-    app.state.showVerseNumbers    = readBool('showVerseNumbers',    DEFAULTS.showVerseNumbers);
-    app.state.showHeadings        = readBool('showHeadings',        DEFAULTS.showHeadings);
+    app.state.showVerseNumbers = readBool('showVerseNumbers', DEFAULTS.showVerseNumbers);
+    app.state.showHeadings = readBool('showHeadings', DEFAULTS.showHeadings);
     app.state.coloredVerseNumbers = readBool('coloredVerseNumbers', DEFAULTS.coloredVerseNumbers);
-    app.state.showFootnotes       = readBool('showFootnotes',       DEFAULTS.showFootnotes);
+    app.state.showFootnotes = readBool('showFootnotes', DEFAULTS.showFootnotes);
     app.state.showCrossReferences = readBool('showCrossReferences', DEFAULTS.showCrossReferences);
-    app.state.verseByVerse        = readBool('verseByVerse',        DEFAULTS.verseByVerse);
-    app.state.showChapterArrows      = readBool('showChapterArrows',      DEFAULTS.showChapterArrows);
-    app.state.hideInterfaceOnScroll  = readBool('hideInterfaceOnScroll',  DEFAULTS.hideInterfaceOnScroll);
-    app.state.hapticsEnabled         = readBool('hapticsEnabled',         DEFAULTS.hapticsEnabled);
+    app.state.verseByVerse = readBool('verseByVerse', DEFAULTS.verseByVerse);
+    app.state.showChapterArrows = readBool('showChapterArrows', DEFAULTS.showChapterArrows);
+    app.state.hideInterfaceOnScroll = readBool('hideInterfaceOnScroll', DEFAULTS.hideInterfaceOnScroll);
+    app.state.hapticsEnabled = readBool('hapticsEnabled', DEFAULTS.hapticsEnabled);
     const _rawLightMode = (() => { try { return localStorage.getItem('lightMode'); } catch (_) { return null; } })();
     app.state.lightMode =
         _rawLightMode === 'light' || _rawLightMode === 'dark' || _rawLightMode === 'system'
@@ -116,9 +143,9 @@ export function loadLocalSettings(app) {
         if (raw) {
             const pos = JSON.parse(raw);
             if (pos && pos.book && pos.chapter) {
-                app.state.currentBook    = pos.book;
+                app.state.currentBook = pos.book;
                 app.state.currentChapter = parseInt(pos.chapter, 10);
-                app.lastScrollPosition   = pos.scrollY || 0;
+                app.lastScrollPosition = pos.scrollY || 0;
             }
         }
     } catch (_) { /* malformed entry — leave state at defaults */ }
@@ -148,15 +175,19 @@ export function applySettings(app) {
     app.bibleApi.setTranslation(app.state.translation || DEFAULTS.translation);
 
     applyLightMode(app.state.lightMode);
-    const lightModeSelect = document.getElementById('lightModeSelect');
-    if (lightModeSelect) lightModeSelect.value = app.state.lightMode;
+
+    applyLightMode(app.state.lightMode);
+
+    document.querySelectorAll('input[name="lightMode"]').forEach((radio) => {
+        radio.checked = radio.value === app.state.lightMode;
+    });
 
     document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
     document.body.classList.toggle('muted-verse-numbers', !app.state.coloredVerseNumbers);
     document.body.classList.toggle('hide-chapter-arrows', !app.state.showChapterArrows);
-    if (app.verseNumbersToggle)    app.verseNumbersToggle.checked    = !!app.state.showVerseNumbers;
+    if (app.verseNumbersToggle) app.verseNumbersToggle.checked = !!app.state.showVerseNumbers;
     if (app.coloredVerseNumbersToggle) app.coloredVerseNumbersToggle.checked = !!app.state.coloredVerseNumbers;
-    if (app.headingsToggle)        app.headingsToggle.checked        = !!app.state.showHeadings;
+    if (app.headingsToggle) app.headingsToggle.checked = !!app.state.showHeadings;
     if (app.chapterArrowsToggle) app.chapterArrowsToggle.checked = !!app.state.showChapterArrows;
     if (app.hideInterfaceOnScrollToggle) app.hideInterfaceOnScrollToggle.checked = !!app.state.hideInterfaceOnScroll;
     if (app.hapticsToggle) app.hapticsToggle.checked = !!app.state.hapticsEnabled;
@@ -166,10 +197,10 @@ export function applySettings(app) {
     syncVerseByVerseMode(app);
     if (app.verseByVerseToggle) app.verseByVerseToggle.checked = !!app.state.verseByVerse;
 
-    const fontSize = app.state.fontSize || DEFAULTS.fontSize;
-    if (app.fontSizeSlider) app.fontSizeSlider.value = fontSize;
-    if (app.fontSizeValue)  app.fontSizeValue.textContent = `${fontSize}px`;
-    if (app.passageText)    app.passageText.style.fontSize = `${fontSize}px`;
+    const fontSize = clampFontSize(app.state.fontSize || DEFAULTS.fontSize);
+    app.state.fontSize = fontSize;
+    syncFontSizeControls(app, fontSize);
+    if (app.passageText) app.passageText.style.fontSize = `${fontSize}px`;
     const readingFont = app.state.readingFont || DEFAULTS.readingFont;
     applyReadingFont(app, readingFont);
 
@@ -181,12 +212,12 @@ export function applySettings(app) {
 }
 
 const TOGGLE_MAP = {
-    showVerseNumbers:  'verseNumbersToggle',
+    showVerseNumbers: 'verseNumbersToggle',
     coloredVerseNumbers: 'coloredVerseNumbersToggle',
-    showHeadings:      'headingsToggle',
+    showHeadings: 'headingsToggle',
     showChapterArrows: 'chapterArrowsToggle',
     hideInterfaceOnScroll: 'hideInterfaceOnScrollToggle',
-    hapticsEnabled:    'hapticsToggle',
+    hapticsEnabled: 'hapticsToggle',
 };
 
 export async function toggleSetting(app, setting) {
@@ -211,10 +242,10 @@ export async function toggleSetting(app, setting) {
         document.body.classList.toggle('hide-verse-numbers', !app.state.showVerseNumbers);
         return;
     }
-    
+
     if (setting === 'coloredVerseNumbers') {
-    document.body.classList.toggle('muted-verse-numbers', !app.state.coloredVerseNumbers);
-    return;
+        document.body.classList.toggle('muted-verse-numbers', !app.state.coloredVerseNumbers);
+        return;
     }
 
     if (setting === 'showChapterArrows') {
@@ -295,16 +326,21 @@ export async function applyReadingFont(app, font) {
 }
 
 export async function updateFontSize(app, size) {
-    app.state.fontSize = parseInt(size, 10);
-    app.fontSizeValue.textContent = `${size}px`;
-    app.passageText.style.fontSize = `${size}px`;
+    const fontSize = clampFontSize(size);
 
-    lsSet('fontSize', size);
+    app.state.fontSize = fontSize;
+    syncFontSizeControls(app, fontSize);
+
+    if (app.passageText) {
+        app.passageText.style.fontSize = `${fontSize}px`;
+    }
+
+    lsSet('fontSize', fontSize);
 
     if (app.canWriteRemoteState()) {
         await app.database
             .ref(`users/${app.currentUser.uid}/settings/fontSize`)
-            .set(parseInt(size, 10));
+            .set(fontSize);
     }
 }
 
@@ -377,7 +413,7 @@ export async function changeTranslation(
         if (response.ok) {
             meta = await response.json();
         }
-    } catch (_) {}
+    } catch (_) { }
 
     app._rebuildBibleBooks(meta);
 

@@ -47,7 +47,7 @@ body.dracula-theme {
     --text-body: var(--dracula-fg);
     --text-muted: var(--dracula-comment);
 
-    --border-neutral:   var(--dracula-selection);
+    --border-neutral: var(--dracula-selection);
     --highlight-border: var(--dracula-current-line);
 
     --primary-color: var(--dracula-purple);
@@ -60,7 +60,7 @@ body.dracula-theme {
     /* Functional colors per spec — distinct from syntax palette */
     --success-color: var(--dracula-func-green);
     --warning-color: var(--dracula-func-orange);
-    --error-color:   var(--dracula-func-red);
+    --error-color: var(--dracula-func-red);
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
 
@@ -73,28 +73,28 @@ body.dracula-theme {
 :root.dracula-theme.light-mode,
 html.dracula-theme.light-mode,
 body.dracula-theme.light-mode {
-    --bg-base:    var(--alucard-bg);
-    --bg-card:    var(--alucard-bg-lighter);
-    --bg-raised:  var(--alucard-bg-light);
+    --bg-base: var(--alucard-bg);
+    --bg-card: var(--alucard-bg-lighter);
+    --bg-raised: var(--alucard-bg-light);
 
     --text-heading: var(--alucard-fg);
-    --text-body:    var(--alucard-fg);
-    --text-muted:   var(--alucard-comment);
+    --text-body: var(--alucard-fg);
+    --text-muted: var(--alucard-comment);
 
-    --border-neutral:   var(--alucard-bg-dark);
+    --border-neutral: var(--alucard-bg-dark);
     --highlight-border: var(--alucard-current-line);
 
-    --primary-color:   var(--alucard-purple);
-    --primary-dark:    #4D38A8;
-    --primary-light:   var(--alucard-pink);
+    --primary-color: var(--alucard-purple);
+    --primary-dark: #4D38A8;
+    --primary-light: var(--alucard-pink);
     --brand-secondary: var(--alucard-orange);
     --section-heading-color: var(--brand-secondary);
-    --accent-color:    var(--alucard-cyan);
+    --accent-color: var(--alucard-cyan);
 
     /* Functional colors per spec */
     --success-color: var(--alucard-func-green);
     --warning-color: var(--alucard-func-orange);
-    --error-color:   var(--alucard-func-red);
+    --error-color: var(--alucard-func-red);
 
     --footnote-hover-bg: color-mix(in srgb, var(--alucard-purple) 14%, transparent);
 
@@ -140,7 +140,7 @@ body.dracula2test-theme {
     /* Functional colors per spec — distinct from syntax palette */
     --success-color: var(--dracula-func-green);
     --warning-color: var(--dracula-func-orange);
-    --error-color:   var(--dracula-func-red);
+    --error-color: var(--dracula-func-red);
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
 
@@ -153,27 +153,27 @@ body.dracula2test-theme {
 :root.dracula2test-theme.light-mode,
 html.dracula2test-theme.light-mode,
 body.dracula2test-theme.light-mode {
-    --bg-base:    var(--alucard-bg);
-    --bg-card:    var(--alucard-bg-lighter);
-    --bg-raised:  var(--alucard-bg-light);
+    --bg-base: var(--alucard-bg);
+    --bg-card: var(--alucard-bg-lighter);
+    --bg-raised: var(--alucard-bg-light);
 
     --text-heading: var(--alucard-fg);
-    --text-body:    var(--alucard-fg);
+    --text-body: var(--alucard-fg);
     --text-muted: #9A9580;
 
-    --border-neutral:   var(--alucard-bg-dark);
+    --border-neutral: var(--alucard-bg-dark);
     --highlight-border: var(--alucard-selection);
 
-    --primary-color:   var(--alucard-purple);
-    --primary-dark:    #4D38A8;
-    --primary-light:   var(--alucard-pink);
+    --primary-color: var(--alucard-purple);
+    --primary-dark: #4D38A8;
+    --primary-light: var(--alucard-pink);
     --brand-secondary: var(--alucard-orange);
     --section-heading-color: var(--brand-secondary);
-    --accent-color:    var(--alucard-cyan);
+    --accent-color: var(--alucard-cyan);
 
     --success-color: var(--alucard-func-green);
     --warning-color: var(--alucard-func-orange);
-    --error-color:   var(--alucard-func-red);
+    --error-color: var(--alucard-func-red);
 
     --footnote-hover-bg: color-mix(in srgb, var(--alucard-purple) 14%, transparent);
 
@@ -261,27 +261,27 @@ body.onyx-theme.light-mode {
 :root.sage-theme,
 html.sage-theme,
 body.sage-theme {
-    --bg-base:   hsl(150, 18%, 8%);
-    --bg-card:   hsl(150, 16%, 11%);
+    --bg-base: hsl(150, 18%, 8%);
+    --bg-card: hsl(150, 16%, 11%);
     --bg-raised: hsl(150, 14%, 16%);
 
     --text-heading: hsl(100, 18%, 90%);
-    --text-body:    hsl(130, 10%, 64%);
-    --text-muted: hsl(130,  8%, 46%);
+    --text-body: hsl(130, 10%, 64%);
+    --text-muted: hsl(130, 8%, 46%);
 
-    --border-neutral:   hsl(148, 14%, 22%);
+    --border-neutral: hsl(148, 14%, 22%);
     --highlight-border: hsl(148, 16%, 30%);
 
-    --primary-color:   hsl(145, 48%, 52%);
-    --primary-dark:    hsl(145, 50%, 40%);
-    --primary-light:   hsl(145, 55%, 66%);
-    --brand-secondary: hsl(40,  65%, 58%);
+    --primary-color: hsl(145, 48%, 52%);
+    --primary-dark: hsl(145, 50%, 40%);
+    --primary-light: hsl(145, 55%, 66%);
+    --brand-secondary: hsl(40, 65%, 58%);
     --section-heading-color: var(--brand-secondary);
-    --accent-color:    hsl(170, 45%, 60%);
+    --accent-color: hsl(170, 45%, 60%);
 
     --success-color: hsl(145, 48%, 52%);
-    --warning-color: hsl(40,  70%, 58%);
-    --error-color:   hsl(4,   62%, 56%);
+    --warning-color: hsl(40, 70%, 58%);
+    --error-color: hsl(4, 62%, 56%);
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
 
@@ -293,27 +293,27 @@ body.sage-theme {
 :root.sage-theme.light-mode,
 html.sage-theme.light-mode,
 body.sage-theme.light-mode {
-    --bg-base:   hsl(90, 14%, 97%);
-    --bg-card:   hsl(90, 12%, 94%);
+    --bg-base: hsl(90, 14%, 97%);
+    --bg-card: hsl(90, 12%, 94%);
     --bg-raised: hsl(90, 10%, 89%);
 
     --text-heading: hsl(150, 25%, 12%);
-    --text-body:    hsl(150, 14%, 32%);
+    --text-body: hsl(150, 14%, 32%);
     --text-muted: hsl(150, 10%, 50%);
 
-    --border-neutral:   hsl(130, 14%, 84%);
+    --border-neutral: hsl(130, 14%, 84%);
     --highlight-border: hsl(130, 18%, 92%);
 
-    --primary-color:   hsl(145, 50%, 30%);
-    --primary-dark:    hsl(145, 52%, 24%);
-    --primary-light:   hsl(145, 48%, 42%);
-    --brand-secondary: hsl(32,  70%, 40%);
+    --primary-color: hsl(145, 50%, 30%);
+    --primary-dark: hsl(145, 52%, 24%);
+    --primary-light: hsl(145, 48%, 42%);
+    --brand-secondary: hsl(32, 70%, 40%);
     --section-heading-color: var(--brand-secondary);
-    --accent-color:    hsl(170, 45%, 28%);
+    --accent-color: hsl(170, 45%, 28%);
 
     --success-color: hsl(145, 45%, 32%);
-    --warning-color: hsl(38,  72%, 40%);
-    --error-color:   hsl(4,   58%, 44%);
+    --warning-color: hsl(38, 72%, 40%);
+    --error-color: hsl(4, 58%, 44%);
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 14%, transparent);
 
@@ -328,27 +328,27 @@ body.sage-theme.light-mode {
 :root.ember-theme,
 html.ember-theme,
 body.ember-theme {
-    --bg-base:   hsl(20, 18%,  8%);
-    --bg-card:   hsl(20, 16%, 11%);
+    --bg-base: hsl(20, 18%, 8%);
+    --bg-card: hsl(20, 16%, 11%);
     --bg-raised: hsl(20, 14%, 16%);
 
     --text-heading: hsl(36, 22%, 88%);
-    --text-body:    hsl(30, 14%, 64%);
+    --text-body: hsl(30, 14%, 64%);
     --text-muted: hsl(28, 10%, 46%);
 
-    --border-neutral:   hsl(24, 16%, 22%);
+    --border-neutral: hsl(24, 16%, 22%);
     --highlight-border: hsl(26, 18%, 30%);
 
-    --primary-color:   hsl(35, 72%, 55%);
-    --primary-dark:    hsl(33, 74%, 44%);
-    --primary-light:   hsl(40, 78%, 68%);
-    --brand-secondary: hsl(8,  60%, 55%);
+    --primary-color: hsl(35, 72%, 55%);
+    --primary-dark: hsl(33, 74%, 44%);
+    --primary-light: hsl(40, 78%, 68%);
+    --brand-secondary: hsl(8, 60%, 55%);
     --section-heading-color: var(--brand-secondary);
-    --accent-color:    hsl(50, 70%, 60%);
+    --accent-color: hsl(50, 70%, 60%);
 
     --success-color: hsl(130, 36%, 48%);
-    --warning-color: hsl(40,  72%, 56%);
-    --error-color:   hsl(4,   65%, 56%);
+    --warning-color: hsl(40, 72%, 56%);
+    --error-color: hsl(4, 65%, 56%);
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 22%, transparent);
 
@@ -360,28 +360,28 @@ body.ember-theme {
 :root.ember-theme.light-mode,
 html.ember-theme.light-mode,
 body.ember-theme.light-mode {
-    --bg-base:   hsl(38, 30%, 97%);
-    --bg-card:   hsl(38, 26%, 93%);
+    --bg-base: hsl(38, 30%, 97%);
+    --bg-card: hsl(38, 26%, 93%);
     --bg-raised: hsl(36, 22%, 88%);
 
     --text-heading: hsl(20, 28%, 14%);
-    --text-body:    hsl(22, 18%, 32%);
+    --text-body: hsl(22, 18%, 32%);
     --text-muted: hsl(24, 12%, 50%);
 
-    --border-neutral:   hsl(32, 18%, 84%);
+    --border-neutral: hsl(32, 18%, 84%);
     --highlight-border: hsl(36, 24%, 92%);
 
-    --primary-color:   hsl(25, 68%, 34%);
-    --primary-dark:    hsl(22, 70%, 27%);
-    --primary-light:   hsl(30, 65%, 46%);
+    --primary-color: hsl(25, 68%, 34%);
+    --primary-dark: hsl(22, 70%, 27%);
+    --primary-light: hsl(30, 65%, 46%);
     /* Darkened from 40% → 32% for WCAG AA contrast on warm cream bg */
-    --brand-secondary: hsl(6,  55%, 32%);
+    --brand-secondary: hsl(6, 55%, 32%);
     --section-heading-color: var(--brand-secondary);
-    --accent-color:    hsl(45, 60%, 32%);
+    --accent-color: hsl(45, 60%, 32%);
 
     --success-color: hsl(130, 38%, 34%);
-    --warning-color: hsl(38,  70%, 38%);
-    --error-color:   hsl(2,   58%, 42%);
+    --warning-color: hsl(38, 70%, 38%);
+    --error-color: hsl(2, 58%, 42%);
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 14%, transparent);
 
@@ -395,43 +395,43 @@ body.ember-theme.light-mode {
 html.perplexity-theme,
 body.perplexity-theme {
     /* Palette constants — sampled from Perplexity app screenshot */
-    --pplx-teal:         #3FA8B8;
-    --pplx-teal-dark:    #2D8A99;
-    --pplx-teal-light:   #52BBC9;
-    --pplx-offblack:     #0A1616;
+    --pplx-teal: #3FA8B8;
+    --pplx-teal-dark: #2D8A99;
+    --pplx-teal-light: #52BBC9;
+    --pplx-offblack: #0A1616;
     --pplx-offblack-mid: #101E1E;
-    --pplx-offblack-lt:  #172828;
-    --pplx-offblack-ll:  #1E3030;
-    --pplx-paper:        #f5f5f5;
-    --pplx-muted:        #8a8a90;
-    --pplx-amber:        #e8a045;
+    --pplx-offblack-lt: #172828;
+    --pplx-offblack-ll: #1E3030;
+    --pplx-paper: #f5f5f5;
+    --pplx-muted: #8a8a90;
+    --pplx-amber: #e8a045;
 
     /* Surfaces */
-    --bg-base:   var(--pplx-offblack);
-    --bg-card:   var(--pplx-offblack-mid);
+    --bg-base: var(--pplx-offblack);
+    --bg-card: var(--pplx-offblack-mid);
     --bg-raised: var(--pplx-offblack-lt);
 
     /* Text */
     --text-heading: var(--pplx-paper);
-    --text-body:    #c8c8cc;
+    --text-body: #c8c8cc;
     --text-muted: var(--pplx-muted);
 
     /* Borders */
-    --border-neutral:   var(--pplx-offblack-ll);
+    --border-neutral: var(--pplx-offblack-ll);
     --highlight-border: #263232;
 
     /* Brand */
-    --primary-color:   var(--pplx-teal);
-    --primary-dark:    var(--pplx-teal-dark);
-    --primary-light:   var(--pplx-teal-light);
+    --primary-color: var(--pplx-teal);
+    --primary-dark: var(--pplx-teal-dark);
+    --primary-light: var(--pplx-teal-light);
     --brand-secondary: var(--pplx-teal-light);
     --section-heading-color: var(--brand-secondary);
-    --accent-color:    var(--pplx-teal-light);
+    --accent-color: var(--pplx-teal-light);
 
     /* Functional */
     --success-color: hsl(155, 45%, 48%);
     --warning-color: var(--pplx-amber);
-    --error-color:   hsl(6, 65%, 56%);
+    --error-color: hsl(6, 65%, 56%);
 
     --footnote-hover-bg: color-mix(in srgb, var(--pplx-teal) 18%, transparent);
 
@@ -450,27 +450,27 @@ body.perplexity-theme:not(.light-mode) .passage-container {
 :root.perplexity-theme.light-mode,
 html.perplexity-theme.light-mode,
 body.perplexity-theme.light-mode {
-    --bg-base:   var(--pplx-paper);
-    --bg-card:   hsl(0, 0%, 94%);
+    --bg-base: var(--pplx-paper);
+    --bg-card: hsl(0, 0%, 94%);
     --bg-raised: hsl(0, 0%, 90%);
 
     --text-heading: var(--pplx-offblack);
-    --text-body:    hsl(220, 8%, 30%);
+    --text-body: hsl(220, 8%, 30%);
     --text-muted: hsl(220, 6%, 52%);
 
-    --border-neutral:   hsl(220, 10%, 84%);
+    --border-neutral: hsl(220, 10%, 84%);
     --highlight-border: hsl(220, 14%, 92%);
 
-    --primary-color:   var(--pplx-teal);
-    --primary-dark:    var(--pplx-teal-dark);
-    --primary-light:   var(--pplx-teal-light);
+    --primary-color: var(--pplx-teal);
+    --primary-dark: var(--pplx-teal-dark);
+    --primary-light: var(--pplx-teal-light);
     --brand-secondary: hsl(30, 65%, 38%);
     --section-heading-color: var(--brand-secondary);
-    --accent-color:    hsl(187, 63%, 30%);
+    --accent-color: hsl(187, 63%, 30%);
 
     --success-color: hsl(155, 42%, 34%);
     --warning-color: hsl(30, 65%, 38%);
-    --error-color:   hsl(6, 60%, 44%);
+    --error-color: hsl(6, 60%, 44%);
 
     --footnote-hover-bg: color-mix(in srgb, var(--pplx-teal) 14%, transparent);
 
@@ -488,27 +488,27 @@ body.perplexity-theme.light-mode {
 html.basic-theme,
 body.basic-theme {
     /* Dark mode (default) */
-    --bg-base:   hsl(0, 0%, 0%);
-    --bg-card:   hsl(0, 0%, 4%);
+    --bg-base: hsl(0, 0%, 0%);
+    --bg-card: hsl(0, 0%, 4%);
     --bg-raised: hsl(0, 0%, 9%);
 
     --text-heading: hsl(0, 0%, 100%);
-    --text-body:    hsl(0, 0%, 100%);
+    --text-body: hsl(0, 0%, 100%);
     --text-muted: hsl(0, 0%, 65%);
 
-    --border-neutral:   hsl(0, 0%, 20%);
+    --border-neutral: hsl(0, 0%, 20%);
     --highlight-border: hsl(0, 0%, 30%);
 
-    --primary-color:   hsl(0, 0%, 90%);
-    --primary-dark:    hsl(0, 0%, 75%);
-    --primary-light:   hsl(0, 0%, 100%);
+    --primary-color: hsl(0, 0%, 90%);
+    --primary-dark: hsl(0, 0%, 75%);
+    --primary-light: hsl(0, 0%, 100%);
     --brand-secondary: hsl(0, 0%, 80%);
     --section-heading-color: var(--brand-secondary);
-    --accent-color:    hsl(0, 0%, 85%);
+    --accent-color: hsl(0, 0%, 85%);
 
     --success-color: hsl(0, 0%, 80%);
     --warning-color: hsl(0, 0%, 80%);
-    --error-color:   hsl(0, 0%, 80%);
+    --error-color: hsl(0, 0%, 80%);
 
     --footnote-hover-bg: rgba(255, 255, 255, 0.10);
 
@@ -527,27 +527,27 @@ body.basic-theme:not(.light-mode) .passage-container {
 :root.basic-theme.light-mode,
 html.basic-theme.light-mode,
 body.basic-theme.light-mode {
-    --bg-base:   hsl(0, 0%, 100%);
-    --bg-card:   hsl(0, 0%, 98%);
+    --bg-base: hsl(0, 0%, 100%);
+    --bg-card: hsl(0, 0%, 98%);
     --bg-raised: hsl(0, 0%, 95%);
 
     --text-heading: hsl(0, 0%, 0%);
-    --text-body:    hsl(0, 0%, 0%);
+    --text-body: hsl(0, 0%, 0%);
     --text-muted: hsl(0, 0%, 40%);
 
-    --border-neutral:   hsl(0, 0%, 80%);
+    --border-neutral: hsl(0, 0%, 80%);
     --highlight-border: hsl(0, 0%, 92%);
 
-    --primary-color:   hsl(0, 0%, 10%);
-    --primary-dark:    hsl(0, 0%, 0%);
-    --primary-light:   hsl(0, 0%, 30%);
+    --primary-color: hsl(0, 0%, 10%);
+    --primary-dark: hsl(0, 0%, 0%);
+    --primary-light: hsl(0, 0%, 30%);
     --brand-secondary: hsl(0, 0%, 20%);
     --section-heading-color: var(--brand-secondary);
-    --accent-color:    hsl(0, 0%, 15%);
+    --accent-color: hsl(0, 0%, 15%);
 
     --success-color: hsl(0, 0%, 20%);
     --warning-color: hsl(0, 0%, 20%);
-    --error-color:   hsl(0, 0%, 20%);
+    --error-color: hsl(0, 0%, 20%);
 
     --footnote-hover-bg: rgba(0, 0, 0, 0.07);
 
@@ -571,27 +571,27 @@ body.basic-theme.light-mode .passage-container {
 :root.geek-theme,
 html.geek-theme,
 body.geek-theme {
-    --bg-base:   #000000;
-    --bg-card:   #000000;
+    --bg-base: #000000;
+    --bg-card: #000000;
     --bg-raised: #000000;
 
     --text-heading: #00AA00;
-    --text-body:    #00AA00;
+    --text-body: #00AA00;
     --text-muted: #007700;
 
-    --border-neutral:   #004400;
+    --border-neutral: #004400;
     --highlight-border: #006600;
 
-    --primary-color:   #00AA00;
-    --primary-dark:    #007700;
-    --primary-light:   #00CC00;
+    --primary-color: #00AA00;
+    --primary-dark: #007700;
+    --primary-light: #00CC00;
     --brand-secondary: #00AA00;
     --section-heading-color: var(--brand-secondary);
-    --accent-color:    #00AA00;
+    --accent-color: #00AA00;
 
     --success-color: #00AA00;
     --warning-color: #00AA00;
-    --error-color:   #00AA00;
+    --error-color: #00AA00;
 
     --footnote-hover-bg: rgba(0, 170, 0, 0.15);
 
@@ -651,32 +651,33 @@ body.geek-theme .verse-num {
 html.gnome-theme,
 body.gnome-theme {
     /* Adwaita-dark surface stack — achromatic, no blue-violet tint */
-    --bg-base:   #1e1e1e;
-    --bg-card:   #242424;
+    --bg-base: #1e1e1e;
+    --bg-card: #242424;
     --bg-raised: #303030;
 
     /* Adwaita-dark text — #ffffff heading, #deddda body, #9a9996 muted */
     --text-heading: #ffffff;
-    --text-body:    #deddda;
+    --text-body: #deddda;
     --text-muted: #9a9996;
 
     /* Adwaita-dark borders */
-    --border-neutral:   #3d3d3d;
+    --border-neutral: #3d3d3d;
     --highlight-border: #484848;
 
     /* Blue accent — HIG Blue 3; reserved for interactive controls only */
-    --primary-color:   #618DF2; /* changed from #3584e4 */
-    --primary-dark:    #1a6fc4;
-    --primary-light:   #62a0ea;
+    --primary-color: #618DF2;
+    /* changed from #3584e4 */
+    --primary-dark: #1a6fc4;
+    --primary-light: #62a0ea;
     /* brand-secondary and section-heading-color drive pericope/book-category headings;
        set to muted Adwaita foreground so they read as plain text. */
     --brand-secondary: #9a9996;
     --section-heading-color: var(--text-muted);
-    --accent-color:    #62a0ea;
+    --accent-color: #62a0ea;
 
     --success-color: #2ec27e;
     --warning-color: #e5a50a;
-    --error-color:   #e01b24;
+    --error-color: #e01b24;
 
     --footnote-hover-bg: color-mix(in srgb, #3584e4 16%, transparent);
 
@@ -734,30 +735,30 @@ body.gnome-theme .modal-header h2 {
 html.gnome-theme.light-mode,
 body.gnome-theme.light-mode {
     /* Adwaita light surface stack — exact HIG values */
-    --bg-base:   #f6f5f4;
-    --bg-card:   #ffffff;
+    --bg-base: #f6f5f4;
+    --bg-card: #ffffff;
     --bg-raised: #e0dedd;
 
     /* Adwaita light text */
     --text-heading: #1e1e1e;
-    --text-body:    #3d3d3d;
+    --text-body: #3d3d3d;
     --text-muted: #7a7a7a;
 
     /* Adwaita light borders */
-    --border-neutral:   #c8c5c0;
+    --border-neutral: #c8c5c0;
     --highlight-border: #dddad5;
 
     /* Blue darkened to 4.5:1 on white — #1c6dbf verified passes WCAG AA */
-    --primary-color:   #1c6dbf;
-    --primary-dark:    #145599;
-    --primary-light:   #3584e4;
+    --primary-color: #1c6dbf;
+    --primary-dark: #145599;
+    --primary-light: #3584e4;
     --brand-secondary: #7a7a7a;
     --section-heading-color: var(--text-muted);
-    --accent-color:    #3584e4;
+    --accent-color: #3584e4;
 
     --success-color: #1b8a52;
     --warning-color: #b5810a;
-    --error-color:   #b01c23;
+    --error-color: #b01c23;
 
     --footnote-hover-bg: color-mix(in srgb, #1c6dbf 12%, transparent);
 
@@ -815,27 +816,27 @@ body.gnome-theme.light-mode .modal-header h2 {
 :root.vespers-theme,
 html.vespers-theme,
 body.vespers-theme {
-    --bg-base:   hsl(0, 0%, 10%);
-    --bg-card:   hsl(0, 0%, 14%);
+    --bg-base: hsl(0, 0%, 10%);
+    --bg-card: hsl(0, 0%, 14%);
     --bg-raised: hsl(0, 0%, 19%);
 
     --text-heading: hsl(38, 8%, 88%);
-    --text-body:    hsl(38, 8%, 80%);
-    --text-muted:   hsl(38, 6%, 55%);
+    --text-body: hsl(38, 8%, 80%);
+    --text-muted: hsl(38, 6%, 55%);
 
-    --border-neutral:   hsl(30, 6%, 22%);
+    --border-neutral: hsl(30, 6%, 22%);
     --highlight-border: hsl(30, 6%, 30%);
 
-    --primary-color:   hsl(38, 55%, 52%);
-    --primary-dark:    hsl(36, 56%, 42%);
-    --primary-light:   hsl(42, 58%, 64%);
+    --primary-color: hsl(38, 55%, 52%);
+    --primary-dark: hsl(36, 56%, 42%);
+    --primary-light: hsl(42, 58%, 64%);
     --brand-secondary: hsl(30, 45%, 58%);
     --section-heading-color: var(--brand-secondary);
-    --accent-color:    hsl(38, 40%, 60%);
+    --accent-color: hsl(38, 40%, 60%);
 
     --success-color: hsl(130, 36%, 48%);
     --warning-color: hsl(38, 55%, 52%);
-    --error-color:   hsl(4, 62%, 54%);
+    --error-color: hsl(4, 62%, 54%);
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 22%, transparent);
 
@@ -848,27 +849,27 @@ body.vespers-theme {
 :root.vespers-theme.light-mode,
 html.vespers-theme.light-mode,
 body.vespers-theme.light-mode {
-    --bg-base:   hsl(38, 32%, 94%);
-    --bg-card:   hsl(38, 28%, 91%);
+    --bg-base: hsl(38, 32%, 94%);
+    --bg-card: hsl(38, 28%, 91%);
     --bg-raised: hsl(36, 24%, 86%);
 
     --text-heading: hsl(30, 8%, 22%);
-    --text-body:    hsl(30, 8%, 22%);
-    --text-muted:   hsl(30, 6%, 52%);
+    --text-body: hsl(30, 8%, 22%);
+    --text-muted: hsl(30, 6%, 52%);
 
-    --border-neutral:   hsl(34, 16%, 78%);
+    --border-neutral: hsl(34, 16%, 78%);
     --highlight-border: hsl(36, 20%, 86%);
 
-    --primary-color:   hsl(24, 55%, 36%);
-    --primary-dark:    hsl(22, 56%, 28%);
-    --primary-light:   hsl(28, 52%, 46%);
+    --primary-color: hsl(24, 55%, 36%);
+    --primary-dark: hsl(22, 56%, 28%);
+    --primary-light: hsl(28, 52%, 46%);
     --brand-secondary: hsl(24, 40%, 40%);
     --section-heading-color: var(--brand-secondary);
-    --accent-color:    hsl(24, 45%, 50%);
+    --accent-color: hsl(24, 45%, 50%);
 
     --success-color: hsl(130, 38%, 34%);
     --warning-color: hsl(38, 60%, 36%);
-    --error-color:   hsl(4, 58%, 42%);
+    --error-color: hsl(4, 58%, 42%);
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 14%, transparent);
 
@@ -885,28 +886,28 @@ body.vespers-theme.light-mode {
 :root.vigil-theme,
 html.vigil-theme,
 body.vigil-theme {
-    --bg-base:   #000000;
-    --bg-card:   hsl(0, 0%, 4%);
+    --bg-base: #000000;
+    --bg-card: hsl(0, 0%, 4%);
     --bg-raised: hsl(0, 0%, 9%);
 
     /* Identical to Vespers — only the surface stack changes */
     --text-heading: hsl(38, 8%, 88%);
-    --text-body:    hsl(38, 8%, 80%);
-    --text-muted:   hsl(38, 6%, 55%);
+    --text-body: hsl(38, 8%, 80%);
+    --text-muted: hsl(38, 6%, 55%);
 
-    --border-neutral:   hsl(30, 6%, 16%);
+    --border-neutral: hsl(30, 6%, 16%);
     --highlight-border: hsl(30, 6%, 24%);
 
-    --primary-color:   hsl(38, 55%, 52%);
-    --primary-dark:    hsl(36, 56%, 42%);
-    --primary-light:   hsl(42, 58%, 64%);
+    --primary-color: hsl(38, 55%, 52%);
+    --primary-dark: hsl(36, 56%, 42%);
+    --primary-light: hsl(42, 58%, 64%);
     --brand-secondary: hsl(30, 45%, 58%);
     --section-heading-color: var(--brand-secondary);
-    --accent-color:    hsl(38, 40%, 60%);
+    --accent-color: hsl(38, 40%, 60%);
 
     --success-color: hsl(130, 36%, 48%);
     --warning-color: hsl(38, 55%, 52%);
-    --error-color:   hsl(4, 62%, 54%);
+    --error-color: hsl(4, 62%, 54%);
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 22%, transparent);
 
@@ -926,27 +927,27 @@ body.vigil-theme:not(.light-mode) .passage-container {
 :root.vigil-theme.light-mode,
 html.vigil-theme.light-mode,
 body.vigil-theme.light-mode {
-    --bg-base:   hsl(38, 32%, 94%);
-    --bg-card:   hsl(38, 28%, 91%);
+    --bg-base: hsl(38, 32%, 94%);
+    --bg-card: hsl(38, 28%, 91%);
     --bg-raised: hsl(36, 24%, 86%);
 
     --text-heading: hsl(30, 8%, 22%);
-    --text-body:    hsl(30, 8%, 22%);
-    --text-muted:   hsl(30, 6%, 52%);
+    --text-body: hsl(30, 8%, 22%);
+    --text-muted: hsl(30, 6%, 52%);
 
-    --border-neutral:   hsl(34, 16%, 78%);
+    --border-neutral: hsl(34, 16%, 78%);
     --highlight-border: hsl(36, 20%, 86%);
 
-    --primary-color:   hsl(24, 55%, 36%);
-    --primary-dark:    hsl(22, 56%, 28%);
-    --primary-light:   hsl(28, 52%, 46%);
+    --primary-color: hsl(24, 55%, 36%);
+    --primary-dark: hsl(22, 56%, 28%);
+    --primary-light: hsl(28, 52%, 46%);
     --brand-secondary: hsl(24, 40%, 40%);
     --section-heading-color: var(--brand-secondary);
-    --accent-color:    hsl(24, 45%, 50%);
+    --accent-color: hsl(24, 45%, 50%);
 
     --success-color: hsl(130, 38%, 34%);
     --warning-color: hsl(38, 60%, 36%);
-    --error-color:   hsl(4, 58%, 42%);
+    --error-color: hsl(4, 58%, 42%);
 
     --footnote-hover-bg: color-mix(in srgb, var(--primary-color) 14%, transparent);
 

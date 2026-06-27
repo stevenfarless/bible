@@ -14,32 +14,32 @@ export function handleKeyboardShortcuts(app, e) {
     }
 
     // Dismiss the active overlay, then clear verse selection when none is open.
-if (e.key === 'Escape') {
-    const activeModal = [
-        app.bookModal, app.chapterModal, app.helpModal,
-        app.settingsModal, app.loginModal, app.signupModal,
-        app.userMenuModal, app.verseModal, app.referencesModal,
-        app.translationModal, app.translationSyncModal,
-    ].find((modal) => modal?.classList.contains('active'));
+    if (e.key === 'Escape') {
+        const activeModal = [
+            app.bookModal, app.chapterModal, app.helpModal,
+            app.settingsModal, app.loginModal, app.signupModal,
+            app.userMenuModal, app.verseModal, app.referencesModal,
+            app.translationModal, app.translationSyncModal,
+        ].find((modal) => modal?.classList.contains('active'));
 
-    if (activeModal) {
-        app.closeModal(activeModal);
+        if (activeModal) {
+            app.closeModal(activeModal);
+            return;
+        }
+
+        if (app.searchContainer?.classList.contains('active')) {
+            app.closeSearch();
+            return;
+        }
+
+        if (app.state.selectedVerse !== null) {
+            e.preventDefault();
+            app.state.selectedVerse = null;
+            app.applyVerseGlow();
+        }
+
         return;
     }
-
-    if (app.searchContainer?.classList.contains('active')) {
-        app.closeSearch();
-        return;
-    }
-
-    if (app.state.selectedVerse !== null) {
-        e.preventDefault();
-        app.state.selectedVerse = null;
-        app.applyVerseGlow();
-    }
-
-    return;
-}
 
     // Translation modal keyboard navigation — runs before the generic modal guard
     if (app.translationModal?.classList.contains('active')) {
@@ -63,7 +63,7 @@ if (e.key === 'Escape') {
     }
 
     // Navigation and reading shortcuts — only when no modal/search is open
-    const modalOpen  = !!document.querySelector('.modal.active');
+    const modalOpen = !!document.querySelector('.modal.active');
     const searchOpen = !!app.searchContainer?.classList.contains('active');
     if (modalOpen || searchOpen) return;
 

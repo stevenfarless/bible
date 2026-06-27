@@ -176,7 +176,7 @@ body.geek-theme.light-mode {
     font-family: 'IBM_CGAThin-2y', 'Courier New', monospace;
     transform: none;
     width: auto;
-   /* font-size: 18px !important; */
+    /* font-size: 18px !important; */
     line-height: 1.55;
     letter-spacing: 0;
 }
