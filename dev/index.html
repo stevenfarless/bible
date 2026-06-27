@@ -19,7 +19,7 @@
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:title" content="Lege Lux" />
 	<meta name="twitter:description" content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-	<meta name="build-id" content="9e3d41b" />
+	<meta name="build-id" content="d3c9943" />
 	<!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement - always available in <head>) before the
@@ -31,7 +31,7 @@
 			var el = document.documentElement;
 			var theme = 'basic';
 			try { theme = localStorage.getItem('colorTheme') || 'basic'; } catch (_) {}
-			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1, lux: 1, vespers: 1, vigil: 1, 'uxorem-amo': 1 };
+			var valid = { dracula: 1, dracula2test: 1, onyx: 1, sage: 1, ember: 1, perplexity: 1, basic: 1, geek: 1, gnome: 1, lux: 1, vespers: 1, vigil: 1, 'uxorem-amo': 1, 'luna-lux': 1 };
 			if (!valid[theme]) theme = 'basic';
 			el.classList.add(theme + '-theme', 'no-color-transition');
 
@@ -45,16 +45,16 @@
 			if (isLight) el.classList.add('light-mode');
 		}());
 	</script>
-	<script src="prepaint-settings.js?v=9e3d41b"></script>
+	<script src="prepaint-settings.js?v=d3c9943"></script>
 	<link rel="manifest" href="./site.webmanifest" />
 	<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
 	<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
 	<link rel="icon" href="./favicon.ico" />
 	<!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=9e3d41b">.
+	     before the parser reaches <script type="module" src="app.js?v=d3c9943">.
 	     This eliminates the sequential module-discovery waterfall. -->
-	<link rel="modulepreload" href="app.js?v=9e3d41b" />
+	<link rel="modulepreload" href="app.js?v=d3c9943" />
 	<link rel="modulepreload" href="bible-api.js" />
 	<link rel="modulepreload" href="bsb-structure.js" />
 	<link rel="modulepreload" href="reading-state.js" />
@@ -88,20 +88,21 @@
 			font-display: swap;
 		}
 	</style>
-	<link rel="preload" href="css/fonts.css?v=9e3d41b" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/fonts.css?v=9e3d41b" /></noscript>
-	<link rel="stylesheet" href="css/base.css?v=9e3d41b" />
-	<link rel="stylesheet" href="css/tokens.css?v=9e3d41b" />
-	<link rel="stylesheet" href="css/themes.css?v=9e3d41b" />
-	<link rel="stylesheet" href="css/layout.css?v=9e3d41b" />
-	<link rel="stylesheet" href="css/components.css?v=9e3d41b" />
-	<link rel="preload" href="css/modals.css?v=9e3d41b" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/modals.css?v=9e3d41b" /></noscript>
-	<link rel="preload" href="css/interactions.css?v=9e3d41b" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/interactions.css?v=9e3d41b" /></noscript>
-	<link rel="preload" href="css/utilities.css?v=9e3d41b" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-	<noscript><link rel="stylesheet" href="css/utilities.css?v=9e3d41b" /></noscript>
-	<link rel="stylesheet" href="css/pericope.css?v=9e3d41b" />
+	<link rel="preload" href="css/fonts.css?v=d3c9943" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/fonts.css?v=d3c9943" /></noscript>
+	<link rel="stylesheet" href="css/base.css?v=d3c9943" />
+	<link rel="stylesheet" href="css/tokens.css?v=d3c9943" />
+	<link rel="stylesheet" href="css/themes.css?v=d3c9943" />
+	<link rel="stylesheet" href="css/layout.css?v=d3c9943" />
+	<link rel="stylesheet" href="css/components.css?v=d3c9943" />
+	<link rel="preload" href="css/modals.css?v=d3c9943" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/modals.css?v=d3c9943" /></noscript>
+	<link rel="preload" href="css/interactions.css?v=d3c9943" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/interactions.css?v=d3c9943" /></noscript>
+	<link rel="preload" href="css/utilities.css?v=d3c9943" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+	<noscript><link rel="stylesheet" href="css/utilities.css?v=d3c9943" /></noscript>
+	<link rel="stylesheet" href="css/pericope.css?v=d3c9943" />
+	<link rel="stylesheet" href="css/luna-lux.css?v=d3c9943" />
 	<!-- Firebase App Check loads reCAPTCHA v3 through ReCaptchaV3Provider. -->
 </head>
 
@@ -110,7 +111,7 @@
 		<header class="header">
 			<div class="header-content">
 				<h1 class="logo">Lege Lux</h1>
-				<span id="build-info">9e3d41b</span>
+				<span id="build-info">d3c9943</span>
 				<div class="header-controls">
 					<button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
 						<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -425,6 +426,7 @@
 									<option value="geek">The Geek Shall Inherit The Earth</option>
 									<option value="gnome">Adwaitish</option>
 									<option value="uxorem-amo">Uxorem Amo</option>
+									<option value="luna-lux">Luna Lux (Light | Dark)</option>
 								</select>
 								<small class="help-text">Choose your preferred color scheme.</small>
 							</div>
@@ -618,6 +620,35 @@
 								</div>
 							</div>
 
+
+							<div class="sub-accordion-section" data-section="source-code">
+								<button class="sub-accordion-header" data-target="source-code" aria-expanded="false">
+									<span>Source Code</span>
+									<svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+										stroke="currentColor" stroke-width="2">
+										<polyline points="6 9 12 15 18 9"></polyline>
+									</svg>
+								</button>
+								<div class="sub-accordion-panel" data-panel="source-code">
+									<div class="settings-group source-code-group">
+									<div class="source-code-links">
+										<a class="source-code-link" href="https://github.com/stevenfarless/lege-lux" target="_blank" rel="noopener noreferrer" aria-label="View Lege Lux on GitHub">
+											<svg class="source-code-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+												<path d="M12 .297C5.373.297 0 5.67 0 12.297c0 5.303 3.438 9.8 8.207 11.387.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.725-4.042-1.61-4.042-1.61-.547-1.387-1.335-1.757-1.335-1.757-1.09-.745.083-.73.083-.73 1.205.085 1.84 1.238 1.84 1.238 1.073 1.835 2.815 1.305 3.5.997.108-.777.42-1.305.763-1.605-2.665-.303-5.467-1.332-5.467-5.93 0-1.31.467-2.382 1.235-3.222-.123-.303-.535-1.523.118-3.177 0 0 1.008-.322 3.3 1.23a11.49 11.49 0 0 1 3.003-.403c1.018.005 2.045.138 3.003.403 2.29-1.552 3.295-1.23 3.295-1.23.655 1.654.243 2.874.12 3.177.77.84 1.233 1.912 1.233 3.222 0 4.61-2.807 5.623-5.48 5.92.432.372.817 1.103.817 2.222 0 1.605-.015 2.898-.015 3.292 0 .32.217.695.825.577C20.565 22.092 24 17.597 24 12.297c0-6.627-5.373-12-12-12z"></path>
+											</svg>
+											<span>GitHub</span>
+										</a>
+
+										<a class="source-code-link" href="https://gitlab.com/stevenfarless/lege-lux" target="_blank" rel="noopener noreferrer" aria-label="View Lege Lux on GitLab">
+											<svg class="source-code-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+												<path d="M23.955 13.587 20.703 3.58a.85.85 0 0 0-1.612-.087l-2.2 6.757H7.109l-2.2-6.757a.85.85 0 0 0-1.612.087L.045 13.587a1.7 1.7 0 0 0 .617 1.903L12 23.734 23.338 15.49a1.7 1.7 0 0 0 .617-1.903z"></path>
+											</svg>
+											<span>GitLab</span>
+										</a>
+									</div>
+									</div>
+								</div>
+							</div>
 							<div class="sub-accordion-section" data-section="shortcuts">
 								<button class="sub-accordion-header" data-target="shortcuts" aria-expanded="false">
 									<span>Keyboard Shortcuts</span>
@@ -868,12 +899,13 @@
 				<li>Offline reading support</li>
 			</ul>
 			<div id="iosInstallSteps" class="install-prompt__ios" hidden>
-				<p>On iPhone, install manually:</p>
-				<ol>
-					<li>Tap Share</li>
-					<li>Tap Add to Home Screen</li>
-					<li>Tap Add</li>
-				</ol>
+				<p>For iPhone or iPad, install from Safari:</p>
+					<ol>
+					    <li>Open this page in Safari</li>
+					    <li>Tap Share</li>
+					    <li>Tap Add to Home Screen</li>
+					    <li>Tap Add</li>
+					</ol>
 			</div>
 			<div class="install-prompt__actions">
 				<button id="installPromptInstall" class="primary-btn" type="button">Install</button>
@@ -884,7 +916,7 @@
 
 	<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-	<script type="module" src="app.js?v=9e3d41b"></script>
+	<script type="module" src="app.js?v=d3c9943"></script>
 	<script>
     	// Hide raw build placeholder when pipeline substitution hasn't run.
     	document.addEventListener('DOMContentLoaded', function() {
