@@ -83,6 +83,109 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
+const RELEASE_NOTES_ALLOWED_TAGS = new Set([
+    'A',
+    'BLOCKQUOTE',
+    'BR',
+    'CODE',
+    'EM',
+    'H1',
+    'H2',
+    'H3',
+    'H4',
+    'H5',
+    'H6',
+    'HR',
+    'LI',
+    'OL',
+    'P',
+    'PRE',
+    'STRONG',
+    'UL',
+]);
+
+const RELEASE_NOTES_DANGEROUS_TAGS = new Set([
+    'SCRIPT',
+    'STYLE',
+    'IFRAME',
+    'OBJECT',
+    'EMBED',
+    'SVG',
+    'MATH',
+    'LINK',
+    'META',
+]);
+
+function isSafeReleaseNoteUrl(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return false;
+
+    try {
+        const url = new URL(raw, window.location.origin);
+        return url.protocol === 'http:'
+            || url.protocol === 'https:'
+            || url.protocol === 'mailto:';
+    } catch (_) {
+        return false;
+    }
+}
+
+function sanitizeReleaseNotesHtml(html) {
+    const template = document.createElement('template');
+    template.innerHTML = String(html ?? '');
+
+    const cleanNode = (node) => {
+        for (const child of Array.from(node.childNodes)) {
+            if (child.nodeType === Node.TEXT_NODE) continue;
+
+            if (child.nodeType !== Node.ELEMENT_NODE) {
+                child.remove();
+                continue;
+            }
+
+            const tag = child.tagName.toUpperCase();
+
+            if (RELEASE_NOTES_DANGEROUS_TAGS.has(tag)) {
+                child.remove();
+                continue;
+            }
+
+            if (!RELEASE_NOTES_ALLOWED_TAGS.has(tag)) {
+                child.replaceWith(document.createTextNode(child.textContent || ''));
+                continue;
+            }
+
+            const href = child.getAttribute('href');
+            const title = child.getAttribute('title');
+
+            for (const attr of Array.from(child.attributes)) {
+                child.removeAttribute(attr.name);
+            }
+
+            if (tag === 'A') {
+                if (isSafeReleaseNoteUrl(href)) {
+                    child.setAttribute('href', new URL(href, window.location.origin).href);
+                    child.setAttribute('target', '_blank');
+                    child.setAttribute('rel', 'noopener noreferrer');
+                }
+
+                if (title) {
+                    child.setAttribute('title', title);
+                }
+            }
+
+            cleanNode(child);
+        }
+    };
+
+    cleanNode(template.content);
+    return template.innerHTML;
+}
+
+function renderReleaseNotesMarkdown(marked, body) {
+    return sanitizeReleaseNotesHtml(marked.parse(String(body ?? '')));
+}
+
 function ensureRecaptchaBadgeHidden() {
     if (document.getElementById(RECAPTCHA_STYLE_ID)) return;
 
@@ -638,7 +741,7 @@ async function loadWhatsNew() {
         if (release.body) {
             try {
                 const marked = await loadMarked();
-                contentEl.innerHTML = marked.parse(release.body);
+                contentEl.innerHTML = renderReleaseNotesMarkdown(marked, release.body);
             } catch (_) {
                 contentEl.textContent = release.body;
             }
@@ -672,7 +775,7 @@ async function loadComingSoon() {
 
         try {
             const marked = await loadMarked();
-            el.innerHTML = marked.parse(pre.body);
+            el.innerHTML = renderReleaseNotesMarkdown(marked, pre.body);
         } catch (_) {
             el.textContent = pre.body;
         }
