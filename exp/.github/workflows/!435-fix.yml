@@ -41,9 +41,15 @@ jobs:
           replace_once(
               api,
               "idbPutSearchIndex(translation, index).catch(() => { });",
-              """idbPutSearchIndex(translation, index).catch((error) => {
-                        console.warn(`BibleApi: failed to persist search index for ${translation}`, error);
-                    });""",
+              """idbPutSearchIndex(translation, index)
+                        .then((stored) => {
+                            if (!stored) {
+                                console.warn(`BibleApi: failed to persist search index for ${translation}`);
+                            }
+                        })
+                        .catch((error) => {
+                            console.warn(`BibleApi: failed to persist search index for ${translation}`, error);
+                        });""",
               'search-index persistence diagnostics',
           )
 
@@ -94,6 +100,7 @@ jobs:
 
           required = [
               (api, 'BibleApi: failed to persist search index for ${translation}'),
+              (api, '.then((stored) => {'),
               (app, 'BibleApp: current-book prefetch failed for ${t}/${book}'),
               (app, 'prefetch current failed: ${t}/${book}'),
               (app, 'BibleApp: adjacent-book prefetch failed for ${translation}/${book}'),
