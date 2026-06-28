@@ -112,7 +112,9 @@ export function saveReadingPosition(app) {
 
 export function handleUserButtonClick(app) {
     if (app.currentUser) {
-        document.getElementById('userEmail').textContent = app.currentUser.email;
+        const emailEl = document.getElementById('userEmail');
+        if (emailEl) emailEl.textContent = app.currentUser.email || '';
+
         const isLight = document.body.classList.contains('light-mode');
         let colorTheme = app.state?.colorTheme || '';
 
@@ -127,8 +129,12 @@ export function handleUserButtonClick(app) {
             geek: 'The Geek Shall Inherit The Earth',
             gnome: 'GNOME 3 (Adwaita)',
         };
-        document.getElementById('userTheme').textContent =
-            themeNameMap[colorTheme] || colorTheme;
+
+        const themeEl = document.getElementById('userTheme');
+        if (themeEl) {
+            themeEl.textContent = themeNameMap[colorTheme] || colorTheme;
+        }
+
         app.openModal(app.userMenuModal);
     } else {
         app.openModal(app.loginModal);
