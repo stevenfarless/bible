@@ -299,6 +299,9 @@ const BOOK_TESTAMENT_FILTERS = [
 ];
 
 export function openBookModal(app) {
+    app._dbgUserAction?.('picker opened: book');
+    app._dbgEvent?.('picker opened: book');
+
     const content = app.bookModal?.querySelector('.modal-content');
     if (content) content.style.height = '';
 
@@ -366,6 +369,8 @@ export function populateBookModal(app) {
         button.type = 'button';
         button.textContent = app.bookAbbreviations[book] || book;
         button.addEventListener('click', () => {
+            app._dbgUserAction?.('picker selected book: ' + book);
+            app._dbgEvent?.('picker selected book: ' + book + ' -> chapter picker');
             app.referencePickerDraft = { book, chapter: 1 };
             app.state.selectedVerse = null;
             app.closeModal(app.bookModal);
@@ -428,6 +433,10 @@ export function openDeuterocanonInfoModal(app) {
 // ── Chapter modal ─────────────────────────────────────────────────────────────
 
 export function openChapterModal(app) {
+    const book = app.referencePickerDraft?.book || app.state.currentBook;
+    app._dbgUserAction?.('picker opened: chapter for ' + book);
+    app._dbgEvent?.('picker opened: chapter for ' + book);
+
     populateChapterModal(app);
     openModal(app, app.chapterModal);
 }
@@ -446,6 +455,8 @@ export function populateChapterModal(app) {
         btn.textContent = i;
         btn.addEventListener('click', async () => {
             const book = app.referencePickerDraft?.book || app.state.currentBook;
+            app._dbgUserAction?.('picker selected chapter: ' + book + ' ' + i);
+            app._dbgEvent?.('picker navigation: loading ' + book + ' ' + i + ' from chapter picker');
 
             app.referencePickerDraft = { book, chapter: i };
             app.state.selectedVerse = null;
@@ -462,6 +473,9 @@ export function populateChapterModal(app) {
 // ── Verse modal ───────────────────────────────────────────────────────────────
 
 export function openVerseModal(app) {
+    app._dbgUserAction?.('picker opened: verse for ' + app.state.currentBook + ' ' + app.state.currentChapter);
+    app._dbgEvent?.('picker opened: verse for ' + app.state.currentBook + ' ' + app.state.currentChapter);
+
     populateVerseModal(app);
     openModal(app, app.verseModal);
 }
@@ -486,6 +500,8 @@ export function populateVerseModal(app) {
         btn.className = 'chapter-item';
         btn.textContent = i;
         btn.addEventListener('click', () => {
+            app._dbgUserAction?.('picker selected verse: ' + app.state.currentBook + ' ' + app.state.currentChapter + ':' + i);
+            app._dbgEvent?.('picker selected verse: ' + app.state.currentBook + ' ' + app.state.currentChapter + ':' + i);
             app.referencePickerDraft = null;
             app.scrollToVerse(i);
             app.closeModal(app.verseModal);
