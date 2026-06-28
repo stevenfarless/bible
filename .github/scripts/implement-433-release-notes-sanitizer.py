@@ -239,7 +239,7 @@ test('about: release notes sanitize rendered markdown', async ({ page }) => {
 });
 """
 
-    write(ABOUT_TEST_PATH, text + "\n")
+    write(ABOUT_TEST_PATH, text.rstrip() + "\n")
 
 
 def main():
