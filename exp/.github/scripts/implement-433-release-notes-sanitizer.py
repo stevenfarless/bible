@@ -157,7 +157,7 @@ def patch_about_release_test():
     if "about: release notes sanitize rendered markdown" in text:
         return
 
-    text = text.rstrip() + """
+    text = text.rstrip() + r"""
 
 test('about: release notes sanitize rendered markdown', async ({ page }) => {
         await page.route('https://api.github.com/repos/stevenfarless/lege-lux/releases/latest', async route => {
@@ -205,8 +205,8 @@ test('about: release notes sanitize rendered markdown', async ({ page }) => {
                                         parse(markdown) {
                                                 return markdown
                                                         .replace(/^## (.*)$/gm, '<h2>$1</h2>')
-                                                        .replace(/\\[bad link\\]\\((.*?)\\)/g, '<a href="$1">bad link</a>')
-                                                        .replace(/\\[safe link\\]\\((.*?)\\)/g, '<a href="$1">safe link</a>');
+                                                        .replace(/\[bad link\]\((.*?)\)/g, '<a href="$1">bad link</a>')
+                                                        .replace(/\[safe link\]\((.*?)\)/g, '<a href="$1">safe link</a>');
                                         }
                                 };
                         `,

@@ -1,0 +1,152 @@
+name: "! 433"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: issue-433-exp
+  cancel-in-progress: false
+
+jobs:
+  implement:
+    name: Sanitize release notes markdown
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v4
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Validate patch script
+        run: |
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+
+          path = Path('.github/scripts/implement-433-release-notes-sanitizer.py')
+          ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
+          PY
+
+      - name: Apply issue 433 fix
+        run: python3 .github/scripts/implement-433-release-notes-sanitizer.py
+
+      - name: Validate implementation markers
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          settings = Path('settings.js').read_text(encoding='utf-8')
+          test = Path('tests/about-release.spec.js').read_text(encoding='utf-8')
+
+          required_settings = [
+              'const RELEASE_NOTES_ALLOWED_TAGS = new Set([',
+              'const RELEASE_NOTES_DANGEROUS_TAGS = new Set([',
+              'function isSafeReleaseNoteUrl(value)',
+              'function sanitizeReleaseNotesHtml(html)',
+              'function renderReleaseNotesMarkdown(marked, body)',
+              'contentEl.innerHTML = renderReleaseNotesMarkdown(marked, release.body);',
+              'el.innerHTML = renderReleaseNotesMarkdown(marked, pre.body);',
+              "child.setAttribute('rel', 'noopener noreferrer');",
+          ]
+
+          for snippet in required_settings:
+              assert snippet in settings, f'Missing from settings.js: {snippet}'
+
+          forbidden_settings = [
+              'contentEl.innerHTML = marked.parse(release.body);',
+              'el.innerHTML = marked.parse(pre.body);',
+          ]
+
+          for snippet in forbidden_settings:
+              assert snippet not in settings, f'Unsafe release rendering remains in settings.js: {snippet}'
+
+          required_test = [
+              "test('about: release notes sanitize rendered markdown'",
+              '<script>window.__releaseNotesXss = true</script>',
+              '<img src=x onerror="window.__releaseNotesXss = true">',
+              '<button onclick="window.__releaseNotesXss = true">bad</button>',
+              'a[href^="javascript:"]',
+              'window.__releaseNotesXss',
+          ]
+
+          for snippet in required_test:
+              assert snippet in test, f'Missing from tests/about-release.spec.js: {snippet}'
+          PY
+
+      - name: Verify changed files
+        run: |
+          allowed='^(settings\.js|tests/about-release\.spec\.js)$'
+          unexpected="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev "$allowed" || true)"
+
+          test -z "$unexpected" || {
+            echo "Unexpected changed files:"
+            echo "$unexpected"
+            exit 1
+          }
+
+      - name: Run syntax checks
+        run: |
+          node --check settings.js
+          node --check tests/about-release.spec.js
+          git diff --check
+
+      - name: Install Playwright dependencies
+        run: |
+          npm install --package-lock=false
+          npm install --no-save --package-lock=false @playwright/test
+
+      - name: Run issue 433 smoke test
+        env:
+          BASE_URL: http://localhost:8080
+        run: |
+          npx playwright install chromium --with-deps
+          python3 -m http.server 8080 > /tmp/lege-lux-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+
+          for i in $(seq 1 10); do
+            curl -fsS http://localhost:8080 > /dev/null && break
+            sleep 1
+          done
+
+          curl -fsS http://localhost:8080 > /dev/null || {
+            cat /tmp/lege-lux-http.log
+            exit 1
+          }
+
+          npx playwright test tests/about-release.spec.js --project=chromium --grep "about: release notes sanitize rendered markdown"
+
+      - name: Commit issue 433 fix
+        run: |
+          files=(
+            settings.js
+            tests/about-release.spec.js
+          )
+
+          git diff --check
+          git diff --stat -- "${files[@]}"
+
+          if [ -z "$(git status --porcelain -- "${files[@]}")" ]; then
+            echo "Issue 433 is already implemented."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${files[@]}"
+          git commit \
+            -m "fix(settings): sanitize release notes markdown" \
+            -m "Sanitize rendered GitHub release markdown before inserting it into the About section. Keep normal release-note formatting while removing dangerous tags, event-handler attributes, and unsafe URLs from What's new and Coming soon." \
+            -m "Fixes #433"
+          git push origin exp
