@@ -716,6 +716,7 @@ class BibleApp {
         this._translationRegistry = [];
         this._normalizeTranslation = normalizeTranslation;
         this._translationKbIndex = -1;
+        this.referencePickerDraft = null;
 
         // Debug instrumentation — REMOVE BEFORE MERGING TO MAIN.
         this._dbg = {

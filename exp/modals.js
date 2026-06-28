@@ -366,9 +366,10 @@ export function populateBookModal(app) {
         button.type = 'button';
         button.textContent = app.bookAbbreviations[book] || book;
         button.addEventListener('click', () => {
+            app.referencePickerDraft = { book, chapter: 1 };
             app.state.selectedVerse = null;
-            app.loadPassage(book, 1);
             app.closeModal(app.bookModal);
+            app.openChapterModal();
         });
         return button;
     };
@@ -432,19 +433,27 @@ export function openChapterModal(app) {
 }
 
 export function populateChapterModal(app) {
-    app.chapterModalBook.textContent = app.getDisplayName(app.state.currentBook);
+    const book = app.referencePickerDraft?.book || app.state.currentBook;
+
+    app.chapterModalBook.textContent = app.getDisplayName(book);
     app.chapterGrid.innerHTML = '';
 
-    const chapterCount = app.getChapterCount(app.state.currentBook);
+    const chapterCount = app.getChapterCount(book);
 
     for (let i = 1; i <= chapterCount; i++) {
         const btn = document.createElement('button');
         btn.className = 'chapter-item';
         btn.textContent = i;
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
+            const book = app.referencePickerDraft?.book || app.state.currentBook;
+
+            app.referencePickerDraft = { book, chapter: i };
             app.state.selectedVerse = null;
-            app.loadPassage(app.state.currentBook, i);
+
+            await app.loadPassage(book, i);
+
             app.closeModal(app.chapterModal);
+            app.openVerseModal();
         });
         app.chapterGrid.appendChild(btn);
     }
@@ -477,6 +486,7 @@ export function populateVerseModal(app) {
         btn.className = 'chapter-item';
         btn.textContent = i;
         btn.addEventListener('click', () => {
+            app.referencePickerDraft = null;
             app.scrollToVerse(i);
             app.closeModal(app.verseModal);
         });
