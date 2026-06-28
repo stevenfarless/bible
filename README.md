@@ -160,12 +160,30 @@ or a CI secret for any public deployment.
 See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for local setup, branch
 workflow, PR standards, and commit conventions.
 
-### Running Tests
+### Required setup
+
+Use Node.js 24.x with npm. Install the project dev dependencies before running
+local validation:
 
 ```bash
 npm install
-npm test          # Vitest unit tests
-npm run e2e       # Playwright end-to-end tests
+```
+
+### Running tests
+
+```bash
+npm test              # Vitest unit tests from package.json
+npm run format:check  # Prettier formatting check from package.json
+```
+
+Browser smoke tests use Playwright, but Playwright is optional for local work
+and is not currently exposed through an `npm run e2e` script. Install it only
+when you need browser coverage:
+
+```bash
+npm install --no-save @playwright/test
+npx playwright install chromium
+npx playwright test tests/smoke.spec.js --project=chromium
 ```
 
 ---
