@@ -337,7 +337,7 @@ export async function toggleSetting(app, setting) {
     }
 
     if (setting === 'showHeadings') {
-        await app.loadPassage(app.state.currentBook, app.state.currentChapter);
+        await app.loadPassage(app.state.currentBook, app.state.currentChapter, false, 'settings-showHeadings');
         return;
     }
 
@@ -459,6 +459,11 @@ export async function changeTranslation(
     translation,
     { syncPreference = true } = {}
 ) {
+    const previousTranslation = app.state.translation;
+    const previousBook = app.state.currentBook;
+    const previousChapter = app.state.currentChapter;
+    app._dbgEvent?.('changeTranslation request: ' + previousTranslation + ' -> ' + translation + ' while at ' + previousBook + ' ' + previousChapter + ' syncPreference=' + syncPreference);
+
     const chromeBottom = Math.max(
         0,
         document.querySelector('.top-chrome')
@@ -492,11 +497,13 @@ export async function changeTranslation(
     }
 
     lsSet('translation', translation);
+    app._dbgEvent?.('storage write: translation ' + translation + ' source=changeTranslation');
 
     if (syncPreference) {
         app.preferredTranslation = translation;
         app.pendingPreferredTranslation = null;
         lsSet('preferredTranslation', translation);
+        app._dbgEvent?.('storage write: preferredTranslation ' + translation + ' source=changeTranslation');
         await app.recordTranslationInstalled(translation);
 
         if (app.canWriteRemoteState()) {
@@ -516,7 +523,9 @@ export async function changeTranslation(
         if (response.ok) {
             meta = await response.json();
         }
-    } catch (_) { }
+    } catch (error) {
+        app._dbgEvent?.('changeTranslation meta fetch failed: ' + translation + ' — ' + (error?.message || error));
+    }
 
     app._rebuildBibleBooks(meta);
 
@@ -528,10 +537,13 @@ export async function changeTranslation(
     }
 
     updateCopyright(app);
+    app._dbgEvent?.('changeTranslation preserving passage: ' + app.state.currentBook + ' ' + app.state.currentChapter + ' translation=' + translation);
 
     await app.loadPassage(
         app.state.currentBook,
-        app.state.currentChapter
+        app.state.currentChapter,
+        false,
+        'translation-change'
     );
 
     if (!verseAnchor) return;

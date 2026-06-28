@@ -1020,13 +1020,14 @@ class BibleApp {
                 await this.loadPassage(
                     this.state.currentBook,
                     this.state.currentChapter,
-                    Boolean(this.lastScrollPosition)
+                    Boolean(this.lastScrollPosition),
+                    'auth-restoration-translation-sync'
                 );
             }
 
             this._syncWritesEnabled = true;
             if (this.hasLocalPositionChangedSinceAuthStart()) {
-                saveReadingPosition(this);
+                saveReadingPosition(this, 'auth-restoration-newer-local-position');
                 this._dbgEvent('auth restoration: saved newer local position');
             }
             this.maybeShowTranslationSyncModal();
@@ -1178,7 +1179,7 @@ class BibleApp {
 
     // ── Passage cache ──────────────────────────────────────────────────────
 
-    _savePassageCache(book, chapter, translation, title, html) {
+    _savePassageCache(book, chapter, translation, title, html, source = 'unspecified') {
         try {
             localStorage.setItem(PASSAGE_CACHE_KEY, JSON.stringify({
                 book,
@@ -1187,6 +1188,7 @@ class BibleApp {
                 title,
                 html,
             }));
+            this._dbgEvent?.('storage write: passageCache ' + book + ' ' + parseInt(chapter, 10) + ' ' + (translation || 'KJV') + ' source=' + source);
         } catch (_) { }
     }
 
@@ -1383,7 +1385,7 @@ class BibleApp {
                 this._dbg.t_passage_fetch_start = ms();
                 await Promise.all([
                     this._loadTranslationRegistry(),
-                    this.loadPassage(savedPos.book, savedPos.chapter),
+                    this.loadPassage(savedPos.book, savedPos.chapter, false, 'startup-position-mismatch'),
                 ]);
                 this._dbg.t_passage_fetch_end = ms();
                 this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
@@ -1396,7 +1398,7 @@ class BibleApp {
                 this._dbgEvent('init: cache miss — revealing with loading spinner');
                 await Promise.all([
                     this._loadTranslationRegistry(),
-                    this.loadPassage(this.state.currentBook, this.state.currentChapter),
+                    this.loadPassage(this.state.currentBook, this.state.currentChapter, false, 'startup-cache-miss'),
                 ]);
                 this._dbg.t_passage_fetch_end = ms();
                 this._dbg.passageFetchMs = this._dbg.t_passage_fetch_end - this._dbg.t_passage_fetch_start;
@@ -1512,9 +1514,13 @@ class BibleApp {
 
     async _loadSavedPositionIfChanged() { await loadSavedPositionIfChanged(this, withTimeout); }
     async loadSavedReadingPosition() { await loadSavedReadingPosition(this, withTimeout); }
-    saveReadingPosition() { saveReadingPosition(this); }
+    saveReadingPosition(source) { saveReadingPosition(this, source); }
 
-    async loadPassage(book, chapter, restoreScroll = false) {
+    async loadPassage(book, chapter, restoreScroll = false, source = 'unspecified') {
+        const requestId = (this._loadPassageRequestSeq = (this._loadPassageRequestSeq || 0) + 1);
+        this._activeLoadPassageRequest = requestId;
+        this._dbgEvent(`loadPassage request #${requestId}: ${book} ${chapter} source=${source} restoreScroll=${!!restoreScroll} from=${this.state.currentBook} ${this.state.currentChapter}`);
+
         // Guard: if the requested book is not present in the current canon
         // (e.g. after switching to a translation with a different canon),
         // fall back to Genesis 1 rather than fetching a passage that does not exist.
@@ -1525,7 +1531,7 @@ class BibleApp {
             chapter = 1;
         }
 
-        if (!restoreScroll) this.saveReadingPosition?.();
+        if (!restoreScroll) this.saveReadingPosition?.('loadPassage-start:' + source);
 
         this.state.currentBook = book;
         this.state.currentChapter = chapter;
@@ -1598,9 +1604,10 @@ class BibleApp {
             document.body.classList.remove('chrome-no-transition');
         });
 
-        this._dbgEvent(`loadPassage: rendered ${book} ${chapter} (${this.state.translation})`);
-        this.saveReadingPosition?.();
-        this._savePassageCache(book, chapter, this.state.translation || 'KJV', title, this.passageText.innerHTML);
+        const superseded = this._activeLoadPassageRequest === requestId ? '' : ` supersededBy=#${this._activeLoadPassageRequest}`;
+        this._dbgEvent(`loadPassage rendered #${requestId}: ${book} ${chapter} (${this.state.translation}) source=${source}${superseded}`);
+        this.saveReadingPosition?.('loadPassage-rendered:' + source);
+        this._savePassageCache(book, chapter, this.state.translation || 'KJV', title, this.passageText.innerHTML, source);
         this.swipe?.syncAdjacentPanels();
     }
 
@@ -1632,13 +1639,13 @@ class BibleApp {
     async performKeywordSearch(q) { await performKeywordSearch(this, q); }
     displaySearchResults(results, q) { displaySearchResults(this, results, q); }
     parseReference(ref) { return parseReference(ref); }
-    async loadPassageFromReference(ref) { await loadPassageFromReference(this, ref); }
+    async loadPassageFromReference(ref, source) { await loadPassageFromReference(this, ref, source); }
     escapeRegExp(str) { return escapeRegExp(str); }
     highlightSearchTerm(text, term) { return highlightSearchTerm(text, term); }
     stripHTML(html) { return stripHTML(html); }
 
-    openModal(modal) {
-        _logUserAction(`openModal: ${modal?.id ?? 'unknown'}`);
+    openModal(modal, source = 'unspecified') {
+        _logUserAction(`openModal: ${modal?.id ?? 'unknown'} source=${source}`);
         openModal(this, modal);
     }
     closeModal(modal) { closeModal(this, modal); }
@@ -1792,6 +1799,7 @@ async function registerServiceWorker(appInstance) {
 
     try {
         const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+        appInstance?._dbgEvent?.('service worker registered: ' + reg.scope);
         const pageBuildId = document.querySelector('meta[name="build-id"]')?.content || '';
 
         let updateToastShown = false;
@@ -1804,12 +1812,14 @@ async function registerServiceWorker(appInstance) {
 
         navigator.serviceWorker.addEventListener('message', (event) => {
             if (event.data?.type === 'NEW_VERSION') {
+                appInstance?._dbgEvent?.('service worker message: NEW_VERSION');
                 maybeShowUpdateToast();
             }
 
             if (event.data?.type === 'NEW_BUILD') {
                 const swBuildId = event.data.buildId || '';
                 if (pageBuildId && swBuildId && pageBuildId !== swBuildId) {
+                    appInstance?._dbgEvent?.('service worker build mismatch: page=' + pageBuildId + ' sw=' + swBuildId);
                     maybeShowUpdateToast();
                 }
             }
@@ -1843,6 +1853,7 @@ async function registerServiceWorker(appInstance) {
                 if (!remoteSha || remoteSha === pageBuildId) return true;
 
                 if (reloadOnUpdate) {
+                    appInstance?._dbgEvent?.('service worker update check: reload requested remote=' + remoteSha + ' page=' + pageBuildId);
                     window.location.reload();
                 } else {
                     maybeShowUpdateToast();
@@ -1883,6 +1894,7 @@ async function registerServiceWorker(appInstance) {
 }
 
 function showUpdateToast(appInstance) {
+    appInstance?._dbgEvent?.('service worker update toast shown');
     const toast = document.getElementById('toast');
     if (!toast) return;
 
