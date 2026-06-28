@@ -23,91 +23,10 @@ jobs:
           ref: exp
           fetch-depth: 0
 
-      - name: Patch picker debug logging
+      - name: Apply debug log fix
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path('modals.js')
-          text = path.read_text(encoding='utf-8')
-
-          def replace_once(old, new, label):
-              global text
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f'{label}: expected one match, found {count}')
-              text = text.replace(old, new, 1)
-
-          replace_once(
-              """export function openBookModal(app) {
-    const content = app.bookModal?.querySelector('.modal-content');""",
-              """export function openBookModal(app) {
-    app._dbgUserAction?.('picker opened: book');
-    app._dbgEvent?.('picker opened: book');
-
-    const content = app.bookModal?.querySelector('.modal-content');""",
-              'book picker open log',
-          )
-
-          replace_once(
-              """        button.addEventListener('click', () => {
-            app.referencePickerDraft = { book, chapter: 1 };""",
-              """        button.addEventListener('click', () => {
-            app._dbgUserAction?.('picker selected book: ' + book);
-            app._dbgEvent?.('picker selected book: ' + book + ' -> chapter picker');
-            app.referencePickerDraft = { book, chapter: 1 };""",
-              'book picker selection log',
-          )
-
-          replace_once(
-              """export function openChapterModal(app) {
-    populateChapterModal(app);""",
-              """export function openChapterModal(app) {
-    const book = app.referencePickerDraft?.book || app.state.currentBook;
-    app._dbgUserAction?.('picker opened: chapter for ' + book);
-    app._dbgEvent?.('picker opened: chapter for ' + book);
-
-    populateChapterModal(app);""",
-              'chapter picker open log',
-          )
-
-          replace_once(
-              """        btn.addEventListener('click', async () => {
-            const book = app.referencePickerDraft?.book || app.state.currentBook;
-
-            app.referencePickerDraft = { book, chapter: i };""",
-              """        btn.addEventListener('click', async () => {
-            const book = app.referencePickerDraft?.book || app.state.currentBook;
-            app._dbgUserAction?.('picker selected chapter: ' + book + ' ' + i);
-            app._dbgEvent?.('picker navigation: loading ' + book + ' ' + i + ' from chapter picker');
-
-            app.referencePickerDraft = { book, chapter: i };""",
-              'chapter picker selection log',
-          )
-
-          replace_once(
-              """export function openVerseModal(app) {
-    populateVerseModal(app);""",
-              """export function openVerseModal(app) {
-    app._dbgUserAction?.('picker opened: verse for ' + app.state.currentBook + ' ' + app.state.currentChapter);
-    app._dbgEvent?.('picker opened: verse for ' + app.state.currentBook + ' ' + app.state.currentChapter);
-
-    populateVerseModal(app);""",
-              'verse picker open log',
-          )
-
-          replace_once(
-              """        btn.addEventListener('click', () => {
-            app.referencePickerDraft = null;""",
-              """        btn.addEventListener('click', () => {
-            app._dbgUserAction?.('picker selected verse: ' + app.state.currentBook + ' ' + app.state.currentChapter + ':' + i);
-            app._dbgEvent?.('picker selected verse: ' + app.state.currentBook + ' ' + app.state.currentChapter + ':' + i);
-            app.referencePickerDraft = null;""",
-              'verse picker selection log',
-          )
-
-          path.write_text(text, encoding='utf-8')
-          PY
+          python3 .github/scripts/debug_log_fix.py
+          python3 .github/scripts/debug_log_fix.py
 
       - name: Validate picker logging
         run: |
