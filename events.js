@@ -291,9 +291,18 @@ export function attachEventListeners(app) {
 
     app.prevChapterBtn?.addEventListener('click', () => app.navigateChapter(-1));
     app.nextChapterBtn?.addEventListener('click', () => app.navigateChapter(1));
-    app.bookSelector?.addEventListener('click', () => app.openBookModal());
-    app.chapterSelector?.addEventListener('click', () => app.openChapterModal());
-    app.verseSelector?.addEventListener('click', () => app.openVerseModal());
+    app.bookSelector?.addEventListener('click', () => {
+        app.referencePickerDraft = null;
+        app.openBookModal();
+    });
+    app.chapterSelector?.addEventListener('click', () => {
+        app.referencePickerDraft = null;
+        app.openChapterModal();
+    });
+    app.verseSelector?.addEventListener('click', () => {
+        app.referencePickerDraft = null;
+        app.openVerseModal();
+    });
 
     initSwipe(app);
 
@@ -458,6 +467,10 @@ export function attachEventListeners(app) {
 
     app.settingsBtn?.addEventListener('click', openSettings);
     app.closeVerseModal?.addEventListener('click', () => app.closeModal(app.verseModal));
+    app.verseGoButton?.addEventListener('click', () => {
+        app.referencePickerDraft = null;
+        app.closeModal(app.verseModal);
+    });
     app.closeBookModal?.addEventListener('click', () => app.closeModal(app.bookModal));
     app.closeDeuterocanonInfoModal?.addEventListener('click', () => app.closeModal(app.deuterocanonInfoModal));
     app.closeChapterModal?.addEventListener('click', () => app.closeModal(app.chapterModal));

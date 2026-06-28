@@ -29,3 +29,10 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 - `chore:` maintenance/tooling
 - `refactor:` code restructure without behavior change
 - `docs:` documentation only
+
+## Formatting
+
+Check formatting without changing files:
+
+```bash
+npm run format:check
