@@ -3,8 +3,15 @@ name: "! 435 fix"
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  check:
+  fix:
     runs-on: ubuntu-latest
     steps:
-      - run: echo issue-435
+      - uses: actions/checkout@v4
+        with:
+          ref: exp
+      - run: node --check app.js
+      - run: node --check bible-api.js
