@@ -272,6 +272,7 @@ export function initSwipe(app) {
 
     viewport.addEventListener('touchstart', (e) => {
         if (_animating) {
+            app._dbgUserAction?.('swipe ignored: animation in progress');
             _vetoed = true;
             return;
         }
@@ -287,7 +288,8 @@ export function initSwipe(app) {
 
     viewport.addEventListener('touchmove', (e) => {
         if (_vetoed) return;
-        if (_isModalOpen() || _isSearchOpen(app)) return;
+        if (_isModalOpen()) { app._dbgUserAction?.('swipe ignored: modal open'); return; }
+        if (_isSearchOpen(app)) { app._dbgUserAction?.('swipe ignored: search open'); return; }
 
         const touch = e.changedTouches[0];
         const dx = touch.screenX - _startX;
@@ -385,6 +387,7 @@ export function initSwipe(app) {
         };
 
         if (!commit) {
+            app._dbgUserAction?.('swipe cancelled: below threshold dx=' + Math.round(dx) + ' velocity=' + _velocity.toFixed(2));
             if (_atBoundary(dx) && absDx > 20) hapticFirm(app);
             cancelSwipe();
             return;
@@ -397,6 +400,7 @@ export function initSwipe(app) {
             : { book: app.swipe.prevPanel.dataset.book, chapter: parseInt(app.swipe.prevPanel.dataset.chapter, 10) };
 
         if (!incomingPos.book) {
+            app._dbgUserAction?.('swipe commit blocked: boundary direction=' + direction);
             hapticFirm(app);
             cancelSwipe();
             return;
@@ -471,7 +475,7 @@ export function initSwipe(app) {
             if (app.currentVerseSpan) app.currentVerseSpan.textContent = '1';
             app.showChrome?.();
             window.scrollTo(0, 0);
-            app.saveReadingPosition?.();
+            app.saveReadingPosition?.('swipe');
             app._savePassageCache?.(
                 incomingPos.book,
                 incomingPos.chapter,

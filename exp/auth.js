@@ -21,6 +21,7 @@ export async function loadSavedPositionIfChanged(app, withTimeout) {
     let targetBook = app.state.currentBook;
     let targetChapter = app.state.currentChapter;
     let targetScrollY = 0;
+    app._dbgEvent?.('auth restoration: local position at read start ' + targetBook + ' ' + targetChapter + ' scrollY=' + (window.scrollY || 0));
 
     try {
         const snapshot = await withTimeout(
@@ -34,6 +35,7 @@ export async function loadSavedPositionIfChanged(app, withTimeout) {
                 targetBook = pos.book;
                 targetChapter = pos.chapter;
                 targetScrollY = pos.scrollY || 0;
+                app._dbgEvent?.('auth restoration: remote position: ' + targetBook + ' ' + targetChapter + ' scrollY=' + targetScrollY);
             }
         } else {
             console.warn('_loadSavedPositionIfChanged: timed out, keeping current passage');
@@ -54,8 +56,10 @@ export async function loadSavedPositionIfChanged(app, withTimeout) {
         app.state.currentChapter = targetChapter;
         app.lastScrollPosition = targetScrollY;
         lsSetJSON('readingPosition', { book: targetBook, chapter: targetChapter, scrollY: targetScrollY });
-        await app.loadPassage(targetBook, targetChapter, !!targetScrollY);
+        app._dbgEvent?.('auth restoration: chose remote position ' + targetBook + ' ' + targetChapter + ' scrollY=' + targetScrollY);
+        await app.loadPassage(targetBook, targetChapter, !!targetScrollY, 'auth-remote-position');
     } else if (targetScrollY) {
+        app._dbgEvent?.('auth restoration: chose remote scrollY=' + targetScrollY + ' for current passage');
         window.scrollTo(0, targetScrollY);
     }
 }
@@ -63,7 +67,7 @@ export async function loadSavedPositionIfChanged(app, withTimeout) {
 /** @deprecated Use loadSavedPositionIfChanged for the auth flow. */
 export async function loadSavedReadingPosition(app, withTimeout) {
     if (!app.currentUser || !app.database) {
-        await app.loadPassage(app.state.currentBook, app.state.currentChapter);
+        await app.loadPassage(app.state.currentBook, app.state.currentChapter, false, 'legacy-saved-position-no-user');
         return;
     }
 
@@ -87,10 +91,10 @@ export async function loadSavedReadingPosition(app, withTimeout) {
         console.error('loadSavedReadingPosition: failed to read Firebase', err);
     }
 
-    await app.loadPassage(app.state.currentBook, app.state.currentChapter, !!app.lastScrollPosition);
+    await app.loadPassage(app.state.currentBook, app.state.currentChapter, !!app.lastScrollPosition, 'legacy-saved-position');
 }
 
-export function saveReadingPosition(app) {
+export function saveReadingPosition(app, source = 'unspecified') {
     const pos = {
         book: app.state.currentBook,
         chapter: app.state.currentChapter,
@@ -101,6 +105,7 @@ export function saveReadingPosition(app) {
     // on the next cold load. Without this, signed-in users always get a cache
     // miss because their localStorage position is stale.
     lsSetJSON('readingPosition', pos);
+    app._dbgEvent?.('storage write: readingPosition ' + pos.book + ' ' + pos.chapter + ' scrollY=' + pos.scrollY + ' source=' + source);
 
     if (app.canWriteRemoteState()) {
         app.database

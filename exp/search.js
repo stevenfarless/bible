@@ -129,14 +129,15 @@ export function isPassageReference(query) {
     return patterns.some((p) => p.test(q));
 }
 
-export async function loadPassageFromReference(app, reference) {
+export async function loadPassageFromReference(app, reference, source = 'search-reference') {
     const allBooks = app.getAllBooks();
     const parsed = parseReference(reference, allBooks);
     if (!parsed) return;
     const { book, chapter, verse } = parsed;
+    app._dbgEvent?.('search reference selected: ' + book + ' ' + chapter + (verse ? ':' + verse : '') + ' source=' + source);
 
     app.state.selectedVerse = verse || null;
-    await app.loadPassage(book, chapter);
+    await app.loadPassage(book, chapter, false, source);
     if (verse) {
         requestAnimationFrame(() => app.scrollToVerse(verse));
     }
@@ -233,6 +234,7 @@ export function initSearchResultsDelegate(app) {
             const card = badge.closest('.search-result-item');
             if (!card) return;
             const translationId = badge.dataset.translationId;
+            app._dbgUserAction?.('search translation badge selected: ' + translationId + ' for ' + (card.dataset.reference || 'unknown'));
             const translationContent = badge.dataset.translationContent;
             card.dataset.activeTranslation = translationId;
             card.querySelector('.search-result-content').innerHTML =
@@ -249,12 +251,15 @@ export function initSearchResultsDelegate(app) {
             e.preventDefault();
             const activeTrans = resultItem.dataset.activeTranslation || null;
             const ref = resultItem.dataset.reference;
+            const activationSource = app._searchActivationSource || e.type;
+            app._dbgUserAction?.('search result selected: ' + ref + ' source=' + activationSource + (activeTrans ? ' translation=' + activeTrans : ''));
+            app._dbgEvent?.('search result navigation: ' + ref + ' source=' + activationSource + (activeTrans ? ' translation=' + activeTrans : ''));
             closeSearch(app);
             (async () => {
                 if (activeTrans && activeTrans !== app.bibleApi.translation) {
                     await app.changeTranslation(activeTrans);
                 }
-                await loadPassageFromReference(app, ref);
+                await loadPassageFromReference(app, ref, 'search-result-' + activationSource);
             })();
             return;
         }
@@ -412,13 +417,18 @@ export function setSearchSelectedIndex(app, index, scrollIntoView = false) {
 
 export function activateSelectedSearchResult(app) {
     if (!app.searchResultItems || app.searchSelectedIndex < 0 || app.searchSelectedIndex >= app.searchResultItems.length) return;
-    app.searchResultItems[app.searchSelectedIndex]?.click();
+    const item = app.searchResultItems[app.searchSelectedIndex];
+    app._dbgUserAction?.('search result keyboard activation: ' + (item?.dataset.reference || 'unknown'));
+    app._searchActivationSource = 'keyboard';
+    item?.click();
+    app._searchActivationSource = null;
 }
 
 // ─── API calls ───────────────────────────────────────────────────────────────────────────────
 
 export async function handlePassageReference(app, reference) {
     const q = reference.trim();
+    app._dbgEvent?.('search mode: reference lookup for "' + q + '"');
     // Wildcard reference patterns bypass the passage-fetch API and go directly
     // to keyword search, which now handles them in bible-api.js.
     if (/^\*/.test(q) || /\*/.test(q.replace(/^[^:]+/, ''))) {
@@ -595,6 +605,7 @@ export function groupSearchResultsByCanon(app, results) {
 }
 
 export async function performKeywordSearch(app, query) {
+    app._dbgEvent?.('search mode: keyword for "' + query + '" translation=' + app.bibleApi.translation);
     app.searchResults.innerHTML = '<div class="loading" style="min-height: 100px">Searching...</div>';
     app.searchSelectedIndex = -1;
     app.searchResultItems = [];
