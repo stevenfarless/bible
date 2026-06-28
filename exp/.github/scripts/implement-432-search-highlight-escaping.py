@@ -20,50 +20,45 @@ def replace_once(text, old, new, label):
     return text.replace(old, new, 1)
 
 
+def replace_between(text, start_marker, end_marker, new_block, label):
+    start = text.find(start_marker)
+    if start < 0:
+        raise SystemExit(f"{label}: start marker not found")
+
+    end = text.find(end_marker, start)
+    if end < 0:
+        raise SystemExit(f"{label}: end marker not found")
+
+    return text[:start] + new_block + text[end:]
+
+
 def patch_search_js():
     text = read(SEARCH_PATH)
 
     if "export function escapeHtml(str)" not in text:
         text = replace_once(
             text,
-            '''export function escapeRegExp(str) {
-    return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-''',
-            '''export function escapeRegExp(str) {
-    return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
+            "\nexport function stripHTML(html) {",
+            """
 export function escapeHtml(str) {
     return String(str ?? '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
+        .replace(/\"/g, '&quot;')
         .replace(/'/g, '&#39;');
 }
-''',
-            "search.js escapeHtml helper",
+
+export function stripHTML(html) {""",
+            "search.js escapeHtml insertion",
         )
 
     if "const escapedText = escapeHtml(text);" not in text:
-        text = replace_once(
+        text = replace_between(
             text,
-            '''export function highlightSearchTerm(text, term) {
-    if (text == null) return '';
-    const safeText = String(text);
-    const rawTerm = term == null ? '' : String(term).trim();
-    if (!rawTerm) return safeText;
-    try {
-        const regex = new RegExp(escapeRegExp(rawTerm), 'gi');
-        return safeText.replace(regex, (match) => `<strong>${match}</strong>`);
-    } catch (err) {
-        console.warn('highlightSearchTerm failed', err);
-        return safeText;
-    }
-}
-''',
-            '''export function highlightSearchTerm(text, term) {
+            "export function highlightSearchTerm(text, term) {",
+            "\n\n// ─── Reference parsing",
+            """export function highlightSearchTerm(text, term) {
     if (text == null) return '';
 
     const escapedText = escapeHtml(text);
@@ -80,18 +75,17 @@ export function escapeHtml(str) {
         return escapedText;
     }
 }
-''',
-            "search.js highlightSearchTerm",
+""",
+            "search.js highlightSearchTerm replacement",
         )
 
-    local_esc = '''
-    const esc = (str) =>
-        String(str || '')
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-'''
-    if local_esc in text:
-        text = replace_once(text, local_esc, "", "search.js local esc helper")
+    local_esc_start = text.find("\n    const esc = (str) =>")
+    if local_esc_start >= 0:
+        local_esc_end_marker = "\n\n    const totalVerses"
+        local_esc_end = text.find(local_esc_end_marker, local_esc_start)
+        if local_esc_end < 0:
+            raise SystemExit("search.js local esc helper: end marker not found")
+        text = text[:local_esc_start] + text[local_esc_end:]
 
     if "esc(" in text:
         text = text.replace("esc(", "escapeHtml(")
