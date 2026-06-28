@@ -17,17 +17,17 @@ def replace_once(text, old, new, label):
     return text.replace(old, new, 1)
 
 
-def replace_test_block(text, old_name, next_name, new_block):
+def replace_test_block(text, old_title_prefix, next_title_prefix, new_block):
     if new_block.split("\n", 1)[0] in text:
         return text
 
-    start = text.find(f"test('{old_name}'")
+    start = text.find(f"test('{old_title_prefix}")
     if start < 0:
-        raise SystemExit(f"Could not find test block: {old_name}")
+        raise SystemExit(f"Could not find test block: {old_title_prefix}")
 
-    end = text.find(f"\ntest('{next_name}'", start)
+    end = text.find(f"\ntest('{next_title_prefix}", start)
     if end < 0:
-        raise SystemExit(f"Could not find following test block: {next_name}")
+        raise SystemExit(f"Could not find following test block: {next_title_prefix}")
 
     return text[:start] + new_block + text[end:]
 
