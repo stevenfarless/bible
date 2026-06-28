@@ -1,0 +1,147 @@
+name: "! Debug log fix"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: debug-log-fix-exp
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    name: Log picker navigation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v4
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Patch picker debug logging
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('modals.js')
+          text = path.read_text(encoding='utf-8')
+
+          def replace_once(old, new, label):
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected one match, found {count}')
+              text = text.replace(old, new, 1)
+
+          replace_once(
+              """export function openBookModal(app) {
+    const content = app.bookModal?.querySelector('.modal-content');""",
+              """export function openBookModal(app) {
+    app._dbgUserAction?.('picker opened: book');
+    app._dbgEvent?.('picker opened: book');
+
+    const content = app.bookModal?.querySelector('.modal-content');""",
+              'book picker open log',
+          )
+
+          replace_once(
+              """        button.addEventListener('click', () => {
+            app.referencePickerDraft = { book, chapter: 1 };""",
+              """        button.addEventListener('click', () => {
+            app._dbgUserAction?.('picker selected book: ' + book);
+            app._dbgEvent?.('picker selected book: ' + book + ' -> chapter picker');
+            app.referencePickerDraft = { book, chapter: 1 };""",
+              'book picker selection log',
+          )
+
+          replace_once(
+              """export function openChapterModal(app) {
+    populateChapterModal(app);""",
+              """export function openChapterModal(app) {
+    const book = app.referencePickerDraft?.book || app.state.currentBook;
+    app._dbgUserAction?.('picker opened: chapter for ' + book);
+    app._dbgEvent?.('picker opened: chapter for ' + book);
+
+    populateChapterModal(app);""",
+              'chapter picker open log',
+          )
+
+          replace_once(
+              """        btn.addEventListener('click', async () => {
+            const book = app.referencePickerDraft?.book || app.state.currentBook;
+
+            app.referencePickerDraft = { book, chapter: i };""",
+              """        btn.addEventListener('click', async () => {
+            const book = app.referencePickerDraft?.book || app.state.currentBook;
+            app._dbgUserAction?.('picker selected chapter: ' + book + ' ' + i);
+            app._dbgEvent?.('picker navigation: loading ' + book + ' ' + i + ' from chapter picker');
+
+            app.referencePickerDraft = { book, chapter: i };""",
+              'chapter picker selection log',
+          )
+
+          replace_once(
+              """export function openVerseModal(app) {
+    populateVerseModal(app);""",
+              """export function openVerseModal(app) {
+    app._dbgUserAction?.('picker opened: verse for ' + app.state.currentBook + ' ' + app.state.currentChapter);
+    app._dbgEvent?.('picker opened: verse for ' + app.state.currentBook + ' ' + app.state.currentChapter);
+
+    populateVerseModal(app);""",
+              'verse picker open log',
+          )
+
+          replace_once(
+              """        btn.addEventListener('click', () => {
+            app.referencePickerDraft = null;""",
+              """        btn.addEventListener('click', () => {
+            app._dbgUserAction?.('picker selected verse: ' + app.state.currentBook + ' ' + app.state.currentChapter + ':' + i);
+            app._dbgEvent?.('picker selected verse: ' + app.state.currentBook + ' ' + app.state.currentChapter + ':' + i);
+            app.referencePickerDraft = null;""",
+              'verse picker selection log',
+          )
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate picker logging
+        run: |
+          grep -q "picker opened: book" modals.js
+          grep -q "picker selected book:" modals.js
+          grep -q "picker opened: chapter for" modals.js
+          grep -q "picker selected chapter:" modals.js
+          grep -q "picker navigation: loading" modals.js
+          grep -q "picker opened: verse for" modals.js
+          grep -q "picker selected verse:" modals.js
+          node --check modals.js
+          git diff --check
+
+      - name: Verify changed files
+        run: |
+          unexpected="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev '^modals\.js$' || true)"
+          test -z "$unexpected" || {
+            echo "Unexpected changed files:"
+            echo "$unexpected"
+            exit 1
+          }
+
+      - name: Commit debug log fix
+        run: |
+          if [ -z "$(git status --porcelain -- modals.js)" ]; then
+            echo "Debug picker logging is already implemented."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add modals.js
+          git commit \
+            -m "chore(debug): log picker navigation actions" \
+            -m "Record book, chapter, and verse picker opens and selections in the debug user-action and session logs so intentional picker navigation is visible in exported diagnostics." \
+            -m "No user-facing UI changes."
+          git push origin exp
