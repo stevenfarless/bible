@@ -74,7 +74,8 @@ export async function idbGetBook(translation, book) {
     try {
         await _open();
         return _idbGet(_tx('books', 'readonly'), `${translation}/${book}`);
-    } catch (_) {
+    } catch (error) {
+        console.warn(`idbGetBook failed for ${translation}/${book}`, error);
         return null;
     }
 }
@@ -94,7 +95,8 @@ export async function idbGetSearchIndex(translation) {
     try {
         await _open();
         return _idbGet(_tx('searchIndex', 'readonly'), translation);
-    } catch (_) {
+    } catch (error) {
+        console.warn(`idbGetSearchIndex failed for ${translation}`, error);
         return null;
     }
 }
@@ -114,7 +116,8 @@ export async function idbIsDownloaded(translation) {
     try {
         await _open();
         return (await _idbGet(_tx('downloaded', 'readonly'), translation)) === true;
-    } catch (_) {
+    } catch (error) {
+        console.warn(`idbIsDownloaded failed for ${translation}`, error);
         return false;
     }
 }
