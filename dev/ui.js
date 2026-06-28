@@ -40,6 +40,7 @@ const REQUIRED_IDS = [
     "chapterGrid",
     "verseModalBook",
     "verseGrid",
+    "verseGoButton",
     "themeSelector",
     "verseNumbersToggle",
     "coloredVerseNumbersToggle",
@@ -216,6 +217,7 @@ export function cacheElements(app) {
     app.chapterGrid = document.getElementById("chapterGrid");
     app.verseModalBook = document.getElementById("verseModalBook");
     app.verseGrid = document.getElementById("verseGrid");
+    app.verseGoButton = document.getElementById("verseGoButton");
 
     // Settings
     app.themeSelector = document.getElementById("themeSelector");
