@@ -1,0 +1,133 @@
+name: "! 432"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: issue-432-exp
+  cancel-in-progress: false
+
+jobs:
+  implement:
+    name: Escape highlighted search results
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v4
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Validate patch script
+        run: |
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+
+          path = Path('.github/scripts/implement-432-search-highlight-escaping.py')
+          ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
+          PY
+
+      - name: Apply issue 432 fix
+        run: python3 .github/scripts/implement-432-search-highlight-escaping.py
+
+      - name: Validate implementation markers
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          search = Path('search.js').read_text(encoding='utf-8')
+          test = Path('tests/unit/search.test.js').read_text(encoding='utf-8')
+
+          required_search = [
+              'export function escapeHtml(str)',
+              'const escapedText = escapeHtml(text);',
+              'const escapedTerm = escapeHtml(rawTerm);',
+              'return escapedText.replace(regex, (match) => `<strong>${match}</strong>`);',
+              "card.querySelector('.search-result-content').innerHTML =",
+              'highlightSearchTerm(translationContent, query);',
+              'data-translation-content="${escapeHtml(t.content)}"',
+              'const safeCanonical = escapeHtml(data.canonical || \'\');',
+              'const preview = escapeHtml(stripHTML(data.passages[0]).substring(0, 200));',
+          ]
+
+          for snippet in required_search:
+              assert snippet in search, f'Missing from search.js: {snippet}'
+
+          forbidden_search = [
+              'const safeText = String(text);',
+              'const esc = (str) =>',
+              'data-translation-content="${esc(t.content)}"',
+              'const preview = stripHTML(data.passages[0]).substring(0, 200);',
+          ]
+
+          for snippet in forbidden_search:
+              assert snippet not in search, f'Unsafe or stale code remains in search.js: {snippet}'
+
+          required_test = [
+              "import { highlightSearchTerm } from '../../search.js';",
+              'escapes malicious-looking result text before adding highlight markup',
+              '&lt;img src=x onerror=alert(1)&gt;',
+              "expect(result).not.toContain('<img');",
+              "expect(highlightSearchTerm('<tag>', '<tag>')).toBe('<strong>&lt;tag&gt;</strong>');",
+          ]
+
+          for snippet in required_test:
+              assert snippet in test, f'Missing from tests/unit/search.test.js: {snippet}'
+          PY
+
+      - name: Verify changed files
+        run: |
+          allowed='^(search\.js|tests/unit/search\.test\.js)$'
+          unexpected="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev "$allowed" || true)"
+
+          test -z "$unexpected" || {
+            echo "Unexpected changed files:"
+            echo "$unexpected"
+            exit 1
+          }
+
+      - name: Run syntax checks
+        run: |
+          node --check search.js
+          git diff --check
+
+      - name: Install dependencies
+        run: npm install --package-lock=false
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Commit issue 432 fix
+        run: |
+          files=(
+            search.js
+            tests/unit/search.test.js
+          )
+
+          git diff --check
+          git diff --stat -- "${files[@]}"
+
+          if [ -z "$(git status --porcelain -- "${files[@]}")" ]; then
+            echo "Issue 432 is already implemented."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${files[@]}"
+          git commit \
+            -m "fix(search): escape highlighted result content" \
+            -m "Escape raw search result text before adding highlight markup so verse text, translation badge content, and search-index content render as text instead of unsafe HTML." \
+            -m "Fixes #432"
+          git push origin exp
