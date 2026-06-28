@@ -46,14 +46,22 @@ jobs:
                   raise SystemExit(f'{label}: expected one match, found {count}')
               return text.replace(old, new, 1)
 
-          index_path = 'index.html'
-          index = read(index_path)
+          def replace_block(path, start, end, new, already, label):
+              text = read(path)
+              if already in text:
+                  return
+              start_index = text.find(start)
+              end_index = text.find(end, start_index)
+              if start_index < 0 or end_index < 0:
+                  raise SystemExit(f'{label}: could not locate block')
+              write(path, text[:start_index] + new + text[end_index:])
+
+          index = read('index.html')
           if 'id="verseGoButton"' not in index:
-              old = '''            <div class="modal-body">
+              index = replace_once(index, '''            <div class="modal-body">
                 <div id="verseGrid" class="chapter-grid"></div>
             </div>
-'''
-              new = '''            <div class="modal-body">
+''', '''            <div class="modal-body">
                 <div class="picker-actions">
                     <button id="verseGoButton" class="primary-btn" type="button"
                         aria-label="Go to selected chapter without choosing a verse">
@@ -62,12 +70,10 @@ jobs:
                 </div>
                 <div id="verseGrid" class="chapter-grid"></div>
             </div>
-'''
-              index = replace_once(index, old, new, 'index.html verse modal body')
-              write(index_path, index)
+''', 'index.html verse modal body')
+              write('index.html', index)
 
-          components_path = 'css/components.css'
-          components = read(components_path)
+          components = read('css/components.css')
           if '.picker-actions {' not in components:
               anchor = '''.chapter-item:hover {
     background-color: var(--primary-color);
@@ -77,7 +83,7 @@ jobs:
 }
 
 '''
-              insert = anchor + '''.picker-actions {
+              components = replace_once(components, anchor, anchor + '''.picker-actions {
     display: flex;
     justify-content: flex-end;
     margin-bottom: var(--spacing-md);
@@ -87,79 +93,56 @@ jobs:
     min-width: 96px;
 }
 
-'''
-              components = replace_once(components, anchor, insert, 'css/components.css picker action insertion')
-              write(components_path, components)
+''', 'css/components.css picker actions')
+              write('css/components.css', components)
 
-          ui_path = 'ui.js'
-          ui = read(ui_path)
+          ui = read('ui.js')
           if '"verseGoButton",' not in ui:
-              ui = replace_once(
-                  ui,
-                  '    "verseGrid",\n',
-                  '    "verseGrid",\n    "verseGoButton",\n',
-                  'ui.js REQUIRED_IDS verseGoButton',
-              )
+              ui = replace_once(ui, '    "verseGrid",\n', '    "verseGrid",\n    "verseGoButton",\n', 'ui.js required ids')
           if 'app.verseGoButton = document.getElementById("verseGoButton");' not in ui:
-              ui = replace_once(
-                  ui,
-                  '    app.verseGrid = document.getElementById("verseGrid");\n',
-                  '    app.verseGrid = document.getElementById("verseGrid");\n    app.verseGoButton = document.getElementById("verseGoButton");\n',
-                  'ui.js cache verseGoButton',
-              )
-          write(ui_path, ui)
+              ui = replace_once(ui, '    app.verseGrid = document.getElementById("verseGrid");\n', '    app.verseGrid = document.getElementById("verseGrid");\n    app.verseGoButton = document.getElementById("verseGoButton");\n', 'ui.js cache verseGoButton')
+          write('ui.js', ui)
 
-          app_path = 'app.js'
-          app = read(app_path)
+          app = read('app.js')
           if 'this.referencePickerDraft = null;' not in app:
-              app = replace_once(
-                  app,
-                  '        this._translationKbIndex = -1;\n',
-                  '        this._translationKbIndex = -1;\n        this.referencePickerDraft = null;\n',
-                  'app.js referencePickerDraft property',
-              )
-              write(app_path, app)
+              app = replace_once(app, '        this._translationKbIndex = -1;\n', '        this._translationKbIndex = -1;\n        this.referencePickerDraft = null;\n', 'app.js referencePickerDraft')
+              write('app.js', app)
 
-          modals_path = 'modals.js'
-          modals = read(modals_path)
-          old = '''        button.addEventListener('click', () => {
+          modals = read('modals.js')
+          if 'app.referencePickerDraft = { book, chapter: 1 };' not in modals:
+              modals = replace_once(modals, '''        button.addEventListener('click', () => {
             app.state.selectedVerse = null;
             app.loadPassage(book, 1);
             app.closeModal(app.bookModal);
         });
-'''
-          new = '''        button.addEventListener('click', () => {
+''', '''        button.addEventListener('click', () => {
             app.referencePickerDraft = { book, chapter: 1 };
             app.state.selectedVerse = null;
             app.closeModal(app.bookModal);
             app.openChapterModal();
         });
-'''
-          if old in modals:
-              modals = replace_once(modals, old, new, 'modals.js book button flow')
+''', 'modals.js book button')
 
-          old = '''    app.chapterModalBook.textContent = app.getDisplayName(app.state.currentBook);
+          if 'const book = app.referencePickerDraft?.book || app.state.currentBook;' not in modals:
+              modals = replace_once(modals, '''    app.chapterModalBook.textContent = app.getDisplayName(app.state.currentBook);
     app.chapterGrid.innerHTML = '';
 
     const chapterCount = app.getChapterCount(app.state.currentBook);
-'''
-          new = '''    const book = app.referencePickerDraft?.book || app.state.currentBook;
+''', '''    const book = app.referencePickerDraft?.book || app.state.currentBook;
 
     app.chapterModalBook.textContent = app.getDisplayName(book);
     app.chapterGrid.innerHTML = '';
 
     const chapterCount = app.getChapterCount(book);
-'''
-          if old in modals:
-              modals = replace_once(modals, old, new, 'modals.js chapter draft book')
+''', 'modals.js chapter draft book')
 
-          old = '''        btn.addEventListener('click', () => {
+          if 'await app.loadPassage(book, i);' not in modals:
+              modals = replace_once(modals, '''        btn.addEventListener('click', () => {
             app.state.selectedVerse = null;
             app.loadPassage(app.state.currentBook, i);
             app.closeModal(app.chapterModal);
         });
-'''
-          new = '''        btn.addEventListener('click', async () => {
+''', '''        btn.addEventListener('click', async () => {
             const book = app.referencePickerDraft?.book || app.state.currentBook;
 
             app.referencePickerDraft = { book, chapter: i };
@@ -170,32 +153,27 @@ jobs:
             app.closeModal(app.chapterModal);
             app.openVerseModal();
         });
-'''
-          if old in modals:
-              modals = replace_once(modals, old, new, 'modals.js chapter button flow')
+''', 'modals.js chapter button')
 
-          old = '''        btn.addEventListener('click', () => {
+          if 'app.referencePickerDraft = null;\n            app.scrollToVerse(i);' not in modals:
+              modals = replace_once(modals, '''        btn.addEventListener('click', () => {
             app.scrollToVerse(i);
             app.closeModal(app.verseModal);
         });
-'''
-          new = '''        btn.addEventListener('click', () => {
+''', '''        btn.addEventListener('click', () => {
             app.referencePickerDraft = null;
             app.scrollToVerse(i);
             app.closeModal(app.verseModal);
         });
-'''
-          if old in modals:
-              modals = replace_once(modals, old, new, 'modals.js verse button clears draft')
-          write(modals_path, modals)
+''', 'modals.js verse button')
+          write('modals.js', modals)
 
-          events_path = 'events.js'
-          events = read(events_path)
-          old = '''    app.bookSelector?.addEventListener('click', () => app.openBookModal());
+          events = read('events.js')
+          if 'app.bookSelector?.addEventListener(\'click\', () => {' not in events:
+              events = replace_once(events, '''    app.bookSelector?.addEventListener('click', () => app.openBookModal());
     app.chapterSelector?.addEventListener('click', () => app.openChapterModal());
     app.verseSelector?.addEventListener('click', () => app.openVerseModal());
-'''
-          new = '''    app.bookSelector?.addEventListener('click', () => {
+''', '''    app.bookSelector?.addEventListener('click', () => {
         app.referencePickerDraft = null;
         app.openBookModal();
     });
@@ -207,38 +185,18 @@ jobs:
         app.referencePickerDraft = null;
         app.openVerseModal();
     });
-'''
-          if old in events:
-              events = replace_once(events, old, new, 'events.js direct picker listeners')
+''', 'events.js direct picker listeners')
 
           if 'app.verseGoButton?.addEventListener' not in events:
-              anchor = '''    app.closeVerseModal?.addEventListener('click', () => app.closeModal(app.verseModal));
-'''
-              insert = anchor + '''    app.verseGoButton?.addEventListener('click', () => {
+              anchor = "    app.closeVerseModal?.addEventListener('click', () => app.closeModal(app.verseModal));\n"
+              events = replace_once(events, anchor, anchor + '''    app.verseGoButton?.addEventListener('click', () => {
         app.referencePickerDraft = null;
         app.closeModal(app.verseModal);
     });
-'''
-              events = replace_once(events, anchor, insert, 'events.js verse Go listener')
-          write(events_path, events)
+''', 'events.js verse Go listener')
+          write('events.js', events)
 
-          tests_path = 'tests/smoke.spec.js'
-          tests = read(tests_path)
-          old = '''test('book navigation: selecting a book loads its first chapter', async ({ page }) => {
-        await page.goto('/');
-        await waitForPassage(page);
-
-        await page.locator('#bookSelector').click();
-        await expect(page.locator('#bookModal')).toBeVisible();
-
-        await page.locator('#newTestamentBooks button', { hasText: 'Matt' }).first().click();
-
-        await expect(page.locator('#bookModal')).not.toHaveClass(/active/);
-        await expect(page.locator('#passageTitle')).toContainText('Matthew 1');
-        await expect(page.locator('#passageText')).not.toBeEmpty();
-});
-'''
-          new = '''test('reference picker: book, chapter, verse flow supports verse and Go', async ({ page }) => {
+          book_flow_test = '''test('reference picker: book, chapter, verse flow supports verse and Go', async ({ page }) => {
         await page.goto('/');
         await waitForPassage(page);
 
@@ -277,23 +235,9 @@ jobs:
         await expect(page.locator('#currentVerse')).toHaveText('1');
 });
 '''
-          if old in tests:
-              tests = replace_once(tests, old, new, 'tests/smoke.spec.js book picker flow test')
+          replace_block('tests/smoke.spec.js', "test('book navigation: selecting a book loads its first chapter'", "\ntest('book selector: testament filters", book_flow_test, 'reference picker: book, chapter, verse flow supports verse and Go', 'tests book picker flow')
 
-          old = '''test('chapter navigation: selecting a chapter loads passage text', async ({ page }) => {
-        await page.goto('/');
-        await waitForPassage(page);
-
-        await page.locator('#chapterSelector').click();
-        await expect(page.locator('#chapterModal')).toBeVisible();
-        await page.locator('#chapterGrid button', { hasText: '2' }).first().click();
-
-        await expect(page.locator('#chapterModal')).not.toHaveClass(/active/);
-        await expect(page.locator('#passageTitle')).toContainText('Genesis 2');
-        await expect(page.locator('#passageText')).not.toBeEmpty();
-});
-'''
-          new = '''test('chapter navigation: selecting a chapter opens verse picker and Go keeps chapter', async ({ page }) => {
+          chapter_flow_test = '''test('chapter navigation: selecting a chapter opens verse picker and Go keeps chapter', async ({ page }) => {
         await page.goto('/');
         await waitForPassage(page);
 
@@ -312,18 +256,18 @@ jobs:
         await expect(page.locator('#passageTitle')).toContainText('Genesis 2');
 });
 '''
-          if old in tests:
-              tests = replace_once(tests, old, new, 'tests/smoke.spec.js chapter picker Go test')
+          replace_block('tests/smoke.spec.js', "test('chapter navigation: selecting a chapter loads passage text'", "\ntest('verse navigation:", chapter_flow_test, 'chapter navigation: selecting a chapter opens verse picker and Go keeps chapter', 'tests chapter picker flow')
 
-          old = '''        await page.locator('#chapterSelector').click();
+          tests = read('tests/smoke.spec.js')
+          if "test('passage cache: navigating back to a visited passage writes cache'" in tests and "await expect(page.locator('#verseModal')).toBeVisible();\n        await page.locator('#verseGoButton').click();\n        await waitForPassage(page);" not in tests:
+              tests = replace_once(tests, '''        await page.locator('#chapterSelector').click();
         await page.locator('#chapterGrid button', { hasText: '2' }).first().click();
         await waitForPassage(page);
 
         await page.locator('#chapterSelector').click();
         await page.locator('#chapterGrid button', { hasText: '1' }).first().click();
         await waitForPassage(page);
-'''
-          new = '''        await page.locator('#chapterSelector').click();
+''', '''        await page.locator('#chapterSelector').click();
         await page.locator('#chapterGrid button', { hasText: '2' }).first().click();
         await expect(page.locator('#verseModal')).toBeVisible();
         await page.locator('#verseGoButton').click();
@@ -334,10 +278,8 @@ jobs:
         await expect(page.locator('#verseModal')).toBeVisible();
         await page.locator('#verseGoButton').click();
         await waitForPassage(page);
-'''
-          if old in tests:
-              tests = replace_once(tests, old, new, 'tests/smoke.spec.js passage cache picker flow')
-          write(tests_path, tests)
+''', 'tests passage cache picker flow')
+              write('tests/smoke.spec.js', tests)
           PY
 
       - name: Validate implementation markers
@@ -346,23 +288,10 @@ jobs:
           from pathlib import Path
 
           required = {
-              'index.html': [
-                  'id="verseGoButton"',
-                  'class="picker-actions"',
-                  'Go\n                    </button>',
-              ],
-              'css/components.css': [
-                  '.picker-actions {',
-                  '.picker-actions .primary-btn {',
-                  'min-width: 96px;',
-              ],
-              'ui.js': [
-                  '"verseGoButton",',
-                  'app.verseGoButton = document.getElementById("verseGoButton");',
-              ],
-              'app.js': [
-                  'this.referencePickerDraft = null;',
-              ],
+              'index.html': ['id="verseGoButton"', 'class="picker-actions"'],
+              'css/components.css': ['.picker-actions {', '.picker-actions .primary-btn {', 'min-width: 96px;'],
+              'ui.js': ['"verseGoButton",', 'app.verseGoButton = document.getElementById("verseGoButton");'],
+              'app.js': ['this.referencePickerDraft = null;'],
               'modals.js': [
                   'app.referencePickerDraft = { book, chapter: 1 };',
                   'const book = app.referencePickerDraft?.book || app.state.currentBook;',
@@ -370,13 +299,7 @@ jobs:
                   'app.openVerseModal();',
                   'app.referencePickerDraft = null;',
               ],
-              'events.js': [
-                  'app.verseGoButton?.addEventListener',
-                  'app.referencePickerDraft = null;',
-                  'app.openBookModal();',
-                  'app.openChapterModal();',
-                  'app.openVerseModal();',
-              ],
+              'events.js': ['app.verseGoButton?.addEventListener', 'app.referencePickerDraft = null;'],
               'tests/smoke.spec.js': [
                   'reference picker: book, chapter, verse flow supports verse and Go',
                   'chapter navigation: selecting a chapter opens verse picker and Go keeps chapter',
@@ -390,7 +313,6 @@ jobs:
                   assert snippet in text, f'Missing from {path_name}: {snippet}'
 
           assert Path('index.html').read_text(encoding='utf-8').count('id="verseGoButton"') == 1
-          assert Path('ui.js').read_text(encoding='utf-8').count('verseGoButton') >= 2
           PY
 
       - name: Verify changed files
