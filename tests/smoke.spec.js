@@ -94,18 +94,43 @@ test('page load: main UI elements are visible', async ({ page }) => {
         expect(errors).toHaveLength(0);
 });
 
-test('book navigation: selecting a book loads its first chapter', async ({ page }) => {
+test('reference picker: book, chapter, verse flow supports verse and Go', async ({ page }) => {
         await page.goto('/');
         await waitForPassage(page);
 
         await page.locator('#bookSelector').click();
         await expect(page.locator('#bookModal')).toBeVisible();
 
-        await page.locator('#newTestamentBooks button', { hasText: 'Matt' }).first().click();
+        await page.locator('#newTestamentBooks button', { hasText: 'John' }).first().click();
 
         await expect(page.locator('#bookModal')).not.toHaveClass(/active/);
-        await expect(page.locator('#passageTitle')).toContainText('Matthew 1');
+        await expect(page.locator('#chapterModal')).toBeVisible();
+        await expect(page.locator('#chapterModalBook')).toHaveText('John');
+
+        await page.locator('#chapterGrid button', { hasText: '3' }).first().click();
+
+        await expect(page.locator('#chapterModal')).not.toHaveClass(/active/);
+        await expect(page.locator('#passageTitle')).toContainText('John 3');
         await expect(page.locator('#passageText')).not.toBeEmpty();
+        await expect(page.locator('#verseModal')).toBeVisible();
+
+        await page.locator('#verseGrid button', { hasText: '16' }).first().click();
+
+        await expect(page.locator('#verseModal')).not.toHaveClass(/active/);
+        await expect(page.locator('#currentVerse')).toHaveText('16');
+
+        await page.locator('#bookSelector').click();
+        await page.locator('#newTestamentBooks button', { hasText: 'Matt' }).first().click();
+        await page.locator('#chapterGrid button', { hasText: '2' }).first().click();
+
+        await expect(page.locator('#passageTitle')).toContainText('Matthew 2');
+        await expect(page.locator('#verseModal')).toBeVisible();
+
+        await page.locator('#verseGoButton').click();
+
+        await expect(page.locator('#verseModal')).not.toHaveClass(/active/);
+        await expect(page.locator('#passageTitle')).toContainText('Matthew 2');
+        await expect(page.locator('#currentVerse')).toHaveText('1');
 });
 
 test('book selector: testament filters toggle sections from canon data', async ({ page }) => {
@@ -167,7 +192,7 @@ test('book selector: testament filters toggle sections from canon data', async (
         await expect(deuterocanonSection).toHaveCount(0);
 });
 
-test('chapter navigation: selecting a chapter loads passage text', async ({ page }) => {
+test('chapter navigation: selecting a chapter opens verse picker and Go keeps chapter', async ({ page }) => {
         await page.goto('/');
         await waitForPassage(page);
 
@@ -178,6 +203,12 @@ test('chapter navigation: selecting a chapter loads passage text', async ({ page
         await expect(page.locator('#chapterModal')).not.toHaveClass(/active/);
         await expect(page.locator('#passageTitle')).toContainText('Genesis 2');
         await expect(page.locator('#passageText')).not.toBeEmpty();
+        await expect(page.locator('#verseModal')).toBeVisible();
+
+        await page.locator('#verseGoButton').click();
+
+        await expect(page.locator('#verseModal')).not.toHaveClass(/active/);
+        await expect(page.locator('#passageTitle')).toContainText('Genesis 2');
 });
 
 test('verse navigation: selecting a verse closes the verse modal', async ({ page }) => {
@@ -306,10 +337,14 @@ test('passage cache: navigating back to a visited passage writes cache', async (
 
         await page.locator('#chapterSelector').click();
         await page.locator('#chapterGrid button', { hasText: '2' }).first().click();
+        await expect(page.locator('#verseModal')).toBeVisible();
+        await page.locator('#verseGoButton').click();
         await waitForPassage(page);
 
         await page.locator('#chapterSelector').click();
         await page.locator('#chapterGrid button', { hasText: '1' }).first().click();
+        await expect(page.locator('#verseModal')).toBeVisible();
+        await page.locator('#verseGoButton').click();
         await waitForPassage(page);
 
         const cache = await page.evaluate(() => localStorage.getItem('passageCache'));

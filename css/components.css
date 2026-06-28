@@ -222,6 +222,16 @@
     transform: scale(1.05);
 }
 
+.picker-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--spacing-md);
+}
+
+.picker-actions .primary-btn {
+    min-width: 96px;
+}
+
 /* Buttons */
 .icon-btn {
     display: flex;
