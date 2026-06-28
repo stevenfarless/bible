@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   fix:
-    name: Log picker navigation
+    name: Expand debug logging
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -28,21 +28,36 @@ jobs:
           python3 .github/scripts/debug_log_fix.py
           python3 .github/scripts/debug_log_fix.py
 
-      - name: Validate picker logging
+      - name: Validate debug logging markers
         run: |
           grep -q "picker opened: book" modals.js
-          grep -q "picker selected book:" modals.js
-          grep -q "picker opened: chapter for" modals.js
-          grep -q "picker selected chapter:" modals.js
-          grep -q "picker navigation: loading" modals.js
-          grep -q "picker opened: verse for" modals.js
           grep -q "picker selected verse:" modals.js
+          grep -q "loadPassage request #" app.js
+          grep -q "loadPassage rendered #" app.js
+          grep -q "storage write: passageCache" app.js
+          grep -q "service worker registered:" app.js
+          grep -q "service worker update toast shown" app.js
+          grep -q "search result selected:" search.js
+          grep -q "search result keyboard activation:" search.js
+          grep -q "search mode: keyword" search.js
+          grep -q "changeTranslation request:" settings.js
+          grep -q "changeTranslation preserving passage:" settings.js
+          grep -q "storage write: readingPosition" auth.js
+          grep -q "auth restoration: remote position:" auth.js
+          grep -q "swipe ignored: modal open" swipe.js
+          grep -q "swipe cancelled:" swipe.js
+          node --check app.js
+          node --check auth.js
           node --check modals.js
+          node --check search.js
+          node --check settings.js
+          node --check swipe.js
           git diff --check
 
       - name: Verify changed files
         run: |
-          unexpected="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev '^modals\.js$' || true)"
+          allowed='^(app\.js|auth\.js|modals\.js|search\.js|settings\.js|swipe\.js)$'
+          unexpected="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev "$allowed" || true)"
           test -z "$unexpected" || {
             echo "Unexpected changed files:"
             echo "$unexpected"
@@ -51,16 +66,17 @@ jobs:
 
       - name: Commit debug log fix
         run: |
-          if [ -z "$(git status --porcelain -- modals.js)" ]; then
-            echo "Debug picker logging is already implemented."
+          files=(app.js auth.js modals.js search.js settings.js swipe.js)
+          if [ -z "$(git status --porcelain -- "${files[@]}")" ]; then
+            echo "Expanded debug logging is already implemented."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add modals.js
+          git add -- "${files[@]}"
           git commit \
-            -m "chore(debug): log picker navigation actions" \
-            -m "Record book, chapter, and verse picker opens and selections in the debug user-action and session logs so intentional picker navigation is visible in exported diagnostics." \
+            -m "chore(debug): record navigation sources in logs" \
+            -m "Record source and decision details for passage loads, search result activation, translation changes, sync position choices, storage writes, swipe edge cases, picker navigation, and service-worker update checks." \
             -m "No user-facing UI changes."
           git push origin exp
