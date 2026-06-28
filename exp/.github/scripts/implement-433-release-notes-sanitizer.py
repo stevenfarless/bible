@@ -200,7 +200,7 @@ test('about: release notes sanitize rendered markdown', async ({ page }) => {
                 await route.fulfill({
                         status: 200,
                         contentType: 'application/javascript',
-                        body: `
+                        body: String.raw`
                                 window.marked = {
                                         parse(markdown) {
                                                 return markdown
