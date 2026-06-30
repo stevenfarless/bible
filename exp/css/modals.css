@@ -685,13 +685,21 @@
     min-height: 3rem;
 }
 
-.picker-actions--footer {
-    margin-top: 0.75rem;
+.picker-actions--top {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.5rem;
+    padding: 0.15rem 0 0.35rem;
+    background-color: var(--bg-card);
 }
 
 .reference-picker-go {
     width: auto;
-    margin-inline: auto;
+    min-width: 4rem;
+    margin: 0;
     padding: 0.35rem 0.75rem;
     border-color: transparent;
 }
