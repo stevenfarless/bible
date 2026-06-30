@@ -630,15 +630,13 @@ function _renderChapterPickerView(app) {
         grid.appendChild(btn);
     }
 
-    view.appendChild(grid);
-
     const actions = document.createElement('div');
-    actions.className = 'picker-actions picker-actions--footer';
+    actions.className = 'picker-actions picker-actions--top';
 
     const goButton = document.createElement('button');
     goButton.className = 'secondary-btn reference-picker-go';
     goButton.type = 'button';
-    goButton.textContent = 'Go to chapter';
+    goButton.textContent = 'Go';
     goButton.addEventListener('click', async () => {
         const targetBook = draft.book || app.state.currentBook;
         const targetChapter = draft.chapter || app.state.currentChapter;
@@ -650,6 +648,7 @@ function _renderChapterPickerView(app) {
 
     actions.appendChild(goButton);
     view.appendChild(actions);
+    view.appendChild(grid);
 }
 
 function _renderVersePickerView(app) {
