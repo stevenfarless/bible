@@ -28,11 +28,13 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install repo dependencies
-        run: npm install --no-package-lock
-
       - name: Install Playwright without saving to package.json
-        run: npm install --no-save --no-package-lock @playwright/test
+        env:
+          npm_config_package_lock: "false"
+          npm_config_save: "false"
+        run: |
+          npm install --no-save --package-lock=false @playwright/test
+          rm -f package-lock.json
 
       - name: Install Chromium browser
         run: npx playwright install chromium --with-deps
@@ -74,6 +76,7 @@ jobs:
           BASE_URL: http://localhost:8080
         run: |
           npx playwright test --project=chromium tests/smoke.spec.js
+          rm -f package-lock.json
 
       - name: Verify changed files
         run: |
