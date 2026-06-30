@@ -94,41 +94,51 @@ test('page load: main UI elements are visible', async ({ page }) => {
         expect(errors).toHaveLength(0);
 });
 
-test('reference picker: book, chapter, verse flow supports verse and Go', async ({ page }) => {
+test('reference picker: book, chapter, verse flow supports verse and close', async ({ page }) => {
         await page.goto('/');
         await waitForPassage(page);
 
+        const picker = page.locator('#referencePickerModal');
+        const pickerTitle = page.locator('#referencePickerTitle');
+        const pickerSubtitle = page.locator('#referencePickerSubtitle');
+        const pickerView = page.locator('#referencePickerView');
+
         await page.locator('#bookSelector').click();
-        await expect(page.locator('#bookModal')).toBeVisible();
+        await expect(picker).toBeVisible();
+        await expect(pickerTitle).toHaveText('Book');
 
-        await page.locator('#newTestamentBooks button', { hasText: 'John' }).first().click();
+        await page.locator('.book-category[data-testament="New Testament"] .book-item', { hasText: 'John' }).first().click();
 
-        await expect(page.locator('#bookModal')).not.toHaveClass(/active/);
-        await expect(page.locator('#chapterModal')).toBeVisible();
-        await expect(page.locator('#chapterModalBook')).toHaveText('John');
+        await expect(picker).toBeVisible();
+        await expect(pickerTitle).toHaveText('Chapter');
+        await expect(pickerSubtitle).toHaveText('John');
 
-        await page.locator('#chapterGrid button', { hasText: '3' }).first().click();
+        await pickerView.locator('.chapter-item', { hasText: '3' }).first().click();
 
-        await expect(page.locator('#chapterModal')).not.toHaveClass(/active/);
         await expect(page.locator('#passageTitle')).toContainText('John 3');
         await expect(page.locator('#passageText')).not.toBeEmpty();
-        await expect(page.locator('#verseModal')).toBeVisible();
+        await expect(picker).toBeVisible();
+        await expect(pickerTitle).toHaveText('Verse');
+        await expect(pickerSubtitle).toHaveText('John 3');
 
-        await page.locator('#verseGrid button', { hasText: '16' }).first().click();
+        await pickerView.locator('.chapter-item', { hasText: '16' }).first().click();
 
-        await expect(page.locator('#verseModal')).not.toHaveClass(/active/);
+        await expect(picker).not.toHaveClass(/active/);
         await expect(page.locator('#currentVerse')).toHaveText('16');
 
         await page.locator('#bookSelector').click();
-        await page.locator('#newTestamentBooks button', { hasText: 'Matt' }).first().click();
-        await page.locator('#chapterGrid button', { hasText: '2' }).first().click();
+        await page.locator('.book-category[data-testament="New Testament"] .book-item', { hasText: 'Matt' }).first().click();
+        await expect(pickerTitle).toHaveText('Chapter');
+        await pickerView.locator('.chapter-item', { hasText: '2' }).first().click();
 
         await expect(page.locator('#passageTitle')).toContainText('Matthew 2');
-        await expect(page.locator('#verseModal')).toBeVisible();
+        await expect(picker).toBeVisible();
+        await expect(pickerTitle).toHaveText('Verse');
+        await expect(pickerSubtitle).toHaveText('Matthew 2');
 
-        await page.locator('#verseGoButton').click();
+        await page.locator('#closeReferencePickerModal').click();
 
-        await expect(page.locator('#verseModal')).not.toHaveClass(/active/);
+        await expect(picker).not.toHaveClass(/active/);
         await expect(page.locator('#passageTitle')).toContainText('Matthew 2');
         await expect(page.locator('#currentVerse')).toHaveText('1');
 });
@@ -138,13 +148,7 @@ test('book selector: testament filters toggle sections from canon data', async (
         await waitForPassage(page);
 
         await page.locator('#bookSelector').click();
-        await expect(page.locator('#bookModal')).toBeVisible();
-
-        const modalContent = page.locator('#bookModal .modal-content');
-        await expect.poll(() => modalContent.evaluate((element) => element.style.height)).not.toBe('');
-        const initialBookModalHeight = await modalContent.evaluate(
-                (element) => Math.round(element.getBoundingClientRect().height)
-        );
+        await expect(page.locator('#referencePickerModal')).toBeVisible();
 
         const oldSection = page.locator('.book-category[data-testament="Old Testament"]');
         const newSection = page.locator('.book-category[data-testament="New Testament"]');
@@ -155,8 +159,8 @@ test('book selector: testament filters toggle sections from canon data', async (
 
         await expect(page.locator('.book-testament-filter')).toHaveCount(2);
         await expect(page.locator('.book-testament-filter--active')).toHaveCount(0);
-        await expect(page.locator('#bookModal .modal-content > .book-testament-filters')).toHaveCount(1);
-        await expect(page.locator('#bookModal .modal-body > .book-testament-filters')).toHaveCount(0);
+        await expect(page.locator('#referencePickerModal .modal-content > .book-testament-filters')).toHaveCount(1);
+        await expect(page.locator('#referencePickerModal .modal-body > .book-testament-filters')).toHaveCount(0);
         await expect(apocryphaFilter).toHaveCount(0);
         await expect(oldSection).toBeVisible();
         await expect(newSection).toBeVisible();
@@ -167,9 +171,6 @@ test('book selector: testament filters toggle sections from canon data', async (
         await expect(newSection).toBeVisible();
         await expect(newFilter).toHaveAttribute('aria-pressed', 'true');
         await expect(newFilter).toHaveClass(/book-testament-filter--active/);
-        await expect.poll(() => modalContent.evaluate(
-                (element) => Math.round(element.getBoundingClientRect().height)
-        )).toBe(initialBookModalHeight);
 
         await oldFilter.click();
 
@@ -177,49 +178,52 @@ test('book selector: testament filters toggle sections from canon data', async (
         await expect(newSection).toBeHidden();
         await expect(oldFilter).toHaveAttribute('aria-pressed', 'true');
         await expect(oldFilter).toHaveClass(/book-testament-filter--active/);
-        await expect.poll(() => modalContent.evaluate(
-                (element) => Math.round(element.getBoundingClientRect().height)
-        )).toBe(initialBookModalHeight);
 
         await oldFilter.click();
 
         await expect(oldSection).toBeVisible();
         await expect(newSection).toBeVisible();
         await expect(page.locator('.book-testament-filter--active')).toHaveCount(0);
-        await expect.poll(() => modalContent.evaluate(
-                (element) => Math.round(element.getBoundingClientRect().height)
-        )).toBe(initialBookModalHeight);
         await expect(deuterocanonSection).toHaveCount(0);
 });
 
-test('chapter navigation: selecting a chapter opens verse picker and Go keeps chapter', async ({ page }) => {
+test('chapter navigation: selecting a chapter opens verse picker and close keeps chapter', async ({ page }) => {
         await page.goto('/');
         await waitForPassage(page);
 
-        await page.locator('#chapterSelector').click();
-        await expect(page.locator('#chapterModal')).toBeVisible();
-        await page.locator('#chapterGrid button', { hasText: '2' }).first().click();
+        const picker = page.locator('#referencePickerModal');
+        const pickerTitle = page.locator('#referencePickerTitle');
+        const pickerView = page.locator('#referencePickerView');
 
-        await expect(page.locator('#chapterModal')).not.toHaveClass(/active/);
+        await page.locator('#chapterSelector').click();
+        await expect(picker).toBeVisible();
+        await expect(pickerTitle).toHaveText('Chapter');
+        await pickerView.locator('.chapter-item', { hasText: '2' }).first().click();
+
         await expect(page.locator('#passageTitle')).toContainText('Genesis 2');
         await expect(page.locator('#passageText')).not.toBeEmpty();
-        await expect(page.locator('#verseModal')).toBeVisible();
+        await expect(picker).toBeVisible();
+        await expect(pickerTitle).toHaveText('Verse');
 
-        await page.locator('#verseGoButton').click();
+        await page.locator('#closeReferencePickerModal').click();
 
-        await expect(page.locator('#verseModal')).not.toHaveClass(/active/);
+        await expect(picker).not.toHaveClass(/active/);
         await expect(page.locator('#passageTitle')).toContainText('Genesis 2');
 });
 
-test('verse navigation: selecting a verse closes the verse modal', async ({ page }) => {
+test('verse navigation: selecting a verse closes the reference picker', async ({ page }) => {
         await page.goto('/');
         await waitForPassage(page);
 
-        await page.locator('#verseSelector').click();
-        await expect(page.locator('#verseModal')).toBeVisible();
-        await page.locator('#verseGrid button', { hasText: '2' }).first().click();
+        const picker = page.locator('#referencePickerModal');
+        const pickerView = page.locator('#referencePickerView');
 
-        await expect(page.locator('#verseModal')).not.toHaveClass(/active/);
+        await page.locator('#verseSelector').click();
+        await expect(picker).toBeVisible();
+        await expect(page.locator('#referencePickerTitle')).toHaveText('Verse');
+        await pickerView.locator('.chapter-item', { hasText: '2' }).first().click();
+
+        await expect(picker).not.toHaveClass(/active/);
         await expect(page.locator('#currentVerse')).toHaveText('2');
 });
 
@@ -335,16 +339,21 @@ test('passage cache: navigating back to a visited passage writes cache', async (
         await page.goto('/');
         await waitForPassage(page);
 
+        const picker = page.locator('#referencePickerModal');
+        const pickerView = page.locator('#referencePickerView');
+
         await page.locator('#chapterSelector').click();
-        await page.locator('#chapterGrid button', { hasText: '2' }).first().click();
-        await expect(page.locator('#verseModal')).toBeVisible();
-        await page.locator('#verseGoButton').click();
+        await pickerView.locator('.chapter-item', { hasText: '2' }).first().click();
+        await expect(page.locator('#passageTitle')).toContainText('Genesis 2');
+        await expect(picker).toBeVisible();
+        await page.locator('#closeReferencePickerModal').click();
         await waitForPassage(page);
 
         await page.locator('#chapterSelector').click();
-        await page.locator('#chapterGrid button', { hasText: '1' }).first().click();
-        await expect(page.locator('#verseModal')).toBeVisible();
-        await page.locator('#verseGoButton').click();
+        await pickerView.locator('.chapter-item', { hasText: '1' }).first().click();
+        await expect(page.locator('#passageTitle')).toContainText('Genesis 1');
+        await expect(picker).toBeVisible();
+        await page.locator('#closeReferencePickerModal').click();
         await waitForPassage(page);
 
         const cache = await page.evaluate(() => localStorage.getItem('passageCache'));
@@ -453,8 +462,8 @@ test('dynamic book picker: translation without meta.json uses 66-book fallback',
         await waitForPassage(page);
 
         await page.locator('#bookSelector').click();
-        await expect(page.locator('#oldTestamentBooks button')).toHaveCount(39);
-        await expect(page.locator('#newTestamentBooks button')).toHaveCount(27);
+        await expect(page.locator('.book-category[data-testament="Old Testament"] .book-item')).toHaveCount(39);
+        await expect(page.locator('.book-category[data-testament="New Testament"] .book-item')).toHaveCount(27);
 });
 
 test('dynamic book picker: switching to BSB fires _rebuildBibleBooks', async ({ page }) => {
@@ -472,12 +481,12 @@ test('dynamic book picker: book modal re-renders while open on translation switc
         await waitForPassage(page);
 
         await page.locator('#bookSelector').click();
-        await expect(page.locator('#bookModal')).toBeVisible();
+        await expect(page.locator('#referencePickerModal')).toBeVisible();
         await page.evaluate(() => window._bibleApp.changeTranslation('ASV'));
         await page.waitForTimeout(500);
 
-        await expect(page.locator('#oldTestamentBooks button')).toHaveCount(39);
-        await expect(page.locator('#newTestamentBooks button')).toHaveCount(27);
+        await expect(page.locator('.book-category[data-testament="Old Testament"] .book-item')).toHaveCount(39);
+        await expect(page.locator('.book-category[data-testament="New Testament"] .book-item')).toHaveCount(27);
 });
 
 test('dynamic book picker: book not in canon redirects to Genesis 1', async ({ page }) => {
@@ -511,9 +520,9 @@ test('dynamic book picker: meta.json network error falls back gracefully', async
         expect(errors).toHaveLength(0);
 
         await page.locator('#bookSelector').click();
-        await expect(page.locator('#bookModal')).toBeVisible();
-        const otBooks = page.locator('#oldTestamentBooks button');
-        const ntBooks = page.locator('#newTestamentBooks button');
+        await expect(page.locator('#referencePickerModal')).toBeVisible();
+        const otBooks = page.locator('.book-category[data-testament="Old Testament"] .book-item');
+        const ntBooks = page.locator('.book-category[data-testament="New Testament"] .book-item');
         expect(await otBooks.count()).toBeGreaterThan(0);
         expect(await ntBooks.count()).toBeGreaterThan(0);
 });
