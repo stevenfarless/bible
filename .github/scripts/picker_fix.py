@@ -22,11 +22,14 @@ def replace_if_missing(text, marker, old, new, label):
     return replace_once(text, old, new, label)
 
 
-def replace_regex_once(text, pattern, new, label):
-    text, count = re.subn(pattern, new, text, count=1, flags=re.S)
-    if count != 1:
-        raise SystemExit(label + ' anchor not found')
-    return text
+def replace_between(text, start, end, new, label):
+    start_index = text.find(start)
+    if start_index == -1:
+        raise SystemExit(label + ' start anchor not found')
+    end_index = text.find(end, start_index)
+    if end_index == -1:
+        raise SystemExit(label + ' end anchor not found')
+    return text[:start_index] + new + text[end_index:]
 
 
 index = read('index.html')
@@ -159,16 +162,18 @@ CHAPTER_GO_BLOCK = '''
 
 modals = read('modals.js')
 if "let title = 'Book';" not in modals:
-    modals = replace_regex_once(
+    modals = replace_between(
         modals,
-        r"function _updateReferencePickerHeader\(app\) \{.*?\n\}",
+        'function _updateReferencePickerHeader(app) {',
+        '\n\nfunction _focusReferencePickerTitle(app) {',
         HEADER_FUNCTION,
         'reference picker header function',
     )
 if '_focusReferencePickerTitle' in modals:
-    modals = replace_regex_once(
+    modals = replace_between(
         modals,
-        r"function _focusReferencePickerTitle\(app\) \{.*?\n\}",
+        'function _focusReferencePickerTitle(app) {',
+        '\n\nfunction _transitionReferencePickerView(app, renderNextView',
         FOCUS_FUNCTION,
         'reference picker focus function',
     )
@@ -305,14 +310,14 @@ REFINED_REFERENCE_PICKER_CSS = '''/* Reference picker */
 }'''
 
 css = read('css/modals.css')
-css = re.sub(
+css, count = re.subn(
     r'/\* Reference picker \*/.*\Z',
     REFINED_REFERENCE_PICKER_CSS,
     css,
     count=1,
     flags=re.S,
 )
-if 'reference-picker-heading' not in css:
+if count != 1 or 'reference-picker-heading' not in css:
     raise SystemExit('reference picker css replacement failed')
 write('css/modals.css', css)
 
