@@ -29,10 +29,10 @@ jobs:
           node-version: '20'
 
       - name: Install repo dependencies
-        run: npm install
+        run: npm install --no-package-lock
 
       - name: Install Playwright without saving to package.json
-        run: npm install --no-save @playwright/test
+        run: npm install --no-save --no-package-lock @playwright/test
 
       - name: Install Chromium browser
         run: npx playwright install chromium --with-deps
@@ -51,6 +51,7 @@ jobs:
           python3 -B .github/scripts/picker_tests.py
           python3 -B .github/scripts/picker_tests.py
           rm -rf .github/scripts/__pycache__
+          rm -f package-lock.json
 
       - name: Validate migrated picker selectors
         run: |
@@ -76,6 +77,7 @@ jobs:
 
       - name: Verify changed files
         run: |
+          rm -f package-lock.json
           allowed='^tests/smoke\.spec\.js$'
           unexpected="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev "$allowed" || true)"
           test -z "$unexpected" || {
