@@ -55,6 +55,7 @@ import {
     openBookModal, populateBookModal,
     openChapterModal, populateChapterModal,
     openVerseModal, populateVerseModal,
+    closeReferencePicker, goBackReferencePicker,
     openTranslationModal, populateTranslationModal,
     translationKbMove, translationKbSelect,
     getCurrentVerseCount,
@@ -1172,7 +1173,10 @@ class BibleApp {
     _rebuildBibleBooks(meta) {
         this.bibleBooks = buildBibleBooks(meta);
         this._dbgEvent(`_rebuildBibleBooks: ${Object.values(this.bibleBooks).reduce((n, t) => n + Object.keys(t).length, 0)} books`);
-        if (this.bookModal?.classList.contains('active')) {
+        if (
+            this.referencePickerModal?.classList.contains('active') &&
+            this.referencePickerDraft?.view === 'book'
+        ) {
             populateBookModal(this);
         }
     }
@@ -1649,6 +1653,8 @@ class BibleApp {
         openModal(this, modal);
     }
     closeModal(modal) { closeModal(this, modal); }
+    closeReferencePicker() { closeReferencePicker(this); }
+    goBackReferencePicker() { goBackReferencePicker(this); }
     openBookModal() { openBookModal(this); }
     populateBookModal() { populateBookModal(this); }
     openChapterModal() { openChapterModal(this); }

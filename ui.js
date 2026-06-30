@@ -20,27 +20,20 @@ const REQUIRED_IDS = [
     "passageTitle",
     "passageText",
     "copyright",
-    "bookModal",
-    "chapterModal",
-    "verseModal",
+    "referencePickerModal",
+    "closeReferencePickerModal",
+    "referencePickerBack",
+    "referencePickerTitle",
+    "referencePickerFilters",
+    "referencePickerView",
     "settingsModal",
     "loginModal",
     "signupModal",
     "userMenuModal",
-    "closeBookModal",
-    "closeChapterModal",
-    "closeVerseModal",
     "closeSettingsModal",
     "closeLoginModal",
     "closeSignupModal",
     "closeUserMenuModal",
-    "oldTestamentBooks",
-    "newTestamentBooks",
-    "chapterModalBook",
-    "chapterGrid",
-    "verseModalBook",
-    "verseGrid",
-    "verseGoButton",
     "themeSelector",
     "verseNumbersToggle",
     "coloredVerseNumbersToggle",
@@ -193,31 +186,22 @@ export function cacheElements(app) {
     app.copyBtn = document.getElementById("copyBtn") ?? null;
 
     // Modals
-    app.bookModal = document.getElementById("bookModal");
-    app.chapterModal = document.getElementById("chapterModal");
-    app.verseModal = document.getElementById("verseModal");
+    app.referencePickerModal = document.getElementById("referencePickerModal");
+    app.referencePickerTitle = document.getElementById("referencePickerTitle");
+    app.referencePickerBack = document.getElementById("referencePickerBack");
+    app.referencePickerFilters = document.getElementById("referencePickerFilters");
+    app.referencePickerView = document.getElementById("referencePickerView");
     app.settingsModal = document.getElementById("settingsModal");
     app.loginModal = document.getElementById("loginModal");
     app.signupModal = document.getElementById("signupModal");
     app.userMenuModal = document.getElementById("userMenuModal");
 
     // Modal close buttons
-    app.closeBookModal = document.getElementById("closeBookModal");
-    app.closeChapterModal = document.getElementById("closeChapterModal");
-    app.closeVerseModal = document.getElementById("closeVerseModal");
+    app.closeReferencePickerModal = document.getElementById("closeReferencePickerModal");
     app.closeSettingsModal = document.getElementById("closeSettingsModal");
     app.closeLoginModal = document.getElementById("closeLoginModal");
     app.closeSignupModal = document.getElementById("closeSignupModal");
     app.closeUserMenuModal = document.getElementById("closeUserMenuModal");
-
-    // Modal content
-    app.oldTestamentBooks = document.getElementById("oldTestamentBooks");
-    app.newTestamentBooks = document.getElementById("newTestamentBooks");
-    app.chapterModalBook = document.getElementById("chapterModalBook");
-    app.chapterGrid = document.getElementById("chapterGrid");
-    app.verseModalBook = document.getElementById("verseModalBook");
-    app.verseGrid = document.getElementById("verseGrid");
-    app.verseGoButton = document.getElementById("verseGoButton");
 
     // Settings
     app.themeSelector = document.getElementById("themeSelector");

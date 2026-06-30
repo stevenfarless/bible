@@ -592,3 +592,67 @@
 .modal-header .close-control {
     margin-left: auto;
 }
+
+/* Reference picker */
+.reference-picker-modal .modal-content {
+    transition: height 180ms ease;
+}
+
+.reference-picker-header {
+    gap: var(--spacing-sm);
+}
+
+.reference-picker-header h2 {
+    flex: 1;
+}
+
+.reference-picker-back {
+    border: 1px solid var(--border-neutral);
+    border-radius: var(--border-radius);
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 0.35rem 0.55rem;
+    font: inherit;
+}
+
+.reference-picker-back[hidden] {
+    display: none;
+}
+
+.reference-picker-body {
+    overflow: hidden auto;
+}
+
+.reference-picker-view {
+    transition:
+        opacity 140ms ease,
+        transform 140ms ease;
+}
+
+.reference-picker-view--enter-forward {
+    opacity: 0;
+    transform: translateX(10px);
+}
+
+.reference-picker-view--enter-back {
+    opacity: 0;
+    transform: translateX(-10px);
+}
+
+.reference-picker-empty {
+    color: var(--text-secondary);
+    padding: 20px;
+    text-align: center;
+}
+
+.picker-item--active {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reference-picker-modal .modal-content,
+    .reference-picker-view {
+        transition: none;
+    }
+}
