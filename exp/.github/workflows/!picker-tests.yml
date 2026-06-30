@@ -14,7 +14,7 @@ jobs:
   picker-tests:
     name: Update picker smoke tests
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout exp
@@ -22,6 +22,27 @@ jobs:
         with:
           ref: exp
           fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      - name: Install repo dependencies
+        run: npm install
+
+      - name: Install Playwright without saving to package.json
+        run: npm install --no-save @playwright/test
+
+      - name: Install Chromium browser
+        run: npx playwright install chromium --with-deps
+
+      - name: Start local HTTP server
+        run: |
+          python3 -m http.server 8080 &
+          for i in $(seq 1 10); do
+            curl -s http://localhost:8080 > /dev/null && break || sleep 1
+          done
 
       - name: Apply picker test migration
         env:
@@ -48,6 +69,8 @@ jobs:
           git diff --check
 
       - name: Run picker smoke tests
+        env:
+          BASE_URL: http://localhost:8080
         run: |
           npx playwright test --project=chromium tests/smoke.spec.js
 
