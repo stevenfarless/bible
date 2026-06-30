@@ -356,12 +356,7 @@ function _updateReferencePickerHeader(app) {
 function _focusReferencePicker(app) {
     requestAnimationFrame(() => {
         if (!app.referencePickerModal?.classList.contains('active')) return;
-
-        const activeItem = app.referencePickerView?.querySelector('.picker-item--active');
-        const firstButton = app.referencePickerView?.querySelector('button');
-
-        (activeItem || firstButton || app.referencePickerModal)
-            ?.focus({ preventScroll: true });
+        app.referencePickerModal.focus({ preventScroll: true });
     });
 }
 
