@@ -22,7 +22,7 @@
     <meta name="twitter:title" content="Lege Lux" />
     <meta name="twitter:description"
         content="A fast, offline-capable Bible reader with multiple translations, themes, font options, and cross-reference tools — built for focused reading." />
-    <meta name="build-id" content="d4c80e2" />
+    <meta name="build-id" content="779436f" />
     <!-- Synchronous theme bootstrap: must run before any CSS is applied.
 	     Stamps the color-theme class and no-color-transition onto <html>
 	     (document.documentElement - always available in <head>) before the
@@ -69,16 +69,16 @@
             if (isLight) el.classList.add("light-mode");
         })();
     </script>
-    <script src="prepaint-settings.js?v=d4c80e2"></script>
+    <script src="prepaint-settings.js?v=779436f"></script>
     <link rel="manifest" href="./site.webmanifest" />
     <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
     <link rel="icon" href="./favicon.ico" />
     <!-- Preload all ES modules so the browser fetches them in parallel
-	     before the parser reaches <script type="module" src="app.js?v=d4c80e2">.
+	     before the parser reaches <script type="module" src="app.js?v=779436f">.
 	     This eliminates the sequential module-discovery waterfall. -->
-    <link rel="modulepreload" href="app.js?v=d4c80e2" />
+    <link rel="modulepreload" href="app.js?v=779436f" />
     <link rel="modulepreload" href="bible-api.js" />
     <link rel="modulepreload" href="bsb-structure.js" />
     <link rel="modulepreload" href="reading-state.js" />
@@ -112,41 +112,41 @@
             font-display: swap;
         }
     </style>
-    <link rel="preload" href="css/fonts.css?v=d4c80e2" as="style" onload="
+    <link rel="preload" href="css/fonts.css?v=779436f" as="style" onload="
                 this.onload = null;
                 this.rel = 'stylesheet';
             " />
     <noscript>
-        <link rel="stylesheet" href="css/fonts.css?v=d4c80e2" />
+        <link rel="stylesheet" href="css/fonts.css?v=779436f" />
     </noscript>
-    <link rel="stylesheet" href="css/base.css?v=d4c80e2" />
-    <link rel="stylesheet" href="css/tokens.css?v=d4c80e2" />
-    <link rel="stylesheet" href="css/themes.css?v=d4c80e2" />
-    <link rel="stylesheet" href="css/layout.css?v=d4c80e2" />
-    <link rel="stylesheet" href="css/components.css?v=d4c80e2" />
-    <link rel="preload" href="css/modals.css?v=d4c80e2" as="style" onload="
+    <link rel="stylesheet" href="css/base.css?v=779436f" />
+    <link rel="stylesheet" href="css/tokens.css?v=779436f" />
+    <link rel="stylesheet" href="css/themes.css?v=779436f" />
+    <link rel="stylesheet" href="css/layout.css?v=779436f" />
+    <link rel="stylesheet" href="css/components.css?v=779436f" />
+    <link rel="preload" href="css/modals.css?v=779436f" as="style" onload="
                 this.onload = null;
                 this.rel = 'stylesheet';
             " />
     <noscript>
-        <link rel="stylesheet" href="css/modals.css?v=d4c80e2" />
+        <link rel="stylesheet" href="css/modals.css?v=779436f" />
     </noscript>
-    <link rel="preload" href="css/interactions.css?v=d4c80e2" as="style" onload="
+    <link rel="preload" href="css/interactions.css?v=779436f" as="style" onload="
                 this.onload = null;
                 this.rel = 'stylesheet';
             " />
     <noscript>
-        <link rel="stylesheet" href="css/interactions.css?v=d4c80e2" />
+        <link rel="stylesheet" href="css/interactions.css?v=779436f" />
     </noscript>
-    <link rel="preload" href="css/utilities.css?v=d4c80e2" as="style" onload="
+    <link rel="preload" href="css/utilities.css?v=779436f" as="style" onload="
                 this.onload = null;
                 this.rel = 'stylesheet';
             " />
     <noscript>
-        <link rel="stylesheet" href="css/utilities.css?v=d4c80e2" />
+        <link rel="stylesheet" href="css/utilities.css?v=779436f" />
     </noscript>
-    <link rel="stylesheet" href="css/pericope.css?v=d4c80e2" />
-    <link rel="stylesheet" href="css/luna-lux.css?v=d4c80e2" />
+    <link rel="stylesheet" href="css/pericope.css?v=779436f" />
+    <link rel="stylesheet" href="css/luna-lux.css?v=779436f" />
     <!-- Firebase App Check loads reCAPTCHA v3 through ReCaptchaV3Provider. -->
 </head>
 
@@ -155,7 +155,7 @@
         <header class="header">
             <div class="header-content">
                 <h1 class="logo">Lege Lux</h1>
-                <span id="build-info">d4c80e2</span>
+                <span id="build-info">779436f</span>
                 <div class="header-controls">
                     <button class="icon-btn" id="searchToggle" aria-label="Search" title="Search (Ctrl+K)">
                         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -299,72 +299,24 @@
         </div>
     </main>
 
-    <div id="bookModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="bookModalTitle"
-        aria-hidden="true" inert>
+    <div id="referencePickerModal" class="modal reference-picker-modal" role="dialog" aria-modal="true"
+        aria-labelledby="referencePickerTitle" aria-hidden="true" inert>
         <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="bookModalTitle" tabindex="-1">Select a Book</h2>
-                <button class="close-btn close-control" id="closeBookModal" aria-label="Close" type="button">
+            <div class="modal-header reference-picker-header">
+                <button id="referencePickerBack" class="reference-picker-back" type="button" hidden aria-label="Back">
+                    Back
+                </button>
+                <h2 id="referencePickerTitle" tabindex="-1">Choose Book</h2>
+                <button class="close-btn close-control" id="closeReferencePickerModal" aria-label="Close" type="button">
                     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                         <path d="M7 7L17 17M17 7L7 17"></path>
                     </svg>
                 </button>
             </div>
-            <div id="bookTestamentFilters" class="book-testament-filters" role="group"
-                aria-label="Filter books by testament"></div>
-            <div class="modal-body">
-                <div class="book-category">
-                    <h3>Old Testament</h3>
-                    <div id="oldTestamentBooks" class="book-grid"></div>
-                </div>
-                <div class="book-category">
-                    <h3>New Testament</h3>
-                    <div id="newTestamentBooks" class="book-grid"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="chapterModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="chapterModalTitle"
-        aria-hidden="true" inert>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="chapterModalTitle" tabindex="-1">
-                    <span id="chapterModalBook">Genesis</span>
-                </h2>
-                <button class="close-btn close-control" id="closeChapterModal" aria-label="Close" type="button">
-                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                        <path d="M7 7L17 17M17 7L7 17"></path>
-                    </svg>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div id="chapterGrid" class="chapter-grid"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="verseModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="verseModalTitle"
-        aria-hidden="true" inert>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="verseModalTitle" tabindex="-1">
-                    <span id="verseModalBook">Genesis 1</span>
-                </h2>
-                <button class="close-btn close-control" id="closeVerseModal" aria-label="Close" type="button">
-                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                        <path d="M7 7L17 17M17 7L7 17"></path>
-                    </svg>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="picker-actions">
-                    <button id="verseGoButton" class="primary-btn" type="button"
-                        aria-label="Go to selected chapter without choosing a verse">
-                        Go
-                    </button>
-                </div>
-                <div id="verseGrid" class="chapter-grid"></div>
+            <div id="referencePickerFilters" class="book-testament-filters" role="group"
+                aria-label="Filter books by testament" hidden></div>
+            <div class="modal-body reference-picker-body">
+                <div id="referencePickerView" class="reference-picker-view"></div>
             </div>
         </div>
     </div>
@@ -1094,7 +1046,7 @@
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-    <script type="module" src="app.js?v=d4c80e2"></script>
+    <script type="module" src="app.js?v=779436f"></script>
     <script>
         // Hide raw build placeholder when pipeline substitution hasn't run.
         document.addEventListener("DOMContentLoaded", function () {

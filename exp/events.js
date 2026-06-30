@@ -234,28 +234,20 @@ function syncReadingDisplay(app) {
 function installCanonFallback(app) {
     const loadPassage = app.loadPassage.bind(app);
 
-    app.loadPassage = async (book, chapter, restoreScroll = false) => {
+    app.loadPassage = async (book, chapter, restoreScroll = false, source = 'unspecified') => {
         const books = app.getAllBooks();
         const activeBook = app.state.currentBook;
 
         if (activeBook && !books.includes(activeBook)) {
-            app._dbgEvent?.(`loadPassage: "${activeBook}" not in canon — redirecting to Genesis 1`);
-            return loadPassage('Genesis', 1, restoreScroll);
+            app._dbgEvent?.(`loadPassage: "${activeBook}" not in canon, redirecting to Genesis 1`);
+            return loadPassage('Genesis', 1, restoreScroll, source);
         }
 
-        return loadPassage(book, chapter, restoreScroll);
+        return loadPassage(book, chapter, restoreScroll, source);
     };
 }
 
 function normalizeModalMarkup() {
-    const bookContent = document.querySelector('#bookModal .modal-content');
-    const bookBody = document.querySelector('#bookModal .modal-body');
-    const filterBar = document.querySelector('#bookModal .book-testament-filters');
-
-    if (bookContent && bookBody && filterBar && filterBar.parentElement !== bookContent) {
-        bookContent.insertBefore(filterBar, bookBody);
-    }
-
     document.querySelectorAll('.accordion-section[data-settings-section]').forEach((section) => {
         if (!section.hasAttribute('data-section')) {
             section.setAttribute('data-section', section.getAttribute('data-settings-section'));
@@ -432,14 +424,18 @@ export function attachEventListeners(app) {
     app.crossReferencesContent = document.getElementById('crossReferencesContent');
 
     [
-        app.bookModal, app.chapterModal, app.verseModal,
+        app.referencePickerModal,
         app.settingsModal, app.loginModal,
         app.signupModal, app.userMenuModal, app.referencesModal,
         app.translationModal, app.translationSyncModal,
         app.deuterocanonInfoModal,
     ].forEach((modal) => {
         if (!modal) return;
-        modal.addEventListener('click', (e) => { if (e.target === modal) app.closeModal(modal); });
+        modal.addEventListener('click', (e) => {
+            if (e.target !== modal) return;
+            if (modal === app.referencePickerModal) app.closeReferencePicker();
+            else app.closeModal(modal);
+        });
     });
 
     const openSettings = () => {
@@ -466,14 +462,9 @@ export function attachEventListeners(app) {
     };
 
     app.settingsBtn?.addEventListener('click', openSettings);
-    app.closeVerseModal?.addEventListener('click', () => app.closeModal(app.verseModal));
-    app.verseGoButton?.addEventListener('click', () => {
-        app.referencePickerDraft = null;
-        app.closeModal(app.verseModal);
-    });
-    app.closeBookModal?.addEventListener('click', () => app.closeModal(app.bookModal));
+    app.closeReferencePickerModal?.addEventListener('click', () => app.closeReferencePicker());
+    app.referencePickerBack?.addEventListener('click', () => app.goBackReferencePicker());
     app.closeDeuterocanonInfoModal?.addEventListener('click', () => app.closeModal(app.deuterocanonInfoModal));
-    app.closeChapterModal?.addEventListener('click', () => app.closeModal(app.chapterModal));
     app.closeSettingsModal?.addEventListener('click', () => app.closeModal(app.settingsModal));
     app.closeLoginModal?.addEventListener('click', () => app.closeModal(app.loginModal));
     app.closeSignupModal?.addEventListener('click', () => app.closeModal(app.signupModal));
