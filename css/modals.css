@@ -690,7 +690,15 @@
 }
 
 .reference-picker-go {
-    width: 100%;
+    width: auto;
+    margin-inline: auto;
+    padding: 0.35rem 0.75rem;
+    border-color: transparent;
+}
+
+.reference-picker-view .book-item:focus:not(:focus-visible),
+.reference-picker-view .chapter-item:focus:not(:focus-visible) {
+    outline: none;
 }
 
 .reference-picker-empty {
@@ -700,6 +708,7 @@
 }
 
 .picker-item--active {
+    background-color: var(--bg-raised);
     border-color: var(--primary-color);
     box-shadow: inset 0 0 0 1px var(--primary-color);
     color: var(--primary-color);
