@@ -83,6 +83,109 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
+const RELEASE_NOTES_ALLOWED_TAGS = new Set([
+    'A',
+    'BLOCKQUOTE',
+    'BR',
+    'CODE',
+    'EM',
+    'H1',
+    'H2',
+    'H3',
+    'H4',
+    'H5',
+    'H6',
+    'HR',
+    'LI',
+    'OL',
+    'P',
+    'PRE',
+    'STRONG',
+    'UL',
+]);
+
+const RELEASE_NOTES_DANGEROUS_TAGS = new Set([
+    'SCRIPT',
+    'STYLE',
+    'IFRAME',
+    'OBJECT',
+    'EMBED',
+    'SVG',
+    'MATH',
+    'LINK',
+    'META',
+]);
+
+function isSafeReleaseNoteUrl(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return false;
+
+    try {
+        const url = new URL(raw, window.location.origin);
+        return url.protocol === 'http:'
+            || url.protocol === 'https:'
+            || url.protocol === 'mailto:';
+    } catch (_) {
+        return false;
+    }
+}
+
+function sanitizeReleaseNotesHtml(html) {
+    const template = document.createElement('template');
+    template.innerHTML = String(html ?? '');
+
+    const cleanNode = (node) => {
+        for (const child of Array.from(node.childNodes)) {
+            if (child.nodeType === Node.TEXT_NODE) continue;
+
+            if (child.nodeType !== Node.ELEMENT_NODE) {
+                child.remove();
+                continue;
+            }
+
+            const tag = child.tagName.toUpperCase();
+
+            if (RELEASE_NOTES_DANGEROUS_TAGS.has(tag)) {
+                child.remove();
+                continue;
+            }
+
+            if (!RELEASE_NOTES_ALLOWED_TAGS.has(tag)) {
+                child.replaceWith(document.createTextNode(child.textContent || ''));
+                continue;
+            }
+
+            const href = child.getAttribute('href');
+            const title = child.getAttribute('title');
+
+            for (const attr of Array.from(child.attributes)) {
+                child.removeAttribute(attr.name);
+            }
+
+            if (tag === 'A') {
+                if (isSafeReleaseNoteUrl(href)) {
+                    child.setAttribute('href', new URL(href, window.location.origin).href);
+                    child.setAttribute('target', '_blank');
+                    child.setAttribute('rel', 'noopener noreferrer');
+                }
+
+                if (title) {
+                    child.setAttribute('title', title);
+                }
+            }
+
+            cleanNode(child);
+        }
+    };
+
+    cleanNode(template.content);
+    return template.innerHTML;
+}
+
+function renderReleaseNotesMarkdown(marked, body) {
+    return sanitizeReleaseNotesHtml(marked.parse(String(body ?? '')));
+}
+
 function ensureRecaptchaBadgeHidden() {
     if (document.getElementById(RECAPTCHA_STYLE_ID)) return;
 
@@ -234,7 +337,7 @@ export async function toggleSetting(app, setting) {
     }
 
     if (setting === 'showHeadings') {
-        await app.loadPassage(app.state.currentBook, app.state.currentChapter);
+        await app.loadPassage(app.state.currentBook, app.state.currentChapter, false, 'settings-showHeadings');
         return;
     }
 
@@ -356,6 +459,11 @@ export async function changeTranslation(
     translation,
     { syncPreference = true } = {}
 ) {
+    const previousTranslation = app.state.translation;
+    const previousBook = app.state.currentBook;
+    const previousChapter = app.state.currentChapter;
+    app._dbgEvent?.('changeTranslation request: ' + previousTranslation + ' -> ' + translation + ' while at ' + previousBook + ' ' + previousChapter + ' syncPreference=' + syncPreference);
+
     const chromeBottom = Math.max(
         0,
         document.querySelector('.top-chrome')
@@ -389,11 +497,13 @@ export async function changeTranslation(
     }
 
     lsSet('translation', translation);
+    app._dbgEvent?.('storage write: translation ' + translation + ' source=changeTranslation');
 
     if (syncPreference) {
         app.preferredTranslation = translation;
         app.pendingPreferredTranslation = null;
         lsSet('preferredTranslation', translation);
+        app._dbgEvent?.('storage write: preferredTranslation ' + translation + ' source=changeTranslation');
         await app.recordTranslationInstalled(translation);
 
         if (app.canWriteRemoteState()) {
@@ -413,7 +523,9 @@ export async function changeTranslation(
         if (response.ok) {
             meta = await response.json();
         }
-    } catch (_) { }
+    } catch (error) {
+        app._dbgEvent?.('changeTranslation meta fetch failed: ' + translation + ' — ' + (error?.message || error));
+    }
 
     app._rebuildBibleBooks(meta);
 
@@ -425,10 +537,13 @@ export async function changeTranslation(
     }
 
     updateCopyright(app);
+    app._dbgEvent?.('changeTranslation preserving passage: ' + app.state.currentBook + ' ' + app.state.currentChapter + ' translation=' + translation);
 
     await app.loadPassage(
         app.state.currentBook,
-        app.state.currentChapter
+        app.state.currentChapter,
+        false,
+        'translation-change'
     );
 
     if (!verseAnchor) return;
@@ -638,7 +753,7 @@ async function loadWhatsNew() {
         if (release.body) {
             try {
                 const marked = await loadMarked();
-                contentEl.innerHTML = marked.parse(release.body);
+                contentEl.innerHTML = renderReleaseNotesMarkdown(marked, release.body);
             } catch (_) {
                 contentEl.textContent = release.body;
             }
@@ -672,7 +787,7 @@ async function loadComingSoon() {
 
         try {
             const marked = await loadMarked();
-            el.innerHTML = marked.parse(pre.body);
+            el.innerHTML = renderReleaseNotesMarkdown(marked, pre.body);
         } catch (_) {
             el.textContent = pre.body;
         }

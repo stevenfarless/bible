@@ -166,3 +166,82 @@ test('about: marked loads only after Whats new opens', async ({ page }) => {
                 'Test release notes'
         );
 });
+
+test('about: release notes sanitize rendered markdown', async ({ page }) => {
+        await page.route('https://api.github.com/repos/stevenfarless/lege-lux/releases/latest', async route => {
+                await route.fulfill({
+                        status: 200,
+                        contentType: 'application/json',
+                        body: JSON.stringify({
+                                tag_name: 'v-test',
+                                body: [
+                                        '## Test release',
+                                        '<script>window.__releaseNotesXss = true</script>',
+                                        '<img src=x onerror="window.__releaseNotesXss = true">',
+                                        '[bad link](javascript:alert(1))',
+                                        '[safe link](https://example.com)'
+                                ].join('\n')
+                        }),
+                });
+        });
+
+        await page.route('https://api.github.com/repos/stevenfarless/lege-lux/releases?per_page=10', async route => {
+                await route.fulfill({
+                        status: 200,
+                        contentType: 'application/json',
+                        body: JSON.stringify([
+                                {
+                                        tag_name: 'v-next',
+                                        prerelease: true,
+                                        body: [
+                                                '## Coming soon test',
+                                                '<script>window.__releaseNotesXss = true</script>',
+                                                '<button onclick="window.__releaseNotesXss = true">bad</button>',
+                                                '[bad link](javascript:alert(1))'
+                                        ].join('\n')
+                                }
+                        ]),
+                });
+        });
+
+        await page.route('**/marked.min.js', async route => {
+                await route.fulfill({
+                        status: 200,
+                        contentType: 'application/javascript',
+                        body: String.raw`
+                                window.marked = {
+                                        parse(markdown) {
+                                                return markdown
+                                                        .replace(/^## (.*)$/gm, '<h2>$1</h2>')
+                                                        .replace(/\[bad link\]\((.*?)\)/g, '<a href="$1">bad link</a>')
+                                                        .replace(/\[safe link\]\((.*?)\)/g, '<a href="$1">safe link</a>');
+                                        }
+                                };
+                        `,
+                });
+        });
+
+        await page.goto('/');
+        await waitForPassage(page);
+
+        await openAboutSubsection(page, 'whats-new');
+
+        const whatsNewContent = page.locator('#whatsNewContent');
+        await expect(whatsNewContent).toContainText('Test release');
+        await expect(whatsNewContent.locator('script')).toHaveCount(0);
+        await expect(whatsNewContent.locator('img')).toHaveCount(0);
+        await expect(whatsNewContent.locator('[onerror]')).toHaveCount(0);
+        await expect(whatsNewContent.locator('[onclick]')).toHaveCount(0);
+        await expect(whatsNewContent.locator('a[href^="javascript:"]')).toHaveCount(0);
+        await expect(whatsNewContent.locator('a[href^="https://example.com"]')).toHaveCount(1);
+
+        await openAboutSubsection(page, 'coming-soon');
+
+        const comingSoonContent = page.locator('#comingSoonContent');
+        await expect(comingSoonContent).toContainText('Coming soon test');
+        await expect(comingSoonContent.locator('script')).toHaveCount(0);
+        await expect(comingSoonContent.locator('[onclick]')).toHaveCount(0);
+        await expect(comingSoonContent.locator('a[href^="javascript:"]')).toHaveCount(0);
+
+        await expect.poll(() => page.evaluate(() => window.__releaseNotesXss)).toBe(undefined);
+});

@@ -299,72 +299,27 @@
         </div>
     </main>
 
-    <div id="bookModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="bookModalTitle"
-        aria-hidden="true" inert>
+    <div id="referencePickerModal" class="modal reference-picker-modal" role="dialog" aria-modal="true"
+        aria-labelledby="referencePickerTitle" aria-hidden="true" inert>
         <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="bookModalTitle" tabindex="-1">Select a Book</h2>
-                <button class="close-btn close-control" id="closeBookModal" aria-label="Close" type="button">
+            <div class="modal-header reference-picker-header">
+                <button id="referencePickerBack" class="reference-picker-back" type="button" hidden aria-label="Back">
+                    ‹ Back
+                </button>
+                <div class="reference-picker-heading">
+                    <h2 id="referencePickerTitle">Book</h2>
+                    <p id="referencePickerSubtitle" class="reference-picker-subtitle" hidden></p>
+                </div>
+                <button class="close-btn close-control" id="closeReferencePickerModal" aria-label="Close" type="button">
                     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                         <path d="M7 7L17 17M17 7L7 17"></path>
                     </svg>
                 </button>
             </div>
-            <div id="bookTestamentFilters" class="book-testament-filters" role="group"
-                aria-label="Filter books by testament"></div>
-            <div class="modal-body">
-                <div class="book-category">
-                    <h3>Old Testament</h3>
-                    <div id="oldTestamentBooks" class="book-grid"></div>
-                </div>
-                <div class="book-category">
-                    <h3>New Testament</h3>
-                    <div id="newTestamentBooks" class="book-grid"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="chapterModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="chapterModalTitle"
-        aria-hidden="true" inert>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="chapterModalTitle" tabindex="-1">
-                    <span id="chapterModalBook">Genesis</span>
-                </h2>
-                <button class="close-btn close-control" id="closeChapterModal" aria-label="Close" type="button">
-                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                        <path d="M7 7L17 17M17 7L7 17"></path>
-                    </svg>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div id="chapterGrid" class="chapter-grid"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="verseModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="verseModalTitle"
-        aria-hidden="true" inert>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="verseModalTitle" tabindex="-1">
-                    <span id="verseModalBook">Genesis 1</span>
-                </h2>
-                <button class="close-btn close-control" id="closeVerseModal" aria-label="Close" type="button">
-                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                        <path d="M7 7L17 17M17 7L7 17"></path>
-                    </svg>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="picker-actions">
-                    <button id="verseGoButton" class="primary-btn" type="button"
-                        aria-label="Go to selected chapter without choosing a verse">
-                        Go
-                    </button>
-                </div>
-                <div id="verseGrid" class="chapter-grid"></div>
+            <div id="referencePickerFilters" class="book-testament-filters" role="group"
+                aria-label="Filter books by testament" hidden></div>
+            <div class="modal-body reference-picker-body">
+                <div id="referencePickerView" class="reference-picker-view"></div>
             </div>
         </div>
     </div>

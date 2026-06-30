@@ -34,6 +34,15 @@ export function escapeRegExp(str) {
     return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+export function escapeHtml(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 export function stripHTML(html) {
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
@@ -42,17 +51,22 @@ export function stripHTML(html) {
 
 export function highlightSearchTerm(text, term) {
     if (text == null) return '';
-    const safeText = String(text);
+
+    const escapedText = escapeHtml(text);
     const rawTerm = term == null ? '' : String(term).trim();
-    if (!rawTerm) return safeText;
+
+    if (!rawTerm) return escapedText;
+
     try {
-        const regex = new RegExp(escapeRegExp(rawTerm), 'gi');
-        return safeText.replace(regex, (match) => `<strong>${match}</strong>`);
+        const escapedTerm = escapeHtml(rawTerm);
+        const regex = new RegExp(escapeRegExp(escapedTerm), 'gi');
+        return escapedText.replace(regex, (match) => `<strong>${match}</strong>`);
     } catch (err) {
         console.warn('highlightSearchTerm failed', err);
-        return safeText;
+        return escapedText;
     }
 }
+
 
 // ─── Reference parsing ────────────────────────────────────────────────────────────────────
 
@@ -115,14 +129,15 @@ export function isPassageReference(query) {
     return patterns.some((p) => p.test(q));
 }
 
-export async function loadPassageFromReference(app, reference) {
+export async function loadPassageFromReference(app, reference, source = 'search-reference') {
     const allBooks = app.getAllBooks();
     const parsed = parseReference(reference, allBooks);
     if (!parsed) return;
     const { book, chapter, verse } = parsed;
+    app._dbgEvent?.('search reference selected: ' + book + ' ' + chapter + (verse ? ':' + verse : '') + ' source=' + source);
 
     app.state.selectedVerse = verse || null;
-    await app.loadPassage(book, chapter);
+    await app.loadPassage(book, chapter, false, source);
     if (verse) {
         requestAnimationFrame(() => app.scrollToVerse(verse));
     }
@@ -219,6 +234,7 @@ export function initSearchResultsDelegate(app) {
             const card = badge.closest('.search-result-item');
             if (!card) return;
             const translationId = badge.dataset.translationId;
+            app._dbgUserAction?.('search translation badge selected: ' + translationId + ' for ' + (card.dataset.reference || 'unknown'));
             const translationContent = badge.dataset.translationContent;
             card.dataset.activeTranslation = translationId;
             card.querySelector('.search-result-content').innerHTML =
@@ -235,12 +251,15 @@ export function initSearchResultsDelegate(app) {
             e.preventDefault();
             const activeTrans = resultItem.dataset.activeTranslation || null;
             const ref = resultItem.dataset.reference;
+            const activationSource = app._searchActivationSource || e.type;
+            app._dbgUserAction?.('search result selected: ' + ref + ' source=' + activationSource + (activeTrans ? ' translation=' + activeTrans : ''));
+            app._dbgEvent?.('search result navigation: ' + ref + ' source=' + activationSource + (activeTrans ? ' translation=' + activeTrans : ''));
             closeSearch(app);
             (async () => {
                 if (activeTrans && activeTrans !== app.bibleApi.translation) {
                     await app.changeTranslation(activeTrans);
                 }
-                await loadPassageFromReference(app, ref);
+                await loadPassageFromReference(app, ref, 'search-result-' + activationSource);
             })();
             return;
         }
@@ -398,13 +417,18 @@ export function setSearchSelectedIndex(app, index, scrollIntoView = false) {
 
 export function activateSelectedSearchResult(app) {
     if (!app.searchResultItems || app.searchSelectedIndex < 0 || app.searchSelectedIndex >= app.searchResultItems.length) return;
-    app.searchResultItems[app.searchSelectedIndex]?.click();
+    const item = app.searchResultItems[app.searchSelectedIndex];
+    app._dbgUserAction?.('search result keyboard activation: ' + (item?.dataset.reference || 'unknown'));
+    app._searchActivationSource = 'keyboard';
+    item?.click();
+    app._searchActivationSource = null;
 }
 
 // ─── API calls ───────────────────────────────────────────────────────────────────────────────
 
 export async function handlePassageReference(app, reference) {
     const q = reference.trim();
+    app._dbgEvent?.('search mode: reference lookup for "' + q + '"');
     // Wildcard reference patterns bypass the passage-fetch API and go directly
     // to keyword search, which now handles them in bible-api.js.
     if (/^\*/.test(q) || /\*/.test(q.replace(/^[^:]+/, ''))) {
@@ -415,8 +439,8 @@ export async function handlePassageReference(app, reference) {
     const data = await app.bibleApi.fetchPassage(reference);
 
     if (data && data.passages && data.passages.length > 0) {
-        const safeCanonical = String(data.canonical || '').replace(/"/g, '&quot;');
-        const preview = stripHTML(data.passages[0]).substring(0, 200);
+        const safeCanonical = escapeHtml(data.canonical || '');
+        const preview = escapeHtml(stripHTML(data.passages[0]).substring(0, 200));
 
         app.searchResults.innerHTML =
             '<div class="search-result-item" data-reference="' + safeCanonical + '">' +
@@ -581,6 +605,7 @@ export function groupSearchResultsByCanon(app, results) {
 }
 
 export async function performKeywordSearch(app, query) {
+    app._dbgEvent?.('search mode: keyword for "' + query + '" translation=' + app.bibleApi.translation);
     app.searchResults.innerHTML = '<div class="loading" style="min-height: 100px">Searching...</div>';
     app.searchSelectedIndex = -1;
     app.searchResultItems = [];
@@ -644,10 +669,6 @@ export function displaySearchResults(app, results, query) {
         return;
     }
 
-    const esc = (str) =>
-        String(str || '')
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
     const totalVerses = groups.reduce((acc, g) => acc + g.books.reduce((a, b) => a + b.results.length, 0), 0);
     const totalBooks = groups.reduce((acc, g) => acc + g.books.length, 0);
@@ -664,8 +685,8 @@ export function displaySearchResults(app, results, query) {
         const testamentExpanded = app.searchExpandedTestaments.has(testName);
 
         parts.push(`
-      <div class="search-group-heading" data-testament="${esc(testName)}">
-        <span class="search-group-title">${esc(testName)}</span>
+      <div class="search-group-heading" data-testament="${escapeHtml(testName)}">
+        <span class="search-group-title">${escapeHtml(testName)}</span>
         <span class="search-group-chevron ${testamentExpanded ? 'expanded' : ''}">&#9662;</span>
       </div>
     `);
@@ -677,8 +698,8 @@ export function displaySearchResults(app, results, query) {
             const bookExpanded = app.searchExpandedBooks.has(bookName);
 
             parts.push(`
-        <div class="search-book-heading" data-book="${esc(bookName)}">
-          <span class="search-book-title">${esc(app.getDisplayName(bookName))}</span>
+        <div class="search-book-heading" data-book="${escapeHtml(bookName)}">
+          <span class="search-book-title">${escapeHtml(app.getDisplayName(bookName))}</span>
           <span class="search-book-chevron ${bookExpanded ? 'expanded' : ''}">&#9662;</span>
         </div>
       `);
@@ -698,17 +719,17 @@ export function displaySearchResults(app, results, query) {
                 // the tap handler; the active one gets class `active`.
                 let badgesHtml = '';
                 if (result.translations.length === 1) {
-                    badgesHtml = `<span class="search-result-translation-badge">${esc(result.translations[0].id)}</span>`;
+                    badgesHtml = `<span class="search-result-translation-badge">${escapeHtml(result.translations[0].id)}</span>`;
                 } else if (result.translations.length > 1) {
                     badgesHtml = result.translations.map((t) => {
                         const isActive = t.id === result.activeTranslation;
-                        return `<span class="search-result-translation-badge${isActive ? ' active' : ''}" data-translation-id="${esc(t.id)}" data-translation-content="${esc(t.content)}">${esc(t.id)}</span>`;
+                        return `<span class="search-result-translation-badge${isActive ? ' active' : ''}" data-translation-id="${escapeHtml(t.id)}" data-translation-content="${escapeHtml(t.content)}">${escapeHtml(t.id)}</span>`;
                     }).join('');
                 }
 
                 parts.push(`
-          <div class="search-result-item" data-reference="${esc(result.reference)}" data-active-translation="${esc(result.activeTranslation)}">
-            <div class="search-result-reference">${esc(result.reference)} ${badgesHtml}</div>
+          <div class="search-result-item" data-reference="${escapeHtml(result.reference)}" data-active-translation="${escapeHtml(result.activeTranslation)}">
+            <div class="search-result-reference">${escapeHtml(result.reference)} ${badgesHtml}</div>
             <div class="search-result-content">${highlighted}</div>
           </div>
         `);
