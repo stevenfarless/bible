@@ -1,0 +1,19 @@
+name: "! picker"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  picker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v4
+        with:
+          ref: exp
+
+      - name: Apply picker refactor
+        run: |
+          python3 -m py_compile .github/scripts/picker.py
+          python3 .github/scripts/picker.py
+          python3 .github/scripts/picker.py
