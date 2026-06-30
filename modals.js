@@ -325,19 +325,26 @@ function _setReferencePickerFiltersVisible(app, visible) {
 
 function _updateReferencePickerHeader(app) {
     const draft = app.referencePickerDraft;
-    if (!draft || !app.referencePickerTitle) return;
+    if (!draft || !app.referencePickerTitle || !app.referencePickerSubtitle) return;
 
     const view = draft.view;
     const book = draft.book || app.state.currentBook;
     const chapter = draft.chapter || app.state.currentChapter;
 
-    if (view === 'book') {
-        app.referencePickerTitle.textContent = 'Choose Book';
-    } else if (view === 'chapter') {
-        app.referencePickerTitle.textContent = 'Choose Chapter in ' + app.getDisplayName(book);
-    } else {
-        app.referencePickerTitle.textContent = 'Choose Verse in ' + app.getDisplayName(book) + ' ' + chapter;
+    let title = 'Book';
+    let subtitle = '';
+
+    if (view === 'chapter') {
+        title = 'Chapter';
+        subtitle = app.getDisplayName(book);
+    } else if (view === 'verse') {
+        title = 'Verse';
+        subtitle = app.getDisplayName(book) + ' ' + chapter;
     }
+
+    app.referencePickerTitle.textContent = title;
+    app.referencePickerSubtitle.textContent = subtitle;
+    app.referencePickerSubtitle.hidden = subtitle === '';
 
     const canGoBack =
         (view === 'chapter' && draft.entryView === 'book') ||
@@ -346,10 +353,15 @@ function _updateReferencePickerHeader(app) {
     if (app.referencePickerBack) app.referencePickerBack.hidden = !canGoBack;
 }
 
-function _focusReferencePickerTitle(app) {
+function _focusReferencePicker(app) {
     requestAnimationFrame(() => {
         if (!app.referencePickerModal?.classList.contains('active')) return;
-        app.referencePickerTitle?.focus({ preventScroll: true });
+
+        const activeItem = app.referencePickerView?.querySelector('.picker-item--active');
+        const firstButton = app.referencePickerView?.querySelector('button');
+
+        (activeItem || firstButton || app.referencePickerModal)
+            ?.focus({ preventScroll: true });
     });
 }
 
@@ -362,7 +374,7 @@ function _transitionReferencePickerView(app, renderNextView, { animate = true, d
     if (!content || !view || !animate || reduceMotion) {
         renderNextView();
         _restoreReferencePickerScroll(app);
-        _focusReferencePickerTitle(app);
+        _focusReferencePicker(app);
         return;
     }
 
@@ -388,7 +400,7 @@ function _transitionReferencePickerView(app, renderNextView, { animate = true, d
     content.addEventListener('transitionend', () => {
         content.style.height = '';
         content.style.overflow = '';
-        _focusReferencePickerTitle(app);
+        _focusReferencePicker(app);
     }, { once: true });
 }
 
@@ -624,6 +636,25 @@ function _renderChapterPickerView(app) {
     }
 
     view.appendChild(grid);
+
+    const actions = document.createElement('div');
+    actions.className = 'picker-actions picker-actions--footer';
+
+    const goButton = document.createElement('button');
+    goButton.className = 'secondary-btn reference-picker-go';
+    goButton.type = 'button';
+    goButton.textContent = 'Go to chapter';
+    goButton.addEventListener('click', async () => {
+        const targetBook = draft.book || app.state.currentBook;
+        const targetChapter = draft.chapter || app.state.currentChapter;
+
+        app._dbgUserAction?.('picker go: ' + targetBook + ' ' + targetChapter);
+        await app.loadPassage(targetBook, targetChapter, false, 'chapter-picker-go');
+        closeReferencePicker(app);
+    });
+
+    actions.appendChild(goButton);
+    view.appendChild(actions);
 }
 
 function _renderVersePickerView(app) {
@@ -634,23 +665,6 @@ function _renderVersePickerView(app) {
     _setReferencePickerFiltersVisible(app, false);
     view.className = 'reference-picker-view reference-picker-view--verse';
     view.innerHTML = '';
-
-    const actions = document.createElement('div');
-    actions.className = 'picker-actions';
-
-    const goButton = document.createElement('button');
-    goButton.className = 'primary-btn';
-    goButton.type = 'button';
-    goButton.textContent = 'Go';
-    goButton.setAttribute('aria-label', 'Go to selected chapter without choosing a verse');
-    goButton.addEventListener('click', () => {
-        app._dbgUserAction?.('picker go: ' + app.state.currentBook + ' ' + app.state.currentChapter);
-        app.referencePickerDraft = null;
-        closeReferencePicker(app);
-    });
-
-    actions.appendChild(goButton);
-    view.appendChild(actions);
 
     const grid = document.createElement('div');
     grid.className = 'chapter-grid';
