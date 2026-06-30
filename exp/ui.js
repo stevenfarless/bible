@@ -24,6 +24,7 @@ const REQUIRED_IDS = [
     "closeReferencePickerModal",
     "referencePickerBack",
     "referencePickerTitle",
+    "referencePickerSubtitle",
     "referencePickerFilters",
     "referencePickerView",
     "settingsModal",
@@ -188,6 +189,7 @@ export function cacheElements(app) {
     // Modals
     app.referencePickerModal = document.getElementById("referencePickerModal");
     app.referencePickerTitle = document.getElementById("referencePickerTitle");
+    app.referencePickerSubtitle = document.getElementById("referencePickerSubtitle");
     app.referencePickerBack = document.getElementById("referencePickerBack");
     app.referencePickerFilters = document.getElementById("referencePickerFilters");
     app.referencePickerView = document.getElementById("referencePickerView");

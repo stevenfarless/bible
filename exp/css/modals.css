@@ -599,27 +599,63 @@
 }
 
 .reference-picker-header {
-    gap: var(--spacing-sm);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: start;
+    gap: 0.5rem;
+    padding: 0.75rem 0.75rem 0.5rem;
 }
 
-.reference-picker-header h2 {
-    flex: 1;
+.reference-picker-heading {
+    min-width: 0;
+}
+
+.reference-picker-heading h2 {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    line-height: 1.2;
+}
+
+.reference-picker-subtitle {
+    margin: 0.15rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.2;
 }
 
 .reference-picker-back {
+    align-self: start;
     border: 1px solid var(--border-neutral);
     border-radius: var(--border-radius);
     background: transparent;
     color: var(--text-secondary);
-    padding: 0.35rem 0.55rem;
+    padding: 0.35rem 0.5rem;
     font: inherit;
+    font-size: 0.85rem;
+    line-height: 1.2;
 }
 
 .reference-picker-back[hidden] {
     display: none;
 }
 
+.reference-picker-modal .book-testament-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    gap: 0.4rem;
+    padding: 0 0.75rem 0.75rem;
+}
+
+.reference-picker-modal .book-testament-filter {
+    min-width: 0;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+}
+
 .reference-picker-body {
+    padding: 0.75rem 1rem 1rem;
     overflow: hidden auto;
 }
 
@@ -639,6 +675,24 @@
     transform: translateX(-10px);
 }
 
+.reference-picker-view--chapter .chapter-grid,
+.reference-picker-view--verse .chapter-grid {
+    gap: 0.5rem;
+}
+
+.reference-picker-view--chapter .chapter-item,
+.reference-picker-view--verse .chapter-item {
+    min-height: 3rem;
+}
+
+.picker-actions--footer {
+    margin-top: 0.75rem;
+}
+
+.reference-picker-go {
+    width: 100%;
+}
+
 .reference-picker-empty {
     color: var(--text-secondary);
     padding: 20px;
@@ -647,6 +701,7 @@
 
 .picker-item--active {
     border-color: var(--primary-color);
+    box-shadow: inset 0 0 0 1px var(--primary-color);
     color: var(--primary-color);
 }
 
