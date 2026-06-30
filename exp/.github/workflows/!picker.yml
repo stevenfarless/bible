@@ -3,17 +3,71 @@ name: "! picker"
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
+concurrency:
+  group: picker-exp
+  cancel-in-progress: false
+
 jobs:
   picker:
+    name: Unify reference picker
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
     steps:
       - name: Checkout exp
         uses: actions/checkout@v4
         with:
           ref: exp
+          fetch-depth: 0
 
       - name: Apply picker refactor
         run: |
           python3 -m py_compile .github/scripts/picker.py
           python3 .github/scripts/picker.py
           python3 .github/scripts/picker.py
+
+      - name: Validate picker markers
+        run: |
+          grep -q 'id="referencePickerModal"' index.html
+          ! grep -q 'id="bookModal"' index.html
+          ! grep -q 'id="chapterModal"' index.html
+          ! grep -q 'id="verseModal"' index.html
+          grep -q 'app.referencePickerModal' ui.js
+          grep -q 'closeReferencePicker, goBackReferencePicker' app.js
+          grep -q "app.loadPassage(book, i, false, 'chapter-picker')" modals.js
+          grep -q 'picker view changed:' modals.js
+          grep -q 'reference-picker-modal' css/modals.css
+          node --check app.js
+          node --check ui.js
+          node --check events.js
+          node --check modals.js
+          git diff --check
+
+      - name: Verify changed files
+        run: |
+          allowed='^(app\.js|css/modals\.css|events\.js|index\.html|modals\.js|ui\.js)$'
+          unexpected="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev "$allowed" || true)"
+          test -z "$unexpected" || {
+            echo "Unexpected changed files:"
+            echo "$unexpected"
+            exit 1
+          }
+
+      - name: Commit picker refactor
+        run: |
+          files=(index.html app.js ui.js events.js modals.js css/modals.css)
+          if [ -z "$(git status --porcelain -- "${files[@]}")" ]; then
+            echo "Reference picker refactor is already implemented."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${files[@]}"
+          git commit \
+            -m "feat(picker): unify reference picker modal flow" \
+            -m "Replace separate book, chapter, and verse modal handoffs with one reference picker shell that switches internal views. Preserve independent entry points, add back navigation, keep picker debug sources, and animate view height changes."
+          git push origin exp
