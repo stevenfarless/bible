@@ -189,11 +189,13 @@
     transition: all var(--transition-fast);
 }
 
-.book-item:hover {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-    color: var(--bg-base);
-    transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+    .book-item:hover {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: var(--bg-base);
+        transform: translateY(-2px);
+    }
 }
 
 .chapter-grid {
@@ -215,11 +217,13 @@
     transition: all var(--transition-fast);
 }
 
-.chapter-item:hover {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-    color: var(--bg-base);
-    transform: scale(1.05);
+@media (hover: hover) and (pointer: fine) {
+    .chapter-item:hover {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: var(--bg-base);
+        transform: scale(1.05);
+    }
 }
 
 .picker-actions {
