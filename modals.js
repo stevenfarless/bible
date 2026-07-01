@@ -533,6 +533,7 @@ function _renderBookPickerView(app) {
         button.className = 'book-item';
         button.type = 'button';
         button.textContent = app.bookAbbreviations[book] || book;
+        button.classList.toggle('picker-item--active', book === app.state.currentBook);
         button.addEventListener('click', () => {
             app._dbgUserAction?.('picker selected book: ' + book);
             app._dbgEvent?.('picker selected book: ' + book + ' -> chapter picker');
