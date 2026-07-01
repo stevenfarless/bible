@@ -20,9 +20,11 @@ jobs:
         run: |
           python3 <<'PY'
           from pathlib import Path
+          import re
 
           MODALS = Path('modals.js')
           COMPONENTS = Path('css/components.css')
+          MODALS_CSS = Path('css/modals.css')
           SMOKE = Path('tests/smoke.spec.js')
 
           def read(path):
@@ -37,7 +39,54 @@ jobs:
                   raise SystemExit(f'{label}: expected one match, found {count}')
               return text.replace(old, new, 1)
 
+          def replace_between(text, start, end, new, label):
+              start_index = text.find(start)
+              if start_index < 0:
+                  raise SystemExit(f'{label}: start anchor not found')
+              end_index = text.find(end, start_index)
+              if end_index < 0:
+                  raise SystemExit(f'{label}: end anchor not found')
+              return text[:start_index] + new + text[end_index:]
+
           modals = read(MODALS)
+
+          transition_function = '''function _transitionReferencePickerView(app, renderNextView, { animate = true, direction = 'forward' } = {}) {
+              const view = app.referencePickerView;
+              const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+              if (!view || !animate || reduceMotion) {
+                  renderNextView();
+                  _restoreReferencePickerScroll(app);
+                  _focusReferencePicker(app);
+                  return;
+              }
+
+              requestAnimationFrame(() => {
+                  renderNextView();
+                  _restoreReferencePickerScroll(app);
+
+                  view.classList.add(direction === 'back'
+                      ? 'reference-picker-view--enter-back'
+                      : 'reference-picker-view--enter-forward');
+
+                  requestAnimationFrame(() => {
+                      view.classList.remove('reference-picker-view--enter-forward', 'reference-picker-view--enter-back');
+                      _focusReferencePicker(app);
+                  });
+              });
+          }'''
+
+          modals = replace_between(
+              modals,
+              'function _transitionReferencePickerView(app, renderNextView',
+              '\n\nfunction _renderReferencePickerView(app, view',
+              transition_function,
+              'reference picker fixed-height transition',
+          )
+
+          book_active_line = "        button.classList.toggle('picker-item--active', book === app.state.currentBook);\n"
+          if book_active_line in modals:
+              modals = modals.replace(book_active_line, '', 1)
 
           chapter_go_block = '''
               const actions = document.createElement('div');
@@ -99,13 +148,18 @@ jobs:
 
           '''
 
-          if 'picker go from verse picker' not in modals:
-              modals = replace_once(
-                  modals,
-                  "    const activeVerse = app.state.selectedVerse;\n\n",
-                  verse_go_block + "    const activeVerse = app.state.selectedVerse;\n\n",
-                  'verse picker Go button',
-              )
+          verse_start = modals.find('function _renderVersePickerView(app) {')
+          if verse_start < 0:
+              raise SystemExit('verse picker function not found')
+          active_marker = "    const activeVerse = app.state.selectedVerse;"
+          active_start = modals.find(active_marker, verse_start)
+          if active_start < 0:
+              raise SystemExit('verse picker active verse marker not found')
+          go_start = modals.find("    if (draft.entryView !== 'verse') {", verse_start)
+          if go_start >= 0 and go_start < active_start:
+              modals = modals[:go_start] + verse_go_block + modals[active_start:]
+          else:
+              modals = modals[:active_start] + verse_go_block + modals[active_start:]
 
           write(MODALS, modals)
 
@@ -147,6 +201,33 @@ jobs:
           if chapter_hover in css:
               css = css.replace(chapter_hover, chapter_hover_media, 1)
           write(COMPONENTS, css)
+
+          modal_css = read(MODALS_CSS)
+          fixed_reference_modal_rule = '''/* Reference picker */
+          .reference-picker-modal .modal-content {
+              height: 85vh;
+              max-height: 85vh;
+              transition: none;
+          }
+
+          @supports (height: 1dvh) {
+              .reference-picker-modal .modal-content {
+                  height: 85dvh;
+                  max-height: 85dvh;
+              }
+          }
+
+          '''
+          modal_css = re.sub(
+              r'/\* Reference picker \*/\n\.reference-picker-modal \.modal-content \{\n.*?\n\}\n\n',
+              fixed_reference_modal_rule,
+              modal_css,
+              count=1,
+              flags=re.S,
+          )
+          if 'height: 85dvh;' not in modal_css:
+              raise SystemExit('fixed reference picker height was not written')
+          write(MODALS_CSS, modal_css)
 
           tests = read(SMOKE)
           tests = tests.replace(
@@ -194,6 +275,12 @@ jobs:
               "        await pickerView.locator('.reference-picker-go').click();\n        await waitForPassage(page);",
               2,
           )
+          if "#referencePickerView .book-item.picker-item--active" not in tests:
+              tests = tests.replace(
+                  "        await expect(page.locator('.book-testament-filter--active')).toHaveCount(0);\n",
+                  "        await expect(page.locator('.book-testament-filter--active')).toHaveCount(0);\n        await expect(page.locator('#referencePickerView .book-item.picker-item--active')).toHaveCount(0);\n",
+                  1,
+              )
           write(SMOKE, tests)
           PY
 
@@ -207,26 +294,32 @@ jobs:
           import re
 
           modals = Path('modals.js').read_text(encoding='utf-8')
-          css = Path('css/components.css').read_text(encoding='utf-8')
+          components = Path('css/components.css').read_text(encoding='utf-8')
+          modal_css = Path('css/modals.css').read_text(encoding='utf-8')
           tests = Path('tests/smoke.spec.js').read_text(encoding='utf-8')
 
           chapter = modals.split('function _renderChapterPickerView(app) {', 1)[1].split('function _renderVersePickerView(app) {', 1)[0]
           verse = modals.split('function _renderVersePickerView(app) {', 1)[1].split('// ── Deuterocanon info modal', 1)[0]
+          book = modals.split('function _renderBookPickerView(app) {', 1)[1].split('function _renderChapterPickerView(app) {', 1)[0]
+          transition = modals.split('function _transitionReferencePickerView(app, renderNextView', 1)[1].split('function _renderReferencePickerView(app, view', 1)[0]
 
           checks = {
               'chapter picker Go removed': 'reference-picker-go' not in chapter,
               'verse picker Go added': 'picker go from verse picker' in verse,
               'direct verse picker keeps Go hidden': "draft.entryView !== 'verse'" in verse,
               'verse picker does not preselect verse 1': 'const activeVerse = app.state.selectedVerse;' in verse,
-              'touch devices do not retain hover highlight': '@media (hover: hover) and (pointer: fine)' in css,
-              'tests cover Go action': 'supports verse and Go' in tests and 'Go keeps chapter' in tests,
+              'book picker does not pre-highlight current book': 'picker-item--active' not in book,
+              'reference picker height is fixed': 'height: 85vh;' in modal_css and 'height: 85dvh;' in modal_css,
+              'reference picker transition no longer animates height': 'content.style.height' not in transition and 'scrollHeight' not in transition,
+              'touch devices do not retain hover highlight': '@media (hover: hover) and (pointer: fine)' in components,
+              'tests cover Go and unhighlighted book state': 'supports verse and Go' in tests and 'Go keeps chapter' in tests and '#referencePickerView .book-item.picker-item--active' in tests,
           }
 
           failures = [name for name, ok in checks.items() if not ok]
           if failures:
               raise SystemExit('Validation failed: ' + ', '.join(failures))
 
-          if re.search(r'(?m)^\.book-item:hover', css) or re.search(r'(?m)^\.chapter-item:hover', css):
+          if re.search(r'(?m)^\.book-item:hover', components) or re.search(r'(?m)^\.chapter-item:hover', components):
               raise SystemExit('Validation failed: unwrapped hover selector remains')
           PY
 
@@ -240,6 +333,6 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add modals.js css/components.css tests/smoke.spec.js
-          git commit -m "fix: move picker Go action to verse step" -m "Move the chapter-only Go action from the chapter picker into the verse picker when the user arrives there from a book or chapter selection. Limit hover highlight styling to devices with real hover support so iOS Safari does not leave tapped picker buttons looking selected. Update smoke coverage for the Go path."
+          git add modals.js css/components.css css/modals.css tests/smoke.spec.js
+          git commit -m "fix: refine reference picker state" -m "Remove the active book highlight in the book picker, keep the reference picker modal at one fixed height across book, chapter, and verse views, and preserve the verse-step Go action. Update smoke coverage for the visible picker state."
           git push origin HEAD:exp
