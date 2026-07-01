@@ -595,7 +595,16 @@
 
 /* Reference picker */
 .reference-picker-modal .modal-content {
-    transition: height 180ms ease;
+    height: 85vh;
+    max-height: 85vh;
+    transition: none;
+}
+
+@supports (height: 1dvh) {
+    .reference-picker-modal .modal-content {
+        height: 85dvh;
+        max-height: 85dvh;
+    }
 }
 
 .reference-picker-header {

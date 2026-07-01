@@ -361,42 +361,29 @@ function _focusReferencePicker(app) {
 }
 
 function _transitionReferencePickerView(app, renderNextView, { animate = true, direction = 'forward' } = {}) {
-    const modal = app.referencePickerModal;
-    const content = modal?.querySelector('.modal-content');
     const view = app.referencePickerView;
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-    if (!content || !view || !animate || reduceMotion) {
+    if (!view || !animate || reduceMotion) {
         renderNextView();
         _restoreReferencePickerScroll(app);
         _focusReferencePicker(app);
         return;
     }
 
-    const startHeight = content.getBoundingClientRect().height;
-    content.style.height = `${startHeight}px`;
-    content.style.overflow = 'hidden';
-
     requestAnimationFrame(() => {
         renderNextView();
         _restoreReferencePickerScroll(app);
 
-        const endHeight = content.scrollHeight;
         view.classList.add(direction === 'back'
             ? 'reference-picker-view--enter-back'
             : 'reference-picker-view--enter-forward');
-        content.style.height = `${endHeight}px`;
 
         requestAnimationFrame(() => {
             view.classList.remove('reference-picker-view--enter-forward', 'reference-picker-view--enter-back');
+            _focusReferencePicker(app);
         });
     });
-
-    content.addEventListener('transitionend', () => {
-        content.style.height = '';
-        content.style.overflow = '';
-        _focusReferencePicker(app);
-    }, { once: true });
 }
 
 function _renderReferencePickerView(app, view, { animate = true, direction = 'forward' } = {}) {
@@ -546,7 +533,6 @@ function _renderBookPickerView(app) {
         button.className = 'book-item';
         button.type = 'button';
         button.textContent = app.bookAbbreviations[book] || book;
-        button.classList.toggle('picker-item--active', book === app.state.currentBook);
         button.addEventListener('click', () => {
             app._dbgUserAction?.('picker selected book: ' + book);
             app._dbgEvent?.('picker selected book: ' + book + ' -> chapter picker');

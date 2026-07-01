@@ -160,6 +160,7 @@ test('book selector: testament filters toggle sections from canon data', async (
 
         await expect(page.locator('.book-testament-filter')).toHaveCount(2);
         await expect(page.locator('.book-testament-filter--active')).toHaveCount(0);
+        await expect(page.locator('#referencePickerView .book-item.picker-item--active')).toHaveCount(0);
         await expect(page.locator('#referencePickerModal .modal-content > .book-testament-filters')).toHaveCount(1);
         await expect(page.locator('#referencePickerModal .modal-body > .book-testament-filters')).toHaveCount(0);
         await expect(apocryphaFilter).toHaveCount(0);
