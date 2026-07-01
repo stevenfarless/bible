@@ -94,7 +94,7 @@ test('page load: main UI elements are visible', async ({ page }) => {
         expect(errors).toHaveLength(0);
 });
 
-test('reference picker: book, chapter, verse flow supports verse and close', async ({ page }) => {
+test('reference picker: book, chapter, verse flow supports verse and Go', async ({ page }) => {
         await page.goto('/');
         await waitForPassage(page);
 
@@ -136,7 +136,8 @@ test('reference picker: book, chapter, verse flow supports verse and close', asy
         await expect(pickerTitle).toHaveText('Verse');
         await expect(pickerSubtitle).toHaveText('Matthew 2');
 
-        await page.locator('#closeReferencePickerModal').click();
+        await expect(pickerView.locator('.reference-picker-go')).toBeVisible();
+        await pickerView.locator('.reference-picker-go').click();
 
         await expect(picker).not.toHaveClass(/active/);
         await expect(page.locator('#passageTitle')).toContainText('Matthew 2');
@@ -187,7 +188,7 @@ test('book selector: testament filters toggle sections from canon data', async (
         await expect(deuterocanonSection).toHaveCount(0);
 });
 
-test('chapter navigation: selecting a chapter opens verse picker and close keeps chapter', async ({ page }) => {
+test('chapter navigation: selecting a chapter opens verse picker and Go keeps chapter', async ({ page }) => {
         await page.goto('/');
         await waitForPassage(page);
 
@@ -205,7 +206,8 @@ test('chapter navigation: selecting a chapter opens verse picker and close keeps
         await expect(picker).toBeVisible();
         await expect(pickerTitle).toHaveText('Verse');
 
-        await page.locator('#closeReferencePickerModal').click();
+        await expect(pickerView.locator('.reference-picker-go')).toBeVisible();
+        await pickerView.locator('.reference-picker-go').click();
 
         await expect(picker).not.toHaveClass(/active/);
         await expect(page.locator('#passageTitle')).toContainText('Genesis 2');
@@ -346,14 +348,14 @@ test('passage cache: navigating back to a visited passage writes cache', async (
         await pickerView.locator('.chapter-item', { hasText: '2' }).first().click();
         await expect(page.locator('#passageTitle')).toContainText('Genesis 2');
         await expect(picker).toBeVisible();
-        await page.locator('#closeReferencePickerModal').click();
+        await pickerView.locator('.reference-picker-go').click();
         await waitForPassage(page);
 
         await page.locator('#chapterSelector').click();
         await pickerView.locator('.chapter-item', { hasText: '1' }).first().click();
         await expect(page.locator('#passageTitle')).toContainText('Genesis 1');
         await expect(picker).toBeVisible();
-        await page.locator('#closeReferencePickerModal').click();
+        await pickerView.locator('.reference-picker-go').click();
         await waitForPassage(page);
 
         const cache = await page.evaluate(() => localStorage.getItem('passageCache'));
