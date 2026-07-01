@@ -1,0 +1,76 @@
+name: "! picker fix"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: picker-fix-exp
+  cancel-in-progress: false
+
+jobs:
+  picker-fix:
+    name: Clean up reference picker layout
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v7
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Apply picker layout fix
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          python3 -B -m py_compile .github/scripts/picker_fix.py
+          python3 -B .github/scripts/picker_fix.py
+          python3 -B .github/scripts/picker_fix.py
+          rm -rf .github/scripts/__pycache__
+
+      - name: Validate picker layout fix
+        run: |
+          grep -q 'referencePickerSubtitle' index.html
+          grep -q 'app.referencePickerSubtitle' ui.js
+          grep -q "title = 'Chapter'" modals.js
+          grep -q "title = 'Verse'" modals.js
+          grep -q '_focusReferencePicker(app)' modals.js
+          ! grep -q '_focusReferencePickerTitle' modals.js
+          ! grep -q "goButton.textContent = 'Go'" modals.js
+          grep -q "goButton.textContent = 'Go to chapter'" modals.js
+          grep -q 'reference-picker-heading' css/modals.css
+          grep -q 'grid-template-columns: auto 1fr auto' css/modals.css
+          grep -q 'box-shadow: inset 0 0 0 1px var(--primary-color)' css/modals.css
+          node --check ui.js
+          node --check modals.js
+          git diff --check
+
+      - name: Verify changed files
+        run: |
+          allowed='^(css/modals\.css|index\.html|modals\.js|ui\.js)$'
+          unexpected="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev "$allowed" || true)"
+          test -z "$unexpected" || {
+            echo "Unexpected changed files:"
+            echo "$unexpected"
+            exit 1
+          }
+
+      - name: Commit picker layout fix
+        run: |
+          files=(index.html ui.js modals.js css/modals.css)
+          if [ -z "$(git status --porcelain -- "${files[@]}")" ]; then
+            echo "Reference picker layout fix is already implemented."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${files[@]}"
+          git commit \
+            -m "fix(picker): clean up reference picker layout" \
+            -m "Shorten picker headings, move passage context into a subtitle, stop focusing the title after view changes, reduce Back button weight, make testament filters horizontal, remove the large Verse Go button, and soften active item styling."
+          git push origin exp
