@@ -630,24 +630,6 @@ function _renderChapterPickerView(app) {
         grid.appendChild(btn);
     }
 
-    const actions = document.createElement('div');
-    actions.className = 'picker-actions picker-actions--top';
-
-    const goButton = document.createElement('button');
-    goButton.className = 'secondary-btn reference-picker-go';
-    goButton.type = 'button';
-    goButton.textContent = 'Go';
-    goButton.addEventListener('click', async () => {
-        const targetBook = draft.book || app.state.currentBook;
-        const targetChapter = draft.chapter || app.state.currentChapter;
-
-        app._dbgUserAction?.('picker go: ' + targetBook + ' ' + targetChapter);
-        await app.loadPassage(targetBook, targetChapter, false, 'chapter-picker-go');
-        closeReferencePicker(app);
-    });
-
-    actions.appendChild(goButton);
-    view.appendChild(actions);
     view.appendChild(grid);
 }
 
@@ -672,7 +654,32 @@ function _renderVersePickerView(app) {
         return;
     }
 
-    const activeVerse = app.state.selectedVerse || parseInt(app.currentVerseSpan?.textContent || '1', 10) || 1;
+    if (draft.entryView !== 'verse') {
+    const actions = document.createElement('div');
+    actions.className = 'picker-actions picker-actions--top';
+
+    const goButton = document.createElement('button');
+    goButton.className = 'secondary-btn reference-picker-go';
+    goButton.type = 'button';
+    goButton.textContent = 'Go';
+    goButton.addEventListener('click', () => {
+        const targetBook = draft.book || app.state.currentBook;
+        const targetChapter = draft.chapter || app.state.currentChapter;
+
+        app._dbgUserAction?.('picker go: ' + targetBook + ' ' + targetChapter);
+        app._dbgEvent?.('picker go from verse picker: ' + targetBook + ' ' + targetChapter);
+        app.referencePickerDraft = null;
+        app.state.selectedVerse = null;
+        if (app.currentVerseSpan) app.currentVerseSpan.textContent = '1';
+        app.applyVerseGlow?.();
+        closeReferencePicker(app);
+    });
+
+    actions.appendChild(goButton);
+    view.appendChild(actions);
+}
+
+    const activeVerse = app.state.selectedVerse;
 
     for (let i = 1; i <= verseCount; i++) {
         const btn = document.createElement('button');
