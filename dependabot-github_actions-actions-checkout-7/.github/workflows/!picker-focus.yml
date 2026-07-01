@@ -1,0 +1,66 @@
+name: "! picker focus"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: picker-focus-exp
+  cancel-in-progress: false
+
+jobs:
+  picker-focus:
+    name: Soften reference picker focus states
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v7
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Apply picker focus fix
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          python3 -B .github/scripts/picker_focus_fix.py
+          python3 -B .github/scripts/picker_focus_fix.py
+
+      - name: Validate picker focus fix
+        run: |
+          grep -q 'app.referencePickerModal.focus({ preventScroll: true });' modals.js
+          grep -q 'background-color: var(--bg-raised);' css/modals.css
+          grep -q '.reference-picker-view .book-item:focus:not(:focus-visible)' css/modals.css
+          grep -q 'width: auto;' css/modals.css
+          node --check modals.js
+          git diff --check
+
+      - name: Verify changed files
+        run: |
+          allowed='^(css/modals\.css|modals\.js)$'
+          unexpected="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev "$allowed" || true)"
+          test -z "$unexpected" || {
+            echo "Unexpected changed files:"
+            echo "$unexpected"
+            exit 1
+          }
+
+      - name: Commit picker focus fix
+        run: |
+          files=(modals.js css/modals.css)
+          if [ -z "$(git status --porcelain -- "${files[@]}")" ]; then
+            echo "Reference picker focus fix is already implemented."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${files[@]}"
+          git commit \
+            -m "fix(picker): soften reference picker focus states" \
+            -m "Focus the picker modal shell instead of grid items after view changes, suppress non-keyboard focus outlines inside the picker, neutralize active item fill, and reduce the visual weight of the chapter Go action."
+          git push origin exp
