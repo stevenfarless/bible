@@ -361,42 +361,29 @@ function _focusReferencePicker(app) {
 }
 
 function _transitionReferencePickerView(app, renderNextView, { animate = true, direction = 'forward' } = {}) {
-    const modal = app.referencePickerModal;
-    const content = modal?.querySelector('.modal-content');
     const view = app.referencePickerView;
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-    if (!content || !view || !animate || reduceMotion) {
+    if (!view || !animate || reduceMotion) {
         renderNextView();
         _restoreReferencePickerScroll(app);
         _focusReferencePicker(app);
         return;
     }
 
-    const startHeight = content.getBoundingClientRect().height;
-    content.style.height = `${startHeight}px`;
-    content.style.overflow = 'hidden';
-
     requestAnimationFrame(() => {
         renderNextView();
         _restoreReferencePickerScroll(app);
 
-        const endHeight = content.scrollHeight;
         view.classList.add(direction === 'back'
             ? 'reference-picker-view--enter-back'
             : 'reference-picker-view--enter-forward');
-        content.style.height = `${endHeight}px`;
 
         requestAnimationFrame(() => {
             view.classList.remove('reference-picker-view--enter-forward', 'reference-picker-view--enter-back');
+            _focusReferencePicker(app);
         });
     });
-
-    content.addEventListener('transitionend', () => {
-        content.style.height = '';
-        content.style.overflow = '';
-        _focusReferencePicker(app);
-    }, { once: true });
 }
 
 function _renderReferencePickerView(app, view, { animate = true, direction = 'forward' } = {}) {
@@ -631,25 +618,6 @@ function _renderChapterPickerView(app) {
     }
 
     view.appendChild(grid);
-
-    const actions = document.createElement('div');
-    actions.className = 'picker-actions picker-actions--footer';
-
-    const goButton = document.createElement('button');
-    goButton.className = 'secondary-btn reference-picker-go';
-    goButton.type = 'button';
-    goButton.textContent = 'Go to chapter';
-    goButton.addEventListener('click', async () => {
-        const targetBook = draft.book || app.state.currentBook;
-        const targetChapter = draft.chapter || app.state.currentChapter;
-
-        app._dbgUserAction?.('picker go: ' + targetBook + ' ' + targetChapter);
-        await app.loadPassage(targetBook, targetChapter, false, 'chapter-picker-go');
-        closeReferencePicker(app);
-    });
-
-    actions.appendChild(goButton);
-    view.appendChild(actions);
 }
 
 function _renderVersePickerView(app) {
@@ -673,7 +641,32 @@ function _renderVersePickerView(app) {
         return;
     }
 
-    const activeVerse = app.state.selectedVerse || parseInt(app.currentVerseSpan?.textContent || '1', 10) || 1;
+    if (draft.entryView !== 'verse') {
+    const actions = document.createElement('div');
+    actions.className = 'picker-actions picker-actions--top';
+
+    const goButton = document.createElement('button');
+    goButton.className = 'secondary-btn reference-picker-go';
+    goButton.type = 'button';
+    goButton.textContent = 'Go';
+    goButton.addEventListener('click', () => {
+        const targetBook = draft.book || app.state.currentBook;
+        const targetChapter = draft.chapter || app.state.currentChapter;
+
+        app._dbgUserAction?.('picker go: ' + targetBook + ' ' + targetChapter);
+        app._dbgEvent?.('picker go from verse picker: ' + targetBook + ' ' + targetChapter);
+        app.referencePickerDraft = null;
+        app.state.selectedVerse = null;
+        if (app.currentVerseSpan) app.currentVerseSpan.textContent = '1';
+        app.applyVerseGlow?.();
+        closeReferencePicker(app);
+    });
+
+    actions.appendChild(goButton);
+    view.appendChild(actions);
+}
+
+    const activeVerse = app.state.selectedVerse;
 
     for (let i = 1; i <= verseCount; i++) {
         const btn = document.createElement('button');
