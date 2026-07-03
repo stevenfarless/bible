@@ -222,8 +222,8 @@ def verify_translation_upload(translation: str) -> None:
         value = db.reference(path).get()
         if value is None:
             raise RuntimeError(f"Firebase verification failed: missing /{path}")
-        if require_mapping and not isinstance(value, dict):
-            raise RuntimeError(f"Firebase verification failed: /{path} is not an object")
+        if require_mapping and not isinstance(value, (dict, list)):
+            raise RuntimeError(f"Firebase verification failed: /{path} is not an object or list")
         print(f"  verified /{path}")
 
 
