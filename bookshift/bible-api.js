@@ -8,7 +8,7 @@ import {
     idbDeleteTranslation,
 } from './translation-store.js';
 
-const FIREBASE_TRANSLATIONS_ENABLED = false;
+const FIREBASE_TRANSLATIONS_ENABLED = true;
 
 const PAGE_SIZE = 100;
 const SEARCH_CONCURRENCY = 5;
@@ -23,8 +23,7 @@ export const LOCAL_TRANSLATIONS = new Set([
 ]);
 
 const REPO_TRANSLATIONS = new Set([
-    "ASV", "BLB", "BSB", "CSB", "ESV", "ISV", "KJV", "LEB",
-    "MEV", "MSB", "NET", "NIV", "NKJV", "NLT", "NRSVUE", "WEB",
+    "ASV", "BLB", "BSB", "KJV", "MSB", "WEB",
 ]);
 
 const BOOK_LOAD_ORDER = [
