@@ -76,6 +76,10 @@ def database_url() -> str:
     return match.group(1)
 
 
+def firebase_key(value: str) -> str:
+    return re.sub(r"[.#$\[\]/]", "_", value)
+
+
 def init_firebase() -> None:
     if firebase_admin._apps:
         return
@@ -116,7 +120,8 @@ def safe_set(ref: db.Reference, value: Any, label: str) -> None:
 
     print(f"  {label} is {size:,} bytes; writing child nodes")
     for key, child_value in value.items():
-        safe_set(ref.child(str(key)), child_value, f"{label}/{key}")
+        child_key = firebase_key(str(key))
+        safe_set(ref.child(child_key), child_value, f"{label}/{child_key}")
 
 
 def catalog_with_access_flags() -> list[dict[str, Any]]:
@@ -170,7 +175,7 @@ def firebase_translation_key(path: Path, translation: str) -> str:
     stem = path.stem
     if path.name == f"{translation}_search_index.json" or stem.endswith("_search_index"):
         return ""
-    return stem
+    return firebase_key(stem)
 
 
 def upload_translation(translation: str) -> None:
@@ -208,7 +213,7 @@ def verify_translation_upload(translation: str) -> None:
     first_book = first_required_book_file(translation)
     checks = [
         (f"translations/{translation}/meta", True),
-        (f"translations/{translation}/{first_book.stem}", True),
+        (f"translations/{translation}/{firebase_key(first_book.stem)}", True),
     ]
 
     search_index = ROOT / "translations" / translation / f"{translation}_search_index.json"
