@@ -11,13 +11,7 @@ on:
         options:
           - full-migration
           - plan
-          - upload-only
           - verify-only
-          - upload-and-clean-repo
-      translation:
-        description: 'Optional single licensed translation for non-cleanup modes; blank is required for cleanup modes'
-        required: false
-        default: ''
       keep_meta:
         description: 'Keep licensed meta.json files in GitHub after cleanup'
         required: true
@@ -70,18 +64,18 @@ jobs:
       - name: Run Bookshift migration
         env:
           BOOKSHIFT_MODE: ${{ inputs.mode }}
-          TARGET_TRANSLATION: ${{ inputs.translation }}
+          TARGET_TRANSLATION: ''
           BOOKSHIFT_KEEP_META: ${{ inputs.keep_meta }}
           BOOKSHIFT_MAX_NODE_BYTES: ${{ secrets.BOOKSHIFT_MAX_NODE_BYTES }}
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/service_account.json
         run: python .github/scripts/bookshift_migrate_licensed_translations.py
 
       - name: Validate generated changes
-        if: ${{ inputs.mode == 'full-migration' || inputs.mode == 'upload-and-clean-repo' }}
+        if: ${{ inputs.mode == 'full-migration' }}
         run: git diff --check
 
       - name: Commit repository cleanup
-        if: ${{ inputs.mode == 'full-migration' || inputs.mode == 'upload-and-clean-repo' }}
+        if: ${{ inputs.mode == 'full-migration' }}
         run: |
           git config user.name "stevenfarless"
           git config user.email "125781365+stevenfarless@users.noreply.github.com"
