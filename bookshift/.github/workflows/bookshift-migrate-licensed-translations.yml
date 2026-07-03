@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Migration mode'
+        description: 'Use full-migration for the one-step upload, verify, cleanup, and commit path'
         required: true
         default: 'full-migration'
         type: choice
@@ -15,7 +15,7 @@ on:
           - verify-only
           - upload-and-clean-repo
       translation:
-        description: 'Optional single licensed translation, or blank for every licensed translation'
+        description: 'Optional single licensed translation for non-cleanup modes; blank is required for cleanup modes'
         required: false
         default: ''
       keep_meta:
