@@ -53,6 +53,9 @@ jobs:
       - name: Install dependencies
         run: pip install firebase-admin
 
+      - name: Validate migration helper syntax
+        run: python -m py_compile .github/scripts/bookshift_migrate_licensed_translations.py
+
       - name: Write service account key
         if: ${{ inputs.mode != 'plan' }}
         env:
@@ -74,9 +77,7 @@ jobs:
 
       - name: Validate generated changes
         if: ${{ inputs.mode == 'full-migration' || inputs.mode == 'upload-and-clean-repo' }}
-        run: |
-          python -m py_compile .github/scripts/bookshift_migrate_licensed_translations.py
-          git diff --check
+        run: git diff --check
 
       - name: Commit repository cleanup
         if: ${{ inputs.mode == 'full-migration' || inputs.mode == 'upload-and-clean-repo' }}

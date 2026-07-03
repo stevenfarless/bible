@@ -124,6 +124,12 @@ def safe_set(ref: db.Reference, value: Any, label: str) -> None:
         safe_set(ref.child(child_key), child_value, f"{label}/{child_key}")
 
 
+def set_whole_node(ref: db.Reference, value: Any, label: str) -> None:
+    size = node_size(value)
+    ref.set(value)
+    print(f"  wrote {label} ({size:,} bytes)")
+
+
 def catalog_with_access_flags() -> list[dict[str, Any]]:
     catalog_path = ROOT / "translations" / "index.json"
     catalog = load_json(catalog_path)
@@ -145,7 +151,7 @@ def catalog_with_access_flags() -> list[dict[str, Any]]:
 
 def upload_catalog() -> None:
     translations = catalog_with_access_flags()
-    safe_set(db.reference("translationIndex"), translations, "translationIndex")
+    set_whole_node(db.reference("translationIndex"), translations, "translationIndex")
     safe_set(
         db.reference("publicTranslations"),
         {translation: True for translation in PUBLIC_TRANSLATIONS},
@@ -191,7 +197,7 @@ def upload_translation(translation: str) -> None:
                 f"translations/{translation}/{key}",
             )
         else:
-            safe_set(db.reference(f"searchIndex/{translation}"), data, f"searchIndex/{translation}")
+            set_whole_node(db.reference(f"searchIndex/{translation}"), data, f"searchIndex/{translation}")
         uploaded_any = True
 
     if not uploaded_any:
