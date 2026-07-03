@@ -372,13 +372,23 @@ def upload_all(translations: list[str]) -> None:
     upload_catalog()
 
 
+def cleanup_mode(mode: str) -> bool:
+    return mode in {"full-migration", "upload-and-clean-repo"}
+
+
 def run() -> None:
     mode = env("BOOKSHIFT_MODE", "plan")
     keep_meta = env_bool("BOOKSHIFT_KEEP_META", True)
+    target = env("TARGET_TRANSLATION")
     translations = selected_translations()
 
     if mode not in {"plan", "upload-only", "verify-only", "upload-and-clean-repo", "full-migration"}:
         raise RuntimeError(f"Unsupported BOOKSHIFT_MODE: {mode}")
+    if cleanup_mode(mode) and target:
+        raise RuntimeError(
+            "Cleanup modes must run with the translation field blank so all licensed "
+            "translations are uploaded, verified, and removed together."
+        )
 
     print_plan(translations, keep_meta)
     if mode == "plan":
@@ -392,7 +402,7 @@ def run() -> None:
 
     upload_all(translations)
 
-    if mode in {"full-migration", "upload-and-clean-repo"}:
+    if cleanup_mode(mode):
         verify_uploads(translations)
         cleanup_repository(translations, keep_meta)
 
