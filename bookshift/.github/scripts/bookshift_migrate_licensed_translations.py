@@ -172,6 +172,8 @@ def local_json_files(translation: str) -> list[Path]:
     json_files = sorted(trans_dir.glob("*.json"))
     if not json_files:
         raise RuntimeError(f"No JSON files found in {trans_dir}")
+    if trans_dir.joinpath("meta.json") not in json_files:
+        raise RuntimeError(f"Missing required metadata file: {trans_dir / 'meta.json'}")
     return json_files
 
 
