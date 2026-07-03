@@ -11,6 +11,7 @@ import firebase_admin
 from firebase_admin import credentials, db
 
 ROOT = Path(__file__).resolve().parents[2]
+MAX_NODE_BYTES = 3_500_000
 
 LICENSED_TRANSLATIONS = (
     "CSB",
@@ -111,8 +112,14 @@ def node_size(value: Any) -> int:
 
 
 def set_node(ref: db.Reference, value: Any, label: str) -> None:
+    size = node_size(value)
+    if size > MAX_NODE_BYTES:
+        raise RuntimeError(
+            f"/{label} is {size:,} bytes, which exceeds the Bookshift "
+            f"single-node limit of {MAX_NODE_BYTES:,} bytes."
+        )
     ref.set(value)
-    print(f"  wrote {label} ({node_size(value):,} bytes)")
+    print(f"  wrote {label} ({size:,} bytes)")
 
 
 def catalog_with_access_flags() -> list[dict[str, Any]]:
