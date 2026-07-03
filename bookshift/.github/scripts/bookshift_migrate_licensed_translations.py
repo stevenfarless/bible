@@ -164,20 +164,29 @@ def local_json_files(translation: str) -> list[Path]:
     return json_files
 
 
+def firebase_translation_key(path: Path, translation: str) -> str:
+    if path.name == "meta.json":
+        return "meta"
+    stem = path.stem
+    if path.name == f"{translation}_search_index.json" or stem.endswith("_search_index"):
+        return ""
+    return stem
+
+
 def upload_translation(translation: str) -> None:
     print(f"\n=== Uploading {translation} ===")
     uploaded_any = False
     for path in local_json_files(translation):
         data = load_json(path)
-        stem = path.stem
-        if path.name == f"{translation}_search_index.json" or stem.endswith("_search_index"):
-            safe_set(db.reference(f"searchIndex/{translation}"), data, f"searchIndex/{translation}")
-        else:
+        key = firebase_translation_key(path, translation)
+        if key:
             safe_set(
-                db.reference(f"translations/{translation}/{stem}"),
+                db.reference(f"translations/{translation}/{key}"),
                 data,
-                f"translations/{translation}/{stem}",
+                f"translations/{translation}/{key}",
             )
+        else:
+            safe_set(db.reference(f"searchIndex/{translation}"), data, f"searchIndex/{translation}")
         uploaded_any = True
 
     if not uploaded_any:
@@ -198,6 +207,7 @@ def verify_translation_upload(translation: str) -> None:
     print(f"\n=== Verifying {translation} ===")
     first_book = first_required_book_file(translation)
     checks = [
+        (f"translations/{translation}/meta", True),
         (f"translations/{translation}/{first_book.stem}", True),
     ]
 
@@ -327,6 +337,7 @@ def print_plan(translations: list[str], keep_meta: bool) -> None:
     print("Bookshift migration plan")
     print(f"  translations: {', '.join(translations)}")
     print(f"  keep meta.json locally: {keep_meta}")
+    print("  upload meta.json to /translations/<ID>/meta")
     print("  upload book JSON files to /translations/<ID>/<Book>")
     print("  upload search indexes to /searchIndex/<ID>")
     print("  upload access-tagged catalog to /translationIndex")
