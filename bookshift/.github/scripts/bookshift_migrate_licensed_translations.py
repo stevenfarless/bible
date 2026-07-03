@@ -11,7 +11,7 @@ import firebase_admin
 from firebase_admin import credentials, db
 
 ROOT = Path(__file__).resolve().parents[2]
-MAX_NODE_BYTES = 3_500_000
+DEFAULT_MAX_NODE_BYTES = 3_500_000
 
 LICENSED_TRANSLATIONS = (
     "CSB",
@@ -49,6 +49,11 @@ def env_bool(name: str, default: bool = False) -> bool:
     if not raw:
         return default
     return raw.lower() in {"1", "true", "yes", "y", "on"}
+
+
+def max_node_bytes() -> int:
+    raw = env("BOOKSHIFT_MAX_NODE_BYTES")
+    return int(raw) if raw else DEFAULT_MAX_NODE_BYTES
 
 
 def load_json(path: Path) -> Any:
@@ -113,10 +118,11 @@ def node_size(value: Any) -> int:
 
 def set_node(ref: db.Reference, value: Any, label: str) -> None:
     size = node_size(value)
-    if size > MAX_NODE_BYTES:
+    limit = max_node_bytes()
+    if size > limit:
         raise RuntimeError(
             f"/{label} is {size:,} bytes, which exceeds the Bookshift "
-            f"single-node limit of {MAX_NODE_BYTES:,} bytes."
+            f"single-node limit of {limit:,} bytes."
         )
     ref.set(value)
     print(f"  wrote {label} ({size:,} bytes)")

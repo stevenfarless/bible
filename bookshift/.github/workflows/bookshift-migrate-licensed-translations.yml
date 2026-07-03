@@ -72,6 +72,7 @@ jobs:
           BOOKSHIFT_MODE: ${{ inputs.mode }}
           TARGET_TRANSLATION: ${{ inputs.translation }}
           BOOKSHIFT_KEEP_META: ${{ inputs.keep_meta }}
+          BOOKSHIFT_MAX_NODE_BYTES: ${{ secrets.BOOKSHIFT_MAX_NODE_BYTES }}
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/service_account.json
         run: python .github/scripts/bookshift_migrate_licensed_translations.py
 
