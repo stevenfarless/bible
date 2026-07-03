@@ -113,7 +113,7 @@ def node_size(value: Any) -> int:
 
 def safe_set(ref: db.Reference, value: Any, label: str) -> None:
     size = node_size(value)
-    if size <= MAX_NODE_BYTES or not isinstance(value, dict):
+    if not isinstance(value, dict) or size <= MAX_NODE_BYTES:
         ref.set(value)
         print(f"  wrote {label} ({size:,} bytes)")
         return
