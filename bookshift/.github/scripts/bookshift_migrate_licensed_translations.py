@@ -11,7 +11,6 @@ import firebase_admin
 from firebase_admin import credentials, db
 
 ROOT = Path(__file__).resolve().parents[2]
-MAX_NODE_BYTES = 3_500_000
 
 LICENSED_TRANSLATIONS = (
     "CSB",
@@ -111,23 +110,9 @@ def node_size(value: Any) -> int:
     return len(json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
 
 
-def safe_set(ref: db.Reference, value: Any, label: str) -> None:
-    size = node_size(value)
-    if not isinstance(value, dict) or size <= MAX_NODE_BYTES:
-        ref.set(value)
-        print(f"  wrote {label} ({size:,} bytes)")
-        return
-
-    print(f"  {label} is {size:,} bytes; writing child nodes")
-    for key, child_value in value.items():
-        child_key = firebase_key(str(key))
-        safe_set(ref.child(child_key), child_value, f"{label}/{child_key}")
-
-
-def set_whole_node(ref: db.Reference, value: Any, label: str) -> None:
-    size = node_size(value)
+def set_node(ref: db.Reference, value: Any, label: str) -> None:
     ref.set(value)
-    print(f"  wrote {label} ({size:,} bytes)")
+    print(f"  wrote {label} ({node_size(value):,} bytes)")
 
 
 def catalog_with_access_flags() -> list[dict[str, Any]]:
@@ -151,13 +136,13 @@ def catalog_with_access_flags() -> list[dict[str, Any]]:
 
 def upload_catalog() -> None:
     translations = catalog_with_access_flags()
-    set_whole_node(db.reference("translationIndex"), translations, "translationIndex")
-    safe_set(
+    set_node(db.reference("translationIndex"), translations, "translationIndex")
+    set_node(
         db.reference("publicTranslations"),
         {translation: True for translation in PUBLIC_TRANSLATIONS},
         "publicTranslations",
     )
-    safe_set(
+    set_node(
         db.reference("licensedTranslations"),
         {translation: True for translation in LICENSED_TRANSLATIONS},
         "licensedTranslations",
@@ -195,13 +180,13 @@ def upload_translation(translation: str) -> None:
         data = load_json(path)
         key = firebase_translation_key(path, translation)
         if key:
-            safe_set(
+            set_node(
                 db.reference(f"translations/{translation}/{key}"),
                 data,
                 f"translations/{translation}/{key}",
             )
         else:
-            set_whole_node(db.reference(f"searchIndex/{translation}"), data, f"searchIndex/{translation}")
+            set_node(db.reference(f"searchIndex/{translation}"), data, f"searchIndex/{translation}")
         uploaded_any = True
 
     if not uploaded_any:
