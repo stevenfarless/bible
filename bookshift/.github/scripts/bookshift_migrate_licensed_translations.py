@@ -99,19 +99,6 @@ def init_firebase() -> None:
     firebase_admin.initialize_app(cred, {"databaseURL": database_url()})
 
 
-def selected_translations() -> list[str]:
-    requested = env("TARGET_TRANSLATION").upper()
-    if not requested:
-        return list(LICENSED_TRANSLATIONS)
-    if requested not in LICENSED_TRANSLATIONS:
-        joined = ", ".join(LICENSED_TRANSLATIONS)
-        raise RuntimeError(
-            f"{requested} is not a licensed Bookshift translation. "
-            f"Allowed values: {joined}"
-        )
-    return [requested]
-
-
 def node_size(value: Any) -> int:
     return len(json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
 
@@ -247,7 +234,7 @@ def translation_index_entries(value: Any) -> list[dict[str, Any]]:
     return []
 
 
-def verify_catalog_upload(translations: list[str]) -> None:
+def verify_catalog_upload() -> None:
     print("\n=== Verifying catalog nodes ===")
     index = db.reference("translationIndex").get()
     entries = translation_index_entries(index)
@@ -255,7 +242,7 @@ def verify_catalog_upload(translations: list[str]) -> None:
         raise RuntimeError("Firebase verification failed: /translationIndex is missing or empty")
 
     indexed_ids = {str(item.get("id", "")).upper() for item in entries}
-    missing = [translation for translation in translations if translation not in indexed_ids]
+    missing = [translation for translation in LICENSED_TRANSLATIONS if translation not in indexed_ids]
     if missing:
         raise RuntimeError(
             "Firebase verification failed: /translationIndex missing " + ", ".join(missing)
@@ -273,16 +260,16 @@ def verify_catalog_upload(translations: list[str]) -> None:
     licensed_map = db.reference("licensedTranslations").get()
     if not isinstance(licensed_map, dict):
         raise RuntimeError("Firebase verification failed: /licensedTranslations is missing")
-    for translation in translations:
+    for translation in LICENSED_TRANSLATIONS:
         if licensed_map.get(translation) is not True:
             raise RuntimeError(f"Firebase verification failed: /licensedTranslations/{translation}")
     print("  verified /licensedTranslations")
 
 
-def verify_uploads(translations: list[str]) -> None:
-    for translation in translations:
+def verify_uploads() -> None:
+    for translation in LICENSED_TRANSLATIONS:
         verify_translation_upload(translation)
-    verify_catalog_upload(translations)
+    verify_catalog_upload()
     print("\nFirebase verification passed.")
 
 
@@ -341,16 +328,16 @@ def remove_local_licensed_text(translation: str, keep_meta: bool) -> None:
         print("  no text-bearing JSON files needed removal")
 
 
-def cleanup_repository(translations: list[str], keep_meta: bool) -> None:
+def cleanup_repository(keep_meta: bool) -> None:
     patch_bible_api()
     patch_translation_index()
-    for translation in translations:
+    for translation in LICENSED_TRANSLATIONS:
         remove_local_licensed_text(translation, keep_meta)
 
 
-def print_plan(translations: list[str], keep_meta: bool) -> None:
+def print_plan(keep_meta: bool) -> None:
     print("Bookshift migration plan")
-    print(f"  translations: {', '.join(translations)}")
+    print(f"  translations: {', '.join(LICENSED_TRANSLATIONS)}")
     print(f"  keep meta.json locally: {keep_meta}")
     print("  upload book JSON files to /translations/<ID>/<Book>")
     print("  upload meta.json to /translations/<ID>/meta when present")
@@ -358,52 +345,38 @@ def print_plan(translations: list[str], keep_meta: bool) -> None:
     print("  upload access-tagged catalog to /translationIndex")
     print("  upload public/ licensed translation maps")
     print("  verify Firebase contains the uploaded translation and catalog nodes")
-    print("  full-migration and upload-and-clean-repo mode also:")
+    print("  full-migration mode also:")
     print("    enable Firebase translation loading in bible-api.js")
     print("    reduce REPO_TRANSLATIONS to public/free translations")
     print("    remove licensed text-bearing JSON files from GitHub")
 
 
-def upload_all(translations: list[str]) -> None:
-    for translation in translations:
+def upload_all() -> None:
+    for translation in LICENSED_TRANSLATIONS:
         upload_translation(translation)
     upload_catalog()
-
-
-def cleanup_mode(mode: str) -> bool:
-    return mode in {"full-migration", "upload-and-clean-repo"}
 
 
 def run() -> None:
     mode = env("BOOKSHIFT_MODE", "plan")
     keep_meta = env_bool("BOOKSHIFT_KEEP_META", True)
-    target = env("TARGET_TRANSLATION")
-    translations = selected_translations()
 
-    if mode not in {"plan", "upload-only", "verify-only", "upload-and-clean-repo", "full-migration"}:
+    if mode not in {"plan", "verify-only", "full-migration"}:
         raise RuntimeError(f"Unsupported BOOKSHIFT_MODE: {mode}")
-    if cleanup_mode(mode) and target:
-        raise RuntimeError(
-            "Cleanup modes must run with the translation field blank so all licensed "
-            "translations are uploaded, verified, and removed together."
-        )
 
-    print_plan(translations, keep_meta)
+    print_plan(keep_meta)
     if mode == "plan":
         return
 
     init_firebase()
 
     if mode == "verify-only":
-        verify_uploads(translations)
+        verify_uploads()
         return
 
-    upload_all(translations)
-
-    if cleanup_mode(mode):
-        verify_uploads(translations)
-        cleanup_repository(translations, keep_meta)
-
+    upload_all()
+    verify_uploads()
+    cleanup_repository(keep_meta)
     print("\nBookshift migration finished.")
 
 
