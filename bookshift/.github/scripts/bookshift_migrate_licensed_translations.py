@@ -11,7 +11,8 @@ import firebase_admin
 from firebase_admin import credentials, db
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_MAX_NODE_BYTES = 3_500_000
+# Firebase Realtime Database SDK writes are capped at 16 MB. Keep margin below that platform limit.
+DEFAULT_MAX_NODE_BYTES = 15_000_000
 
 LICENSED_TRANSLATIONS = (
     "CSB",
