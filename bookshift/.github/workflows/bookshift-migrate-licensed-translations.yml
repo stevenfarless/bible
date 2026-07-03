@@ -15,7 +15,7 @@ on:
           - verify-only
           - upload-and-clean-repo
       translation:
-        description: 'Licensed translation to migrate, or blank for all licensed translations'
+        description: 'Optional single licensed translation, or blank for every licensed translation'
         required: false
         default: ''
       keep_meta:

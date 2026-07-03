@@ -172,9 +172,11 @@ def local_json_files(translation: str) -> list[Path]:
     json_files = sorted(trans_dir.glob("*.json"))
     if not json_files:
         raise RuntimeError(f"No JSON files found in {trans_dir}")
-    if trans_dir.joinpath("meta.json") not in json_files:
-        raise RuntimeError(f"Missing required metadata file: {trans_dir / 'meta.json'}")
     return json_files
+
+
+def has_local_meta(translation: str) -> bool:
+    return ROOT.joinpath("translations", translation, "meta.json").exists()
 
 
 def firebase_translation_key(path: Path, translation: str) -> str:
@@ -220,9 +222,11 @@ def verify_translation_upload(translation: str) -> None:
     print(f"\n=== Verifying {translation} ===")
     first_book = first_required_book_file(translation)
     checks = [
-        (f"translations/{translation}/meta", True),
         (f"translations/{translation}/{firebase_key(first_book.stem)}", True),
     ]
+
+    if has_local_meta(translation):
+        checks.insert(0, (f"translations/{translation}/meta", True))
 
     search_index = ROOT / "translations" / translation / f"{translation}_search_index.json"
     if search_index.exists():
@@ -350,8 +354,8 @@ def print_plan(translations: list[str], keep_meta: bool) -> None:
     print("Bookshift migration plan")
     print(f"  translations: {', '.join(translations)}")
     print(f"  keep meta.json locally: {keep_meta}")
-    print("  upload meta.json to /translations/<ID>/meta")
     print("  upload book JSON files to /translations/<ID>/<Book>")
+    print("  upload meta.json to /translations/<ID>/meta when present")
     print("  upload search indexes to /searchIndex/<ID>")
     print("  upload access-tagged catalog to /translationIndex")
     print("  upload public/ licensed translation maps")
