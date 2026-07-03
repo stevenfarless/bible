@@ -267,8 +267,24 @@ def verify_catalog_upload() -> None:
 
 
 def verify_uploads() -> None:
+    missing_local = [
+        translation for translation in LICENSED_TRANSLATIONS
+        if not (ROOT / "translations" / translation).is_dir()
+    ]
+    if missing_local:
+        missing_remote = [
+            translation for translation in missing_local
+            if db.reference(f"translations/{translation}").get() is None
+        ]
+        if missing_remote:
+            raise RuntimeError(
+                "Firebase verification failed: missing local and remote translations "
+                + ", ".join(missing_remote)
+            )
+
     for translation in LICENSED_TRANSLATIONS:
-        verify_translation_upload(translation)
+        if (ROOT / "translations" / translation).is_dir():
+            verify_translation_upload(translation)
     verify_catalog_upload()
     print("\nFirebase verification passed.")
 
@@ -353,7 +369,10 @@ def print_plan(keep_meta: bool) -> None:
 
 def upload_all() -> None:
     for translation in LICENSED_TRANSLATIONS:
-        upload_translation(translation)
+        if (ROOT / "translations" / translation).is_dir():
+            upload_translation(translation)
+        else:
+            print(f"\n=== Skipping missing local {translation} directory ===")
     upload_catalog()
 
 
