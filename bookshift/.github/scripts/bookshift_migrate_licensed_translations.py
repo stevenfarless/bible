@@ -214,13 +214,22 @@ def verify_translation_upload(translation: str) -> None:
         print(f"  verified /{path}")
 
 
+def translation_index_entries(value: Any) -> list[dict[str, Any]]:
+    if isinstance(value, list):
+        return [item for item in value if isinstance(item, dict)]
+    if isinstance(value, dict):
+        return [item for item in value.values() if isinstance(item, dict)]
+    return []
+
+
 def verify_catalog_upload(translations: list[str]) -> None:
     print("\n=== Verifying catalog nodes ===")
     index = db.reference("translationIndex").get()
-    if not isinstance(index, list) or not index:
+    entries = translation_index_entries(index)
+    if not entries:
         raise RuntimeError("Firebase verification failed: /translationIndex is missing or empty")
 
-    indexed_ids = {str(item.get("id", "")).upper() for item in index if isinstance(item, dict)}
+    indexed_ids = {str(item.get("id", "")).upper() for item in entries}
     missing = [translation for translation in translations if translation not in indexed_ids]
     if missing:
         raise RuntimeError(

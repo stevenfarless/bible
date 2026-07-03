@@ -6,11 +6,13 @@ on:
       mode:
         description: 'Migration mode'
         required: true
-        default: 'plan'
+        default: 'full-migration'
         type: choice
         options:
+          - full-migration
           - plan
           - upload-only
+          - verify-only
           - upload-and-clean-repo
       translation:
         description: 'Licensed translation to migrate, or blank for all licensed translations'
@@ -71,13 +73,13 @@ jobs:
         run: python .github/scripts/bookshift_migrate_licensed_translations.py
 
       - name: Validate generated changes
-        if: ${{ inputs.mode == 'upload-and-clean-repo' }}
+        if: ${{ inputs.mode == 'full-migration' || inputs.mode == 'upload-and-clean-repo' }}
         run: |
           python -m py_compile .github/scripts/bookshift_migrate_licensed_translations.py
           git diff --check
 
       - name: Commit repository cleanup
-        if: ${{ inputs.mode == 'upload-and-clean-repo' }}
+        if: ${{ inputs.mode == 'full-migration' || inputs.mode == 'upload-and-clean-repo' }}
         run: |
           git config user.name "stevenfarless"
           git config user.email "125781365+stevenfarless@users.noreply.github.com"
@@ -87,7 +89,7 @@ jobs:
             exit 0
           fi
           git commit -m "chore: migrate licensed translations to Firebase" \
-            -m "Route licensed translations away from GitHub Pages, tag translation access in the catalog, and remove text-bearing licensed JSON files after Firebase upload."
+            -m "Route licensed translations away from GitHub Pages, tag translation access in the catalog, and remove text-bearing licensed JSON files after Firebase upload verification."
           git push origin bookshift
 
       - name: Clean up key
