@@ -26,6 +26,10 @@ const REPO_TRANSLATIONS = new Set([
     "ASV", "BLB", "BSB", "KJV", "MSB", "WEB",
 ]);
 
+const LICENSED_TRANSLATIONS = new Set([
+    "CSB", "ESV", "ISV", "LEB", "MEV", "NET", "NIV", "NKJV", "NLT", "NRSVUE",
+]);
+
 const BOOK_LOAD_ORDER = [
     'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
     'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
@@ -239,6 +243,10 @@ export class BibleApi {
         this._translationBookLists.set(translation, bookNames);
     }
 
+    isLicensedTranslation(translation) {
+        return LICENSED_TRANSLATIONS.has(translation);
+    }
+
     async _getShallowIndex(translation) {
         if (!FIREBASE_TRANSLATIONS_ENABLED) return new Map();
         if (this._shallowIndexCache.has(translation)) {
@@ -313,6 +321,12 @@ export class BibleApi {
             return promise;
         }
 
+        if (LICENSED_TRANSLATIONS.has(translation)) {
+            console.warn(`BibleApi: ${translation} is licensed and is not available by default`);
+            this._bookCache.set(cacheKey, null);
+            return null;
+        }
+
         if (!FIREBASE_TRANSLATIONS_ENABLED) {
             console.warn(`BibleApi: Firebase translations disabled — cannot load ${translation}/${this._sanitizeForLog(book)}`);
             return null;
@@ -363,6 +377,11 @@ export class BibleApi {
                     return null;
                 }
 
+                if (LICENSED_TRANSLATIONS.has(translation)) {
+                    this._searchIndexCache.set(translation, null);
+                    return null;
+                }
+
                 if (isRepo && !PRECACHED_TRANSLATIONS.has(translation)) {
                     const installed = await idbIsDownloaded(translation);
                     if (!installed) {
@@ -403,6 +422,10 @@ export class BibleApi {
     }
 
     async downloadTranslation(translation, bookList, onProgress) {
+        if (LICENSED_TRANSLATIONS.has(translation)) {
+            throw new Error(`${translation} is licensed and is not available for download by default`);
+        }
+
         const books = bookList?.length ? bookList : BOOK_LOAD_ORDER;
         const total = books.length;
         const failedBooks = [];
@@ -804,7 +827,9 @@ export class BibleApi {
         if (q.length < 3) return [];
 
         const activeTranslation = this._translation;
-        const candidates = [...LOCAL_TRANSLATIONS].filter((t) => t !== activeTranslation);
+        const candidates = [...LOCAL_TRANSLATIONS].filter((t) => (
+            t !== activeTranslation && !LICENSED_TRANSLATIONS.has(t)
+        ));
 
         if (candidates.length === 0) return [];
 

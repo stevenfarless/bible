@@ -1267,7 +1267,9 @@ class BibleApp {
         }
 
         const active = this.state.translation;
-        const others = [...LOCAL_TRANSLATIONS].filter(t => t !== active);
+        const others = [...LOCAL_TRANSLATIONS].filter((t) => (
+            t !== active && !this.bibleApi?.isLicensedTranslation?.(t)
+        ));
         let i = 0;
         const next = () => {
             if (i >= others.length) return;
