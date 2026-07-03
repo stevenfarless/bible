@@ -153,7 +153,7 @@ def upload_catalog() -> None:
     )
 
 
-def upload_translation(translation: str) -> None:
+def local_json_files(translation: str) -> list[Path]:
     trans_dir = ROOT / "translations" / translation
     if not trans_dir.is_dir():
         raise RuntimeError(f"Missing translation directory: {trans_dir}")
@@ -161,10 +161,13 @@ def upload_translation(translation: str) -> None:
     json_files = sorted(trans_dir.glob("*.json"))
     if not json_files:
         raise RuntimeError(f"No JSON files found in {trans_dir}")
+    return json_files
 
+
+def upload_translation(translation: str) -> None:
     print(f"\n=== Uploading {translation} ===")
     uploaded_any = False
-    for path in json_files:
+    for path in local_json_files(translation):
         data = load_json(path)
         stem = path.stem
         if path.name == f"{translation}_search_index.json" or stem.endswith("_search_index"):
@@ -179,6 +182,74 @@ def upload_translation(translation: str) -> None:
 
     if not uploaded_any:
         raise RuntimeError(f"Nothing uploaded for {translation}")
+
+
+def first_required_book_file(translation: str) -> Path:
+    for path in local_json_files(translation):
+        if path.name == "meta.json":
+            continue
+        if path.name == f"{translation}_search_index.json" or path.stem.endswith("_search_index"):
+            continue
+        return path
+    raise RuntimeError(f"No book JSON file found for {translation}")
+
+
+def verify_translation_upload(translation: str) -> None:
+    print(f"\n=== Verifying {translation} ===")
+    first_book = first_required_book_file(translation)
+    checks = [
+        (f"translations/{translation}/{first_book.stem}", True),
+    ]
+
+    search_index = ROOT / "translations" / translation / f"{translation}_search_index.json"
+    if search_index.exists():
+        checks.append((f"searchIndex/{translation}", False))
+
+    for path, require_mapping in checks:
+        value = db.reference(path).get()
+        if value is None:
+            raise RuntimeError(f"Firebase verification failed: missing /{path}")
+        if require_mapping and not isinstance(value, dict):
+            raise RuntimeError(f"Firebase verification failed: /{path} is not an object")
+        print(f"  verified /{path}")
+
+
+def verify_catalog_upload(translations: list[str]) -> None:
+    print("\n=== Verifying catalog nodes ===")
+    index = db.reference("translationIndex").get()
+    if not isinstance(index, list) or not index:
+        raise RuntimeError("Firebase verification failed: /translationIndex is missing or empty")
+
+    indexed_ids = {str(item.get("id", "")).upper() for item in index if isinstance(item, dict)}
+    missing = [translation for translation in translations if translation not in indexed_ids]
+    if missing:
+        raise RuntimeError(
+            "Firebase verification failed: /translationIndex missing " + ", ".join(missing)
+        )
+    print("  verified /translationIndex")
+
+    public_map = db.reference("publicTranslations").get()
+    if not isinstance(public_map, dict):
+        raise RuntimeError("Firebase verification failed: /publicTranslations is missing")
+    for translation in PUBLIC_TRANSLATIONS:
+        if public_map.get(translation) is not True:
+            raise RuntimeError(f"Firebase verification failed: /publicTranslations/{translation}")
+    print("  verified /publicTranslations")
+
+    licensed_map = db.reference("licensedTranslations").get()
+    if not isinstance(licensed_map, dict):
+        raise RuntimeError("Firebase verification failed: /licensedTranslations is missing")
+    for translation in translations:
+        if licensed_map.get(translation) is not True:
+            raise RuntimeError(f"Firebase verification failed: /licensedTranslations/{translation}")
+    print("  verified /licensedTranslations")
+
+
+def verify_uploads(translations: list[str]) -> None:
+    for translation in translations:
+        verify_translation_upload(translation)
+    verify_catalog_upload(translations)
+    print("\nFirebase verification passed.")
 
 
 def patch_bible_api() -> None:
@@ -236,6 +307,13 @@ def remove_local_licensed_text(translation: str, keep_meta: bool) -> None:
         print("  no text-bearing JSON files needed removal")
 
 
+def cleanup_repository(translations: list[str], keep_meta: bool) -> None:
+    patch_bible_api()
+    patch_translation_index()
+    for translation in translations:
+        remove_local_licensed_text(translation, keep_meta)
+
+
 def print_plan(translations: list[str], keep_meta: bool) -> None:
     print("Bookshift migration plan")
     print(f"  translations: {', '.join(translations)}")
@@ -244,10 +322,17 @@ def print_plan(translations: list[str], keep_meta: bool) -> None:
     print("  upload search indexes to /searchIndex/<ID>")
     print("  upload access-tagged catalog to /translationIndex")
     print("  upload public/ licensed translation maps")
-    print("  upload-and-clean-repo mode also:")
+    print("  verify Firebase contains the uploaded translation and catalog nodes")
+    print("  full-migration and upload-and-clean-repo mode also:")
     print("    enable Firebase translation loading in bible-api.js")
     print("    reduce REPO_TRANSLATIONS to public/free translations")
     print("    remove licensed text-bearing JSON files from GitHub")
+
+
+def upload_all(translations: list[str]) -> None:
+    for translation in translations:
+        upload_translation(translation)
+    upload_catalog()
 
 
 def run() -> None:
@@ -255,7 +340,7 @@ def run() -> None:
     keep_meta = env_bool("BOOKSHIFT_KEEP_META", True)
     translations = selected_translations()
 
-    if mode not in {"plan", "upload-only", "upload-and-clean-repo"}:
+    if mode not in {"plan", "upload-only", "verify-only", "upload-and-clean-repo", "full-migration"}:
         raise RuntimeError(f"Unsupported BOOKSHIFT_MODE: {mode}")
 
     print_plan(translations, keep_meta)
@@ -263,15 +348,16 @@ def run() -> None:
         return
 
     init_firebase()
-    for translation in translations:
-        upload_translation(translation)
-    upload_catalog()
 
-    if mode == "upload-and-clean-repo":
-        patch_bible_api()
-        patch_translation_index()
-        for translation in translations:
-            remove_local_licensed_text(translation, keep_meta)
+    if mode == "verify-only":
+        verify_uploads(translations)
+        return
+
+    upload_all(translations)
+
+    if mode in {"full-migration", "upload-and-clean-repo"}:
+        verify_uploads(translations)
+        cleanup_repository(translations, keep_meta)
 
     print("\nBookshift migration finished.")
 
