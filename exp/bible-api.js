@@ -157,27 +157,35 @@ function _tokenizeSearchText(value) {
         .filter(Boolean);
 }
 
+function _buildSearchToken(token) {
+    return {
+        raw: token,
+        normalized: _normalizeTerm(token),
+    };
+}
+
 function _termMatchRank(term, token) {
-    if (token === term) return TEXT_MATCH_EXACT;
-    if (term.length >= PREFIX_MATCH_MIN_LENGTH && token.startsWith(term)) return TEXT_MATCH_PREFIX;
+    if (token.raw === term.raw || token.normalized === term.normalized) return TEXT_MATCH_EXACT;
+    if (term.raw.length >= PREFIX_MATCH_MIN_LENGTH && token.raw.startsWith(term.raw)) return TEXT_MATCH_PREFIX;
+    if (term.normalized.length >= PREFIX_MATCH_MIN_LENGTH && token.normalized.startsWith(term.normalized)) return TEXT_MATCH_PREFIX;
     return TEXT_MATCH_NONE;
 }
 
 function _buildTextMatcher(query) {
-    const normalizedTerms = _tokenizeSearchText(query)
-        .map((term) => _normalizeTerm(term))
-        .filter(Boolean);
+    const terms = _tokenizeSearchText(query)
+        .map((term) => _buildSearchToken(term))
+        .filter((term) => term.raw || term.normalized);
 
     return (value) => {
-        const normalizedTokens = _tokenizeSearchText(value)
-            .map((token) => _normalizeTerm(token))
-            .filter(Boolean);
+        const tokens = _tokenizeSearchText(value)
+            .map((token) => _buildSearchToken(token))
+            .filter((token) => token.raw || token.normalized);
         let overallRank = TEXT_MATCH_EXACT;
 
-        for (const term of normalizedTerms) {
+        for (const term of terms) {
             let termRank = TEXT_MATCH_NONE;
 
-            for (const token of normalizedTokens) {
+            for (const token of tokens) {
                 const rank = _termMatchRank(term, token);
                 if (rank > termRank) termRank = rank;
                 if (termRank === TEXT_MATCH_EXACT) break;
