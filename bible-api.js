@@ -12,6 +12,10 @@ const FIREBASE_TRANSLATIONS_ENABLED = false;
 
 const PAGE_SIZE = 100;
 const SEARCH_CONCURRENCY = 5;
+const PREFIX_MATCH_MIN_LENGTH = 6;
+const TEXT_MATCH_NONE = 0;
+const TEXT_MATCH_PREFIX = 1;
+const TEXT_MATCH_EXACT = 2;
 
 export const PRECACHED_TRANSLATIONS = new Set([
     "BSB", "KJV",
@@ -153,15 +157,45 @@ function _tokenizeSearchText(value) {
         .filter(Boolean);
 }
 
+function _buildSearchToken(token) {
+    return {
+        raw: token,
+        normalized: _normalizeTerm(token),
+    };
+}
+
+function _termMatchRank(term, token) {
+    if (token.raw === term.raw || token.normalized === term.normalized) return TEXT_MATCH_EXACT;
+    if (term.raw.length >= PREFIX_MATCH_MIN_LENGTH && token.raw.startsWith(term.raw)) return TEXT_MATCH_PREFIX;
+    if (term.normalized.length >= PREFIX_MATCH_MIN_LENGTH && token.normalized.startsWith(term.normalized)) return TEXT_MATCH_PREFIX;
+    return TEXT_MATCH_NONE;
+}
+
 function _buildTextMatcher(query) {
-    const normalizedTerms = _tokenizeSearchText(query).map((term) => _normalizeTerm(term));
+    const terms = _tokenizeSearchText(query)
+        .map((term) => _buildSearchToken(term))
+        .filter((term) => term.raw || term.normalized);
 
     return (value) => {
-        const normalizedTokens = new Set(
-            _tokenizeSearchText(value).map((token) => _normalizeTerm(token))
-        );
+        const tokens = _tokenizeSearchText(value)
+            .map((token) => _buildSearchToken(token))
+            .filter((token) => token.raw || token.normalized);
+        let overallRank = TEXT_MATCH_EXACT;
 
-        return normalizedTerms.every((term) => normalizedTokens.has(term));
+        for (const term of terms) {
+            let termRank = TEXT_MATCH_NONE;
+
+            for (const token of tokens) {
+                const rank = _termMatchRank(term, token);
+                if (rank > termRank) termRank = rank;
+                if (termRank === TEXT_MATCH_EXACT) break;
+            }
+
+            if (termRank === TEXT_MATCH_NONE) return TEXT_MATCH_NONE;
+            if (termRank < overallRank) overallRank = termRank;
+        }
+
+        return overallRank;
     };
 }
 
@@ -290,7 +324,7 @@ export class BibleApi {
                             this._bookCache.set(cacheKey, cached);
                             return cached;
                         }
-                        this._bookCache.set(cacheKey, null);
+                        this._bookCache.delete(cacheKey);
                         return null;
                     }
 
@@ -303,7 +337,7 @@ export class BibleApi {
                     return data;
                 } catch (err) {
                     console.error(`BibleApi: failed to load ${translation}/${this._sanitizeForLog(book)}`, err);
-                    this._bookCache.set(cacheKey, null);
+                    this._bookCache.delete(cacheKey);
                     return null;
                 } finally {
                     this._localBookFetchPromise.delete(cacheKey);
@@ -338,11 +372,15 @@ export class BibleApi {
                 const exactKey = shallowIndex.get(book.toLowerCase());
                 if (exactKey && exactKey !== book) bookData = await fetchNode(exactKey);
             }
-            this._bookCache.set(cacheKey, bookData);
+            if (bookData !== null) {
+                this._bookCache.set(cacheKey, bookData);
+            } else {
+                this._bookCache.delete(cacheKey);
+            }
             return bookData;
         } catch (err) {
             console.error(`BibleApi: failed to load ${translation}/${book} from RTDB`, err);
-            this._bookCache.set(cacheKey, null);
+            this._bookCache.delete(cacheKey);
             return null;
         }
     }
@@ -387,7 +425,9 @@ export class BibleApi {
                 const index = (data && typeof data === 'object' && Object.keys(data).length > 0) ? data : null;
                 this._searchIndexCache.set(translation, index);
                 if (isRepo && !PRECACHED_TRANSLATIONS.has(translation) && index !== null) {
-                    idbPutSearchIndex(translation, index).catch(() => { });
+                    idbPutSearchIndex(translation, index).catch((error) => {
+                        console.warn(`BibleApi: failed to persist search index for ${translation}`, error);
+                    });
                 }
                 return index;
             } catch (err) {
@@ -639,11 +679,21 @@ export class BibleApi {
         return { passages: [html], canonical };
     }
 
+    _compareSearchMatches(a, b) {
+        const rankDelta = (b.searchRank ?? TEXT_MATCH_EXACT) - (a.searchRank ?? TEXT_MATCH_EXACT);
+        if (rankDelta !== 0) return rankDelta;
+        const bookDelta = (BOOK_ORDER_INDEX.get(a.book) ?? 999) - (BOOK_ORDER_INDEX.get(b.book) ?? 999);
+        if (bookDelta !== 0) return bookDelta;
+        if (a.chapter !== b.chapter) return a.chapter - b.chapter;
+        return a.verse - b.verse;
+    }
+
     _scanSearchIndex(searchIndex, matcher, mode = 'text') {
         const matched = [];
         for (const ref of Object.keys(searchIndex)) {
             const target = mode === 'reference' ? ref : searchIndex[ref];
-            if (!matcher(target)) continue;
+            const matchRank = matcher(target);
+            if (!matchRank) continue;
             const colonIdx = ref.lastIndexOf(':');
             const spaceIdx = ref.lastIndexOf(' ', colonIdx);
             matched.push({
@@ -651,14 +701,10 @@ export class BibleApi {
                 book: ref.slice(0, spaceIdx),
                 chapter: Number(ref.slice(spaceIdx + 1, colonIdx)),
                 verse: Number(ref.slice(colonIdx + 1)),
+                searchRank: typeof matchRank === 'number' ? matchRank : TEXT_MATCH_EXACT,
             });
         }
-        matched.sort((a, b) => {
-            const bi = (BOOK_ORDER_INDEX.get(a.book) ?? 999) - (BOOK_ORDER_INDEX.get(b.book) ?? 999);
-            if (bi !== 0) return bi;
-            if (a.chapter !== b.chapter) return a.chapter - b.chapter;
-            return a.verse - b.verse;
-        });
+        matched.sort((a, b) => this._compareSearchMatches(a, b));
         return matched;
     }
 
@@ -776,10 +822,10 @@ export class BibleApi {
                     for (const [verseStr, text] of verseEntries) {
                         const verseText = String(text || '');
                         const reference = `${book} ${chapterStr}:${verseStr}`;
-                        const isMatch = mode === 'reference'
+                        const matchRank = mode === 'reference'
                             ? matcher(reference)
                             : matcher(verseText);
-                        if (!isMatch) continue;
+                        if (!matchRank) continue;
                         batchResults.push({
                             reference,
                             content: verseText,
@@ -787,17 +833,22 @@ export class BibleApi {
                             chapter: Number(chapterStr),
                             verse: Number(verseStr),
                             text: verseText,
+                            searchRank: typeof matchRank === 'number' ? matchRank : TEXT_MATCH_EXACT,
                         });
                     }
                 }
             }
             if (batchResults.length > 0) {
                 allResults.push(...batchResults);
-                if (typeof onBatchResults === 'function') onBatchResults(batchResults);
+                if (typeof onBatchResults === 'function') {
+                    onBatchResults(batchResults.map(({ searchRank, ...result }) => result));
+                }
             }
         }
 
-        return { results: allResults, total_results: allResults.length, page_size: PAGE_SIZE };
+        allResults.sort((a, b) => this._compareSearchMatches(a, b));
+        const results = allResults.map(({ searchRank, ...result }) => result);
+        return { results, total_results: results.length, page_size: PAGE_SIZE };
     }
 
     async searchPassagesAllTranslations(query, knownRefs) {
