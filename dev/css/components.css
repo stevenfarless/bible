@@ -153,6 +153,14 @@
     padding-top: var(--spacing-lg);
 }
 
+.book-category--hide-filter-heading {
+    padding-top: var(--spacing-lg);
+}
+
+.book-category--hide-filter-heading>h3 {
+    display: none;
+}
+
 .book-category h3 {
     position: relative;
     font-size: 1.1rem;
