@@ -391,7 +391,9 @@ export class BibleApi {
                 const index = (data && typeof data === 'object' && Object.keys(data).length > 0) ? data : null;
                 this._searchIndexCache.set(translation, index);
                 if (isRepo && !PRECACHED_TRANSLATIONS.has(translation) && index !== null) {
-                    idbPutSearchIndex(translation, index).catch(() => { });
+                    idbPutSearchIndex(translation, index).catch((error) => {
+                        console.warn(`BibleApi: failed to persist search index for ${translation}`, error);
+                    });
                 }
                 return index;
             } catch (err) {
