@@ -1273,7 +1273,11 @@ class BibleApp {
             if (i >= others.length) return;
             const t = others[i++];
             this.bibleApi._loadBook(t, book)
-                .catch(() => { })
+                .catch((error) => {
+                    const message = `prefetch failed: ${t}/${book}`;
+                    console.warn(message, error);
+                    this._dbgEvent(`${message} — ${error?.message || error}`);
+                })
                 .finally(() => setTimeout(next, 300));
         };
         setTimeout(next, 1000);
@@ -1291,7 +1295,11 @@ class BibleApp {
         ].filter(Boolean);
         setTimeout(() => {
             for (const book of toFetch) {
-                this.bibleApi._loadBook(translation, book).catch(() => { });
+                this.bibleApi._loadBook(translation, book).catch((error) => {
+                    const message = `prefetch adjacent failed: ${translation}/${book}`;
+                    console.warn(message, error);
+                    this._dbgEvent(`${message} — ${error?.message || error}`);
+                });
             }
         }, 3000);
     }
@@ -1473,7 +1481,10 @@ class BibleApp {
                         this._dbgEvent(`setBookList: ${startingTranslation} (${meta.books.length} books)`);
                     }
                 })
-                .catch(() => { });
+                .catch((error) => {
+                    console.warn(`BibleApp: failed to load ${startingTranslation} meta.json`, error);
+                    this._dbgEvent(`meta load failed: ${startingTranslation} — ${error?.message || error}`);
+                });
         } catch (err) {
             console.error('BibleApp: failed to load translation index', err);
         }
