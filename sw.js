@@ -66,6 +66,7 @@ const APP_SHELL = [
   './app.js',
   './install-prompt.js',
   './bible-api.js',
+  './search-index-engine.js',
   './bible-structure.js',
   './bsb-structure.js',
   './book-aliases.js',
