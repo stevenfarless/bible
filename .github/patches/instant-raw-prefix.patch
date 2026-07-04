@@ -1,7 +1,7 @@
 diff --git a/bible-api.js b/bible-api.js
 --- a/bible-api.js
 +++ b/bible-api.js
-@@ -159,38 +159,55 @@ function _tokenizeSearchText(value) {
+@@ -159,27 +159,35 @@
          .filter(Boolean);
  }
  
@@ -47,22 +47,10 @@ diff --git a/bible-api.js b/bible-api.js
                  const rank = _termMatchRank(term, token);
                  if (rank > termRank) termRank = rank;
                  if (termRank === TEXT_MATCH_EXACT) break;
-             }
- 
-             if (termRank === TEXT_MATCH_NONE) return TEXT_MATCH_NONE;
-             if (termRank < overallRank) overallRank = termRank;
-         }
- 
-         return overallRank;
-     };
- }
- 
- 
- export async function loadTranslationIndex() {
 diff --git a/tests/unit/bible-api-search.test.js b/tests/unit/bible-api-search.test.js
 --- a/tests/unit/bible-api-search.test.js
 +++ b/tests/unit/bible-api-search.test.js
-@@ -91,6 +91,17 @@ describe('BibleApi search word matching', () => {
+@@ -89,6 +89,16 @@
          ]);
      });
  
@@ -79,7 +67,7 @@ diff --git a/tests/unit/bible-api-search.test.js b/tests/unit/bible-api-search.t
      it('does not match short word prefixes', async () => {
          const api = makeApi();
          const { results } = await api.searchPassages('prede');
-@@ -115,4 +126,16 @@ describe('BibleApi search word matching', () => {
+@@ -113,4 +123,15 @@
              'Genesis 1:10',
          ]);
      });
