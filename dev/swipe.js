@@ -481,7 +481,8 @@ export function initSwipe(app) {
                 incomingPos.chapter,
                 app.state.translation || 'KJV',
                 title,
-                app.passageText.innerHTML
+                app.passageText.innerHTML,
+                'swipe'
             );
             app._dbgEvent?.(`swipe commit: ${incomingPos.book} ${incomingPos.chapter} (direction=${direction})`);
             app._dbgUserAction?.(`swipe: ${direction === 1 ? 'next' : 'prev'} → ${incomingPos.book} ${incomingPos.chapter}`);
