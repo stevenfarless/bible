@@ -1,6 +1,8 @@
 // keyboard.js
 // Global keyboard shortcut handler for BibleApp.
 
+import './search-index-engine.js';
+
 /**
  * @param {object} app - BibleApp instance
  * @param {KeyboardEvent} e
