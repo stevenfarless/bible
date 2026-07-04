@@ -57,6 +57,7 @@ export function navigateChapter(app, direction) {
 }
 
 export function scrollToVerse(app, verseNumber) {
+    app.saveReadingPosition?.('verse-selection-start');
     app.state.selectedVerse = verseNumber;
     app.currentVerseSpan.textContent = `${verseNumber}`;
     app.applyVerseGlow();
