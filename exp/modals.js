@@ -499,7 +499,14 @@ function _renderBookPickerView(app) {
         activeTestament = activeTestament === testament ? null : testament;
 
         for (const [sectionTestament, section] of sections) {
-            section.hidden = activeTestament !== null && sectionTestament !== activeTestament;
+            const isVisibleSection = activeTestament === null || sectionTestament === activeTestament;
+            section.hidden = !isVisibleSection;
+            section.classList.toggle(
+                'book-category--hide-filter-heading',
+                activeTestament !== null
+                && sectionTestament === activeTestament
+                && sectionTestament !== 'Deuterocanon'
+            );
         }
 
         for (const [buttonTestament, button] of filterButtons) {
@@ -641,29 +648,29 @@ function _renderVersePickerView(app) {
     }
 
     if (draft.entryView !== 'verse') {
-    const actions = document.createElement('div');
-    actions.className = 'picker-actions picker-actions--top';
+        const actions = document.createElement('div');
+        actions.className = 'picker-actions picker-actions--top';
 
-    const goButton = document.createElement('button');
-    goButton.className = 'secondary-btn reference-picker-go';
-    goButton.type = 'button';
-    goButton.textContent = 'Go';
-    goButton.addEventListener('click', () => {
-        const targetBook = draft.book || app.state.currentBook;
-        const targetChapter = draft.chapter || app.state.currentChapter;
+        const goButton = document.createElement('button');
+        goButton.className = 'secondary-btn reference-picker-go';
+        goButton.type = 'button';
+        goButton.textContent = 'Go';
+        goButton.addEventListener('click', () => {
+            const targetBook = draft.book || app.state.currentBook;
+            const targetChapter = draft.chapter || app.state.currentChapter;
 
-        app._dbgUserAction?.('picker go: ' + targetBook + ' ' + targetChapter);
-        app._dbgEvent?.('picker go from verse picker: ' + targetBook + ' ' + targetChapter);
-        app.referencePickerDraft = null;
-        app.state.selectedVerse = null;
-        if (app.currentVerseSpan) app.currentVerseSpan.textContent = '1';
-        app.applyVerseGlow?.();
-        closeReferencePicker(app);
-    });
+            app._dbgUserAction?.('picker go: ' + targetBook + ' ' + targetChapter);
+            app._dbgEvent?.('picker go from verse picker: ' + targetBook + ' ' + targetChapter);
+            app.referencePickerDraft = null;
+            app.state.selectedVerse = null;
+            if (app.currentVerseSpan) app.currentVerseSpan.textContent = '1';
+            app.applyVerseGlow?.();
+            closeReferencePicker(app);
+        });
 
-    actions.appendChild(goButton);
-    view.appendChild(actions);
-}
+        actions.appendChild(goButton);
+        view.appendChild(actions);
+    }
 
     const activeVerse = app.state.selectedVerse;
 
