@@ -156,6 +156,24 @@ describe('BibleApi search word matching', () => {
         expect(api._searchIndexCache.get('KJV')).not.toBe(SEARCH_INDEX_FIXTURE);
     });
 
+    it('uses indexed preview text without fetching matched books', async () => {
+        const api = new BibleApi('KJV');
+        api._searchIndexCache.set('KJV', buildInvertedSearchIndex({
+            'Romans 8:29': 'for whom he did foreknow, he also did predestinate',
+        }));
+        api._loadBook = async () => {
+            throw new Error('search result hydration should not fetch books');
+        };
+
+        const { results } = await api.searchPassages('predestinate');
+
+        expect(results).toHaveLength(1);
+        expect(results[0]).toMatchObject({
+            reference: 'Romans 8:29',
+            content: 'for whom he did foreknow, he also did predestinate',
+        });
+    });
+
     it('ranks exact matches first when falling back to book scanning', async () => {
         const api = makeApi({ index: null });
         const { results } = await api.searchPassages('predestin');
