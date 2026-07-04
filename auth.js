@@ -9,12 +9,78 @@ function lsSetJSON(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) { }
 }
 
+function isAuthRestorePositionSource(source) {
+    const value = String(source || 'unspecified');
+    return value === 'auth-restoration-newer-local-position' ||
+        value.startsWith('auth-') ||
+        value.includes(':auth-') ||
+        value.startsWith('legacy-') ||
+        value.includes(':legacy-');
+}
+
+function markLocalReadingPositionChange(app, source) {
+    if (isAuthRestorePositionSource(source)) return;
+
+    app._localReadingPositionVersion = (app._localReadingPositionVersion || 0) + 1;
+    app._localReadingPositionChangedAt = performance.now();
+    app._localReadingPositionChangeSource = source;
+}
+
+function hasLocalPositionChangedSinceAuthScheduled(app) {
+    if (app.hasLocalPositionChangedSinceAuthStart?.()) return true;
+
+    const scheduledAt = app._dbg?.t_auth_restore_scheduled;
+    const changedAt = app._localReadingPositionChangedAt;
+
+    return Number.isFinite(scheduledAt) &&
+        Number.isFinite(changedAt) &&
+        changedAt > scheduledAt;
+}
+
+function currentReadingPosition(app) {
+    return {
+        book: app.state.currentBook,
+        chapter: app.state.currentChapter,
+        scrollY: window.scrollY || 0,
+    };
+}
+
+function markCurrentPositionAsAuthBaseline(app) {
+    app._authRestorePositionBaseline = currentReadingPosition(app);
+}
+
+async function saveNewerLocalReadingPosition(app) {
+    const pos = currentReadingPosition(app);
+    lsSetJSON('readingPosition', pos);
+    app._dbgEvent?.(
+        'auth restoration: saved newer local position ' +
+        pos.book + ' ' + pos.chapter + ' scrollY=' + pos.scrollY +
+        ' source=' + (app._localReadingPositionChangeSource || 'unknown')
+    );
+
+    if (!app.currentUser || !app.database) return;
+
+    try {
+        await app.database
+            .ref(`users/${app.currentUser.uid}/readingPosition`)
+            .set(pos);
+    } catch (err) {
+        console.error('saveNewerLocalReadingPosition: Firebase write failed', err);
+    }
+}
+
+async function keepNewerLocalPosition(app, reason) {
+    app._dbgEvent?.(
+        'auth restoration: skipped remote position after local interaction ' + reason
+    );
+    await saveNewerLocalReadingPosition(app);
+    markCurrentPositionAsAuthBaseline(app);
+}
+
 export async function loadSavedPositionIfChanged(app, withTimeout) {
     if (!app.currentUser || !app.database) return;
-    if (app.hasLocalPositionChangedSinceAuthStart()) {
-        app._dbgEvent(
-            'auth restoration: skipped remote position after local interaction'
-        );
+    if (hasLocalPositionChangedSinceAuthScheduled(app)) {
+        await keepNewerLocalPosition(app, 'before remote read');
         return;
     }
 
@@ -44,10 +110,8 @@ export async function loadSavedPositionIfChanged(app, withTimeout) {
         console.error('_loadSavedPositionIfChanged: Firebase read failed', err);
     }
 
-    if (app.hasLocalPositionChangedSinceAuthStart()) {
-        app._dbgEvent(
-            'auth restoration: discarded remote position changed during read'
-        );
+    if (hasLocalPositionChangedSinceAuthScheduled(app)) {
+        await keepNewerLocalPosition(app, 'during remote read');
         return;
     }
 
@@ -95,6 +159,8 @@ export async function loadSavedReadingPosition(app, withTimeout) {
 }
 
 export function saveReadingPosition(app, source = 'unspecified') {
+    markLocalReadingPositionChange(app, source);
+
     const pos = {
         book: app.state.currentBook,
         chapter: app.state.currentChapter,
