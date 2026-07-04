@@ -13,6 +13,24 @@
     line-height: 1.3;
 }
 
+.pericope-heading[role='button'] {
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.pericope-heading[role='button']:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 4px;
+    border-radius: 4px;
+}
+
+.pericope-heading[role='button']:active {
+    color: var(--primary-color);
+}
+
 .hide-headings .pericope-heading {
     display: none;
 }
