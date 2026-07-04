@@ -14,6 +14,8 @@ function makeApi() {
         'Genesis 1:7': 'many were there',
         'Genesis 1:8': 'he spoke plainly',
         'Genesis 1:9': 'the word was spoken',
+        'Genesis 1:10': 'predestinated us unto adoption',
+        'Genesis 1:11': 'predestin doctrine appears',
     });
 
     api._bookCache.set('KJV/Genesis', {
@@ -28,6 +30,8 @@ function makeApi() {
                 '7': 'Many were there',
                 '8': 'He spoke plainly',
                 '9': 'The word was spoken',
+                '10': 'Predestinated us unto adoption',
+                '11': 'Predestin doctrine appears',
             },
         },
     });
@@ -72,6 +76,41 @@ describe('BibleApi search word matching', () => {
             'Genesis 1:1',
             'Genesis 1:2',
             'Genesis 1:8',
+        ]);
+    });
+
+    it('matches long word prefixes and ranks exact matches first', async () => {
+        const api = makeApi();
+        const { results } = await api.searchPassages('predestin');
+
+        expect(results.map((result) => result.reference)).toEqual([
+            'Genesis 1:11',
+            'Genesis 1:10',
+        ]);
+    });
+
+    it('does not match short word prefixes', async () => {
+        const api = makeApi();
+        const { results } = await api.searchPassages('prede');
+
+        expect(results.map((result) => result.reference)).toEqual([]);
+    });
+
+    it('does not match a middle slice of a word', async () => {
+        const api = makeApi();
+        const { results } = await api.searchPassages('destin');
+
+        expect(results.map((result) => result.reference)).toEqual([]);
+    });
+
+    it('ranks exact matches first when falling back to book scanning', async () => {
+        const api = makeApi();
+        api._searchIndexCache.set('KJV', null);
+        const { results } = await api.searchPassages('predestin');
+
+        expect(results.map((result) => result.reference)).toEqual([
+            'Genesis 1:11',
+            'Genesis 1:10',
         ]);
     });
 });
