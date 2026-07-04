@@ -122,9 +122,13 @@ export async function loadSavedPositionIfChanged(app, withTimeout) {
         lsSetJSON('readingPosition', { book: targetBook, chapter: targetChapter, scrollY: targetScrollY });
         app._dbgEvent?.('auth restoration: chose remote position ' + targetBook + ' ' + targetChapter + ' scrollY=' + targetScrollY);
         await app.loadPassage(targetBook, targetChapter, !!targetScrollY, 'auth-remote-position');
+        markCurrentPositionAsAuthBaseline(app);
     } else if (targetScrollY) {
         app._dbgEvent?.('auth restoration: chose remote scrollY=' + targetScrollY + ' for current passage');
         window.scrollTo(0, targetScrollY);
+        markCurrentPositionAsAuthBaseline(app);
+    } else {
+        markCurrentPositionAsAuthBaseline(app);
     }
 }
 
