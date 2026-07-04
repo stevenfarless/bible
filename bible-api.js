@@ -617,6 +617,26 @@ export class BibleApi {
             eventMap.get(evt.v).push(evt);
         }
 
+        const headingEvents = scaffoldEvents
+    .filter((evt) => evt.type === 'heading' && Number.isFinite(evt.v))
+    .sort((a, b) => a.v - b.v);
+
+const headingRangeEndByStart = new Map();
+
+for (let i = 0; i < headingEvents.length; i++) {
+    const startVerse = headingEvents[i].v;
+    const nextHeadingVerse = headingEvents[i + 1]?.v ?? null;
+    const versesInRange = verseNums.filter((v) => (
+        v >= startVerse &&
+        (nextHeadingVerse === null || v < nextHeadingVerse)
+    ));
+    const endVerse = versesInRange[versesInRange.length - 1];
+
+    if (Number.isFinite(endVerse)) {
+        headingRangeEndByStart.set(startVerse, endVerse);
+    }
+}
+
         const parts = [];
         let inParagraph = false;
 
@@ -627,7 +647,16 @@ export class BibleApi {
             const eventsHere = eventMap.get(v) || [];
             for (const evt of eventsHere) {
                 if (evt.type === 'heading') {
-                    if (showHeadings) { closeP(); parts.push(`<h3 class="pericope-heading">${escapeHtml(evt.text)}</h3>`); }
+                    if (showHeadings) {
+                        closeP();
+
+    const endVerse = headingRangeEndByStart.get(evt.v);
+    const rangeAttrs = Number.isFinite(endVerse)
+        ? ` role="button" tabindex="0" data-start-verse="${evt.v}" data-end-verse="${endVerse}" aria-label="Select section: ${escapeHtml(evt.text)}"`
+        : '';
+
+    parts.push(`<h3 class="pericope-heading"${rangeAttrs}>${escapeHtml(evt.text)}</h3>`);
+}
                 } else if (evt.type === 'para_break') {
                     closeP();
                 }
