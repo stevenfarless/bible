@@ -1,11 +1,46 @@
 name: "! instant upgrade"
 
 on:
+  push:
+    branches:
+      - exp
+    paths:
+      - ".github/workflows/instant-upgrade.yml"
   workflow_dispatch:
 
 jobs:
-  placeholder:
+  patch:
+    name: Patch raw-prefix search
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
     steps:
-      - name: Placeholder
-        run: echo "Instant upgrade workflow placeholder"
+      - name: Checkout exp
+        uses: actions/checkout@v4
+        with:
+          ref: exp
+
+      - name: Apply raw-prefix patch
+        run: git apply .github/patches/instant-raw-prefix.patch
+
+      - name: Validate search patch
+        run: |
+          node --check bible-api.js
+          node --check tests/unit/bible-api-search.test.js
+          npm install --no-package-lock --no-audit --no-fund
+          npm test -- --run tests/unit/bible-api-search.test.js tests/unit/bible-api-book-cache.test.js
+          rm -f package-lock.json
+
+      - name: Commit raw-prefix fix
+        run: |
+          git config user.name "stevenfarless"
+          git config user.email "125781365+stevenfarless@users.noreply.github.com"
+          git add bible-api.js tests/unit/bible-api-search.test.js
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "fix(search): preserve raw prefixes" \
+            -m "Keep raw and normalized forms during text matching so searches like predest still prefix-match predestinated after normalization. Preserve exact-before-prefix ranking and cover the regression with unit tests."
+          git push origin HEAD:exp
