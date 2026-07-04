@@ -1,0 +1,123 @@
+name: "! instant upgrade"
+
+on:
+  push:
+    branches:
+      - exp
+    paths:
+      - ".github/workflows/! instant upgrade.yml"
+  workflow_dispatch:
+
+jobs:
+  patch:
+    name: Implement instant-style search upgrade
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v4
+        with:
+          ref: exp
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Patch search matcher and ranking
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              if new in text:
+                  return text
+              if old not in text:
+                  raise SystemExit(f'Missing expected anchor for {label}')
+              return text.replace(old, new, 1)
+
+          bible_path = Path('bible-api.js')
+          bible = bible_path.read_text(encoding='utf-8')
+
+          bible = replace_once(
+              bible,
+              """const PAGE_SIZE = 100;\nconst SEARCH_CONCURRENCY = 5;""",
+              """const PAGE_SIZE = 100;\nconst SEARCH_CONCURRENCY = 5;\nconst PREFIX_MATCH_MIN_LENGTH = 6;\nconst TEXT_MATCH_NONE = 0;\nconst TEXT_MATCH_PREFIX = 1;\nconst TEXT_MATCH_EXACT = 2;""",
+              'search match constants',
+          )
+
+          bible = replace_once(
+              bible,
+              """function _buildTextMatcher(query) {\n    const normalizedTerms = _tokenizeSearchText(query).map((term) => _normalizeTerm(term));\n\n    return (value) => {\n        const normalizedTokens = new Set(\n            _tokenizeSearchText(value).map((token) => _normalizeTerm(token))\n        );\n\n        return normalizedTerms.every((term) => normalizedTokens.has(term));\n    };\n}""",
+              """function _termMatchRank(term, token) {\n    if (token === term) return TEXT_MATCH_EXACT;\n    if (term.length >= PREFIX_MATCH_MIN_LENGTH && token.startsWith(term)) return TEXT_MATCH_PREFIX;\n    return TEXT_MATCH_NONE;\n}\n\nfunction _buildTextMatcher(query) {\n    const normalizedTerms = _tokenizeSearchText(query)\n        .map((term) => _normalizeTerm(term))\n        .filter(Boolean);\n\n    return (value) => {\n        const normalizedTokens = _tokenizeSearchText(value)\n            .map((token) => _normalizeTerm(token))\n            .filter(Boolean);\n        let overallRank = TEXT_MATCH_EXACT;\n\n        for (const term of normalizedTerms) {\n            let termRank = TEXT_MATCH_NONE;\n\n            for (const token of normalizedTokens) {\n                const rank = _termMatchRank(term, token);\n                if (rank > termRank) termRank = rank;\n                if (termRank === TEXT_MATCH_EXACT) break;\n            }\n\n            if (termRank === TEXT_MATCH_NONE) return TEXT_MATCH_NONE;\n            if (termRank < overallRank) overallRank = termRank;\n        }\n\n        return overallRank;\n    };\n}""",
+              'text matcher',
+          )
+
+          bible = replace_once(
+              bible,
+              """    _scanSearchIndex(searchIndex, matcher, mode = 'text') {\n        const matched = [];\n        for (const ref of Object.keys(searchIndex)) {\n            const target = mode === 'reference' ? ref : searchIndex[ref];\n            if (!matcher(target)) continue;\n            const colonIdx = ref.lastIndexOf(':');\n            const spaceIdx = ref.lastIndexOf(' ', colonIdx);\n            matched.push({\n                ref,\n                book: ref.slice(0, spaceIdx),\n                chapter: Number(ref.slice(spaceIdx + 1, colonIdx)),\n                verse: Number(ref.slice(colonIdx + 1)),\n            });\n        }\n        matched.sort((a, b) => {\n            const bi = (BOOK_ORDER_INDEX.get(a.book) ?? 999) - (BOOK_ORDER_INDEX.get(b.book) ?? 999);\n            if (bi !== 0) return bi;\n            if (a.chapter !== b.chapter) return a.chapter - b.chapter;\n            return a.verse - b.verse;\n        });\n        return matched;\n    }""",
+              """    _compareSearchMatches(a, b) {\n        const rankDelta = (b.searchRank ?? TEXT_MATCH_EXACT) - (a.searchRank ?? TEXT_MATCH_EXACT);\n        if (rankDelta !== 0) return rankDelta;\n        const bookDelta = (BOOK_ORDER_INDEX.get(a.book) ?? 999) - (BOOK_ORDER_INDEX.get(b.book) ?? 999);\n        if (bookDelta !== 0) return bookDelta;\n        if (a.chapter !== b.chapter) return a.chapter - b.chapter;\n        return a.verse - b.verse;\n    }\n\n    _scanSearchIndex(searchIndex, matcher, mode = 'text') {\n        const matched = [];\n        for (const ref of Object.keys(searchIndex)) {\n            const target = mode === 'reference' ? ref : searchIndex[ref];\n            const matchRank = matcher(target);\n            if (!matchRank) continue;\n            const colonIdx = ref.lastIndexOf(':');\n            const spaceIdx = ref.lastIndexOf(' ', colonIdx);\n            matched.push({\n                ref,\n                book: ref.slice(0, spaceIdx),\n                chapter: Number(ref.slice(spaceIdx + 1, colonIdx)),\n                verse: Number(ref.slice(colonIdx + 1)),\n                searchRank: typeof matchRank === 'number' ? matchRank : TEXT_MATCH_EXACT,\n            });\n        }\n        matched.sort((a, b) => this._compareSearchMatches(a, b));\n        return matched;\n    }""",
+              'search index scanner',
+          )
+
+          bible = replace_once(
+              bible,
+              """                        const isMatch = mode === 'reference'\n                            ? matcher(reference)\n                            : matcher(verseText);\n                        if (!isMatch) continue;\n                        batchResults.push({\n                            reference,\n                            content: verseText,\n                            book,\n                            chapter: Number(chapterStr),\n                            verse: Number(verseStr),\n                            text: verseText,\n                        });""",
+              """                        const matchRank = mode === 'reference'\n                            ? matcher(reference)\n                            : matcher(verseText);\n                        if (!matchRank) continue;\n                        batchResults.push({\n                            reference,\n                            content: verseText,\n                            book,\n                            chapter: Number(chapterStr),\n                            verse: Number(verseStr),\n                            text: verseText,\n                            searchRank: typeof matchRank === 'number' ? matchRank : TEXT_MATCH_EXACT,\n                        });""",
+              'book scan match ranking',
+          )
+
+          bible = replace_once(
+              bible,
+              """            if (batchResults.length > 0) {\n                allResults.push(...batchResults);\n                if (typeof onBatchResults === 'function') onBatchResults(batchResults);\n            }\n        }\n\n        return { results: allResults, total_results: allResults.length, page_size: PAGE_SIZE };""",
+              """            if (batchResults.length > 0) {\n                allResults.push(...batchResults);\n                if (typeof onBatchResults === 'function') {\n                    onBatchResults(batchResults.map(({ searchRank, ...result }) => result));\n                }\n            }\n        }\n\n        allResults.sort((a, b) => this._compareSearchMatches(a, b));\n        const results = allResults.map(({ searchRank, ...result }) => result);\n        return { results, total_results: results.length, page_size: PAGE_SIZE };""",
+              'book scan result ordering',
+          )
+
+          bible_path.write_text(bible, encoding='utf-8')
+
+          test_path = Path('tests/unit/bible-api-search.test.js')
+          test = test_path.read_text(encoding='utf-8')
+
+          test = replace_once(
+              test,
+              """        'Genesis 1:9': 'the word was spoken',""",
+              """        'Genesis 1:9': 'the word was spoken',\n        'Genesis 1:10': 'predestinated us unto adoption',\n        'Genesis 1:11': 'predestin doctrine appears',""",
+              'search index fixture',
+          )
+
+          test = replace_once(
+              test,
+              """                '9': 'The word was spoken',""",
+              """                '9': 'The word was spoken',\n                '10': 'Predestinated us unto adoption',\n                '11': 'Predestin doctrine appears',""",
+              'book cache fixture',
+          )
+
+          test = replace_once(
+              test,
+              """    it('does not match he inside the', async () => {\n        const api = makeApi();\n        const { results } = await api.searchPassages('he');\n\n        expect(results.map((result) => result.reference)).toEqual([\n            'Genesis 1:1',\n            'Genesis 1:2',\n            'Genesis 1:8',\n        ]);\n    });\n});""",
+              """    it('does not match he inside the', async () => {\n        const api = makeApi();\n        const { results } = await api.searchPassages('he');\n\n        expect(results.map((result) => result.reference)).toEqual([\n            'Genesis 1:1',\n            'Genesis 1:2',\n            'Genesis 1:8',\n        ]);\n    });\n\n    it('matches long word prefixes and ranks exact matches first', async () => {\n        const api = makeApi();\n        const { results } = await api.searchPassages('predestin');\n\n        expect(results.map((result) => result.reference)).toEqual([\n            'Genesis 1:11',\n            'Genesis 1:10',\n        ]);\n    });\n\n    it('does not match short word prefixes', async () => {\n        const api = makeApi();\n        const { results } = await api.searchPassages('prede');\n\n        expect(results.map((result) => result.reference)).toEqual([]);\n    });\n\n    it('does not match a middle slice of a word', async () => {\n        const api = makeApi();\n        const { results } = await api.searchPassages('destin');\n\n        expect(results.map((result) => result.reference)).toEqual([]);\n    });\n\n    it('ranks exact matches first when falling back to book scanning', async () => {\n        const api = makeApi();\n        api._searchIndexCache.set('KJV', null);\n        const { results } = await api.searchPassages('predestin');\n\n        expect(results.map((result) => result.reference)).toEqual([\n            'Genesis 1:11',\n            'Genesis 1:10',\n        ]);\n    });\n});""",
+              'prefix search tests',
+          )
+
+          test_path.write_text(test, encoding='utf-8')
+          PY
+
+      - name: Validate search upgrade
+        run: |
+          node --check bible-api.js
+          node --check tests/unit/bible-api-search.test.js
+          npm install --no-package-lock --no-audit --no-fund
+          npm test -- --run tests/unit/bible-api-search.test.js tests/unit/bible-api-book-cache.test.js
+          rm -f package-lock.json
+
+      - name: Commit search upgrade
+        run: |
+          git config user.name "stevenfarless"
+          git config user.email "125781365+stevenfarless@users.noreply.github.com"
+          git add bible-api.js tests/unit/bible-api-search.test.js
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "feat(search): add exact-ranked prefix matching" \
+            -m "Add controlled prefix matching for normalized search terms with exact matches ranked ahead of prefix matches. Apply the same ranking path to search-index scans and fallback book scans, and cover the behavior with focused unit tests."
+          git push origin HEAD:exp
