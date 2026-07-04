@@ -2,7 +2,6 @@ import { BibleApi, LOCAL_TRANSLATIONS } from './bible-api.js';
 import { normaliseBookAlias } from './book-aliases.js';
 
 const PAGE_SIZE = 100;
-const SEARCH_CONCURRENCY = 5;
 const PREFIX_MATCH_MIN_LENGTH = 6;
 const SEARCH_INDEX_VERSION = 2;
 const TEXT_MATCH_NONE = 0;
@@ -202,33 +201,29 @@ function resolveBookKey(bible, canonicalName) {
     if (alias !== undefined && bible?.[alias] !== undefined) return alias;
     return null;
 }
-async function hydrateMatches(api, translation, searchIndex, matches, onBatchResults = null, sourceTranslation = null) {
-    const uniqueBooks = [...new Set(matches.map((match) => match.book))];
-    const bookDataMap = new Map();
-    const results = [];
-    for (let i = 0; i < uniqueBooks.length; i += SEARCH_CONCURRENCY) {
-        const chunk = uniqueBooks.slice(i, i + SEARCH_CONCURRENCY);
-        const entries = await Promise.all(chunk.map(async (book) => [book, await api._loadBook(translation, book)]));
-        for (const [book, data] of entries) bookDataMap.set(book, data);
-        const chunkBooks = new Set(chunk);
-        const batchResults = [];
-        for (const match of matches) {
-            if (!chunkBooks.has(match.book)) continue;
-            const bookData = bookDataMap.get(match.book);
-            const resolvedKey = resolveBookKey(bookData, match.book);
-            const resolvedBookData = resolvedKey ? bookData[resolvedKey] ?? bookData : bookData;
-            const originalText = resolvedBookData?.[String(match.chapter)]?.[String(match.verse)];
-            const text = originalText != null ? String(originalText) : searchIndex.texts[match.id];
-            const result = { reference: match.ref, content: text, book: match.book, chapter: match.chapter, verse: match.verse, text };
-            if (sourceTranslation) result.sourceTranslation = sourceTranslation;
-            batchResults.push(result);
-        }
-        results.push(...batchResults);
-        if (batchResults.length > 0 && typeof onBatchResults === 'function') onBatchResults(batchResults);
-    }
+function cachedVerseText(api, translation, searchIndex, match) {
+    const alias = BOOK_KEY_ALIASES[match.book];
+    const bookData = api._bookCache.get(`${translation}/${match.book}`) ?? (alias ? api._bookCache.get(`${translation}/${alias}`) : null);
+    const resolvedKey = resolveBookKey(bookData, match.book);
+    const resolvedBookData = resolvedKey ? bookData[resolvedKey] ?? bookData : bookData;
+    const originalText = resolvedBookData?.[String(match.chapter)]?.[String(match.verse)];
+    return originalText != null ? String(originalText) : searchIndex.texts[match.id];
+}
+function buildResultsFromMatches(api, translation, searchIndex, matches, onBatchResults = null, sourceTranslation = null) {
+    const results = matches.map((match) => {
+        const text = cachedVerseText(api, translation, searchIndex, match);
+        const result = { reference: match.ref, content: text, book: match.book, chapter: match.chapter, verse: match.verse, text };
+        if (sourceTranslation) result.sourceTranslation = sourceTranslation;
+        return result;
+    });
+    if (results.length > 0 && typeof onBatchResults === 'function') onBatchResults(results);
     return results;
 }
+function searchDebugEnabled() {
+    return typeof window !== 'undefined' && window.__LEGE_LUX_SEARCH_DEBUG__ === true;
+}
 function debugIndexedSearch(api, engine, query, mode, queryTerms, normalizedQueryTerms, matches) {
+    if (!searchDebugEnabled()) return;
     const matchedRefs = matches.map((match) => match.ref);
     console.debug('BibleApi.searchPassages', { engine, translation: api.translation, query, mode, queryTerms, normalizedQueryTerms, totalHits: matchedRefs.length, hasJohn316: matchedRefs.includes('John 3:16'), topRefs: matchedRefs.slice(0, 5) });
 }
@@ -268,7 +263,7 @@ export function installInvertedSearchIndexEngine() {
         const { matches, mode, queryTerms, normalizedQueryTerms } = searchNormalizedIndex(searchIndex, q);
         const engine = mode === 'reference' ? 'referenceIndex' : mode === 'wildcardText' ? 'wildcardInvertedIndex' : 'textInvertedIndex';
         debugIndexedSearch(this, engine, q.toLowerCase(), mode, queryTerms, normalizedQueryTerms, matches);
-        const results = await hydrateMatches(this, this._translation, searchIndex, matches, onBatchResults);
+        const results = buildResultsFromMatches(this, this._translation, searchIndex, matches, onBatchResults);
         return { results, total_results: results.length, page_size: PAGE_SIZE };
     };
     proto.searchPassagesAllTranslations = async function searchPassagesAllTranslations(query, knownRefs) {
@@ -286,7 +281,7 @@ export function installInvertedSearchIndexEngine() {
             if (searchIndex !== null) {
                 if (searchIndex !== rawSearchIndex) this._searchIndexCache.set(translation, searchIndex);
                 const filteredMatches = searchNormalizedIndex(searchIndex, q).matches.filter((match) => !seen.has(`${translation}::${match.ref}`));
-                const results = await hydrateMatches(this, translation, searchIndex, filteredMatches, null, translation);
+                const results = buildResultsFromMatches(this, translation, searchIndex, filteredMatches, null, translation);
                 for (const result of results) {
                     const seenKey = `${translation}::${result.reference}`;
                     if (seen.has(seenKey)) continue;
