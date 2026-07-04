@@ -306,6 +306,33 @@ export function attachEventListeners(app) {
     if (verseSelectionTarget) {
         const HOLD_MS = 500;
         const MOVE_LIMIT = 12;
+        const selectPericopeHeading = (heading) => {
+        const startVerse = Number(heading.dataset.startVerse);
+        const endVerse = Number(heading.dataset.endVerse);
+
+    if (!Number.isInteger(startVerse) || !Number.isInteger(endVerse)) return;
+    if (endVerse < startVerse) return;
+
+    const startEl = app.passageText?.querySelector(`.verse[data-verse="${startVerse}"]`);
+    const endEl = app.passageText?.querySelector(`.verse[data-verse="${endVerse}"]`);
+
+    if (!startEl || !endEl) return;
+
+    app.state.selectedVerse = null;
+    app.applyVerseGlow?.();
+
+    const range = document.createRange();
+    range.setStartBefore(startEl);
+    range.setEndAfter(endEl);
+
+    const selection = window.getSelection();
+    if (!selection) return;
+
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    app._dbgUserAction?.(`selected pericope: ${startVerse}-${endVerse}`);
+};
 
         let holdTimer = null;
         let pointerId = null;
@@ -333,11 +360,30 @@ export function attachEventListeners(app) {
         };
 
         const cancelVersePress = () => {
-            clearTimeout(holdTimer);
-            holdTimer = null;
-            pointerId = null;
-            pressedVerse = null;
-        };
+        clearTimeout(holdTimer);
+        holdTimer = null;
+        pointerId = null;
+        pressedVerse = null;
+    };
+
+    verseSelectionTarget.addEventListener('click', (event) => {
+        const heading = event.target.closest('.pericope-heading');
+        if (!heading || !verseSelectionTarget.contains(heading)) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        selectPericopeHeading(heading);
+    });
+
+    verseSelectionTarget.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+
+        const heading = event.target.closest('.pericope-heading');
+        if (!heading || !verseSelectionTarget.contains(heading)) return;
+
+        event.preventDefault();
+        selectPericopeHeading(heading);
+    });
 
         verseSelectionTarget.addEventListener('pointerdown', (event) => {
             if (event.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
@@ -386,7 +432,6 @@ export function attachEventListeners(app) {
 
         verseSelectionTarget.addEventListener('pointerup', finishVersePress);
         verseSelectionTarget.addEventListener('pointercancel', finishVersePress);
-
         verseSelectionTarget.addEventListener('click', (event) => {
             if (event.target.closest('.verse-tools-tray, .verse-tools-trigger')) return;
 
