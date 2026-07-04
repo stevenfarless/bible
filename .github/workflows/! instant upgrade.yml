@@ -34,6 +34,15 @@ jobs:
                   raise SystemExit(f'Missing expected anchor for {label}')
               return text.replace(old, new, 1)
 
+          def insert_before_final_describe_close(text, block, label):
+              if block.strip() in text:
+                  return text
+              marker = '\n});'
+              index = text.rfind(marker)
+              if index == -1:
+                  raise SystemExit(f'Missing final describe close for {label}')
+              return text[:index] + '\n' + block.rstrip() + text[index:]
+
           bible_path = Path('bible-api.js')
           bible = bible_path.read_text(encoding='utf-8')
 
@@ -91,26 +100,30 @@ jobs:
               'book cache fixture',
           )
 
-          test = replace_once(
-              test,
-              """    it('does not match he inside the', async () => {\n        const api = makeApi();\n        const { results } = await api.searchPassages('he');\n\n        expect(results.map((result) => result.reference)).toEqual([\n            'Genesis 1:1',\n            'Genesis 1:2',\n            'Genesis 1:8',\n        ]);\n    });\n});""",
-              """    it('does not match he inside the', async () => {\n        const api = makeApi();\n        const { results } = await api.searchPassages('he');\n\n        expect(results.map((result) => result.reference)).toEqual([\n            'Genesis 1:1',\n            'Genesis 1:2',\n            'Genesis 1:8',\n        ]);\n    });\n\n    it('matches long word prefixes and ranks exact matches first', async () => {\n        const api = makeApi();\n        const { results } = await api.searchPassages('predestin');\n\n        expect(results.map((result) => result.reference)).toEqual([\n            'Genesis 1:11',\n            'Genesis 1:10',\n        ]);\n    });\n\n    it('matches raw prefixes before normalization can alter the query', async () => {\n        const api = makeApi();\n        const { results } = await api.searchPassages('predest');\n\n        expect(results.map((result) => result.reference)).toEqual([\n            'Genesis 1:10',\n            'Genesis 1:11',\n        ]);\n    });\n\n    it('does not match short word prefixes', async () => {\n        const api = makeApi();\n        const { results } = await api.searchPassages('prede');\n\n        expect(results.map((result) => result.reference)).toEqual([]);\n    });\n\n    it('does not match a middle slice of a word', async () => {\n        const api = makeApi();\n        const { results } = await api.searchPassages('destin');\n\n        expect(results.map((result) => result.reference)).toEqual([]);\n    });\n\n    it('ranks exact matches first when falling back to book scanning', async () => {\n        const api = makeApi();\n        api._searchIndexCache.set('KJV', null);\n        const { results } = await api.searchPassages('predestin');\n\n        expect(results.map((result) => result.reference)).toEqual([\n            'Genesis 1:11',\n            'Genesis 1:10',\n        ]);\n    });\n\n    it('matches raw prefixes when falling back to book scanning', async () => {\n        const api = makeApi();\n        api._searchIndexCache.set('KJV', null);\n        const { results } = await api.searchPassages('predest');\n\n        expect(results.map((result) => result.reference)).toEqual([\n            'Genesis 1:10',\n            'Genesis 1:11',\n        ]);\n    });\n});""",
-              'prefix search tests',
-          )
+          test = insert_before_final_describe_close(test, """
+    it('matches raw prefixes before normalization can alter the query', async () => {
+        const api = makeApi();
+        const { results } = await api.searchPassages('predest');
 
-          test = replace_once(
-              test,
-              """    it('does not match short word prefixes', async () => {""",
-              """    it('matches raw prefixes before normalization can alter the query', async () => {\n        const api = makeApi();\n        const { results } = await api.searchPassages('predest');\n\n        expect(results.map((result) => result.reference)).toEqual([\n            'Genesis 1:10',\n            'Genesis 1:11',\n        ]);\n    });\n\n    it('does not match short word prefixes', async () => {""",
-              'raw prefix index regression test',
-          )
+        expect(results.map((result) => result.reference)).toEqual([
+            'Genesis 1:10',
+            'Genesis 1:11',
+        ]);
+    });
+""", 'raw prefix index regression test')
 
-          test = replace_once(
-              test,
-              """    it('ranks exact matches first when falling back to book scanning', async () => {\n        const api = makeApi();\n        api._searchIndexCache.set('KJV', null);\n        const { results } = await api.searchPassages('predestin');\n\n        expect(results.map((result) => result.reference)).toEqual([\n            'Genesis 1:11',\n            'Genesis 1:10',\n        ]);\n    });""",
-              """    it('ranks exact matches first when falling back to book scanning', async () => {\n        const api = makeApi();\n        api._searchIndexCache.set('KJV', null);\n        const { results } = await api.searchPassages('predestin');\n\n        expect(results.map((result) => result.reference)).toEqual([\n            'Genesis 1:11',\n            'Genesis 1:10',\n        ]);\n    });\n\n    it('matches raw prefixes when falling back to book scanning', async () => {\n        const api = makeApi();\n        api._searchIndexCache.set('KJV', null);\n        const { results } = await api.searchPassages('predest');\n\n        expect(results.map((result) => result.reference)).toEqual([\n            'Genesis 1:10',\n            'Genesis 1:11',\n        ]);\n    });""",
-              'raw prefix book scan regression test',
-          )
+          test = insert_before_final_describe_close(test, """
+    it('matches raw prefixes when falling back to book scanning', async () => {
+        const api = makeApi();
+        api._searchIndexCache.set('KJV', null);
+        const { results } = await api.searchPassages('predest');
+
+        expect(results.map((result) => result.reference)).toEqual([
+            'Genesis 1:10',
+            'Genesis 1:11',
+        ]);
+    });
+""", 'raw prefix book scan regression test')
 
           test_path.write_text(test, encoding='utf-8')
           PY
