@@ -60,10 +60,18 @@ function createIndex() {
   };
 }
 
+function getBookName(bookEntry) {
+  if (typeof bookEntry === 'string') return bookEntry;
+  if (bookEntry && typeof bookEntry.name === 'string') return bookEntry.name;
+  return null;
+}
+
 const dirs = fs.readdirSync(TRANSLATIONS_DIR).filter(name => {
   const full = path.join(TRANSLATIONS_DIR, name);
   return fs.statSync(full).isDirectory() && (!filter.length || filter.includes(name));
 });
+
+let failed = false;
 
 for (const t of dirs) {
   const metaPath = path.join(TRANSLATIONS_DIR, t, 'meta.json');
@@ -74,7 +82,10 @@ for (const t of dirs) {
 
   const index = createIndex();
 
-  for (const bookName of meta.books) {
+  for (const bookEntry of meta.books) {
+    const bookName = getBookName(bookEntry);
+    if (!bookName) continue;
+
     const bookPath = path.join(TRANSLATIONS_DIR, t, `${bookName}.json`);
     if (!fs.existsSync(bookPath)) continue;
 
@@ -93,7 +104,15 @@ for (const t of dirs) {
     }
   }
 
+  if (index.refs.length === 0) {
+    console.error(`[${t}] no verses written; refusing to overwrite search index`);
+    failed = true;
+    continue;
+  }
+
   const outPath = path.join(TRANSLATIONS_DIR, t, `${t}_search_index.json`);
   fs.writeFileSync(outPath, JSON.stringify(index), 'utf8');
   console.log(`[${t}] ${index.refs.length.toLocaleString()} verses written`);
 }
+
+if (failed) process.exitCode = 1;
