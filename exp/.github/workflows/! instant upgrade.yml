@@ -26,13 +26,45 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
 
           bible_path = Path('bible-api.js')
           bible = bible_path.read_text(encoding='utf-8')
 
-          if 'function _buildSearchToken(token)' not in bible:
-              replacement = """function _buildSearchToken(token) {
+          old_matcher = """function _termMatchRank(term, token) {
+    if (token === term) return TEXT_MATCH_EXACT;
+    if (term.length >= PREFIX_MATCH_MIN_LENGTH && token.startsWith(term)) return TEXT_MATCH_PREFIX;
+    return TEXT_MATCH_NONE;
+}
+
+function _buildTextMatcher(query) {
+    const normalizedTerms = _tokenizeSearchText(query)
+        .map((term) => _normalizeTerm(term))
+        .filter(Boolean);
+
+    return (value) => {
+        const normalizedTokens = _tokenizeSearchText(value)
+            .map((token) => _normalizeTerm(token))
+            .filter(Boolean);
+        let overallRank = TEXT_MATCH_EXACT;
+
+        for (const term of normalizedTerms) {
+            let termRank = TEXT_MATCH_NONE;
+
+            for (const token of normalizedTokens) {
+                const rank = _termMatchRank(term, token);
+                if (rank > termRank) termRank = rank;
+                if (termRank === TEXT_MATCH_EXACT) break;
+            }
+
+            if (termRank === TEXT_MATCH_NONE) return TEXT_MATCH_NONE;
+            if (termRank < overallRank) overallRank = termRank;
+        }
+
+        return overallRank;
+    };
+}"""
+
+          new_matcher = """function _buildSearchToken(token) {
     return {
         raw: token,
         normalized: _normalizeTerm(token),
@@ -73,15 +105,11 @@ function _buildTextMatcher(query) {
         return overallRank;
     };
 }"""
-              bible, count = re.subn(
-                  r"function _termMatchRank\(term, token\) \{.*?\n\}\n\nfunction _buildTextMatcher\(query\) \{.*?\n\}",
-                  replacement,
-                  bible,
-                  count=1,
-                  flags=re.S,
-              )
-              if count != 1:
-                  raise SystemExit('Failed to replace current text matcher')
+
+          if new_matcher not in bible:
+              if old_matcher not in bible:
+                  raise SystemExit('Current text matcher anchor was not found')
+              bible = bible.replace(old_matcher, new_matcher, 1)
 
           bible_path.write_text(bible, encoding='utf-8')
 
@@ -89,11 +117,16 @@ function _buildTextMatcher(query) {
           test = test_path.read_text(encoding='utf-8')
 
           if "'Genesis 1:10': 'predestinated us unto adoption'" not in test:
+              if "        'Genesis 1:9': 'the word was spoken'," not in test:
+                  raise SystemExit('Search index fixture anchor was not found')
               test = test.replace(
                   "        'Genesis 1:9': 'the word was spoken',",
                   "        'Genesis 1:9': 'the word was spoken',\n        'Genesis 1:10': 'predestinated us unto adoption',\n        'Genesis 1:11': 'predestin doctrine appears',",
                   1,
               )
+
+              if "                '9': 'The word was spoken'," not in test:
+                  raise SystemExit('Book cache fixture anchor was not found')
               test = test.replace(
                   "                '9': 'The word was spoken',",
                   "                '9': 'The word was spoken',\n                '10': 'Predestinated us unto adoption',\n                '11': 'Predestin doctrine appears',",
