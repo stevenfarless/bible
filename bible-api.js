@@ -290,7 +290,7 @@ export class BibleApi {
                             this._bookCache.set(cacheKey, cached);
                             return cached;
                         }
-                        this._bookCache.set(cacheKey, null);
+                        this._bookCache.delete(cacheKey);
                         return null;
                     }
 
@@ -303,7 +303,7 @@ export class BibleApi {
                     return data;
                 } catch (err) {
                     console.error(`BibleApi: failed to load ${translation}/${this._sanitizeForLog(book)}`, err);
-                    this._bookCache.set(cacheKey, null);
+                    this._bookCache.delete(cacheKey);
                     return null;
                 } finally {
                     this._localBookFetchPromise.delete(cacheKey);
@@ -338,11 +338,15 @@ export class BibleApi {
                 const exactKey = shallowIndex.get(book.toLowerCase());
                 if (exactKey && exactKey !== book) bookData = await fetchNode(exactKey);
             }
-            this._bookCache.set(cacheKey, bookData);
+            if (bookData !== null) {
+                this._bookCache.set(cacheKey, bookData);
+            } else {
+                this._bookCache.delete(cacheKey);
+            }
             return bookData;
         } catch (err) {
             console.error(`BibleApi: failed to load ${translation}/${book} from RTDB`, err);
-            this._bookCache.set(cacheKey, null);
+            this._bookCache.delete(cacheKey);
             return null;
         }
     }
