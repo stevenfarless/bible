@@ -89,6 +89,16 @@ describe('BibleApi search word matching', () => {
         ]);
     });
 
+    it('matches raw prefixes before normalization can alter the query', async () => {
+        const api = makeApi();
+        const { results } = await api.searchPassages('predest');
+
+        expect(results.map((result) => result.reference)).toEqual([
+            'Genesis 1:10',
+            'Genesis 1:11',
+        ]);
+    });
+
     it('does not match short word prefixes', async () => {
         const api = makeApi();
         const { results } = await api.searchPassages('prede');
@@ -111,6 +121,17 @@ describe('BibleApi search word matching', () => {
         expect(results.map((result) => result.reference)).toEqual([
             'Genesis 1:11',
             'Genesis 1:10',
+        ]);
+    });
+
+    it('matches raw prefixes when falling back to book scanning', async () => {
+        const api = makeApi();
+        api._searchIndexCache.set('KJV', null);
+        const { results } = await api.searchPassages('predest');
+
+        expect(results.map((result) => result.reference)).toEqual([
+            'Genesis 1:10',
+            'Genesis 1:11',
         ]);
     });
 });
