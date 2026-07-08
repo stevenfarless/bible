@@ -2169,6 +2169,48 @@ class BibleApp {
     }
   }
 
+  shareSelectedVerse() {
+    _logUserAction("shareSelectedVerse");
+
+    const verseNumber = this.state.selectedVerse;
+    if (verseNumber == null) {
+      this.showToast("No verse selected");
+      return;
+    }
+
+    const verse = this.passageText?.querySelector(
+      `.verse[data-verse="${verseNumber}"]`,
+    );
+    if (!verse) {
+      this.showToast("Selected verse unavailable");
+      return;
+    }
+
+    const verseText = verse.querySelector(".verse-text") ?? verse;
+    const text = this.stripHTML(verseText.innerHTML).trim();
+    const ref = `${this.passageTitle.textContent}:${verseNumber}`;
+    const content = `${text}\n\n${ref} ${this.state.translation || "KJV"}`;
+
+    if (navigator.share) {
+      navigator
+        .share({
+          text: content,
+        })
+        .then(() => {
+          this._dbgEvent(`shareSelectedVerse: shared ${ref}`);
+        })
+        .catch((err) => {
+          if (err?.name === "AbortError") return;
+
+          console.error("Failed to share verse:", err);
+          this._dbgEvent(`shareSelectedVerse: share error — ${err.message}`);
+          this._copyFallback(content, "Share unavailable. Verse copied!");
+        });
+    } else {
+      this._copyFallback(content, "Share unavailable. Verse copied!");
+    }
+  }
+
   copyPassage() {
     _logUserAction("copyPassage");
     const text = this.stripHTML(this.passageText.innerHTML);
