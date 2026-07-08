@@ -125,7 +125,15 @@ export function applyVerseGlow(app) {
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
             </svg>
             </button>
-        <button class="verse-tool-btn has-tooltip" type="button" aria-label="Share" title="Share" data-tooltip="Share"><span class="verse-tool-letter">S</span></button>
+        <button class="verse-tool-btn has-tooltip" type="button" aria-label="Share" title="Share" data-tooltip="Share" data-verse-tool="share">
+          <svg class="verse-tool-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <circle cx="18" cy="5" r="3"></circle>
+            <circle cx="6" cy="12" r="3"></circle>
+            <circle cx="18" cy="19" r="3"></circle>
+            <path d="M8.6 10.5 15.4 6.5"></path>
+            <path d="M8.6 13.5 15.4 17.5"></path>
+          </svg>
+        </button>
     </div>`;
   wrapper.appendChild(tray);
 
