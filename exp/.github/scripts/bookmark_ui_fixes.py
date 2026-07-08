@@ -265,7 +265,7 @@ if '.verse-tool-btn--bookmark-menu-open::after' not in css:
 
 css = css.replace('  bottom: 72px;\n', '  bottom: 68px;\n')
 
-if 'cursor: pointer;\n  touch-action: manipulation;' not in css:
+if '.bookmark-card:hover,' not in css:
     css = replace_once(
         css,
         '''.bookmark-card {
