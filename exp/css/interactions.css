@@ -443,8 +443,10 @@ body.light-mode .verse-tool-icon {
 }
 
 .verse-tool-icon--bookmark-add {
-  width: 18px;
-  height: 18px;
+  display: block;
+  width: 21px;
+  height: 21px;
+  overflow: visible;
 }
 
 .verse-tool-btn--bookmark-menu-open {
