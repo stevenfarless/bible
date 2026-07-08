@@ -2150,7 +2150,7 @@ class BibleApp {
     const verseText = verse.querySelector(".verse-text") ?? verse;
     const text = this.stripHTML(verseText.innerHTML).trim();
     const ref = `${this.passageTitle.textContent}:${verseNumber}`;
-    const content = `${ref}\n\n${text}\n\n${this.copyright?.textContent ?? ""}`;
+    const content = `${text}\n\n${ref} ${this.state.translation || "KJV"}`;
 
     if (navigator.clipboard?.writeText) {
       navigator.clipboard
@@ -2173,7 +2173,7 @@ class BibleApp {
     _logUserAction("copyPassage");
     const text = this.stripHTML(this.passageText.innerHTML);
     const ref = this.passageTitle.textContent;
-    const content = `${ref}\n\n${text}\n\n${this.copyright?.textContent ?? ""}`;
+    const content = `${text.trim()}\n\n${ref} ${this.state.translation || "KJV"}`;
 
     const btn = document.getElementById("copyPassage");
     const _swapToCheck = () => {
