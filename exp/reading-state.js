@@ -117,7 +117,7 @@ export function applyVerseGlow(app) {
     </div>
     <div class="verse-tools-actions">
         <button class="verse-tool-btn has-tooltip" type="button" aria-label="Highlight" title="Highlight" data-tooltip="Highlight"><span class="verse-tool-letter">H</span></button>
-        <button class="verse-tool-btn has-tooltip" type="button" aria-label="Bookmark" title="Bookmark" data-tooltip="Bookmark"><span class="verse-tool-letter">B</span></button>
+        <button class="verse-tool-btn has-tooltip" type="button" aria-label="Bookmark" title="Bookmark" data-tooltip="Bookmark" data-verse-tool="bookmark" aria-haspopup="menu"><span class="verse-tool-letter">B</span></button>
         <button class="verse-tool-btn has-tooltip" type="button" aria-label="Note" title="Note" data-tooltip="Note"><span class="verse-tool-letter">N</span></button>
         <button class="verse-tool-btn has-tooltip" type="button" aria-label="Copy" title="Copy" data-tooltip="Copy" data-verse-tool="copy">
             <svg class="verse-tool-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false">
@@ -140,6 +140,8 @@ export function applyVerseGlow(app) {
   trigger.addEventListener("click", () =>
     toggleVerseTray(wrapper, trigger, tray),
   );
+
+  app.updateBookmarkToolState?.();
 }
 
 export function toggleVerseTray(wrapperOrApp, triggerArg, trayArg) {
