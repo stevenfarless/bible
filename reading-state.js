@@ -119,7 +119,12 @@ export function applyVerseGlow(app) {
         <button class="verse-tool-btn has-tooltip" type="button" aria-label="Highlight" title="Highlight" data-tooltip="Highlight"><span class="verse-tool-letter">H</span></button>
         <button class="verse-tool-btn has-tooltip" type="button" aria-label="Bookmark" title="Bookmark" data-tooltip="Bookmark"><span class="verse-tool-letter">B</span></button>
         <button class="verse-tool-btn has-tooltip" type="button" aria-label="Note" title="Note" data-tooltip="Note"><span class="verse-tool-letter">N</span></button>
-        <button class="verse-tool-btn has-tooltip" type="button" aria-label="Copy" title="Copy" data-tooltip="Copy" data-verse-tool="copy"><span class="verse-tool-letter">C</span></button>
+        <button class="verse-tool-btn has-tooltip" type="button" aria-label="Copy" title="Copy" data-tooltip="Copy" data-verse-tool="copy">
+            <svg class="verse-tool-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            </button>
         <button class="verse-tool-btn has-tooltip" type="button" aria-label="Share" title="Share" data-tooltip="Share"><span class="verse-tool-letter">S</span></button>
     </div>`;
   wrapper.appendChild(tray);
