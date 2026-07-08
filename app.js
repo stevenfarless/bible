@@ -299,9 +299,23 @@ function buildDebugReport(app) {
       } else if (k === "bookmarksV1" && raw) {
         const p = JSON.parse(raw);
         const items = Object.values(p.items || {});
-        const active = items.filter((item) => item && item.deleted !== true).length;
-        const deleted = items.filter((item) => item && item.deleted === true).length;
-        ls[k] = `${active} active, ${deleted} deleted tombstones`;
+        const activeItems = items.filter((item) => item && item.deleted !== true);
+        const deletedItems = items.filter((item) => item && item.deleted === true);
+        const formatBookmark = (item, status) => {
+          const ref = `${item.book ?? "?"} ${item.chapter ?? "?"}:${item.verse ?? "?"}`;
+          const color = item.color ?? "unknown";
+          const updatedAt = Number(item.updatedAt);
+          const updated = Number.isFinite(updatedAt)
+            ? new Date(updatedAt).toISOString()
+            : "n/a";
+          return `    - ${status} ${ref} color=${color} updatedAt=${updated}`;
+        };
+        const details = [
+          `${activeItems.length} active, ${deletedItems.length} deleted tombstones`,
+          ...activeItems.map((item) => formatBookmark(item, "active")),
+          ...deletedItems.map((item) => formatBookmark(item, "deleted")),
+        ];
+        ls[k] = details.join("\n");
       } else {
         ls[k] = raw ?? "(not set)";
       }
