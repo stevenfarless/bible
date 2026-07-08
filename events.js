@@ -442,6 +442,16 @@ export function attachEventListeners(app) {
     });
 
     verseSelectionTarget.addEventListener("click", (event) => {
+      const shareButton = event.target.closest('[data-verse-tool="share"]');
+      if (!shareButton || !verseSelectionTarget.contains(shareButton)) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      app.shareSelectedVerse();
+    });
+
+    verseSelectionTarget.addEventListener("click", (event) => {
       const heading = event.target.closest(".pericope-heading");
       if (!heading || !verseSelectionTarget.contains(heading)) return;
 
