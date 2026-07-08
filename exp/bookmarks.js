@@ -192,11 +192,20 @@ export function updateBookmarkToolState(app) {
     current ? `Bookmark saved as ${current.color}` : "Bookmark",
   );
 
-  const icon = button.querySelector(".verse-tool-letter");
-  if (icon) icon.textContent = "B";
 }
 
 export function closeBookmarkColorPicker() {
+  document
+    .querySelectorAll(".verse-tool-btn--bookmark-menu-open")
+    .forEach((button) => {
+      const originalTitle = button.dataset.bookmarkOriginalTitle;
+      if (originalTitle) {
+        button.title = originalTitle;
+        delete button.dataset.bookmarkOriginalTitle;
+      }
+      button.classList.remove("verse-tool-btn--bookmark-menu-open");
+    });
+
   document.querySelectorAll(".bookmark-color-menu").forEach((menu) => {
     menu.remove();
   });
@@ -212,12 +221,18 @@ export function openBookmarkColorPicker(app, anchor) {
 
   const existing = document.querySelector(".bookmark-color-menu");
   if (existing) {
-    existing.remove();
+    closeBookmarkColorPicker();
     return;
   }
 
   const tray = anchor.closest(".verse-tools-tray");
   if (!tray) return;
+
+  if (anchor.title) {
+    anchor.dataset.bookmarkOriginalTitle = anchor.title;
+    anchor.removeAttribute("title");
+  }
+  anchor.classList.add("verse-tool-btn--bookmark-menu-open");
 
   const menu = document.createElement("div");
   menu.className = "bookmark-color-menu";
@@ -236,13 +251,23 @@ export function openBookmarkColorPicker(app, anchor) {
       <span>Blue</span>
     </button>
     <button class="bookmark-color-choice bookmark-color-choice--remove" type="button" data-bookmark-remove role="menuitem">
-      <span class="bookmark-choice-trash" aria-hidden="true">⌫</span>
+      <span class="bookmark-choice-trash" aria-hidden="true">×</span>
       <span>Remove</span>
     </button>
   `;
 
   tray.appendChild(menu);
 
+  const trayRect = tray.getBoundingClientRect();
+  const anchorRect = anchor.getBoundingClientRect();
+  const center = anchorRect.left - trayRect.left + anchorRect.width / 2;
+  const halfMenu = menu.offsetWidth / 2;
+  const minLeft = halfMenu + 8;
+  const maxLeft = tray.clientWidth - halfMenu - 8;
+  const left = Math.min(Math.max(center, minLeft), maxLeft);
+  menu.style.left = `${left}px`;
+
+  // bookmark-color-menu anchor
   menu.querySelectorAll("[data-bookmark-color-choice]").forEach((button) => {
     button.addEventListener("click", (event) => {
       event.preventDefault();
@@ -468,18 +493,29 @@ function ensureBookmarksSheet(app) {
   });
 
   sheet.addEventListener("click", (event) => {
-    const jump = event.target.closest("[data-bookmark-jump]");
-    if (jump) {
-      event.preventDefault();
-      void jumpToBookmark(app, jump.dataset.bookmarkJump);
-      return;
-    }
-
     const remove = event.target.closest("[data-bookmark-remove-id]");
     if (remove) {
       event.preventDefault();
+      event.stopPropagation();
       void removeBookmarkById(app, remove.dataset.bookmarkRemoveId);
+      return;
     }
+
+    const card = event.target.closest("[data-bookmark-jump]");
+    if (card && sheet.contains(card)) {
+      event.preventDefault();
+      void jumpToBookmark(app, card.dataset.bookmarkJump);
+    }
+  });
+
+  sheet.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+
+    const card = event.target.closest("[data-bookmark-jump]");
+    if (!card || !sheet.contains(card)) return;
+
+    event.preventDefault();
+    void jumpToBookmark(app, card.dataset.bookmarkJump);
   });
 
   return sheet;
@@ -526,6 +562,9 @@ function renderBookmarksSheet(app) {
     const card = document.createElement("article");
     card.className = "bookmark-card";
     card.dataset.bookmarkColor = item.color;
+    card.dataset.bookmarkJump = id;
+    card.setAttribute("role", "button");
+    card.tabIndex = 0;
 
     const ribbon = document.createElement("span");
     ribbon.className = `bookmark-card__ribbon bookmark-card__ribbon--${item.color}`;
@@ -545,21 +584,14 @@ function renderBookmarksSheet(app) {
     const actions = document.createElement("div");
     actions.className = "bookmark-card__actions";
 
-    const jump = document.createElement("button");
-    jump.type = "button";
-    jump.className = "bookmark-card__action";
-    jump.dataset.bookmarkJump = id;
-    jump.setAttribute("aria-label", "Open bookmark");
-    jump.textContent = "↗";
-
     const remove = document.createElement("button");
     remove.type = "button";
-    remove.className = "bookmark-card__action";
+    remove.className = "bookmark-card__remove";
     remove.dataset.bookmarkRemoveId = id;
     remove.setAttribute("aria-label", "Remove bookmark");
-    remove.textContent = "⋮";
+    remove.textContent = "×";
 
-    actions.append(jump, remove);
+    actions.append(remove);
     card.append(ribbon, body, actions);
     list.appendChild(card);
   }

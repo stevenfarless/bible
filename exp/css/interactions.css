@@ -442,10 +442,23 @@ body.light-mode .verse-tool-icon {
   box-shadow: 0 0 12px rgba(75, 131, 230, 0.25);
 }
 
+.verse-tool-icon--bookmark-add {
+  width: 18px;
+  height: 18px;
+}
+
+.verse-tool-btn--bookmark-menu-open {
+  z-index: 6;
+}
+
+.verse-tool-btn--bookmark-menu-open::after {
+  display: none;
+}
+
 .bookmark-color-menu {
   position: absolute;
   left: 50%;
-  bottom: 72px;
+  bottom: 68px;
   z-index: 5;
   display: grid;
   gap: 2px;
@@ -609,6 +622,15 @@ body.light-mode .verse-tool-icon {
   border: 1px solid rgba(207, 178, 42, 0.18);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.bookmark-card:hover,
+.bookmark-card:focus-visible {
+  border-color: rgba(207, 178, 42, 0.38);
+  background: rgba(207, 178, 42, 0.06);
+  outline: none;
 }
 
 .bookmark-card__ribbon {
@@ -644,7 +666,7 @@ body.light-mode .verse-tool-icon {
   gap: 0.25rem;
 }
 
-.bookmark-card__action {
+.bookmark-card__remove {
   display: grid;
   place-items: center;
   width: 36px;
@@ -653,12 +675,14 @@ body.light-mode .verse-tool-icon {
   background: transparent;
   border: 0;
   border-radius: 999px;
-  font-size: 1.15rem;
+  font-size: 1.35rem;
+  line-height: 1;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
-.bookmark-card__action:focus-visible,
-.bookmark-card__action:hover {
+.bookmark-card__remove:focus-visible,
+.bookmark-card__remove:hover {
   color: var(--accent-color);
   background: rgba(207, 178, 42, 0.1);
   outline: none;
