@@ -1,0 +1,76 @@
+name: "! Bookmarks"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bookmarks-exp
+  cancel-in-progress: false
+
+jobs:
+  bookmarks:
+    name: Add bookmark feature
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v7
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Apply bookmark change
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          python3 -B -m py_compile .github/scripts/bookmarks.py
+          python3 -B .github/scripts/bookmarks.py
+          python3 -B .github/scripts/bookmarks.py
+          rm -rf .github/scripts/__pycache__
+
+      - name: Validate bookmark change
+        run: |
+          test -f bookmarks.js
+          grep -q 'const BOOKMARKS_KEY = "bookmarksV1";' bookmarks.js
+          grep -q 'data-verse-tool="bookmark"' reading-state.js
+          grep -q 'openBookmarkColorPicker' app.js
+          grep -q 'await this.syncBookmarks();' app.js
+          grep -q 'bookmarksV1' app.js
+          grep -q '.bookmark-color-menu' css/interactions.css
+          grep -q '.bookmarks-sheet' css/interactions.css
+          grep -q 'href="bookmarks.js"' index.html
+          node --check bookmarks.js
+          node --check app.js
+          node --check reading-state.js
+          node --check events.js
+          git diff --check
+
+      - name: Verify changed files
+        run: |
+          allowed='^(app\.js|bookmarks\.js|reading-state\.js|events\.js|index\.html|css/interactions\.css)$'
+          unexpected="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev "$allowed" || true)"
+          test -z "$unexpected" || {
+            echo "Unexpected changed files:"
+            echo "$unexpected"
+            exit 1
+          }
+
+      - name: Commit bookmark change
+        run: |
+          files=(app.js bookmarks.js reading-state.js events.js index.html css/interactions.css)
+          if [ -z "$(git status --porcelain -- "${files[@]}")" ]; then
+            echo "Bookmark feature is already applied."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${files[@]}"
+          git commit \
+            -m "feat(bookmarks): add colored synced verse bookmarks" \
+            -m "Add localStorage-backed red, green, and blue verse bookmarks, render bookmark ribbons on passage load, provide a bookmark color picker and overview sheet, and sync records through Firebase after authenticated restoration."
+          git push origin exp
