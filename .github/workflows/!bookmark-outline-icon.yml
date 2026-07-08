@@ -1,0 +1,72 @@
+name: "! Bookmark Outline Icon"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bookmark-outline-icon-exp
+  cancel-in-progress: false
+
+jobs:
+  bookmark-outline-icon:
+    name: Apply outline bookmark icon
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v7
+        with:
+          ref: exp
+          fetch-depth: 0
+
+      - name: Apply outline bookmark icon
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          python3 -B -m py_compile .github/scripts/bookmark_outline_icon.py
+          python3 -B .github/scripts/bookmark_outline_icon.py
+          python3 -B .github/scripts/bookmark_outline_icon.py
+          rm -rf .github/scripts/__pycache__
+
+      - name: Validate outline bookmark icon
+        run: |
+          grep -q 'width="21" height="21"' reading-state.js
+          grep -q 'fill="none" stroke="currentColor"' reading-state.js
+          grep -q 'stroke-width="2.25"' reading-state.js
+          grep -q 'stroke-width="2.45"' reading-state.js
+          grep -q 'width: 21px;' css/interactions.css
+          grep -q 'overflow: visible;' css/interactions.css
+          ! grep -q 'fill="currentColor"></path>' reading-state.js
+          ! grep -q 'stroke="#1c1c1a"' reading-state.js
+          node --check reading-state.js
+          git diff --check
+
+      - name: Verify changed files
+        run: |
+          allowed='^(reading-state\.js|css/interactions\.css)$'
+          unexpected="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev "$allowed" || true)"
+          test -z "$unexpected" || {
+            echo "Unexpected changed files:"
+            echo "$unexpected"
+            exit 1
+          }
+
+      - name: Commit outline bookmark icon
+        run: |
+          files=(reading-state.js css/interactions.css)
+          if [ -z "$(git status --porcelain -- "${files[@]}")" ]; then
+            echo "Outline bookmark icon is already applied."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${files[@]}"
+          git commit \
+            -m "fix(bookmarks): use outlined ribbon add icon" \
+            -m "Replace the filled add-bookmark icon with a slimmer outlined ribbon and a separate plus mark so the control reads clearly without looking too heavy."
+          git push origin exp
