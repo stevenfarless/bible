@@ -2197,7 +2197,6 @@ class BibleApp {
           text: content,
         })
         .then(() => {
-          .then(() => {
           this.showToast("Verse shared!");
           this._dbgEvent(`shareSelectedVerse: shared ${ref}`);
         })
