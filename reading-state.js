@@ -118,10 +118,9 @@ export function applyVerseGlow(app) {
     <div class="verse-tools-actions">
         <button class="verse-tool-btn has-tooltip" type="button" aria-label="Highlight" title="Highlight" data-tooltip="Highlight"><span class="verse-tool-letter">H</span></button>
         <button class="verse-tool-btn has-tooltip" type="button" aria-label="Add bookmark" title="Bookmark" data-tooltip="Bookmark" data-verse-tool="bookmark" aria-haspopup="menu">
-            <svg class="verse-tool-icon verse-tool-icon--bookmark-add" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-              <path d="M7 4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v18l-5-3-5 3V4z"></path>
-              <path d="M12 7v6"></path>
-              <path d="M9 10h6"></path>
+            <svg class="verse-tool-icon verse-tool-icon--bookmark-add" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M7.25 3.25C7.25 2.56 7.81 2 8.5 2h7c.69 0 1.25.56 1.25 1.25V20.75l-4.75-2.85-4.75 2.85V3.25Z" fill="currentColor"></path>
+              <path d="M12 7.15v4.7M9.65 9.5h4.7" fill="none" stroke="#1c1c1a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
         </button>
         <button class="verse-tool-btn has-tooltip" type="button" aria-label="Note" title="Note" data-tooltip="Note"><span class="verse-tool-letter">N</span></button>
