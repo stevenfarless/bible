@@ -296,9 +296,10 @@ body.verse-by-verse-mode .passage-text .verse,
 .verse-by-verse .verse {
     display: grid !important;
     grid-template-columns: 3ch minmax(0, 1fr);
-    column-gap: 0.15em;
+    column-gap: 0.45em;
     align-items: start;
     margin-bottom: 0.75rem;
+    margin-left: -0.35em;
 }
 
 html.verse-by-verse-enabled:not(:has(body[data-app-ready="true"])) .passage-text .verse-num,
