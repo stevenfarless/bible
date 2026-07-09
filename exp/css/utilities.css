@@ -295,7 +295,8 @@ html.verse-by-verse-enabled:not(:has(body[data-app-ready="true"])) .passage-text
 body.verse-by-verse-mode .passage-text .verse,
 .verse-by-verse .verse {
     display: grid !important;
-    grid-template-columns: 1.5em minmax(0, 1fr);
+    grid-template-columns: 0.3em minmax(0, 1fr);
+    /* changed from 1.5em to 0.3em */
     column-gap: 0.4em;
     align-items: start;
     margin-bottom: 0.75rem;
