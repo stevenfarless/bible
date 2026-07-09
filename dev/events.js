@@ -309,6 +309,7 @@ export function attachEventListeners(app) {
   installCanonFallback(app);
   attachButtonHaptics(app);
   installBugReportUi(app);
+  app.installBookmarkSheet?.();
 
   app.searchToggleBtn?.addEventListener("click", () => app.toggleSearch());
   app.closeSearchBtn?.addEventListener("click", () => app.closeSearch());
@@ -449,6 +450,16 @@ export function attachEventListeners(app) {
       event.stopPropagation();
 
       app.shareSelectedVerse();
+    });
+
+    verseSelectionTarget.addEventListener("click", (event) => {
+      const bookmarkButton = event.target.closest('[data-verse-tool="bookmark"]');
+      if (!bookmarkButton || !verseSelectionTarget.contains(bookmarkButton)) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      app.openBookmarkColorPicker(bookmarkButton);
     });
 
     verseSelectionTarget.addEventListener("click", (event) => {

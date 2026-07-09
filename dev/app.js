@@ -111,6 +111,14 @@ import {
 import { handleKeyboardShortcuts } from "./keyboard.js";
 import { attachEventListeners } from "./events.js";
 import { getHapticsDebugState, hapticFirm } from "./haptics.js";
+import {
+  loadLocalBookmarks,
+  applyBookmarkMarkers,
+  updateBookmarkToolState,
+  openBookmarkColorPicker,
+  syncBookmarks,
+  installBookmarkSheet,
+} from "./bookmarks.js";
 
 const TRANSLATION_ALIASES = { NRSVue: "NRSVUE" };
 function normalizeTranslation(t) {
@@ -255,6 +263,7 @@ function buildDebugReport(app) {
   const LS_KEYS = [
     "readingPosition",
     "passageCache",
+    "bookmarksV1",
     "translation",
     "preferredTranslation",
     "translationFallback",
@@ -287,6 +296,26 @@ function buildDebugReport(app) {
       } else if (k === "readingPosition" && raw) {
         const p = JSON.parse(raw);
         ls[k] = `book=${p.book} ch=${p.chapter} scrollY=${p.scrollY}`;
+      } else if (k === "bookmarksV1" && raw) {
+        const p = JSON.parse(raw);
+        const items = Object.values(p.items || {});
+        const activeItems = items.filter((item) => item && item.deleted !== true);
+        const deletedItems = items.filter((item) => item && item.deleted === true);
+        const formatBookmark = (item, status) => {
+          const ref = `${item.book ?? "?"} ${item.chapter ?? "?"}:${item.verse ?? "?"}`;
+          const color = item.color ?? "unknown";
+          const updatedAt = Number(item.updatedAt);
+          const updated = Number.isFinite(updatedAt)
+            ? new Date(updatedAt).toISOString()
+            : "n/a";
+          return `    - ${status} ${ref} color=${color} updatedAt=${updated}`;
+        };
+        const details = [
+          `${activeItems.length} active, ${deletedItems.length} deleted tombstones`,
+          ...activeItems.map((item) => formatBookmark(item, "active")),
+          ...deletedItems.map((item) => formatBookmark(item, "deleted")),
+        ];
+        ls[k] = details.join("\n");
       } else {
         ls[k] = raw ?? "(not set)";
       }
@@ -876,6 +905,7 @@ class BibleApp {
     this._normalizeTranslation = normalizeTranslation;
     this._translationKbIndex = -1;
     this.referencePickerDraft = null;
+    this.bookmarks = loadLocalBookmarks();
 
     // Debug instrumentation — REMOVE BEFORE MERGING TO MAIN.
     this._dbg = {
@@ -1232,6 +1262,7 @@ class BibleApp {
         saveReadingPosition(this, "auth-restoration-newer-local-position");
         this._dbgEvent("auth restoration: saved newer local position");
       }
+      await this.syncBookmarks();
       this.maybeShowTranslationSyncModal();
       this._dbg.t_firebase_position_end = ms();
       this._dbg.firebasePositionChanged = positionChanged;
@@ -1470,6 +1501,7 @@ class BibleApp {
 
       document.body.classList.add("passage-ready");
       updateNavigationState(this);
+      this.applyBookmarkMarkers();
       return true;
     } catch (err) {
       this._dbgEvent(`cache restore failed: ${err?.message || err}`);
@@ -1921,6 +1953,7 @@ class BibleApp {
       this.passageText.innerHTML,
       source,
     );
+    this.applyBookmarkMarkers();
     this.swipe?.syncAdjacentPanels();
   }
 
@@ -2125,6 +2158,26 @@ class BibleApp {
   }
   dismissTranslationSyncForSession() {
     return dismissTranslationSyncForSession(this);
+  }
+
+  applyBookmarkMarkers() {
+    applyBookmarkMarkers(this);
+  }
+
+  updateBookmarkToolState() {
+    updateBookmarkToolState(this);
+  }
+
+  openBookmarkColorPicker(anchor) {
+    openBookmarkColorPicker(this, anchor);
+  }
+
+  async syncBookmarks() {
+    await syncBookmarks(this);
+  }
+
+  installBookmarkSheet() {
+    installBookmarkSheet(this);
   }
   async recoverUnavailableActiveTranslation(book) {
     return recoverUnavailableActiveTranslation(this, book);
