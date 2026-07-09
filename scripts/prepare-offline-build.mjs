@@ -4,7 +4,7 @@ import { build } from 'esbuild';
 
 const root = process.cwd();
 const outputRoot = path.join(root, '_site');
-const cssSources = [
+const startupCssSources = [
     'css/fonts.css',
     'css/base.css',
     'css/tokens.css',
@@ -15,6 +15,9 @@ const cssSources = [
     'css/interactions.css',
     'css/utilities.css',
     'css/pericope.css',
+];
+const cssSources = [
+    ...startupCssSources,
     'css/geek95.css',
 ];
 const excludedTopLevel = new Set([
@@ -91,8 +94,8 @@ function stylesheetPaths(indexHtml) {
 
 async function validateCssSources(sourceIndex) {
     const linkedCss = stylesheetPaths(sourceIndex);
-    if (linkedCss.length !== cssSources.length || linkedCss.some((source, index) => source !== cssSources[index])) {
-        throw new Error(`Expected separate CSS links in this order:\n${cssSources.join('\n')}\nFound:\n${linkedCss.join('\n')}`);
+    if (linkedCss.length !== startupCssSources.length || linkedCss.some((source, index) => source !== startupCssSources[index])) {
+        throw new Error(`Expected startup CSS links in this order:\n${startupCssSources.join('\n')}\nFound:\n${linkedCss.join('\n')}`);
     }
 
     const missingUrls = [];
@@ -152,7 +155,7 @@ async function bundleFirebase() {
         source = source.replaceAll(remote, local);
     }
 
-    const outputPath = path.join(outputRoot, 'config/firebase-config.js');
+    const outputPath = path.join(outputRoot, 'config/firebase-config.bundle.js');
     await fs.mkdir(path.dirname(outputPath), { recursive: true });
     await build({
         stdin: {
@@ -168,8 +171,6 @@ async function bundleFirebase() {
         platform: 'browser',
         target: ['chrome109', 'firefox115', 'safari16.4'],
     });
-
-    await fs.rm(path.join(outputRoot, 'config/firebase-config.bundle.js'), { force: true });
 }
 
 async function localizeMarked() {
@@ -191,12 +192,12 @@ async function localizeMarked() {
     await fs.copyFile(resolvedSource, destination);
 }
 
-function rewriteIndex(sourceIndex) {
-    const markedPattern = /https:\/\/cdn\.jsdelivr\.net\/npm\/marked@9\/marked\.min\.js(?:\?[^\"]*)?/;
-    if (!markedPattern.test(sourceIndex)) {
-        throw new Error('Could not find the hosted Marked script in index.html.');
+function rewriteMarkedLoader(source) {
+    const markedPattern = /https:\/\/cdn\.jsdelivr\.net\/npm\/marked@9\/marked\.min\.js(?:\?[^"]*)?/;
+    if (!markedPattern.test(source)) {
+        throw new Error('Could not find the hosted Marked URL in settings.js.');
     }
-    return sourceIndex.replace(markedPattern, 'vendor/marked/marked.min.js');
+    return source.replace(markedPattern, './vendor/marked/marked.min.js');
 }
 
 async function validateInitialTranslations() {
@@ -269,14 +270,21 @@ async function writeOfflineManifest() {
 async function verifyOutput(assets) {
     const outputIndex = await fs.readFile(path.join(outputRoot, 'index.html'), 'utf8');
     const linkedCss = stylesheetPaths(outputIndex);
-    if (linkedCss.length !== cssSources.length || linkedCss.some((source, index) => source !== cssSources[index])) {
-        throw new Error(`Offline artifact did not preserve the separate CSS files: ${linkedCss.join(', ')}`);
+    if (linkedCss.length !== startupCssSources.length || linkedCss.some((source, index) => source !== startupCssSources[index])) {
+        throw new Error(`Offline artifact did not preserve the startup CSS files: ${linkedCss.join(', ')}`);
     }
     if (await exists(path.join(outputRoot, 'css/app.min.css'))) {
         throw new Error('Offline artifact unexpectedly contains css/app.min.css.');
     }
     if (outputIndex.includes('cdn.jsdelivr.net/npm/marked')) {
         throw new Error('Built index still loads Marked from jsDelivr.');
+    }
+    const outputSettings = await fs.readFile(path.join(outputRoot, 'settings.js'), 'utf8');
+    if (outputSettings.includes('cdn.jsdelivr.net/npm/marked')) {
+        throw new Error('Built settings.js still loads Marked from jsDelivr.');
+    }
+    if (!outputSettings.includes("'./vendor/marked/marked.min.js'")) {
+        throw new Error('Built settings.js does not load the local Marked bundle.');
     }
     if (assets.length < 150) {
         throw new Error(`Offline manifest contains only ${assets.length} assets; expected the full shell and two translations.`);
@@ -287,11 +295,15 @@ async function main() {
     if (!initialTranslations.length) throw new Error('INITIAL_OFFLINE_TRANSLATIONS cannot be empty.');
 
     const sourceIndex = await fs.readFile(path.join(root, 'index.html'), 'utf8');
+    const sourceSettings = await fs.readFile(path.join(root, 'settings.js'), 'utf8');
     await copyRuntimeTree();
     await validateCssSources(sourceIndex);
     await bundleFirebase();
     await localizeMarked();
-    await fs.writeFile(path.join(outputRoot, 'index.html'), rewriteIndex(sourceIndex));
+    await fs.writeFile(
+        path.join(outputRoot, 'settings.js'),
+        rewriteMarkedLoader(sourceSettings)
+    );
     await validateInitialTranslations();
     const assets = await writeOfflineManifest();
     await verifyOutput(assets);

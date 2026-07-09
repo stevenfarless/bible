@@ -27,21 +27,25 @@ Full copyright and attribution information is in [NOTICE](NOTICE).
 ## Features
 
 **Reading**
+
 - Section headings and paragraph breaks sourced from BSB structure data
 - Footnotes and inline cross-references
 - Verse-by-verse mode
 - Adjustable font size and multiple color themes (dark and light)
 
 **Navigation**
+
 - Book, chapter, and verse picker modals
 - Swipe left/right for chapter navigation on touch devices
 - Keyboard shortcuts: `<-` `->` chapter navigation, `^` `v` verse navigation, `Ctrl+K` search, `?` help
 
 **Search**
+
 - Full-text search across all translations with results grouped by testament and book
 - Direct passage reference lookup (e.g. `John 3:16`, `Romans 8`)
 
 **Sync and Offline**
+
 - Firebase Authentication (email/password)
 - Reading position and settings synced across devices via Firebase Realtime Database
 - Service worker for full offline use after first load
@@ -156,12 +160,30 @@ or a CI secret for any public deployment.
 See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for local setup, branch
 workflow, PR standards, and commit conventions.
 
-### Running Tests
+### Required setup
+
+Use Node.js 24.x with npm. Install the project dev dependencies before running
+local validation:
 
 ```bash
 npm install
-npm test          # Vitest unit tests
-npm run e2e       # Playwright end-to-end tests
+```
+
+### Running tests
+
+```bash
+npm test              # Vitest unit tests from package.json
+npm run format:check  # Prettier formatting check from package.json
+```
+
+Browser smoke tests use Playwright, but Playwright is optional for local work
+and is not currently exposed through an `npm run e2e` script. Install it only
+when you need browser coverage:
+
+```bash
+npm install --no-save @playwright/test
+npx playwright install chromium
+npx playwright test tests/smoke.spec.js --project=chromium
 ```
 
 ---
