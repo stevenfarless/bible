@@ -8,7 +8,7 @@
 // A "downloaded" record stores the translation id so we can check presence
 // without reading every book.
 
-const DB_NAME    = 'bibleTranslations';
+const DB_NAME = 'bibleTranslations';
 const DB_VERSION = 1;
 
 let _db = null;
@@ -30,7 +30,7 @@ function _open() {
             }
         };
         req.onsuccess = (e) => { _db = e.target.result; resolve(_db); };
-        req.onerror   = (e) => reject(e.target.error);
+        req.onerror = (e) => reject(e.target.error);
     });
 }
 
@@ -42,7 +42,7 @@ function _idbGet(store, key) {
     return new Promise((resolve, reject) => {
         const req = store.get(key);
         req.onsuccess = () => resolve(req.result ?? null);
-        req.onerror   = (e) => reject(e.target.error);
+        req.onerror = (e) => reject(e.target.error);
     });
 }
 
@@ -50,7 +50,7 @@ function _idbPut(store, key, value) {
     return new Promise((resolve, reject) => {
         const req = store.put(value, key);
         req.onsuccess = () => resolve();
-        req.onerror   = (e) => reject(e.target.error);
+        req.onerror = (e) => reject(e.target.error);
     });
 }
 
@@ -58,7 +58,7 @@ function _idbDelete(store, key) {
     return new Promise((resolve, reject) => {
         const req = store.delete(key);
         req.onsuccess = () => resolve();
-        req.onerror   = (e) => reject(e.target.error);
+        req.onerror = (e) => reject(e.target.error);
     });
 }
 
@@ -66,7 +66,7 @@ function _idbGetAllKeys(store) {
     return new Promise((resolve, reject) => {
         const req = store.getAllKeys();
         req.onsuccess = () => resolve(req.result ?? []);
-        req.onerror   = (e) => reject(e.target.error);
+        req.onerror = (e) => reject(e.target.error);
     });
 }
 
@@ -74,7 +74,8 @@ export async function idbGetBook(translation, book) {
     try {
         await _open();
         return _idbGet(_tx('books', 'readonly'), `${translation}/${book}`);
-    } catch (_) {
+    } catch (error) {
+        console.warn(`idbGetBook failed for ${translation}/${book}`, error);
         return null;
     }
 }
@@ -83,14 +84,19 @@ export async function idbPutBook(translation, book, data) {
     try {
         await _open();
         await _idbPut(_tx('books', 'readwrite'), `${translation}/${book}`, data);
-    } catch (_) {}
+        return true;
+    } catch (error) {
+        console.error(`idbPutBook failed for ${translation}/${book}`, error);
+        return false;
+    }
 }
 
 export async function idbGetSearchIndex(translation) {
     try {
         await _open();
         return _idbGet(_tx('searchIndex', 'readonly'), translation);
-    } catch (_) {
+    } catch (error) {
+        console.warn(`idbGetSearchIndex failed for ${translation}`, error);
         return null;
     }
 }
@@ -99,14 +105,19 @@ export async function idbPutSearchIndex(translation, data) {
     try {
         await _open();
         await _idbPut(_tx('searchIndex', 'readwrite'), translation, data);
-    } catch (_) {}
+        return true;
+    } catch (error) {
+        console.error(`idbPutSearchIndex failed for ${translation}`, error);
+        return false;
+    }
 }
 
 export async function idbIsDownloaded(translation) {
     try {
         await _open();
         return (await _idbGet(_tx('downloaded', 'readonly'), translation)) === true;
-    } catch (_) {
+    } catch (error) {
+        console.warn(`idbIsDownloaded failed for ${translation}`, error);
         return false;
     }
 }
@@ -115,7 +126,11 @@ export async function idbMarkDownloaded(translation) {
     try {
         await _open();
         await _idbPut(_tx('downloaded', 'readwrite'), translation, true);
-    } catch (_) {}
+        return true;
+    } catch (error) {
+        console.error(`idbMarkDownloaded failed for ${translation}`, error);
+        return false;
+    }
 }
 
 /**

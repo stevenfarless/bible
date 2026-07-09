@@ -1,5 +1,5 @@
 // bible-api.js
-import { FIREBASE_DB_URL } from './config/firebase-config.js';
+import { FIREBASE_DB_URL } from './firebase-config.js';
 import { normaliseBookAlias } from './book-aliases.js';
 import {
     idbGetBook, idbPutBook,
@@ -12,6 +12,10 @@ const FIREBASE_TRANSLATIONS_ENABLED = false;
 
 const PAGE_SIZE = 100;
 const SEARCH_CONCURRENCY = 5;
+const PREFIX_MATCH_MIN_LENGTH = 6;
+const TEXT_MATCH_NONE = 0;
+const TEXT_MATCH_PREFIX = 1;
+const TEXT_MATCH_EXACT = 2;
 
 export const PRECACHED_TRANSLATIONS = new Set([
     "BSB", "KJV",
@@ -28,25 +32,25 @@ const REPO_TRANSLATIONS = new Set([
 ]);
 
 const BOOK_LOAD_ORDER = [
-    'Genesis','Exodus','Leviticus','Numbers','Deuteronomy',
-    'Joshua','Judges','Ruth','1 Samuel','2 Samuel',
-    '1 Kings','2 Kings','1 Chronicles','2 Chronicles',
-    'Ezra','Nehemiah','Esther','Job','Psalm','Proverbs',
-    'Ecclesiastes','Song of Solomon','Isaiah','Jeremiah',
-    'Lamentations','Ezekiel','Daniel','Hosea','Joel','Amos',
-    'Obadiah','Jonah','Micah','Nahum','Habakkuk','Zephaniah',
-    'Haggai','Zechariah','Malachi','Matthew','Mark','Luke',
-    'John','Acts','Romans','1 Corinthians','2 Corinthians',
-    'Galatians','Ephesians','Philippians','Colossians',
-    '1 Thessalonians','2 Thessalonians','1 Timothy','2 Timothy',
-    'Titus','Philemon','Hebrews','James','1 Peter','2 Peter',
-    '1 John','2 John','3 John','Jude','Revelation',
+    'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
+    'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
+    '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles',
+    'Ezra', 'Nehemiah', 'Esther', 'Job', 'Psalm', 'Proverbs',
+    'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah',
+    'Lamentations', 'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos',
+    'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk', 'Zephaniah',
+    'Haggai', 'Zechariah', 'Malachi', 'Matthew', 'Mark', 'Luke',
+    'John', 'Acts', 'Romans', '1 Corinthians', '2 Corinthians',
+    'Galatians', 'Ephesians', 'Philippians', 'Colossians',
+    '1 Thessalonians', '2 Thessalonians', '1 Timothy', '2 Timothy',
+    'Titus', 'Philemon', 'Hebrews', 'James', '1 Peter', '2 Peter',
+    '1 John', '2 John', '3 John', 'Jude', 'Revelation',
     // Deuterocanon
-    'Additions to Esther','Bel and the Dragon','Prayer of Manasseh','Letter of Jeremiah',
-    'Prayer of Azariah','Wisdom of Solomon','2 Maccabees','4 Maccabees',
-    '3 Maccabees','1 Maccabees','Psalm 151','1 Esdras',
-    '2 Esdras','Susanna','Sirach','Baruch',
-    'Judith','Tobit',
+    'Additions to Esther', 'Bel and the Dragon', 'Prayer of Manasseh', 'Letter of Jeremiah',
+    'Prayer of Azariah', 'Wisdom of Solomon', '2 Maccabees', '4 Maccabees',
+    '3 Maccabees', '1 Maccabees', 'Psalm 151', '1 Esdras',
+    '2 Esdras', 'Susanna', 'Sirach', 'Baruch',
+    'Judith', 'Tobit',
 ];
 
 const REFERENCE_PATTERN_RE = /^(?:\*|(?:[1-3]\s+)?[A-Za-z][A-Za-z ]*?)\s+(?:\*|\d+)(?::(?:\*|\d+))?$/i;
@@ -146,15 +150,55 @@ function _classifySearchQuery(query) {
  * Strategy: stem the query term, then match any token that starts with that
  * stem and is bounded by a word boundary on both sides.
  */
-function _buildStemRegex(q) {
-    const terms = q.split(/[^\p{L}\p{N}']+/u).filter(Boolean);
-    const regexes = terms.map((term) => {
-        const stem = _normalizeTerm(term.toLowerCase());
-        const escapedStem = stem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        return new RegExp(`\\b${escapedStem}\\w*`, 'i');
-    });
-    return regexes;
+function _tokenizeSearchText(value) {
+    return String(value || '')
+        .toLowerCase()
+        .split(/[^\p{L}\p{N}']+/u)
+        .filter(Boolean);
 }
+
+function _buildSearchToken(token) {
+    return {
+        raw: token,
+        normalized: _normalizeTerm(token),
+    };
+}
+
+function _termMatchRank(term, token) {
+    if (token.raw === term.raw || token.normalized === term.normalized) return TEXT_MATCH_EXACT;
+    if (term.raw.length >= PREFIX_MATCH_MIN_LENGTH && token.raw.startsWith(term.raw)) return TEXT_MATCH_PREFIX;
+    if (term.normalized.length >= PREFIX_MATCH_MIN_LENGTH && token.normalized.startsWith(term.normalized)) return TEXT_MATCH_PREFIX;
+    return TEXT_MATCH_NONE;
+}
+
+function _buildTextMatcher(query) {
+    const terms = _tokenizeSearchText(query)
+        .map((term) => _buildSearchToken(term))
+        .filter((term) => term.raw || term.normalized);
+
+    return (value) => {
+        const tokens = _tokenizeSearchText(value)
+            .map((token) => _buildSearchToken(token))
+            .filter((token) => token.raw || token.normalized);
+        let overallRank = TEXT_MATCH_EXACT;
+
+        for (const term of terms) {
+            let termRank = TEXT_MATCH_NONE;
+
+            for (const token of tokens) {
+                const rank = _termMatchRank(term, token);
+                if (rank > termRank) termRank = rank;
+                if (termRank === TEXT_MATCH_EXACT) break;
+            }
+
+            if (termRank === TEXT_MATCH_NONE) return TEXT_MATCH_NONE;
+            if (termRank < overallRank) overallRank = termRank;
+        }
+
+        return overallRank;
+    };
+}
+
 
 export async function loadTranslationIndex() {
     if (!FIREBASE_TRANSLATIONS_ENABLED) return [];
@@ -174,9 +218,21 @@ export async function loadTranslationIndex() {
 
 
 function _normalizeTerm(word) {
-    const w = word.toLowerCase();
+    let w = word.toLowerCase();
+
+    if (w.length > 3) {
+        w = w.replace(/[’']s$/, '');
+    }
+
     if (w.length < 3) return w;
+
+    if (w.endsWith('est') && w.length > 5) {
+        return _normalizeTerm(w.slice(0, -2));
+    }
     if (w.endsWith('eth') && w.length > 4) {
+        return _normalizeTerm(w.slice(0, -3));
+    }
+    if (w.endsWith('ing') && w.length > 5) {
         return _normalizeTerm(w.slice(0, -3));
     }
     if (w.endsWith('ed') && w.length > 4 && !'aeiou'.includes(w[w.length - 3])) {
@@ -268,7 +324,7 @@ export class BibleApi {
                             this._bookCache.set(cacheKey, cached);
                             return cached;
                         }
-                        this._bookCache.set(cacheKey, null);
+                        this._bookCache.delete(cacheKey);
                         return null;
                     }
 
@@ -281,7 +337,7 @@ export class BibleApi {
                     return data;
                 } catch (err) {
                     console.error(`BibleApi: failed to load ${translation}/${this._sanitizeForLog(book)}`, err);
-                    this._bookCache.set(cacheKey, null);
+                    this._bookCache.delete(cacheKey);
                     return null;
                 } finally {
                     this._localBookFetchPromise.delete(cacheKey);
@@ -316,11 +372,15 @@ export class BibleApi {
                 const exactKey = shallowIndex.get(book.toLowerCase());
                 if (exactKey && exactKey !== book) bookData = await fetchNode(exactKey);
             }
-            this._bookCache.set(cacheKey, bookData);
+            if (bookData !== null) {
+                this._bookCache.set(cacheKey, bookData);
+            } else {
+                this._bookCache.delete(cacheKey);
+            }
             return bookData;
         } catch (err) {
             console.error(`BibleApi: failed to load ${translation}/${book} from RTDB`, err);
-            this._bookCache.set(cacheKey, null);
+            this._bookCache.delete(cacheKey);
             return null;
         }
     }
@@ -365,7 +425,9 @@ export class BibleApi {
                 const index = (data && typeof data === 'object' && Object.keys(data).length > 0) ? data : null;
                 this._searchIndexCache.set(translation, index);
                 if (isRepo && !PRECACHED_TRANSLATIONS.has(translation) && index !== null) {
-                    idbPutSearchIndex(translation, index).catch(() => {});
+                    idbPutSearchIndex(translation, index).catch((error) => {
+                        console.warn(`BibleApi: failed to persist search index for ${translation}`, error);
+                    });
                 }
                 return index;
             } catch (err) {
@@ -384,43 +446,83 @@ export class BibleApi {
     async downloadTranslation(translation, bookList, onProgress) {
         const books = bookList?.length ? bookList : BOOK_LOAD_ORDER;
         const total = books.length;
+        const failedBooks = [];
         let done = 0;
 
         const fetchAndStore = async (book) => {
             const cacheKey = `${translation}/${book}`;
-            let data = this._bookCache.get(cacheKey) ?? null;
-            if (data === null) {
-                try {
+
+            try {
+                let data = this._bookCache.get(cacheKey) ?? null;
+                if (data === null) {
                     const filename = BOOK_KEY_ALIASES[book] ?? book;
-                    const url = `./translations/${translation}/${encodeURIComponent(filename)}.json`;
-                    const res = await fetch(url);
-                    if (res.ok) {
-                        data = await res.json();
-                        this._bookCache.set(cacheKey, data);
+                    const url =
+                        `./translations/${encodeURIComponent(translation)}/` +
+                        `${encodeURIComponent(filename)}.json`;
+                    const response = await fetch(url);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
                     }
-                } catch (_) {}
+
+                    data = await response.json();
+                    if (!data || typeof data !== 'object') {
+                        throw new Error('Invalid book data');
+                    }
+                    this._bookCache.set(cacheKey, data);
+                }
+
+                const stored = await idbPutBook(translation, book, data);
+                if (!stored) throw new Error('IndexedDB write failed');
+            } catch (error) {
+                failedBooks.push(book);
+                console.error(
+                    `Translation download failed for ${translation}/${book}`,
+                    error
+                );
+            } finally {
+                done++;
+                onProgress?.(done, total);
             }
-            if (data !== null) await idbPutBook(translation, book, data);
-            done++;
-            onProgress?.(done, total);
         };
 
-        const BATCH = 4;
-        for (let i = 0; i < books.length; i += BATCH) {
-            await Promise.all(books.slice(i, i + BATCH).map(fetchAndStore));
+        const batchSize = 4;
+        for (let index = 0; index < books.length; index += batchSize) {
+            await Promise.all(
+                books.slice(index, index + batchSize).map(fetchAndStore)
+            );
+        }
+
+        if (failedBooks.length > 0) {
+            await idbDeleteTranslation(translation);
+            this.evictTranslation(translation);
+            throw new Error(
+                `Failed to download ${failedBooks.length} books: ` +
+                failedBooks.join(', ')
+            );
         }
 
         try {
-            const url = `./translations/${translation}/${translation}_search_index.json`;
-            const res = await fetch(url);
-            if (res.ok) {
-                const idx = await res.json();
-                await idbPutSearchIndex(translation, idx);
-                this._searchIndexCache.set(translation, idx);
-            }
-        } catch (_) {}
+            const url =
+                `./translations/${encodeURIComponent(translation)}/` +
+                `${encodeURIComponent(translation)}_search_index.json`;
+            const response = await fetch(url);
 
-        await idbMarkDownloaded(translation);
+            if (response.ok) {
+                const index = await response.json();
+                await idbPutSearchIndex(translation, index);
+                this._searchIndexCache.set(translation, index);
+            }
+        } catch (error) {
+            console.warn(`Search index unavailable for ${translation}`, error);
+        }
+
+        const marked = await idbMarkDownloaded(translation);
+        if (!marked) {
+            await idbDeleteTranslation(translation);
+            this.evictTranslation(translation);
+            throw new Error(`Could not mark ${translation} installed`);
+        }
 
         if (navigator.serviceWorker?.controller) {
             navigator.serviceWorker.controller.postMessage({
@@ -453,10 +555,10 @@ export class BibleApi {
             const m = str.match(re);
             if (m) {
                 return {
-                    book:       name,
-                    chapter:    parseInt(m[2], 10),
+                    book: name,
+                    chapter: parseInt(m[2], 10),
                     verseStart: m[3] ? parseInt(m[3], 10) : null,
-                    verseEnd:   m[4] ? parseInt(m[4], 10) : null,
+                    verseEnd: m[4] ? parseInt(m[4], 10) : null,
                 };
             }
         }
@@ -464,10 +566,10 @@ export class BibleApi {
         const m = str.match(/^((?:[1-3]\s+)?[A-Za-z ]+?)\s+(\d+)(?:[:\s](\d+)(?:-(\d+))?)?$/);
         if (!m) return null;
         return {
-            book:       m[1].trim(),
-            chapter:    parseInt(m[2], 10),
+            book: m[1].trim(),
+            chapter: parseInt(m[2], 10),
             verseStart: m[3] ? parseInt(m[3], 10) : null,
-            verseEnd:   m[4] ? parseInt(m[4], 10) : null,
+            verseEnd: m[4] ? parseInt(m[4], 10) : null,
         };
     }
 
@@ -515,6 +617,26 @@ export class BibleApi {
             eventMap.get(evt.v).push(evt);
         }
 
+        const headingEvents = scaffoldEvents
+    .filter((evt) => evt.type === 'heading' && Number.isFinite(evt.v))
+    .sort((a, b) => a.v - b.v);
+
+const headingRangeEndByStart = new Map();
+
+for (let i = 0; i < headingEvents.length; i++) {
+    const startVerse = headingEvents[i].v;
+    const nextHeadingVerse = headingEvents[i + 1]?.v ?? null;
+    const versesInRange = verseNums.filter((v) => (
+        v >= startVerse &&
+        (nextHeadingVerse === null || v < nextHeadingVerse)
+    ));
+    const endVerse = versesInRange[versesInRange.length - 1];
+
+    if (Number.isFinite(endVerse)) {
+        headingRangeEndByStart.set(startVerse, endVerse);
+    }
+}
+
         const parts = [];
         let inParagraph = false;
 
@@ -525,7 +647,16 @@ export class BibleApi {
             const eventsHere = eventMap.get(v) || [];
             for (const evt of eventsHere) {
                 if (evt.type === 'heading') {
-                    if (showHeadings) { closeP(); parts.push(`<h3 class="pericope-heading">${escapeHtml(evt.text)}</h3>`); }
+                    if (showHeadings) {
+                        closeP();
+
+    const endVerse = headingRangeEndByStart.get(evt.v);
+    const rangeAttrs = Number.isFinite(endVerse)
+        ? ` role="button" tabindex="0" data-start-verse="${evt.v}" data-end-verse="${endVerse}" aria-label="Select section: ${escapeHtml(evt.text)}"`
+        : '';
+
+    parts.push(`<h3 class="pericope-heading"${rangeAttrs}>${escapeHtml(evt.text)}</h3>`);
+}
                 } else if (evt.type === 'para_break') {
                     closeP();
                 }
@@ -577,26 +708,32 @@ export class BibleApi {
         return { passages: [html], canonical };
     }
 
+    _compareSearchMatches(a, b) {
+        const rankDelta = (b.searchRank ?? TEXT_MATCH_EXACT) - (a.searchRank ?? TEXT_MATCH_EXACT);
+        if (rankDelta !== 0) return rankDelta;
+        const bookDelta = (BOOK_ORDER_INDEX.get(a.book) ?? 999) - (BOOK_ORDER_INDEX.get(b.book) ?? 999);
+        if (bookDelta !== 0) return bookDelta;
+        if (a.chapter !== b.chapter) return a.chapter - b.chapter;
+        return a.verse - b.verse;
+    }
+
     _scanSearchIndex(searchIndex, matcher, mode = 'text') {
         const matched = [];
         for (const ref of Object.keys(searchIndex)) {
             const target = mode === 'reference' ? ref : searchIndex[ref];
-            if (!matcher(target)) continue;
+            const matchRank = matcher(target);
+            if (!matchRank) continue;
             const colonIdx = ref.lastIndexOf(':');
             const spaceIdx = ref.lastIndexOf(' ', colonIdx);
             matched.push({
                 ref,
-                book:    ref.slice(0, spaceIdx),
+                book: ref.slice(0, spaceIdx),
                 chapter: Number(ref.slice(spaceIdx + 1, colonIdx)),
-                verse:   Number(ref.slice(colonIdx + 1)),
+                verse: Number(ref.slice(colonIdx + 1)),
+                searchRank: typeof matchRank === 'number' ? matchRank : TEXT_MATCH_EXACT,
             });
         }
-        matched.sort((a, b) => {
-            const bi = (BOOK_ORDER_INDEX.get(a.book) ?? 999) - (BOOK_ORDER_INDEX.get(b.book) ?? 999);
-            if (bi !== 0) return bi;
-            if (a.chapter !== b.chapter) return a.chapter - b.chapter;
-            return a.verse - b.verse;
-        });
+        matched.sort((a, b) => this._compareSearchMatches(a, b));
         return matched;
     }
 
@@ -608,7 +745,7 @@ export class BibleApi {
         const mode = _classifySearchQuery(q);
         const queryTerms = normalizedQ.split(/[^\p{L}\p{N}']+/u).filter(Boolean);
         const normalizedQueryTerms = queryTerms.map((term) => _normalizeTerm(term));
-        const stemRegexes = mode === 'text' ? _buildStemRegex(normalizedQ) : [];
+        const textMatcher = mode === 'text' ? _buildTextMatcher(normalizedQ) : null;
         const wildcardTextRegex = mode === 'wildcardText' ? _buildWildcardTextRegex(q) : null;
         const referenceRegex = mode === 'reference' ? _buildReferenceRegex(q) : null;
 
@@ -616,7 +753,7 @@ export class BibleApi {
             ? (value) => referenceRegex?.test(value) ?? false
             : mode === 'wildcardText'
                 ? (value) => wildcardTextRegex?.test(String(value || '')) ?? false
-                : (value) => stemRegexes.every((re) => re.test(String(value || '')));
+                : (value) => textMatcher?.(value) ?? false;
 
         const scanMode = mode === 'reference' ? 'reference' : 'text';
 
@@ -714,28 +851,33 @@ export class BibleApi {
                     for (const [verseStr, text] of verseEntries) {
                         const verseText = String(text || '');
                         const reference = `${book} ${chapterStr}:${verseStr}`;
-                        const isMatch = mode === 'reference'
+                        const matchRank = mode === 'reference'
                             ? matcher(reference)
                             : matcher(verseText);
-                        if (!isMatch) continue;
+                        if (!matchRank) continue;
                         batchResults.push({
                             reference,
-                            content:   verseText,
+                            content: verseText,
                             book,
-                            chapter:   Number(chapterStr),
-                            verse:     Number(verseStr),
-                            text:      verseText,
+                            chapter: Number(chapterStr),
+                            verse: Number(verseStr),
+                            text: verseText,
+                            searchRank: typeof matchRank === 'number' ? matchRank : TEXT_MATCH_EXACT,
                         });
                     }
                 }
             }
             if (batchResults.length > 0) {
                 allResults.push(...batchResults);
-                if (typeof onBatchResults === 'function') onBatchResults(batchResults);
+                if (typeof onBatchResults === 'function') {
+                    onBatchResults(batchResults.map(({ searchRank, ...result }) => result));
+                }
             }
         }
 
-        return { results: allResults, total_results: allResults.length, page_size: PAGE_SIZE };
+        allResults.sort((a, b) => this._compareSearchMatches(a, b));
+        const results = allResults.map(({ searchRank, ...result }) => result);
+        return { results, total_results: results.length, page_size: PAGE_SIZE };
     }
 
     async searchPassagesAllTranslations(query, knownRefs) {
@@ -748,14 +890,14 @@ export class BibleApi {
         if (candidates.length === 0) return [];
 
         const mode = _classifySearchQuery(q);
-        const stemRegexes = mode === 'text' ? _buildStemRegex(q.toLowerCase()) : [];
+        const textMatcher = mode === 'text' ? _buildTextMatcher(q.toLowerCase()) : null;
         const wildcardTextRegex = mode === 'wildcardText' ? _buildWildcardTextRegex(q) : null;
         const referenceRegex = mode === 'reference' ? _buildReferenceRegex(q) : null;
         const matcher = mode === 'reference'
             ? (value) => referenceRegex?.test(value) ?? false
             : mode === 'wildcardText'
                 ? (value) => wildcardTextRegex?.test(String(value || '')) ?? false
-                : (value) => stemRegexes.every((re) => re.test(String(value || '')));
+                : (value) => textMatcher?.(value) ?? false;
         const scanMode = mode === 'reference' ? 'reference' : 'text';
 
         const seen = new Set(
@@ -791,8 +933,8 @@ export class BibleApi {
                     const originalText = resolvedBookData?.[String(chapter)]?.[String(verse)];
                     const text = originalText != null ? String(originalText) : searchIndex[ref];
                     supplemental.push({
-                        reference:         ref,
-                        content:           text,
+                        reference: ref,
+                        content: text,
                         book,
                         chapter,
                         verse,

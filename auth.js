@@ -1,22 +1,93 @@
 // auth.js
 // Firebase auth, user data, and reading-position persistence for BibleApp.
 
-import { loadUserData as loadUserDataFromFirebase } from './config/firebase-config.js';
-
 function lsSet(key, value) {
-    try { localStorage.setItem(key, String(value)); } catch (_) {}
+    try { localStorage.setItem(key, String(value)); } catch (_) { }
 }
 
 function lsSetJSON(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) {}
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) { }
+}
+
+function isAuthRestorePositionSource(source) {
+    const value = String(source || 'unspecified');
+    return value === 'auth-restoration-newer-local-position' ||
+        value.startsWith('auth-') ||
+        value.includes(':auth-') ||
+        value.startsWith('legacy-') ||
+        value.includes(':legacy-');
+}
+
+function markLocalReadingPositionChange(app, source) {
+    if (isAuthRestorePositionSource(source)) return;
+
+    app._localReadingPositionVersion = (app._localReadingPositionVersion || 0) + 1;
+    app._localReadingPositionChangedAt = performance.now();
+    app._localReadingPositionChangeSource = source;
+}
+
+function hasLocalPositionChangedSinceAuthScheduled(app) {
+    if (app.hasLocalPositionChangedSinceAuthStart?.()) return true;
+
+    const scheduledAt = app._dbg?.t_auth_restore_scheduled;
+    const changedAt = app._localReadingPositionChangedAt;
+
+    return Number.isFinite(scheduledAt) &&
+        Number.isFinite(changedAt) &&
+        changedAt > scheduledAt;
+}
+
+function currentReadingPosition(app) {
+    return {
+        book: app.state.currentBook,
+        chapter: app.state.currentChapter,
+        scrollY: window.scrollY || 0,
+    };
+}
+
+function markCurrentPositionAsAuthBaseline(app) {
+    app._authRestorePositionBaseline = currentReadingPosition(app);
+}
+
+async function saveNewerLocalReadingPosition(app) {
+    const pos = currentReadingPosition(app);
+    lsSetJSON('readingPosition', pos);
+    app._dbgEvent?.(
+        'auth restoration: saved newer local position ' +
+        pos.book + ' ' + pos.chapter + ' scrollY=' + pos.scrollY +
+        ' source=' + (app._localReadingPositionChangeSource || 'unknown')
+    );
+
+    if (!app.currentUser || !app.database) return;
+
+    try {
+        await app.database
+            .ref(`users/${app.currentUser.uid}/readingPosition`)
+            .set(pos);
+    } catch (err) {
+        console.error('saveNewerLocalReadingPosition: Firebase write failed', err);
+    }
+}
+
+async function keepNewerLocalPosition(app, reason) {
+    app._dbgEvent?.(
+        'auth restoration: skipped remote position after local interaction ' + reason
+    );
+    await saveNewerLocalReadingPosition(app);
+    markCurrentPositionAsAuthBaseline(app);
 }
 
 export async function loadSavedPositionIfChanged(app, withTimeout) {
     if (!app.currentUser || !app.database) return;
+    if (hasLocalPositionChangedSinceAuthScheduled(app)) {
+        await keepNewerLocalPosition(app, 'before remote read');
+        return;
+    }
 
     let targetBook = app.state.currentBook;
     let targetChapter = app.state.currentChapter;
     let targetScrollY = 0;
+    app._dbgEvent?.('auth restoration: local position at read start ' + targetBook + ' ' + targetChapter + ' scrollY=' + (window.scrollY || 0));
 
     try {
         const snapshot = await withTimeout(
@@ -30,6 +101,7 @@ export async function loadSavedPositionIfChanged(app, withTimeout) {
                 targetBook = pos.book;
                 targetChapter = pos.chapter;
                 targetScrollY = pos.scrollY || 0;
+                app._dbgEvent?.('auth restoration: remote position: ' + targetBook + ' ' + targetChapter + ' scrollY=' + targetScrollY);
             }
         } else {
             console.warn('_loadSavedPositionIfChanged: timed out, keeping current passage');
@@ -38,21 +110,32 @@ export async function loadSavedPositionIfChanged(app, withTimeout) {
         console.error('_loadSavedPositionIfChanged: Firebase read failed', err);
     }
 
+    if (hasLocalPositionChangedSinceAuthScheduled(app)) {
+        await keepNewerLocalPosition(app, 'during remote read');
+        return;
+    }
+
     if (targetBook !== app.state.currentBook || targetChapter !== app.state.currentChapter) {
         app.state.currentBook = targetBook;
         app.state.currentChapter = targetChapter;
         app.lastScrollPosition = targetScrollY;
         lsSetJSON('readingPosition', { book: targetBook, chapter: targetChapter, scrollY: targetScrollY });
-        await app.loadPassage(targetBook, targetChapter, !!targetScrollY);
+        app._dbgEvent?.('auth restoration: chose remote position ' + targetBook + ' ' + targetChapter + ' scrollY=' + targetScrollY);
+        await app.loadPassage(targetBook, targetChapter, !!targetScrollY, 'auth-remote-position');
+        markCurrentPositionAsAuthBaseline(app);
     } else if (targetScrollY) {
+        app._dbgEvent?.('auth restoration: chose remote scrollY=' + targetScrollY + ' for current passage');
         window.scrollTo(0, targetScrollY);
+        markCurrentPositionAsAuthBaseline(app);
+    } else {
+        markCurrentPositionAsAuthBaseline(app);
     }
 }
 
 /** @deprecated Use loadSavedPositionIfChanged for the auth flow. */
 export async function loadSavedReadingPosition(app, withTimeout) {
     if (!app.currentUser || !app.database) {
-        await app.loadPassage(app.state.currentBook, app.state.currentChapter);
+        await app.loadPassage(app.state.currentBook, app.state.currentChapter, false, 'legacy-saved-position-no-user');
         return;
     }
 
@@ -76,12 +159,14 @@ export async function loadSavedReadingPosition(app, withTimeout) {
         console.error('loadSavedReadingPosition: failed to read Firebase', err);
     }
 
-    await app.loadPassage(app.state.currentBook, app.state.currentChapter, !!app.lastScrollPosition);
+    await app.loadPassage(app.state.currentBook, app.state.currentChapter, !!app.lastScrollPosition, 'legacy-saved-position');
 }
 
-export function saveReadingPosition(app) {
+export function saveReadingPosition(app, source = 'unspecified') {
+    markLocalReadingPositionChange(app, source);
+
     const pos = {
-        book:    app.state.currentBook,
+        book: app.state.currentBook,
         chapter: app.state.currentChapter,
         scrollY: window.scrollY || 0,
     };
@@ -90,8 +175,9 @@ export function saveReadingPosition(app) {
     // on the next cold load. Without this, signed-in users always get a cache
     // miss because their localStorage position is stale.
     lsSetJSON('readingPosition', pos);
+    app._dbgEvent?.('storage write: readingPosition ' + pos.book + ' ' + pos.chapter + ' scrollY=' + pos.scrollY + ' source=' + source);
 
-    if (app.currentUser && app.database) {
+    if (app.canWriteRemoteState()) {
         app.database
             .ref(`users/${app.currentUser.uid}/readingPosition`)
             .set(pos)
@@ -99,31 +185,31 @@ export function saveReadingPosition(app) {
     }
 }
 
-export function checkApiKey(app) {
-    setTimeout(() => {
-        app.showToast('Sign in to sync your reading position across devices.');
-    }, 500);
-}
-
 export function handleUserButtonClick(app) {
     if (app.currentUser) {
-        document.getElementById('userEmail').textContent = app.currentUser.email;
+        const emailEl = document.getElementById('userEmail');
+        if (emailEl) emailEl.textContent = app.currentUser.email || '';
+
         const isLight = document.body.classList.contains('light-mode');
         let colorTheme = app.state?.colorTheme || '';
 
-        try { colorTheme = app.state?.colorTheme || localStorage.getItem('colorTheme') || ''; } catch (_) {}
+        try { colorTheme = app.state?.colorTheme || localStorage.getItem('colorTheme') || ''; } catch (_) { }
         const themeNameMap = {
-            dracula:    'Dracula (Purple/Pink)',
-            onyx:       'Onyx (Gold/OLED)',
-            sage:       'Sage (Green/Forest)',
-            ember:      'Ember (Amber/Candlelit)',
+            dracula: 'Dracula (Purple/Pink)',
+            onyx: 'Onyx (Gold/OLED)',
+            sage: 'Sage (Green/Forest)',
+            ember: 'Ember (Amber/Candlelit)',
             perplexity: 'Perplexity (Teal/Minimal)',
-            basic:      'Basic (Black & White)',
-            geek:       'The Geek Shall Inherit The Earth',
-            gnome:      'GNOME 3 (Adwaita)',
+            basic: 'Basic (Black & White)',
+            geek: 'The Geek Shall Inherit The Earth',
+            gnome: 'GNOME 3 (Adwaita)',
         };
-        document.getElementById('userTheme').textContent =
-            themeNameMap[colorTheme] || colorTheme;
+
+        const themeEl = document.getElementById('userTheme');
+        if (themeEl) {
+            themeEl.textContent = themeNameMap[colorTheme] || colorTheme;
+        }
+
         app.openModal(app.userMenuModal);
     } else {
         app.openModal(app.loginModal);
@@ -140,9 +226,11 @@ export async function handleLogin(app) {
     }
 
     try {
+        await app.ensureInteractiveAuth();
         await app.auth.signInWithEmailAndPassword(email, password);
         app.showToast('Signed in successfully!');
         app.closeModal(app.loginModal);
+        app.maybeShowTranslationSyncModal();
         document.getElementById('loginEmail').value = '';
         document.getElementById('loginPassword').value = '';
     } catch (error) {
@@ -176,9 +264,11 @@ export async function handleSignup(app) {
     }
 
     try {
+        await app.ensureInteractiveAuth();
         const userCredential = await app.auth.createUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
 
+        await app.ensureInteractiveDatabase();
         await app.database.ref(`users/${user.uid}/settings`).set({
             fontSize: app.state.fontSize,
             showVerseNumbers: app.state.showVerseNumbers,
@@ -186,9 +276,14 @@ export async function handleSignup(app) {
             showFootnotes: app.state.showFootnotes,
             showCrossReferences: app.state.showCrossReferences,
             verseByVerse: app.state.verseByVerse,
+            showChapterArrows: app.state.showChapterArrows,
+            hideInterfaceOnScroll: app.state.hideInterfaceOnScroll,
+            hapticsEnabled: app.state.hapticsEnabled,
             colorTheme: app.state.colorTheme,
             lightMode: app.state.lightMode ?? 'system',
-            translation: app.state.translation || 'ESV',
+            translation: app.preferredTranslation || app.state.translation || 'KJV',
+            readingFont: app.state.readingFont,
+            verseSelectionGesture: app.state.verseSelectionGesture,
         });
 
         app.showToast('Account created successfully!');
@@ -215,36 +310,62 @@ export async function handleLogout(app) {
 }
 
 export async function loadUserData(app, normalizeTranslation) {
-    if (!app.currentUser) return;
-    const data = await loadUserDataFromFirebase(app.currentUser.uid);
-    if (!data) return;
-    const s = data.settings;
+    if (!app.currentUser || !app.database) return;
 
-    app.state.fontSize             = s.fontSize;
-    app.state.showVerseNumbers     = s.showVerseNumbers;
-    app.state.showHeadings         = s.showHeadings;
-    app.state.showFootnotes        = s.showFootnotes;
-    app.state.showCrossReferences  = s.showCrossReferences;
-    app.state.verseByVerse         = s.verseByVerse;
-    app.state.colorTheme           = s.colorTheme;
-    // Migrate old boolean values from Firebase to string enum
-    app.state.lightMode =
-        s.lightMode === 'light' || s.lightMode === 'dark' || s.lightMode === 'system'
-            ? s.lightMode
-            : s.lightMode === true ? 'light'
-            : s.lightMode === false ? 'dark'
-            : 'system';
-    app.state.translation          = normalizeTranslation(s.translation || 'ESV');
+    let data;
+    try {
+        const snapshot = await app.database
+            .ref(`users/${app.currentUser.uid}`)
+            .once('value');
+        data = snapshot?.val();
+    } catch (error) {
+        console.error('loadUserData error:', error);
+        return;
+    }
 
-    if (s.fontSize            != null) lsSet('fontSize',             s.fontSize);
-    if (s.showVerseNumbers    != null) lsSet('showVerseNumbers',     s.showVerseNumbers);
-    if (s.showHeadings        != null) lsSet('showHeadings',         s.showHeadings);
-    if (s.showFootnotes       != null) lsSet('showFootnotes',        s.showFootnotes);
-    if (s.showCrossReferences != null) lsSet('showCrossReferences',  s.showCrossReferences);
-    if (s.verseByVerse        != null) lsSet('verseByVerse',         s.verseByVerse);
-    if (s.colorTheme          != null) lsSet('colorTheme',           s.colorTheme);
-    if (s.lightMode           != null) lsSet('lightMode',            app.state.lightMode);
-    if (s.translation         != null) lsSet('translation',          normalizeTranslation(s.translation || 'ESV'));
+    const s = data?.settings;
+    if (!s) return;
+
+    const applySetting = (key, value) => {
+        if (value == null) return;
+        app.state[key] = value;
+        lsSet(key, value);
+    };
+
+    applySetting('fontSize', s.fontSize);
+    applySetting('showVerseNumbers', s.showVerseNumbers);
+    applySetting('coloredVerseNumbers', s.coloredVerseNumbers);
+    applySetting('showHeadings', s.showHeadings);
+    applySetting('showFootnotes', s.showFootnotes);
+    applySetting('showCrossReferences', s.showCrossReferences);
+    applySetting('verseByVerse', s.verseByVerse);
+    applySetting('showChapterArrows', s.showChapterArrows);
+    applySetting('hideInterfaceOnScroll', s.hideInterfaceOnScroll);
+    applySetting('hapticsEnabled', s.hapticsEnabled);
+    applySetting('colorTheme', s.colorTheme);
+    applySetting('readingFont', s.readingFont);
+    applySetting('verseSelectionGesture', s.verseSelectionGesture);
+
+    if (s.lightMode != null) {
+        app.state.lightMode =
+            s.lightMode === 'light' ||
+                s.lightMode === 'dark' ||
+                s.lightMode === 'system'
+                ? s.lightMode
+                : s.lightMode === true
+                    ? 'light'
+                    : s.lightMode === false
+                        ? 'dark'
+                        : 'system';
+        lsSet('lightMode', app.state.lightMode);
+    }
+
+    if (s.translation != null) {
+        app.preferredTranslation = normalizeTranslation(
+            s.translation || app.preferredTranslation || 'KJV'
+        );
+        lsSet('preferredTranslation', app.preferredTranslation);
+    }
 }
 
 export async function handleChangeEmail(app) {
@@ -314,6 +435,7 @@ export async function handleForgotPassword(app) {
     }
 
     try {
+        await app.ensureInteractiveAuth();
         await app.auth.sendPasswordResetEmail(email);
         app.showToast('Reset link sent — check your inbox');
         app.closeModal(document.getElementById('forgotPasswordModal'));

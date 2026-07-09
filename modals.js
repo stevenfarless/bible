@@ -2,7 +2,7 @@
 // Modal open/close, population, and drag-to-resize for BibleApp.
 
 import { LOCAL_TRANSLATIONS, PRECACHED_TRANSLATIONS } from './bible-api.js';
-import { idbIsDownloaded, idbDeleteTranslation } from './translation-store.js';
+import { idbDeleteTranslation } from './translation-store.js';
 
 // ── Open / close ─────────────────────────────────────────────────────────────
 
@@ -173,33 +173,46 @@ function _resolveFocusOrigin(origin) {
     return null;
 }
 
+function _isRestorableFocusTarget(target) {
+    return target instanceof HTMLElement
+        && target.isConnected
+        && !target.hidden
+        && !target.inert
+        && target.getClientRects().length > 0
+        && !target.closest('[hidden], [inert], [aria-hidden="true"]');
+}
+
 function _restoreModalFocus(modal) {
     const origin = _modalFocusOrigins.get(modal);
     modal.removeEventListener('keydown', _trapModalFocus);
 
     const activeModal = _getTopActiveModal();
-
-if (activeModal && activeModal !== modal) {
-    if (
-        origin instanceof HTMLElement &&
-        origin.isConnected &&
-        activeModal.contains(origin)
-    ) {
+    if (activeModal && activeModal !== modal) {
         _modalFocusOrigins.delete(modal);
-        origin.focus({ preventScroll: true });
-    }
 
-    return;
-}
+        if (
+            _isRestorableFocusTarget(origin) &&
+            activeModal.contains(origin)
+        ) {
+            origin.focus({ preventScroll: true });
+        } else {
+            _focusModal(activeModal);
+        }
+        return;
+    }
 
     _modalFocusOrigins.delete(modal);
     const target = _resolveFocusOrigin(origin);
-    if (!(target instanceof HTMLElement) || !target.isConnected) return;
-
+    if (!_isRestorableFocusTarget(target)) return;
     target.focus({ preventScroll: true });
 }
 
 function _finishModalClose(modal) {
+    const focused = document.activeElement;
+    if (focused instanceof HTMLElement && modal.contains(focused)) {
+        focused.blur();
+    }
+
     modal.classList.remove('active', 'closing');
     modal.inert = true;
     modal.setAttribute('aria-hidden', 'true');
@@ -236,6 +249,14 @@ export function closeModal(app, modal) {
     if (!modal || !modal.classList.contains('active')) return;
     if (modal.classList.contains('closing')) return;
 
+    if (modal === app.settingsModal) {
+        app.hideSyncPrompt?.();
+    }
+
+    if (modal === app.translationSyncModal) {
+        app.dismissTranslationSyncForSession?.();
+    }
+
     if (modal === app.translationModal) {
         _translationKbClear(app);
     }
@@ -244,17 +265,22 @@ export function closeModal(app, modal) {
         modal.classList.add('closing');
 
         if (modal === app.settingsModal) {
-            setTimeout(() => _finishModalClose(modal), 320);
+            setTimeout(() => {
+                _finishModalClose(modal);
+                app.maybeShowTranslationSyncModal?.();
+            }, 320);
         } else {
             const content = modal.querySelector('.modal-content');
             content.style.animation = 'slideDownToBottom 250ms ease';
             setTimeout(() => {
                 _finishModalClose(modal);
                 content.style.animation = '';
+                app.maybeShowTranslationSyncModal?.();
             }, 250);
         }
     } else {
         _finishModalClose(modal);
+        queueMicrotask(() => app.maybeShowTranslationSyncModal?.());
     }
 }
 
@@ -264,7 +290,7 @@ function _maybeRemoveModalOpen() {
     }
 }
 
-// ── Book modal ────────────────────────────────────────────────────────────────
+// ── Reference picker modal ───────────────────────────────────────────────────
 
 const BOOK_TESTAMENT_FILTERS = [
     { testament: 'Old Testament', label: 'Old Testament' },
@@ -272,26 +298,197 @@ const BOOK_TESTAMENT_FILTERS = [
     { testament: 'New Testament', label: 'New Testament' },
 ];
 
-export function openBookModal(app) {
-    const content = app.bookModal?.querySelector('.modal-content');
-    if (content) content.style.height = '';
+function _referencePickerScrollElement(app) {
+    return app.referencePickerView?.closest('.modal-body') || app.referencePickerView;
+}
 
-    populateBookModal(app);
-    openModal(app, app.bookModal);
+function _rememberReferencePickerScroll(app) {
+    const draft = app.referencePickerDraft;
+    const scrollElement = _referencePickerScrollElement(app);
+    if (!draft || !scrollElement) return;
+    draft.viewScroll = draft.viewScroll || {};
+    draft.viewScroll[draft.view] = scrollElement.scrollTop || 0;
+}
+
+function _restoreReferencePickerScroll(app) {
+    const draft = app.referencePickerDraft;
+    const scrollElement = _referencePickerScrollElement(app);
+    if (!draft || !scrollElement) return;
+    scrollElement.scrollTop = draft.viewScroll?.[draft.view] || 0;
+}
+
+function _setReferencePickerFiltersVisible(app, visible) {
+    if (!app.referencePickerFilters) return;
+    app.referencePickerFilters.hidden = !visible;
+    if (!visible) app.referencePickerFilters.innerHTML = '';
+}
+
+function _updateReferencePickerHeader(app) {
+    const draft = app.referencePickerDraft;
+    if (!draft || !app.referencePickerTitle || !app.referencePickerSubtitle) return;
+
+    const view = draft.view;
+    const book = draft.book || app.state.currentBook;
+    const chapter = draft.chapter || app.state.currentChapter;
+
+    let title = 'Book';
+    let subtitle = '';
+
+    if (view === 'chapter') {
+        title = 'Chapter';
+        subtitle = app.getDisplayName(book);
+    } else if (view === 'verse') {
+        title = 'Verse';
+        subtitle = app.getDisplayName(book) + ' ' + chapter;
+    }
+
+    app.referencePickerTitle.textContent = title;
+    app.referencePickerSubtitle.textContent = subtitle;
+    app.referencePickerSubtitle.hidden = subtitle === '';
+
+    const canGoBack =
+        (view === 'chapter' && draft.entryView === 'book') ||
+        (view === 'verse' && draft.entryView !== 'verse');
+
+    if (app.referencePickerBack) app.referencePickerBack.hidden = !canGoBack;
+}
+
+function _focusReferencePicker(app) {
+    requestAnimationFrame(() => {
+        if (!app.referencePickerModal?.classList.contains('active')) return;
+        app.referencePickerModal.focus({ preventScroll: true });
+    });
+}
+
+function _transitionReferencePickerView(app, renderNextView, { animate = true, direction = 'forward' } = {}) {
+    const view = app.referencePickerView;
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+    if (!view || !animate || reduceMotion) {
+        renderNextView();
+        _restoreReferencePickerScroll(app);
+        _focusReferencePicker(app);
+        return;
+    }
 
     requestAnimationFrame(() => {
-        if (!content || !app.bookModal?.classList.contains('active')) return;
-        content.style.height = `${content.offsetHeight}px`;
+        renderNextView();
+        _restoreReferencePickerScroll(app);
+
+        view.classList.add(direction === 'back'
+            ? 'reference-picker-view--enter-back'
+            : 'reference-picker-view--enter-forward');
+
+        requestAnimationFrame(() => {
+            view.classList.remove('reference-picker-view--enter-forward', 'reference-picker-view--enter-back');
+            _focusReferencePicker(app);
+        });
+    });
+}
+
+function _renderReferencePickerView(app, view, { animate = true, direction = 'forward' } = {}) {
+    const draft = app.referencePickerDraft;
+    if (!draft || !app.referencePickerView) return;
+
+    const previousView = draft.view;
+    _rememberReferencePickerScroll(app);
+    draft.view = view;
+
+    if (previousView && previousView !== view) {
+        app._dbgEvent?.('picker view changed: ' + previousView + ' -> ' + view);
+    }
+
+    _transitionReferencePickerView(app, () => {
+        _updateReferencePickerHeader(app);
+        if (view === 'book') _renderBookPickerView(app);
+        if (view === 'chapter') _renderChapterPickerView(app);
+        if (view === 'verse') _renderVersePickerView(app);
+    }, { animate, direction });
+}
+
+export function openReferencePicker(app, options = {}) {
+    const view = options.view || 'book';
+    app.referencePickerDraft = {
+        entryView: view,
+        view,
+        book: options.book || app.state.currentBook,
+        chapter: options.chapter || app.state.currentChapter,
+        viewScroll: { book: 0, chapter: 0, verse: 0 },
+    };
+
+    app._dbgUserAction?.('picker opened: ' + view);
+    app._dbgEvent?.('picker opened: ' + view);
+
+    _renderReferencePickerView(app, view, { animate: false });
+    openModal(app, app.referencePickerModal);
+}
+
+export function closeReferencePicker(app) {
+    app.referencePickerDraft = null;
+    closeModal(app, app.referencePickerModal);
+}
+
+export function goBackReferencePicker(app) {
+    const draft = app.referencePickerDraft;
+    if (!draft) return;
+
+    if (draft.view === 'verse' && draft.entryView !== 'verse') {
+        _renderReferencePickerView(app, 'chapter', { animate: true, direction: 'back' });
+        return;
+    }
+
+    if (draft.view === 'chapter' && draft.entryView === 'book') {
+        _renderReferencePickerView(app, 'book', { animate: true, direction: 'back' });
+        return;
+    }
+
+    closeReferencePicker(app);
+}
+
+export function openBookModal(app) {
+    openReferencePicker(app, { view: 'book' });
+}
+
+export function openChapterModal(app) {
+    openReferencePicker(app, {
+        view: 'chapter',
+        book: app.state.currentBook,
+        chapter: app.state.currentChapter,
+    });
+}
+
+export function openVerseModal(app) {
+    openReferencePicker(app, {
+        view: 'verse',
+        book: app.state.currentBook,
+        chapter: app.state.currentChapter,
     });
 }
 
 export function populateBookModal(app) {
-    const modalBody = app.bookModal?.querySelector('.modal-body');
-    const filterBar = app.bookModal?.querySelector('.book-testament-filters');
+    if (!app.referencePickerDraft) return;
+    _renderReferencePickerView(app, 'book', { animate: false });
+}
+
+export function populateChapterModal(app) {
+    if (!app.referencePickerDraft) return;
+    _renderReferencePickerView(app, 'chapter', { animate: false });
+}
+
+export function populateVerseModal(app) {
+    if (!app.referencePickerDraft) return;
+    _renderReferencePickerView(app, 'verse', { animate: false });
+}
+
+function _renderBookPickerView(app) {
+    const modalBody = app.referencePickerView;
+    const filterBar = app.referencePickerFilters;
     if (!modalBody || !filterBar) return;
 
+    modalBody.className = 'reference-picker-view reference-picker-view--book';
     modalBody.innerHTML = '';
     filterBar.innerHTML = '';
+    _setReferencePickerFiltersVisible(app, true);
     modalBody.classList.remove('book-testament-filter-active');
 
     const sections = new Map();
@@ -302,8 +499,14 @@ export function populateBookModal(app) {
         activeTestament = activeTestament === testament ? null : testament;
 
         for (const [sectionTestament, section] of sections) {
-            section.hidden = activeTestament !== null
-                && sectionTestament !== activeTestament;
+            const isVisibleSection = activeTestament === null || sectionTestament === activeTestament;
+            section.hidden = !isVisibleSection;
+            section.classList.toggle(
+                'book-category--hide-filter-heading',
+                activeTestament !== null
+                && sectionTestament === activeTestament
+                && sectionTestament !== 'Deuterocanon'
+            );
         }
 
         for (const [buttonTestament, button] of filterButtons) {
@@ -312,11 +515,9 @@ export function populateBookModal(app) {
             button.setAttribute('aria-pressed', String(isActive));
         }
 
-        modalBody.classList.toggle(
-            'book-testament-filter-active',
-            activeTestament !== null
-        );
-        modalBody.scrollTop = 0;
+        modalBody.classList.toggle('book-testament-filter-active', activeTestament !== null);
+        const scrollElement = _referencePickerScrollElement(app);
+        if (scrollElement) scrollElement.scrollTop = 0;
     };
 
     for (const { testament, label } of BOOK_TESTAMENT_FILTERS) {
@@ -340,9 +541,12 @@ export function populateBookModal(app) {
         button.type = 'button';
         button.textContent = app.bookAbbreviations[book] || book;
         button.addEventListener('click', () => {
+            app._dbgUserAction?.('picker selected book: ' + book);
+            app._dbgEvent?.('picker selected book: ' + book + ' -> chapter picker');
+            app.referencePickerDraft.book = book;
+            app.referencePickerDraft.chapter = 1;
             app.state.selectedVerse = null;
-            app.loadPassage(book, 1);
-            app.closeModal(app.bookModal);
+            _renderReferencePickerView(app, 'chapter', { animate: true, direction: 'forward' });
         });
         return button;
     };
@@ -373,9 +577,6 @@ export function populateBookModal(app) {
 
         const grid = document.createElement('div');
         grid.className = 'book-grid';
-        if (testament === 'Old Testament') grid.id = 'oldTestamentBooks';
-        if (testament === 'Deuterocanon') grid.id = 'deuterocanonBooks';
-        if (testament === 'New Testament') grid.id = 'newTestamentBooks';
 
         for (const book of Object.keys(books)) {
             grid.appendChild(createBookButton(book));
@@ -387,6 +588,111 @@ export function populateBookModal(app) {
     }
 }
 
+function _renderChapterPickerView(app) {
+    const view = app.referencePickerView;
+    const draft = app.referencePickerDraft;
+    if (!view || !draft) return;
+
+    _setReferencePickerFiltersVisible(app, false);
+    view.className = 'reference-picker-view reference-picker-view--chapter';
+    view.innerHTML = '';
+
+    const book = draft.book || app.state.currentBook;
+    const chapterCount = app.getChapterCount(book);
+    const grid = document.createElement('div');
+    grid.className = 'chapter-grid';
+
+    for (let i = 1; i <= chapterCount; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'chapter-item';
+        btn.type = 'button';
+        btn.textContent = i;
+        btn.classList.toggle(
+            'picker-item--active',
+            book === app.state.currentBook && i === app.state.currentChapter
+        );
+        btn.addEventListener('click', async () => {
+            app._dbgUserAction?.('picker selected chapter: ' + book + ' ' + i);
+            app._dbgEvent?.('picker navigation: loading ' + book + ' ' + i + ' from chapter picker');
+            draft.book = book;
+            draft.chapter = i;
+            app.state.selectedVerse = null;
+            await app.loadPassage(book, i, false, 'chapter-picker');
+            _renderReferencePickerView(app, 'verse', { animate: true, direction: 'forward' });
+        });
+        grid.appendChild(btn);
+    }
+
+    view.appendChild(grid);
+}
+
+function _renderVersePickerView(app) {
+    const view = app.referencePickerView;
+    const draft = app.referencePickerDraft;
+    if (!view || !draft) return;
+
+    _setReferencePickerFiltersVisible(app, false);
+    view.className = 'reference-picker-view reference-picker-view--verse';
+    view.innerHTML = '';
+
+    const grid = document.createElement('div');
+    grid.className = 'chapter-grid';
+    const verseCount = getCurrentVerseCount(app);
+
+    if (verseCount === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'reference-picker-empty';
+        empty.textContent = 'No verses found in current passage';
+        view.appendChild(empty);
+        return;
+    }
+
+    if (draft.entryView !== 'verse') {
+        const actions = document.createElement('div');
+        actions.className = 'picker-actions picker-actions--top';
+
+        const goButton = document.createElement('button');
+        goButton.className = 'secondary-btn reference-picker-go';
+        goButton.type = 'button';
+        goButton.textContent = 'Go';
+        goButton.addEventListener('click', () => {
+            const targetBook = draft.book || app.state.currentBook;
+            const targetChapter = draft.chapter || app.state.currentChapter;
+
+            app._dbgUserAction?.('picker go: ' + targetBook + ' ' + targetChapter);
+            app._dbgEvent?.('picker go from verse picker: ' + targetBook + ' ' + targetChapter);
+            app.referencePickerDraft = null;
+            app.state.selectedVerse = null;
+            if (app.currentVerseSpan) app.currentVerseSpan.textContent = '1';
+            app.applyVerseGlow?.();
+            closeReferencePicker(app);
+        });
+
+        actions.appendChild(goButton);
+        view.appendChild(actions);
+    }
+
+    const activeVerse = app.state.selectedVerse;
+
+    for (let i = 1; i <= verseCount; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'chapter-item';
+        btn.type = 'button';
+        btn.textContent = i;
+        btn.classList.toggle('picker-item--active', i === activeVerse);
+        btn.addEventListener('click', () => {
+            app._dbgUserAction?.('picker selected verse: ' + app.state.currentBook + ' ' + app.state.currentChapter + ':' + i);
+            app._dbgEvent?.('picker selected verse: ' + app.state.currentBook + ' ' + app.state.currentChapter + ':' + i);
+            app.referencePickerDraft = null;
+            app.scrollToVerse(i);
+            closeReferencePicker(app);
+        });
+        grid.appendChild(btn);
+    }
+
+    view.appendChild(grid);
+}
+
 // ── Deuterocanon info modal ───────────────────────────────────────────────────
 
 export function openDeuterocanonInfoModal(app) {
@@ -395,66 +701,6 @@ export function openDeuterocanonInfoModal(app) {
         openModal(app, modal);
     } else {
         console.error('[DeutModal] element #deuterocanonInfoModal not found in DOM');
-    }
-}
-
-// ── Chapter modal ─────────────────────────────────────────────────────────────
-
-export function openChapterModal(app) {
-    populateChapterModal(app);
-    openModal(app, app.chapterModal);
-}
-
-export function populateChapterModal(app) {
-    app.chapterModalBook.textContent = app.getDisplayName(app.state.currentBook);
-    app.chapterGrid.innerHTML = '';
-
-    const chapterCount = app.getChapterCount(app.state.currentBook);
-
-    for (let i = 1; i <= chapterCount; i++) {
-        const btn = document.createElement('button');
-        btn.className = 'chapter-item';
-        btn.textContent = i;
-        btn.addEventListener('click', () => {
-            app.state.selectedVerse = null;
-            app.loadPassage(app.state.currentBook, i);
-            app.closeModal(app.chapterModal);
-        });
-        app.chapterGrid.appendChild(btn);
-    }
-}
-
-// ── Verse modal ───────────────────────────────────────────────────────────────
-
-export function openVerseModal(app) {
-    populateVerseModal(app);
-    openModal(app, app.verseModal);
-}
-
-export function populateVerseModal(app) {
-    const book = app.state.currentBook;
-    const displayBook = book === 'Psalm'
-        ? `Psalm ${app.state.currentChapter}`
-        : `${app.getDisplayName(book)} ${app.state.currentChapter}`;
-    app.verseModalBook.textContent = displayBook;
-    app.verseGrid.innerHTML = '';
-
-    const verseCount = getCurrentVerseCount(app);
-
-    if (verseCount === 0) {
-        app.verseGrid.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-secondary);">No verses found in current passage</p>';
-        return;
-    }
-
-    for (let i = 1; i <= verseCount; i++) {
-        const btn = document.createElement('button');
-        btn.className = 'chapter-item';
-        btn.textContent = i;
-        btn.addEventListener('click', () => {
-            app.scrollToVerse(i);
-            app.closeModal(app.verseModal);
-        });
-        app.verseGrid.appendChild(btn);
     }
 }
 
@@ -475,7 +721,7 @@ const _SVG_TRASH = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.or
 const _downloading = new Set();
 const _hasHover = window.matchMedia('(hover: hover)').matches;
 
-const _FLY_EASING   = 'cubic-bezier(0.4, 0, 0.2, 1)';
+const _FLY_EASING = 'cubic-bezier(0.4, 0, 0.2, 1)';
 const _FLY_DURATION = '420ms';
 
 export function openTranslationModal(app) {
@@ -504,7 +750,9 @@ export async function populateTranslationModal(app) {
 
     const idbChecks = await Promise.all(
         registry.map((t) =>
-            PRECACHED_TRANSLATIONS.has(t.id) ? Promise.resolve(true) : idbIsDownloaded(t.id)
+            PRECACHED_TRANSLATIONS.has(t.id)
+                ? Promise.resolve(true)
+                : app.isTranslationAvailableOnDevice(t.id)
         )
     );
 
@@ -666,12 +914,12 @@ async function _flyItem(app, t, sourceWrapper) {
     document.body.appendChild(clone);
 
     const dx = toRect.left - fromRect.left;
-    const dy = toRect.top  - fromRect.top;
+    const dy = toRect.top - fromRect.top;
 
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-            clone.style.transform  = `translate(${dx}px,${dy}px)`;
-            clone.style.boxShadow  = 'var(--shadow-sm,0 1px 2px rgba(0,0,0,.06))';
+            clone.style.transform = `translate(${dx}px,${dy}px)`;
+            clone.style.boxShadow = 'var(--shadow-sm,0 1px 2px rgba(0,0,0,.06))';
         });
     });
 
@@ -690,7 +938,7 @@ async function _flyToAvailable(app, t, sourceWrapper) {
 }
 
 const _SWIPE_THRESHOLD = 60;
-const _DELETE_BTN_W   = 72;
+const _DELETE_BTN_W = 72;
 
 let _openWrapper = null;
 
@@ -735,12 +983,12 @@ function _attachSwipe(wrapper, li) {
     };
 
     let _onMove = null;
-    let _onEnd  = null;
+    let _onEnd = null;
 
     function cleanup() {
         if (_onMove) { li.removeEventListener('touchmove', _onMove); _onMove = null; }
-        if (_onEnd)  {
-            li.removeEventListener('touchend',    _onEnd);
+        if (_onEnd) {
+            li.removeEventListener('touchend', _onEnd);
             li.removeEventListener('touchcancel', _onEnd);
             _onEnd = null;
         }
@@ -789,24 +1037,31 @@ function _attachSwipe(wrapper, li) {
             cleanup();
         };
 
-        li.addEventListener('touchmove',   _onMove, { passive: false });
-        li.addEventListener('touchend',    _onEnd,  { passive: true });
-        li.addEventListener('touchcancel', _onEnd,  { passive: true });
+        li.addEventListener('touchmove', _onMove, { passive: false });
+        li.addEventListener('touchend', _onEnd, { passive: true });
+        li.addEventListener('touchcancel', _onEnd, { passive: true });
     }, { passive: true });
 }
 
 async function _handleUninstall(app, t, wrapper) {
+    const removeFromDevice = confirm(
+        `Remove ${t.id} from this device?\n\n` +
+        'This removes the downloaded files from this browser.'
+    );
+    if (!removeFromDevice) return;
+
+    let removeFromLibrary = false;
+    if (app.currentUser) {
+        removeFromLibrary = confirm(
+            `Also remove ${t.id} from your synced translation library?\n\n` +
+            'Choose OK to stop offering it on your other devices.\n' +
+            'Choose Cancel to remove it only from this device.'
+        );
+    }
+
     await idbDeleteTranslation(t.id);
-
-    if (app.bibleApi?.evictTranslation) {
-        app.bibleApi.evictTranslation(t.id);
-    }
-
-    if (app.state.translation === t.id) {
-        const fallback = [...PRECACHED_TRANSLATIONS][0];
-        if (fallback) app.changeTranslation(fallback);
-    }
-
+    app.bibleApi?.evictTranslation?.(t.id);
+    await app.recordTranslationUninstalled(t.id, { removeFromLibrary });
     _flyToAvailable(app, t, wrapper);
 }
 
@@ -830,7 +1085,7 @@ async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progre
             const meta = await metaRes.json();
             if (meta?.books?.length) bookList = meta.books.map((b) => b.name);
         }
-    } catch (_) {}
+    } catch (_) { }
 
     try {
         await app.bibleApi.downloadTranslation(t.id, bookList, (done, tot) => {
@@ -838,6 +1093,7 @@ async function _handleTranslationSelect(app, t, li, iconEl, progressWrap, progre
             progressBar.style.width = `${pct}%`;
             progressLabel.textContent = `${done} / ${tot}`;
         });
+        await app.recordTranslationInstalled(t.id);
 
         _downloading.delete(t.id);
         li.classList.remove('translation-modal-item--downloading');
@@ -902,15 +1158,15 @@ export function translationKbMove(app, delta) {
 
 export function translationKbSelect(app) {
     const items = _translationItems(app);
-    const idx   = app._translationKbIndex ?? -1;
+    const idx = app._translationKbIndex ?? -1;
     if (idx < 0 || idx >= items.length) return;
     items[idx].click();
 }
 
 function attachDragHandlers(app, modal, dismissOnDrag = true) {
     const content = modal.querySelector('.modal-content');
-    const header  = modal.querySelector('.modal-header');
-    const body    = modal.querySelector('.modal-body');
+    const header = modal.querySelector('.modal-header');
+    const body = modal.querySelector('.modal-body');
 
     if (!content || !header) return;
 
@@ -978,6 +1234,6 @@ function attachDragHandlers(app, modal, dismissOnDrag = true) {
 }
 
 export function attachDragToResize(app) {
-    if (app.settingsModal)   attachDragHandlers(app, app.settingsModal);
+    if (app.settingsModal) attachDragHandlers(app, app.settingsModal);
     if (app.referencesModal) attachDragHandlers(app, app.referencesModal);
 }

@@ -7,25 +7,26 @@ let BUILD_ID = 'pending';
 let CACHE_NAME = 'bible-pending';
 
 const APP_SHELL_PATTERN = /\.(js|mjs|css)$/;
+const LONG_LIVED_STATIC_PATTERN = /\.(js|mjs|css|woff2?|png|ico|webmanifest)$/;
 
 const PRECACHED_TRANSLATIONS = new Set(['KJV', 'BSB']);
 
 const installedTranslations = new Set(PRECACHED_TRANSLATIONS);
 
 const CANONICAL_BOOKS = [
-  'Genesis','Exodus','Leviticus','Numbers','Deuteronomy',
-  'Joshua','Judges','Ruth','1 Samuel','2 Samuel',
-  '1 Kings','2 Kings','1 Chronicles','2 Chronicles',
-  'Ezra','Nehemiah','Esther','Job','Psalm','Proverbs',
-  'Ecclesiastes','Song of Solomon','Isaiah','Jeremiah',
-  'Lamentations','Ezekiel','Daniel','Hosea','Joel','Amos',
-  'Obadiah','Jonah','Micah','Nahum','Habakkuk','Zephaniah',
-  'Haggai','Zechariah','Malachi','Matthew','Mark','Luke',
-  'John','Acts','Romans','1 Corinthians','2 Corinthians',
-  'Galatians','Ephesians','Philippians','Colossians',
-  '1 Thessalonians','2 Thessalonians','1 Timothy','2 Timothy',
-  'Titus','Philemon','Hebrews','James','1 Peter','2 Peter',
-  '1 John','2 John','3 John','Jude','Revelation',
+  'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
+  'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
+  '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles',
+  'Ezra', 'Nehemiah', 'Esther', 'Job', 'Psalm', 'Proverbs',
+  'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah',
+  'Lamentations', 'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos',
+  'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk', 'Zephaniah',
+  'Haggai', 'Zechariah', 'Malachi', 'Matthew', 'Mark', 'Luke',
+  'John', 'Acts', 'Romans', '1 Corinthians', '2 Corinthians',
+  'Galatians', 'Ephesians', 'Philippians', 'Colossians',
+  '1 Thessalonians', '2 Thessalonians', '1 Timothy', '2 Timothy',
+  'Titus', 'Philemon', 'Hebrews', 'James', '1 Peter', '2 Peter',
+  '1 John', '2 John', '3 John', 'Jude', 'Revelation',
 ];
 
 const PER_BOOK_PRECACHE = [...PRECACHED_TRANSLATIONS].flatMap(t =>
@@ -52,6 +53,7 @@ const APP_SHELL = [
   './css/base.css',
   './css/tokens.css',
   './css/fonts.css',
+  './css/optional-fonts.css',
   './css/themes.css',
   './css/layout.css',
   './css/components.css',
@@ -59,8 +61,12 @@ const APP_SHELL = [
   './css/interactions.css',
   './css/utilities.css',
   './css/pericope.css',
+  './css/luna-lux.css',
+  './css/geek95.css',
   './app.js',
+  './install-prompt.js',
   './bible-api.js',
+  './search-index-engine.js',
   './bible-structure.js',
   './bsb-structure.js',
   './book-aliases.js',
@@ -70,12 +76,16 @@ const APP_SHELL = [
   './navigation.js',
   './search.js',
   './auth.js',
+  './sync-prompt.js',
+  './translation-sync.js',
   './modals.js',
   './settings.js',
+  './haptics.js',
   './keyboard.js',
   './events.js',
   './swipe.js',
   './firebase-config.js',
+  './config/firebase-config.bundle.js',
   './translations/index.json',
   './translations/KJV/KJV_search_index.json',
   './translations/BSB/BSB_search_index.json',
@@ -103,11 +113,27 @@ const APP_SHELL = [
   './fonts/iAWriterQuattroS-Italic.woff2',
   './fonts/iAWriterQuattroS-Bold.woff2',
   './fonts/iAWriterQuattroS-BoldItalic.woff2',
-  './fonts/iAWriterMonoS-Regular.woff',
   './fonts/AdwaitaSans-Regular.woff2',
   './fonts/AdwaitaSans-Italic.woff2',
   './fonts/Web437_IBM_VGA_9x16-2x.woff',
 ];
+
+function isLongLivedStaticAsset(url) {
+  if (url.origin !== self.location.origin) return false;
+  if (!LONG_LIVED_STATIC_PATTERN.test(url.pathname)) return false;
+  if (url.pathname.endsWith('/index.html')) return false;
+  return url.searchParams.has('v') || url.pathname.includes('/fonts/');
+}
+
+function withLongLivedStaticHeaders(response) {
+  const headers = new Headers(response.headers);
+  headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
 
 function isFirebaseCacheable(url) {
   if (!url.hostname.endsWith('.firebaseio.com')) return false;
@@ -184,8 +210,8 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   if (url.origin !== self.location.origin &&
-      !url.hostname.endsWith('.firebaseio.com') &&
-      !url.hostname.endsWith('.firebase.google.com')) {
+    !url.hostname.endsWith('.firebaseio.com') &&
+    !url.hostname.endsWith('.firebase.google.com')) {
     return;
   }
 
@@ -217,27 +243,26 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (APP_SHELL_PATTERN.test(url.pathname)) {
-    // Stale-while-revalidate for app shell JS/CSS:
-    // Serve from cache immediately, revalidate in the background.
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        // Start background fetch to keep cache fresh
-        const networkFetch = fetch(event.request).then((response) => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, clone);
-            });
-          }
-          return response;
-        }).catch(() => {
-          // Network fetch failed; that's okay, we already returned cached version
-        });
-        
-        // Return cached version immediately, or wait for network if not cached
-        return cached || networkFetch;
-      })
-    );
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+
+      try {
+        const response = await fetch(new Request(event.request, { cache: 'no-store' }));
+
+        if (response.ok) {
+          const cacheResponse = isLongLivedStaticAsset(url)
+            ? withLongLivedStaticHeaders(response.clone())
+            : response.clone();
+
+          await cache.put(event.request, cacheResponse);
+        }
+
+        return response;
+      } catch {
+        const cached = await cache.match(event.request);
+        return cached || new Response('Offline', { status: 503 });
+      }
+    })());
     return;
   }
 
