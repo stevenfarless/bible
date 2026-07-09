@@ -118,10 +118,10 @@ export function applyVerseGlow(app) {
     <div class="verse-tools-actions">
         <button class="verse-tool-btn has-tooltip" type="button" aria-label="Highlight" title="Highlight" data-tooltip="Highlight"><span class="verse-tool-letter">H</span></button>
         <button class="verse-tool-btn has-tooltip" type="button" aria-label="Add bookmark" title="Bookmark" data-tooltip="Bookmark" data-verse-tool="bookmark" aria-haspopup="menu">
-            <svg class="verse-tool-icon verse-tool-icon--bookmark-add" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-              <path d="M7.8 4.2c0-.69.56-1.25 1.25-1.25h4.7c.69 0 1.25.56 1.25 1.25v15.1l-3.6-2.25-3.6 2.25V4.2z" stroke-width="2.25"></path>
-              <path d="M18.15 8.75v5.1" stroke-width="2.45"></path>
-              <path d="M15.6 11.3h5.1" stroke-width="2.45"></path>
+            <svg class="verse-tool-icon verse-tool-icon--bookmark-add" width="21" height="21" viewBox="0 0 26 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M6.35 4.2c0-.72.58-1.3 1.3-1.3H14c.72 0 1.3.58 1.3 1.3v15.1l-4.48-2.75-4.47 2.75V4.2z" stroke-width="2.25"></path>
+              <path d="M21.8 8.9v5.3" stroke-width="2.45"></path>
+              <path d="M19.2 11.55h5.2" stroke-width="2.45"></path>
             </svg>
         </button>
         <button class="verse-tool-btn has-tooltip" type="button" aria-label="Note" title="Note" data-tooltip="Note"><span class="verse-tool-letter">N</span></button>
