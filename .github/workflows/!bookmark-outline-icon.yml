@@ -35,7 +35,10 @@ jobs:
       - name: Validate outline bookmark icon
         run: |
           grep -q 'width="21" height="21"' reading-state.js
+          grep -q 'viewBox="0 0 26 24"' reading-state.js
           grep -q 'fill="none" stroke="currentColor"' reading-state.js
+          grep -q 'M6.35 4.2c0-.72.58-1.3 1.3-1.3H14' reading-state.js
+          grep -q 'M21.8 8.9v5.3' reading-state.js
           grep -q 'stroke-width="2.25"' reading-state.js
           grep -q 'stroke-width="2.45"' reading-state.js
           grep -q 'width: 21px;' css/interactions.css
@@ -68,5 +71,5 @@ jobs:
           git add -- "${files[@]}"
           git commit \
             -m "fix(bookmarks): use outlined ribbon add icon" \
-            -m "Replace the filled add-bookmark icon with a slimmer outlined ribbon and a separate plus mark so the control reads clearly without looking too heavy."
+            -m "Replace the filled add-bookmark icon with a wider outlined ribbon and a separate plus mark so the control reads clearly at mobile size."
           git push origin exp
