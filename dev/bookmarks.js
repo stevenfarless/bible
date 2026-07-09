@@ -59,7 +59,7 @@ function saveLocalBookmarks(app) {
   try {
     localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(app.bookmarks));
     app._dbgEvent?.("storage write: bookmarksV1");
-  } catch (_) {}
+  } catch (_) { }
 }
 
 function makeBookKey(book) {
@@ -96,6 +96,24 @@ function getSelectedBookmark(app) {
     app.state.currentChapter,
     verse,
   );
+}
+
+function getActiveBookmarkByColor(app, color, ignoredId = null) {
+  const state = normalizeBookmarks(app.bookmarks);
+
+  for (const [id, item] of Object.entries(state.items)) {
+    if (id === ignoredId) continue;
+    if (item.deleted === true) continue;
+    if (item.color !== color) continue;
+
+    return { id, item };
+  }
+
+  return null;
+}
+
+function formatBookmarkReference(app, item) {
+  return `${displayBook(app, item.book)} ${item.chapter}:${item.verse}`;
 }
 
 function currentReference(app) {
@@ -305,9 +323,33 @@ export async function setSelectedVerseBookmarkColor(app, color) {
   }
 
   const now = Date.now();
-  const existing = app.bookmarks?.items?.[reference.id];
 
   app.bookmarks = normalizeBookmarks(app.bookmarks);
+  const existing = app.bookmarks.items[reference.id];
+  const conflict = getActiveBookmarkByColor(app, color, reference.id);
+
+  if (conflict) {
+    const conflictRef = formatBookmarkReference(app, conflict.item);
+    const shouldOverride = window.confirm(
+      `${capitalize(color)} is already being used for ${conflictRef}.\n\nPress OK to move it here, or Cancel to choose a different color.`,
+    );
+
+    if (!shouldOverride) return false;
+  }
+
+  const remoteWrites = [];
+
+  if (conflict) {
+    const deletedConflict = {
+      ...conflict.item,
+      updatedAt: now,
+      deleted: true,
+    };
+
+    app.bookmarks.items[conflict.id] = deletedConflict;
+    remoteWrites.push([conflict.id, deletedConflict]);
+  }
+
   app.bookmarks.items[reference.id] = {
     book: reference.book,
     chapter: reference.chapter,
@@ -318,14 +360,21 @@ export async function setSelectedVerseBookmarkColor(app, color) {
     deleted: false,
     createdTranslation: existing?.createdTranslation || app.state.translation || null,
   };
+  remoteWrites.push([reference.id, app.bookmarks.items[reference.id]]);
 
   saveLocalBookmarks(app);
   applyBookmarkMarkers(app);
   closeBookmarkColorPicker();
-  app.showToast?.(`${capitalize(color)} bookmark saved`);
+  app.showToast?.(
+    conflict
+      ? `${capitalize(color)} bookmark moved`
+      : `${capitalize(color)} bookmark saved`,
+  );
 
   try {
-    await writeRemoteBookmark(app, reference.id, app.bookmarks.items[reference.id]);
+    await Promise.all(
+      remoteWrites.map(([id, item]) => writeRemoteBookmark(app, id, item)),
+    );
   } catch (error) {
     console.error("setSelectedVerseBookmarkColor: Firebase write failed", error);
   }
