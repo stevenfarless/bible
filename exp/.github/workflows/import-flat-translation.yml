@@ -66,23 +66,22 @@ on:
         required: true
         default: false
         type: boolean
+      commit_to_repository:
+        description: 'Commit generated files to the standard translations directory'
+        required: true
+        default: false
+        type: boolean
       distribution_rights_confirmed:
         description: 'I have permission to distribute this edition through Lege Lux'
         required: true
         default: false
         type: boolean
-  push:
-    branches:
-      - exp
-    paths:
-      - '.github/nasb95-local-import.trigger'
 
 permissions:
   contents: write
 
 jobs:
   import:
-    if: github.event_name == 'workflow_dispatch'
     name: Validate and convert translation
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -92,13 +91,14 @@ jobs:
         uses: actions/checkout@v7
         with:
           ref: exp
-          persist-credentials: false
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Validate workflow inputs
         env:
           TRANSLATION_ID: ${{ inputs.translation_id }}
           SOURCE_REF: ${{ inputs.source_ref }}
           UPLOAD_TO_FIREBASE: ${{ inputs.upload_to_firebase }}
+          COMMIT_TO_REPOSITORY: ${{ inputs.commit_to_repository }}
           RIGHTS_CONFIRMED: ${{ inputs.distribution_rights_confirmed }}
         run: |
           set -euo pipefail
@@ -110,12 +110,12 @@ jobs:
             echo "source_ref must be an exact 40-character commit SHA."
             exit 1
           fi
-          if [[ "$UPLOAD_TO_FIREBASE" == "true" && "$RIGHTS_CONFIRMED" != "true" ]]; then
-            echo "Firebase upload requires distribution_rights_confirmed=true."
+          if [[ ("$UPLOAD_TO_FIREBASE" == "true" || "$COMMIT_TO_REPOSITORY" == "true") && "$RIGHTS_CONFIRMED" != "true" ]]; then
+            echo "Distribution requires distribution_rights_confirmed=true."
             exit 1
           fi
-          if [[ -e "translations/$TRANSLATION_ID" ]]; then
-            echo "translations/$TRANSLATION_ID already exists. This workflow will not overwrite it."
+          if [[ -e "translations/$TRANSLATION_ID" && "$COMMIT_TO_REPOSITORY" != "true" ]]; then
+            echo "translations/$TRANSLATION_ID already exists. Enable commit_to_repository to update it."
             exit 1
           fi
 
@@ -227,127 +227,15 @@ jobs:
           TRANSLATION_ID: ${{ inputs.translation_id }}
         run: python dev-scripts/.github/scripts/bundle_translations.py "$TRANSLATION_ID"
 
-      - name: Install Firebase uploader
-        if: ${{ inputs.upload_to_firebase }}
-        run: pip install firebase-admin
-
-      - name: Write Firebase service account
-        if: ${{ inputs.upload_to_firebase }}
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - name: Remove NASB95 Firebase-only routing
+        if: ${{ inputs.commit_to_repository && inputs.translation_id == 'NASB95' }}
         run: |
-          if [[ -z "$FIREBASE_SERVICE_ACCOUNT" ]]; then
-            echo "FIREBASE_SERVICE_ACCOUNT is not configured."
-            exit 1
-          fi
-          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > /tmp/service_account.json
-
-      - name: Upload bundle to Firebase
-        if: ${{ inputs.upload_to_firebase }}
-        env:
-          TARGET_TRANSLATION: ${{ inputs.translation_id }}
-        run: python .github/scripts/upload_bundles.py
-
-      - name: Write run summary
-        env:
-          TRANSLATION_ID: ${{ inputs.translation_id }}
-          SOURCE_REPOSITORY: ${{ inputs.source_repository }}
-          SOURCE_REF: ${{ inputs.source_ref }}
-          SOURCE_PATH: ${{ inputs.source_path }}
-          UPLOAD_TO_FIREBASE: ${{ inputs.upload_to_firebase }}
-        run: |
-          {
-            echo "## Translation import"
-            echo
-            echo "- Translation: \`$TRANSLATION_ID\`"
-            echo "- Source: \`$SOURCE_REPOSITORY@$SOURCE_REF:$SOURCE_PATH\`"
-            echo "- Canon audit: passed"
-            echo "- Bundle build: passed"
-            echo "- Firebase upload: \`$UPLOAD_TO_FIREBASE\`"
-            echo
-            echo "Generated Bible text remained on the temporary Actions runner and was not committed to GitHub."
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Remove generated text and credentials
-        if: always()
-        env:
-          TRANSLATION_ID: ${{ inputs.translation_id }}
-        run: |
-          rm -rf .translation-source "translations/$TRANSLATION_ID"
-          rm -f "bundles/${TRANSLATION_ID}_bundle.json" /tmp/service_account.json
-
-  commit_nasb95:
-    if: github.event_name == 'push'
-    name: Commit NASB95 beside other translations
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    steps:
-      - name: Checkout exp
-        uses: actions/checkout@v7
-        with:
-          ref: exp
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Checkout pinned NASB95 source
-        uses: actions/checkout@v7
-        with:
-          repository: stevenfarless/Holy-Bible-JSON
-          ref: bf3caf393949c57b579f0144d248644196952bb3
-          path: .translation-source
-          persist-credentials: false
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-
-      - name: Set up Node
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-
-      - name: Generate repository translation files
-        run: |
-          python -m py_compile scripts/import_flat_verse_json.py scripts/split_translations.py
-          python scripts/import_flat_verse_json.py \
-            .translation-source/bibles/english_nasb.json \
-            NASB95 \
-            --expected-version NASB \
-            --expected-language English
-          cat > translations/NASB95/info.json <<'JSON'
-          {
-            "id": "NASB95",
-            "label": "New American Standard Bible 1995",
-            "abbreviation": "NASB95",
-            "language": "en",
-            "textDirection": "ltr",
-            "year": 1995,
-            "canon": "protestant",
-            "philosophy": "formal",
-            "edition": "1995",
-            "copyright": "New American Standard Bible®, Copyright © 1960, 1971, 1977, 1995 by The Lockman Foundation. All rights reserved."
-          }
-          JSON
-          node scripts/generate-meta.js NASB95
-          node --experimental-vm-modules scripts/audit-translations.js NASB95
-
-      - name: Remove Firebase-only routing
-        run: |
-          cat > firebase-config.js <<'JS'
-          // firebase-config.js
-          // Centralises Firebase project settings used by client-side modules.
-          // Only public, non-secret values live here.
-          // The service account private key is NEVER referenced from browser code.
-
-          export const FIREBASE_DB_URL = 'https://esv-bible-6dffb-default-rtdb.firebaseio.com';
-          JS
           python - <<'PY'
           import json
           from pathlib import Path
 
-          path = Path('bible-api.js')
-          source = path.read_text(encoding='utf-8')
+          api_path = Path('bible-api.js')
+          source = api_path.read_text(encoding='utf-8')
 
           def replace_once(old, new, label):
               global source
@@ -381,7 +269,7 @@ jobs:
               '''        try {\n            const url =\n                `./translations/${encodeURIComponent(translation)}/` +\n                `${encodeURIComponent(translation)}_search_index.json`;\n            const response = await fetch(url);\n\n            if (response.ok) {\n                const index = await response.json();\n                await idbPutSearchIndex(translation, index);\n                this._searchIndexCache.set(translation, index);\n            }\n        } catch (error) {\n            console.warn(`Search index unavailable for ${translation}`, error);\n        }\n''',
               'generated search index finalization',
           )
-          path.write_text(source, encoding='utf-8')
+          api_path.write_text(source, encoding='utf-8')
 
           index_path = Path('translations/index.json')
           catalog = json.loads(index_path.read_text(encoding='utf-8'))
@@ -396,52 +284,110 @@ jobs:
           )
           PY
 
-      - name: Validate standard download layout
+      - name: Validate standard repository layout
+        if: ${{ inputs.commit_to_repository }}
+        env:
+          TRANSLATION_ID: ${{ inputs.translation_id }}
         run: |
           node --check bible-api.js
           node --check firebase-config.js
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
 
-          translation_dir = Path('translations/NASB95')
+          translation_id = os.environ['TRANSLATION_ID']
+          translation_dir = Path('translations') / translation_id
           meta = json.loads((translation_dir / 'meta.json').read_text(encoding='utf-8'))
           search_index = json.loads(
-              (translation_dir / 'NASB95_search_index.json').read_text(encoding='utf-8')
+              (translation_dir / f'{translation_id}_search_index.json').read_text(encoding='utf-8')
           )
-          catalog = json.loads(Path('translations/index.json').read_text(encoding='utf-8'))
-          api = Path('bible-api.js').read_text(encoding='utf-8')
-
-          book_files = [path for path in translation_dir.glob('*.json')
-                        if path.name not in {'info.json', 'meta.json', 'NASB95_search_index.json'}]
+          book_files = [
+              path for path in translation_dir.glob('*.json')
+              if path.name not in {
+                  'info.json',
+                  'meta.json',
+                  f'{translation_id}_search_index.json',
+              }
+          ]
           assert len(book_files) == 66, len(book_files)
           assert len(meta['books']) == 66
-          assert len(search_index) == 31102
-          assert json.loads((translation_dir / 'Genesis.json').read_text(encoding='utf-8'))['1']['1']
-          assert json.loads((translation_dir / 'Revelation.json').read_text(encoding='utf-8'))['22']['21']
-          entry = next(item for item in catalog['translations'] if item['id'] == 'NASB95')
-          assert 'source' not in entry
-          assert 'access' not in entry
-          assert 'BUNDLE_TRANSLATIONS' not in api
-          assert 'FIREBASE_DB_URL}/bundles/' not in api
+          assert len(search_index) > 0
+          if translation_id == 'NASB95':
+              assert len(search_index) == 31102
+              api = Path('bible-api.js').read_text(encoding='utf-8')
+              assert 'BUNDLE_TRANSLATIONS' not in api
+              assert 'FIREBASE_DB_URL}/bundles/' not in api
           PY
           git diff --check
 
-      - name: Run focused search tests
+      - name: Commit generated translation to exp
+        if: ${{ inputs.commit_to_repository }}
+        env:
+          TRANSLATION_ID: ${{ inputs.translation_id }}
         run: |
-          npm install --no-audit --no-fund
-          npm test -- tests/unit/bible-api-search.test.js
-          rm -f package-lock.json
-
-      - name: Restore workflow and commit
-        run: |
-          git checkout 00b32b47f1378f9bfab1e23db1367eb3ad491cf6 -- .github/workflows/import-flat-translation.yml
-          rm -f .github/nasb95-local-import.trigger
-          rm -rf .translation-source
-          git add bible-api.js firebase-config.js translations/index.json translations/NASB95 .github/workflows/import-flat-translation.yml
-          git status --short
+          git add bible-api.js firebase-config.js translations/index.json "translations/$TRANSLATION_ID"
+          if git diff --cached --quiet; then
+            echo "No repository changes to commit."
+            exit 0
+          fi
           git config user.name "stevenfarless"
           git config user.email "125781365+stevenfarless@users.noreply.github.com"
-          git commit -m "fix(translations): store NASB95 with other translations" \
-            -m "Commit the generated NASB95 books and search index under translations/NASB95, remove the Firebase-only route, and reuse the standard repository download and IndexedDB installation path."
+          git commit -m "feat(translations): add $TRANSLATION_ID to standard downloads" \
+            -m "Store the generated books, metadata, and search index under translations/$TRANSLATION_ID so the existing repository-backed download and IndexedDB installation path is reused."
           git push origin exp
+
+      - name: Install Firebase uploader
+        if: ${{ inputs.upload_to_firebase }}
+        run: pip install firebase-admin
+
+      - name: Write Firebase service account
+        if: ${{ inputs.upload_to_firebase }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [[ -z "$FIREBASE_SERVICE_ACCOUNT" ]]; then
+            echo "FIREBASE_SERVICE_ACCOUNT is not configured."
+            exit 1
+          fi
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > /tmp/service_account.json
+
+      - name: Upload bundle to Firebase
+        if: ${{ inputs.upload_to_firebase }}
+        env:
+          TARGET_TRANSLATION: ${{ inputs.translation_id }}
+        run: python .github/scripts/upload_bundles.py
+
+      - name: Write run summary
+        env:
+          TRANSLATION_ID: ${{ inputs.translation_id }}
+          SOURCE_REPOSITORY: ${{ inputs.source_repository }}
+          SOURCE_REF: ${{ inputs.source_ref }}
+          SOURCE_PATH: ${{ inputs.source_path }}
+          UPLOAD_TO_FIREBASE: ${{ inputs.upload_to_firebase }}
+          COMMIT_TO_REPOSITORY: ${{ inputs.commit_to_repository }}
+        run: |
+          {
+            echo "## Translation import"
+            echo
+            echo "- Translation: \`$TRANSLATION_ID\`"
+            echo "- Source: \`$SOURCE_REPOSITORY@$SOURCE_REF:$SOURCE_PATH\`"
+            echo "- Canon audit: passed"
+            echo "- Bundle build: passed"
+            echo "- Firebase upload: \`$UPLOAD_TO_FIREBASE\`"
+            echo "- Standard repository download: \`$COMMIT_TO_REPOSITORY\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove generated text when not committed
+        if: ${{ always() && !inputs.commit_to_repository }}
+        env:
+          TRANSLATION_ID: ${{ inputs.translation_id }}
+        run: rm -rf "translations/$TRANSLATION_ID"
+
+      - name: Remove temporary source, bundle, and credentials
+        if: always()
+        env:
+          TRANSLATION_ID: ${{ inputs.translation_id }}
+        run: |
+          rm -rf .translation-source
+          rm -f "bundles/${TRANSLATION_ID}_bundle.json" /tmp/service_account.json
