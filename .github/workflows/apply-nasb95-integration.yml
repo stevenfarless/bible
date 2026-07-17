@@ -20,10 +20,9 @@ jobs:
           ref: exp
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Apply focused NASB95 integration
+      - name: Add Firebase bundle-backed translation support
         run: |
           python - <<'PY'
-          import json
           from pathlib import Path
 
           def replace_once(text, old, new, label):
@@ -31,139 +30,87 @@ jobs:
                   raise SystemExit(f"Expected exactly one {label} marker, found {text.count(old)}")
               return text.replace(old, new, 1)
 
-          api_path = Path('bible-api.js')
-          api = api_path.read_text(encoding='utf-8')
+          path = Path('bible-api.js')
+          source = path.read_text(encoding='utf-8')
 
-          api = replace_once(
-              api,
+          source = replace_once(
+              source,
               '''export const LOCAL_TRANSLATIONS = new Set([\n    "ASV", "BLB", "BSB", "CSB", "ESV", "ISV", "KJV", "LEB",\n    "MEV", "MSB", "NET", "NIV", "NKJV", "NLT", "NRSVUE", "WEB",\n]);''',
               '''export const LOCAL_TRANSLATIONS = new Set([\n    "ASV", "BLB", "BSB", "CSB", "ESV", "ISV", "KJV", "LEB",\n    "MEV", "MSB", "NASB95", "NET", "NIV", "NKJV", "NLT", "NRSVUE", "WEB",\n]);''',
               'LOCAL_TRANSLATIONS',
           )
 
-          api = replace_once(
-              api,
+          source = replace_once(
+              source,
               '''const REPO_TRANSLATIONS = new Set([\n    "ASV", "BLB", "BSB", "CSB", "ESV", "ISV", "KJV", "LEB",\n    "MEV", "MSB", "NET", "NIV", "NKJV", "NLT", "NRSVUE", "WEB",\n]);''',
               '''const REPO_TRANSLATIONS = new Set([\n    "ASV", "BLB", "BSB", "CSB", "ESV", "ISV", "KJV", "LEB",\n    "MEV", "MSB", "NET", "NIV", "NKJV", "NLT", "NRSVUE", "WEB",\n]);\n\nconst BUNDLE_TRANSLATIONS = new Set([\n    "NASB95",\n]);''',
               'REPO_TRANSLATIONS',
           )
 
-          api = replace_once(
-              api,
+          source = replace_once(
+              source,
               '''        if (this._bookCache.has(cacheKey)) {\n            return this._bookCache.get(cacheKey);\n        }\n\n        if (REPO_TRANSLATIONS.has(translation)) {''',
               '''        if (this._bookCache.has(cacheKey)) {\n            return this._bookCache.get(cacheKey);\n        }\n\n        if (\n            LOCAL_TRANSLATIONS.has(translation) &&\n            !PRECACHED_TRANSLATIONS.has(translation)\n        ) {\n            const cached = await idbGetBook(translation, book);\n            if (cached !== null) {\n                this._bookCache.set(cacheKey, cached);\n                return cached;\n            }\n            if (BUNDLE_TRANSLATIONS.has(translation)) {\n                this._bookCache.delete(cacheKey);\n                return null;\n            }\n        }\n\n        if (REPO_TRANSLATIONS.has(translation)) {''',
               '_loadBook cache boundary',
           )
 
-          api = replace_once(
-              api,
+          source = replace_once(
+              source,
               '''                const isRepo = REPO_TRANSLATIONS.has(translation);\n                if (!isRepo && !FIREBASE_TRANSLATIONS_ENABLED) {''',
               '''                const isRepo = REPO_TRANSLATIONS.has(translation);\n                const isDownloadable = LOCAL_TRANSLATIONS.has(translation);\n                if (!isRepo && !isDownloadable && !FIREBASE_TRANSLATIONS_ENABLED) {''',
               '_loadSearchIndex source classification',
           )
 
-          api = replace_once(
-              api,
+          source = replace_once(
+              source,
               '''                if (isRepo && !PRECACHED_TRANSLATIONS.has(translation)) {''',
               '''                if (isDownloadable && !PRECACHED_TRANSLATIONS.has(translation)) {''',
               '_loadSearchIndex IndexedDB lookup',
           )
 
-          api = replace_once(
-              api,
+          source = replace_once(
+              source,
               '''                const url = isRepo\n                    ? `./translations/${translation}/${translation}_search_index.json`\n                    : `${FIREBASE_DB_URL}/searchIndex/${encodeURIComponent(translation)}.json`;''',
               '''                if (BUNDLE_TRANSLATIONS.has(translation)) {\n                    this._searchIndexCache.set(translation, null);\n                    return null;\n                }\n\n                const url = isRepo\n                    ? `./translations/${translation}/${translation}_search_index.json`\n                    : `${FIREBASE_DB_URL}/searchIndex/${encodeURIComponent(translation)}.json`;''',
               '_loadSearchIndex bundle fallback',
           )
 
-          api = replace_once(
-              api,
+          source = replace_once(
+              source,
               '''                if (isRepo && !PRECACHED_TRANSLATIONS.has(translation) && index !== null) {''',
               '''                if (isDownloadable && !PRECACHED_TRANSLATIONS.has(translation) && index !== null) {''',
               '_loadSearchIndex persistence',
           )
 
-          api = replace_once(
-              api,
+          source = replace_once(
+              source,
               '''        const failedBooks = [];\n        let done = 0;''',
               '''        const failedBooks = [];\n        const generatedSearchIndex = BUNDLE_TRANSLATIONS.has(translation) ? {} : null;\n        let done = 0;''',
               'download search index initialization',
           )
 
-          api = replace_once(
-              api,
+          source = replace_once(
+              source,
               '''                    const url =\n                        `./translations/${encodeURIComponent(translation)}/` +\n                        `${encodeURIComponent(filename)}.json`;\n                    const response = await fetch(url);''',
               '''                    const url = BUNDLE_TRANSLATIONS.has(translation)\n                        ? `${FIREBASE_DB_URL}/bundles/${encodeURIComponent(translation)}/books/${encodeURIComponent(filename)}.json`\n                        : `./translations/${encodeURIComponent(translation)}/` +\n                            `${encodeURIComponent(filename)}.json`;\n                    const response = await fetch(url);''',
               'download source URL',
           )
 
-          api = replace_once(
-              api,
+          source = replace_once(
+              source,
               '''                const stored = await idbPutBook(translation, book, data);''',
               '''                if (generatedSearchIndex !== null) {\n                    for (const [chapter, verses] of Object.entries(data)) {\n                        if (!verses || typeof verses !== 'object') continue;\n                        for (const [verse, text] of Object.entries(verses)) {\n                            if (Number(verse) <= 0) continue;\n                            generatedSearchIndex[`${book} ${chapter}:${verse}`] =\n                                String(text).toLowerCase();\n                        }\n                    }\n                }\n\n                const stored = await idbPutBook(translation, book, data);''',
               'download search index population',
           )
 
-          api = replace_once(
-              api,
+          source = replace_once(
+              source,
               '''        try {\n            const url =\n                `./translations/${encodeURIComponent(translation)}/` +\n                `${encodeURIComponent(translation)}_search_index.json`;\n            const response = await fetch(url);\n\n            if (response.ok) {\n                const index = await response.json();\n                await idbPutSearchIndex(translation, index);\n                this._searchIndexCache.set(translation, index);\n            }\n        } catch (error) {\n            console.warn(`Search index unavailable for ${translation}`, error);\n        }''',
               '''        if (generatedSearchIndex !== null) {\n            const stored = await idbPutSearchIndex(translation, generatedSearchIndex);\n            if (!stored) {\n                await idbDeleteTranslation(translation);\n                this.evictTranslation(translation);\n                throw new Error(`Could not store ${translation} search index`);\n            }\n            this._searchIndexCache.set(translation, generatedSearchIndex);\n        } else {\n            try {\n                const url =\n                    `./translations/${encodeURIComponent(translation)}/` +\n                    `${encodeURIComponent(translation)}_search_index.json`;\n                const response = await fetch(url);\n\n                if (response.ok) {\n                    const index = await response.json();\n                    await idbPutSearchIndex(translation, index);\n                    this._searchIndexCache.set(translation, index);\n                }\n            } catch (error) {\n                console.warn(`Search index unavailable for ${translation}`, error);\n            }\n        }''',
               'download search index finalization',
           )
 
-          api_path.write_text(api, encoding='utf-8')
-
-          catalog_path = Path('translations/index.json')
-          catalog = json.loads(catalog_path.read_text(encoding='utf-8'))
-          translations = catalog.get('translations')
-          if not isinstance(translations, list):
-              raise SystemExit('translations/index.json has no translations list')
-          if any(item.get('id') == 'NASB95' for item in translations):
-              raise SystemExit('NASB95 already exists in translations/index.json')
-
-          copyright_text = (
-              'New American Standard Bible®, Copyright © 1960, 1971, 1977, 1995 '
-              'by The Lockman Foundation. All rights reserved.'
-          )
-          translations.append({
-              'id': 'NASB95',
-              'label': 'New American Standard Bible 1995',
-              'abbreviation': 'NASB95',
-              'language': 'en',
-              'textDirection': 'ltr',
-              'year': 1995,
-              'canon': 'protestant',
-              'philosophy': 'formal',
-              'access': 'licensed',
-              'source': 'firebase-bundle',
-              'copyright': copyright_text,
-          })
-          translations.sort(key=lambda item: item.get('id', ''))
-          catalog_path.write_text(
-              json.dumps(catalog, indent=2, ensure_ascii=False) + '\n',
-              encoding='utf-8',
-          )
-
-          source_meta_path = Path('translations/KJV/meta.json')
-          meta = json.loads(source_meta_path.read_text(encoding='utf-8'))
-          meta['info'] = {
-              'id': 'NASB95',
-              'label': 'New American Standard Bible 1995',
-              'abbreviation': 'NASB95',
-              'language': 'en',
-              'textDirection': 'ltr',
-              'year': 1995,
-              'canon': 'protestant',
-              'philosophy': 'formal',
-              'edition': '1995',
-              'copyright': copyright_text,
-          }
-          nasb_dir = Path('translations/NASB95')
-          nasb_dir.mkdir()
-          (nasb_dir / 'meta.json').write_text(
-              json.dumps(meta, indent=2, ensure_ascii=False) + '\n',
-              encoding='utf-8',
-          )
+          path.write_text(source, encoding='utf-8')
           PY
 
       - name: Validate integration
@@ -191,12 +138,12 @@ jobs:
           PY
           git diff --check
 
-      - name: Commit NASB95 integration
+      - name: Commit NASB95 runtime integration
         run: |
           git config user.name "stevenfarless"
           git config user.email "125781365+stevenfarless@users.noreply.github.com"
           git rm .github/workflows/apply-nasb95-integration.yml
-          git add bible-api.js translations/index.json translations/NASB95/meta.json
-          git commit -m "feat(translations): add NASB 1995" \
-            -m "Catalog NASB95, add its local metadata, and download its Firebase bundle books into IndexedDB with a generated offline search index."
+          git add bible-api.js
+          git commit -m "feat(translations): load NASB 1995 from Firebase" \
+            -m "Download NASB95 book nodes from the licensed Firebase bundle, persist them in IndexedDB, and generate the flat offline search index during installation."
           git push origin exp
