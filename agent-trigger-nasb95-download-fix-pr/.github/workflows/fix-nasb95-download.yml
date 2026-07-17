@@ -1,0 +1,147 @@
+name: Fix NASB95 download
+# Trusted trigger for the one-time exp repair.
+
+on:
+  push:
+    branches:
+      - exp
+    paths:
+      - '.github/workflows/fix-nasb95-download.yml'
+  pull_request_target:
+    branches:
+      - exp
+    paths:
+      - '.github/workflows/fix-nasb95-download.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v7
+        with:
+          ref: exp
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Patch Firebase bundle reads
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"Expected one {label} marker, found {count}")
+              return text.replace(old, new, 1)
+
+          config_path = Path('firebase-config.js')
+          config = config_path.read_text(encoding='utf-8')
+          config = replace_once(
+              config,
+              "export const FIREBASE_DB_URL = 'https://esv-bible-6dffb-default-rtdb.firebaseio.com';\n",
+              """export const FIREBASE_DB_URL = 'https://esv-bible-6dffb-default-rtdb.firebaseio.com';
+
+let firebaseDatabasePromise = null;
+
+async function getFirebaseDatabase() {
+    if (!firebaseDatabasePromise) {
+        firebaseDatabasePromise = import('./config/firebase-config.bundle.js')
+            .then(({ initializeFirebaseDatabase }) => initializeFirebaseDatabase());
+    }
+    return firebaseDatabasePromise;
+}
+
+export async function readFirebasePath(path) {
+    const database = await getFirebaseDatabase();
+    const snapshot = await database.ref(path).once('value');
+    return snapshot?.val?.() ?? null;
+}
+""",
+              'firebase-config export',
+          )
+          config_path.write_text(config, encoding='utf-8')
+
+          api_path = Path('bible-api.js')
+          api = api_path.read_text(encoding='utf-8')
+          api = replace_once(
+              api,
+              "import { FIREBASE_DB_URL } from './firebase-config.js';",
+              "import { FIREBASE_DB_URL, readFirebasePath } from './firebase-config.js';",
+              'Firebase config import',
+          )
+          api = replace_once(
+              api,
+              """                    const url = BUNDLE_TRANSLATIONS.has(translation)
+                        ? `${FIREBASE_DB_URL}/bundles/${encodeURIComponent(translation)}/books/${encodeURIComponent(filename)}.json`
+                        : `./translations/${encodeURIComponent(translation)}/` +
+                            `${encodeURIComponent(filename)}.json`;
+                    const response = await fetch(url);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    data = await response.json();
+""",
+              """                    if (BUNDLE_TRANSLATIONS.has(translation)) {
+                        data = await readFirebasePath(
+                            `bundles/${translation}/books/${filename}`
+                        );
+                    } else {
+                        const url =
+                            `./translations/${encodeURIComponent(translation)}/` +
+                            `${encodeURIComponent(filename)}.json`;
+                        const response = await fetch(url);
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+
+                        data = await response.json();
+                    }
+""",
+              'bundle download request',
+          )
+          api_path.write_text(api, encoding='utf-8')
+          PY
+
+      - name: Validate JavaScript
+        run: |
+          node --check firebase-config.js
+          node --check bible-api.js
+          git diff --check
+
+      - name: Run focused tests
+        run: |
+          npm install --no-audit --no-fund
+          npm test -- tests/unit/bible-api-search.test.js
+
+      - name: Verify focused change
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          config = Path('firebase-config.js').read_text(encoding='utf-8')
+          api = Path('bible-api.js').read_text(encoding='utf-8')
+
+          assert "readFirebasePath" in config
+          assert "initializeFirebaseDatabase" in config
+          assert "readFirebasePath" in api
+          assert "bundles/${translation}/books/${filename}" in api
+          assert "FIREBASE_DB_URL}/bundles/" not in api
+          PY
+
+      - name: Commit fix
+        run: |
+          git config user.name "stevenfarless"
+          git config user.email "125781365+stevenfarless@users.noreply.github.com"
+          git rm .github/workflows/fix-nasb95-download.yml
+          git add firebase-config.js bible-api.js
+          git commit -m "fix(translations): authenticate NASB95 downloads" \
+            -m "Read NASB95 bundle books through the existing lazy Firebase Database and App Check initializer instead of unauthenticated REST requests."
+          git push origin exp
