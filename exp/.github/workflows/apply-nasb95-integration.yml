@@ -1,17 +1,16 @@
 name: Apply NASB95 integration
 
 on:
-  push:
-    branches:
-      - exp
-    paths:
-      - '.github/workflows/apply-nasb95-integration.yml'
+  pull_request_target:
+    types:
+      - opened
 
 permissions:
   contents: write
 
 jobs:
   apply:
+    if: github.event.pull_request.head.ref == 'agent/run-nasb95-integration'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout exp
