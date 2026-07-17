@@ -6,6 +6,11 @@ on:
       - exp
     paths:
       - '.github/workflows/fix-nasb95-download.yml'
+  pull_request_target:
+    branches:
+      - exp
+    paths:
+      - '.github/workflows/fix-nasb95-download.yml'
 
 permissions:
   contents: write
