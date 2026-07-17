@@ -1,4 +1,5 @@
 name: Fix NASB95 download
+# Trusted trigger for the one-time exp repair.
 
 on:
   push:
