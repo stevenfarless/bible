@@ -23,12 +23,12 @@ export const PRECACHED_TRANSLATIONS = new Set([
 
 export const LOCAL_TRANSLATIONS = new Set([
     "ASV", "BLB", "BSB", "CSB", "ESV", "ISV", "KJV", "LEB",
-    "MEV", "MSB", "NET", "NIV", "NKJV", "NLT", "NRSVUE", "WEB",
+    "MEV", "MSB", "NASB95", "NET", "NIV", "NKJV", "NLT", "NRSVUE", "WEB",
 ]);
 
 const REPO_TRANSLATIONS = new Set([
     "ASV", "BLB", "BSB", "CSB", "ESV", "ISV", "KJV", "LEB",
-    "MEV", "MSB", "NET", "NIV", "NKJV", "NLT", "NRSVUE", "WEB",
+    "MEV", "MSB", "NASB95", "NET", "NIV", "NKJV", "NLT", "NRSVUE", "WEB",
 ]);
 
 const BOOK_LOAD_ORDER = [
