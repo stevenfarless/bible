@@ -31,10 +31,6 @@ const REPO_TRANSLATIONS = new Set([
     "MEV", "MSB", "NASB95", "NET", "NIV", "NKJV", "NLT", "NRSVUE", "WEB",
 ]);
 
-const BUNDLE_TRANSLATIONS = new Set([
-    "NASB95",
-]);
-
 const BOOK_LOAD_ORDER = [
     'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
     'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
@@ -451,7 +447,6 @@ export class BibleApi {
         const books = bookList?.length ? bookList : BOOK_LOAD_ORDER;
         const total = books.length;
         const failedBooks = [];
-        const generatedSearchIndex = BUNDLE_TRANSLATIONS.has(translation) ? {} : null;
         let done = 0;
 
         const fetchAndStore = async (book) => {
@@ -461,10 +456,9 @@ export class BibleApi {
                 let data = this._bookCache.get(cacheKey) ?? null;
                 if (data === null) {
                     const filename = BOOK_KEY_ALIASES[book] ?? book;
-                    const url = BUNDLE_TRANSLATIONS.has(translation)
-                        ? `${FIREBASE_DB_URL}/bundles/${encodeURIComponent(translation)}/books/${encodeURIComponent(filename)}.json`
-                        : `./translations/${encodeURIComponent(translation)}/` +
-                            `${encodeURIComponent(filename)}.json`;
+                    const url =
+                        `./translations/${encodeURIComponent(translation)}/` +
+                        `${encodeURIComponent(filename)}.json`;
                     const response = await fetch(url);
 
                     if (!response.ok) {
@@ -476,17 +470,6 @@ export class BibleApi {
                         throw new Error('Invalid book data');
                     }
                     this._bookCache.set(cacheKey, data);
-                }
-
-                if (generatedSearchIndex !== null) {
-                    for (const [chapter, verses] of Object.entries(data)) {
-                        if (!verses || typeof verses !== 'object') continue;
-                        for (const [verse, text] of Object.entries(verses)) {
-                            if (Number(verse) <= 0) continue;
-                            generatedSearchIndex[`${book} ${chapter}:${verse}`] =
-                                String(text).toLowerCase();
-                        }
-                    }
                 }
 
                 const stored = await idbPutBook(translation, book, data);
@@ -519,29 +502,19 @@ export class BibleApi {
             );
         }
 
-        if (generatedSearchIndex !== null) {
-            const stored = await idbPutSearchIndex(translation, generatedSearchIndex);
-            if (!stored) {
-                await idbDeleteTranslation(translation);
-                this.evictTranslation(translation);
-                throw new Error(`Could not store ${translation} search index`);
-            }
-            this._searchIndexCache.set(translation, generatedSearchIndex);
-        } else {
-            try {
-                const url =
-                    `./translations/${encodeURIComponent(translation)}/` +
-                    `${encodeURIComponent(translation)}_search_index.json`;
-                const response = await fetch(url);
+        try {
+            const url =
+                `./translations/${encodeURIComponent(translation)}/` +
+                `${encodeURIComponent(translation)}_search_index.json`;
+            const response = await fetch(url);
 
-                if (response.ok) {
-                    const index = await response.json();
-                    await idbPutSearchIndex(translation, index);
-                    this._searchIndexCache.set(translation, index);
-                }
-            } catch (error) {
-                console.warn(`Search index unavailable for ${translation}`, error);
+            if (response.ok) {
+                const index = await response.json();
+                await idbPutSearchIndex(translation, index);
+                this._searchIndexCache.set(translation, index);
             }
+        } catch (error) {
+            console.warn(`Search index unavailable for ${translation}`, error);
         }
 
         const marked = await idbMarkDownloaded(translation);
