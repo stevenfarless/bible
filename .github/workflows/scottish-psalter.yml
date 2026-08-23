@@ -1,0 +1,56 @@
+name: Scottish Psalter Data
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [exp]
+    paths:
+      - psalm-translations.js
+      - scripts/import_scottish_psalter.py
+      - special-psalms/MP1650/**
+      - events.js
+      - sw.js
+      - .github/workflows/scottish-psalter.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: exp
+
+      - name: Generate pinned Psalter data
+        run: |
+          mkdir -p build/MP1650
+          python3 scripts/import_scottish_psalter.py \
+            --output build/MP1650/Psalm.json \
+            --source-metadata build/MP1650/source.json
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check psalm-translations.js
+          node --check events.js
+          node --check sw.js
+
+      - name: Verify committed generated data
+        if: ${{ hashFiles('special-psalms/MP1650/Psalm.json') != '' }}
+        run: |
+          cmp build/MP1650/Psalm.json special-psalms/MP1650/Psalm.json
+          cmp build/MP1650/source.json special-psalms/MP1650/source.json
+
+      - name: Stage implementation bundle
+        run: |
+          cp events.js build/events.js
+          cp sw.js build/sw.js
+
+      - name: Upload generated bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: scottish-psalter
+          path: build/
+          retention-days: 7
