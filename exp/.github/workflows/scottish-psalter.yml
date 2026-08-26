@@ -84,13 +84,14 @@ jobs:
           assert data["1"]["1"].startswith("That man hath perfect blessedness,")
           assert data["23"]["1"].startswith("The Lord's my shepherd")
           assert "\n" in data["23"]["2"]
+          assert data["72"]["20"] == "The prayers of David the son of Jesse are ended."
           assert data["100"]["1"].startswith("All people that on earth do dwell")
           assert data["150"]
           PY
           git diff --check
 
       - name: Restore validation workflow
-        run: git show HEAD^:.github/workflows/scottish-psalter.yml > .github/workflows/scottish-psalter.yml
+        run: git show 25dcc2e8bd3e65ae56da626b02506b803aa2a212:.github/workflows/scottish-psalter.yml > .github/workflows/scottish-psalter.yml
 
       - name: Verify change scope
         run: |
