@@ -16,6 +16,7 @@ SOURCE_URL = (
 )
 PSALM_HEADING_RE = re.compile(r"^PSALM\s+(\d+)([A-Za-z]?)$")
 VERSE_START_RE = re.compile(r"^(\d+)(.*)$")
+PSALM_72_VERSE_20 = "#The prayers of David the son of Jesse are ended."
 
 
 def git_blob_sha1(data):
@@ -69,7 +70,15 @@ def parse_psalter(source_text, expected_verses):
             primary = heading.group(2) == ""
             continue
 
-        if not primary or current_psalm is None or not line or line.startswith("#"):
+        if not primary or current_psalm is None or not line:
+            continue
+
+        if line.startswith("#"):
+            # The source stores Psalm 72:20 as a rubric instead of a numbered line.
+            if current_psalm == 72 and line == PSALM_72_VERSE_20:
+                flush_verse()
+                current_verse = 20
+                current_lines.append(line[1:].strip())
             continue
 
         verse_match = VERSE_START_RE.match(line)
@@ -107,6 +116,8 @@ def validate(psalms, expected_verses):
 
     if not psalms["1"]["1"].startswith("That man hath perfect blessedness,"):
         raise ValueError("Psalm 1:1 sanity check failed")
+    if psalms["72"]["20"] != "The prayers of David the son of Jesse are ended.":
+        raise ValueError("Psalm 72:20 sanity check failed")
 
 
 def write_json(path, data):
