@@ -8,7 +8,7 @@ import {
 
 const SCOTTISH_PSALTER_ID = "MP1650";
 const SCOTTISH_PSALTER_NAME = "Scottish Psalter (1650)";
-const SCOTTISH_PSALTER_LABEL = "Scottish 1650";
+const SCOTTISH_PSALTER_LABEL = "MP1650";
 const SCOTTISH_PSALTER_DESCRIPTION = "Traditional metrical Psalms for singing.";
 const SCOTTISH_PSALTER_DATA_URL = "./special-psalms/MP1650/Psalm.json";
 const PSALM_TRANSLATION_KEY = "psalmTranslation";
@@ -175,7 +175,7 @@ async function injectPsalterOption(app) {
 
   const heading = document.createElement("li");
   heading.className = "translation-modal-section-heading";
-  heading.textContent = "Psalms for Singing";
+  heading.textContent = "Metrical Psalters";
   heading.setAttribute("role", "presentation");
   heading.dataset.psalmTranslationHeading = "true";
 
