@@ -1,4 +1,4 @@
-name: Scottish Psalter Finalize
+name: Scottish Psalter
 
 on:
   workflow_dispatch:
@@ -6,12 +6,19 @@ on:
     branches: [exp]
     paths:
       - .github/workflows/scottish-psalter.yml
+      - scripts/import_scottish_psalter.py
+      - psalm-translations.js
+      - events.js
+      - sw.js
+      - special-psalms/MP1650/Psalm.json
+      - special-psalms/MP1650/source.json
+      - translations/KJV/Psalm.json
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  finalize:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout exp
@@ -19,49 +26,8 @@ jobs:
         with:
           ref: exp
 
-      - name: Wire Psalter integration
+      - name: Verify generated Psalter data
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          def replace_once(path, old, new):
-              p = Path(path)
-              text = p.read_text(encoding="utf-8")
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f"{path}: expected one exact anchor, found {count}: {old!r}")
-              p.write_text(text.replace(old, new, 1), encoding="utf-8")
-
-          replace_once(
-              "events.js",
-              'import { initSwipe } from "./swipe.js";\n',
-              'import { initSwipe } from "./swipe.js";\nimport { installPsalmTranslations } from "./psalm-translations.js";\n',
-          )
-          replace_once(
-              "events.js",
-              "  installCanonFallback(app);\n  attachButtonHaptics(app);",
-              "  installCanonFallback(app);\n  installPsalmTranslations(app);\n  attachButtonHaptics(app);",
-          )
-          replace_once(
-              "sw.js",
-              "  './translation-store.js',\n",
-              "  './translation-store.js',\n  './psalm-translations.js',\n",
-          )
-          replace_once(
-              "psalm-translations.js",
-              'const SCOTTISH_PSALTER_LABEL = "Scottish 1650";',
-              'const SCOTTISH_PSALTER_LABEL = "MP1650";',
-          )
-          replace_once(
-              "psalm-translations.js",
-              'heading.textContent = "Psalms for Singing";',
-              'heading.textContent = "Metrical Psalters";',
-          )
-          PY
-
-      - name: Generate pinned Psalter data
-        run: |
-          python3 scripts/import_scottish_psalter.py
           mkdir -p /tmp/mp1650-check
           python3 scripts/import_scottish_psalter.py \
             --output /tmp/mp1650-check/Psalm.json \
@@ -90,43 +56,3 @@ jobs:
           assert data["150"]
           PY
           git diff --check
-
-      - name: Verify change scope
-        run: |
-          python3 - <<'PY'
-          import subprocess
-
-          expected = {
-              "events.js",
-              "psalm-translations.js",
-              "special-psalms/MP1650/Psalm.json",
-              "special-psalms/MP1650/source.json",
-              "sw.js",
-          }
-          lines = subprocess.check_output(
-              ["git", "status", "--porcelain", "--untracked-files=all"],
-              text=True,
-          ).splitlines()
-          changed = {line[3:] for line in lines if line}
-          unexpected = changed - expected
-          if unexpected:
-              raise SystemExit(f"Unexpected changed files: {sorted(unexpected)}")
-          missing = expected - changed
-          if missing:
-              raise SystemExit(f"Expected changes missing: {sorted(missing)}")
-          PY
-
-      - name: Commit completed feature
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            events.js \
-            psalm-translations.js \
-            special-psalms/MP1650/Psalm.json \
-            special-psalms/MP1650/source.json \
-            sw.js
-          git commit \
-            -m "feat(psalms): add Scottish Metrical Psalter" \
-            -m "Add the generated Scottish Psalter corpus and wire the Psalms-only translation override into the reader and offline app shell. Preserve the normal Bible translation outside Psalms while supporting explicit offline installation and metrical line breaks."
-          git push origin HEAD:exp
