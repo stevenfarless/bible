@@ -90,16 +90,12 @@ jobs:
           PY
           git diff --check
 
-      - name: Restore validation workflow
-        run: git show 25dcc2e8bd3e65ae56da626b02506b803aa2a212:.github/workflows/scottish-psalter.yml > .github/workflows/scottish-psalter.yml
-
       - name: Verify change scope
         run: |
           python3 - <<'PY'
           import subprocess
 
           expected = {
-              ".github/workflows/scottish-psalter.yml",
               "events.js",
               "psalm-translations.js",
               "special-psalms/MP1650/Psalm.json",
@@ -114,7 +110,7 @@ jobs:
           unexpected = changed - expected
           if unexpected:
               raise SystemExit(f"Unexpected changed files: {sorted(unexpected)}")
-          missing = {"events.js", "psalm-translations.js", "special-psalms/MP1650/Psalm.json", "special-psalms/MP1650/source.json", "sw.js"} - changed
+          missing = expected - changed
           if missing:
               raise SystemExit(f"Expected changes missing: {sorted(missing)}")
           PY
@@ -124,7 +120,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
-            .github/workflows/scottish-psalter.yml \
             events.js \
             psalm-translations.js \
             special-psalms/MP1650/Psalm.json \
