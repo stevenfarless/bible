@@ -75,6 +75,7 @@ jobs:
           node --check events.js
           node --check sw.js
           python3 -m py_compile scripts/import_scottish_psalter.py
+          rm -rf scripts/__pycache__
           python3 - <<'PY'
           import json
           from pathlib import Path
