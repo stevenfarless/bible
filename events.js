@@ -7,6 +7,7 @@ import { attachDragToResize } from "./bottom-sheet-drag.js";
 import { runMegasearch, performKeywordSearch } from "./search.js";
 import { applyReadingFont, populateAboutVersion } from "./settings.js";
 import { initSwipe } from "./swipe.js";
+import { installPsalmTranslations } from "./psalm-translations.js";
 import {
   handleChangeEmail,
   handleChangePassword,
@@ -307,6 +308,7 @@ function normalizeModalMarkup() {
 export function attachEventListeners(app) {
   normalizeModalMarkup();
   installCanonFallback(app);
+  installPsalmTranslations(app);
   attachButtonHaptics(app);
   installBugReportUi(app);
   app.installBookmarkSheet?.();

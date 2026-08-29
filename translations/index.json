@@ -111,6 +111,17 @@
       "copyright": "The Holy Bible, Majority Standard Bible, MSB is produced in cooperation with Bible Hub, Discovery Bible, unfoldingWord, Bible Aquifer, OpenBible.com, and the Berean Bible Translation Committee. This text of God's Word has been dedicated to the public domain."
     },
     {
+      "id": "NASB95",
+      "label": "New American Standard Bible 1995",
+      "abbreviation": "NASB95",
+      "language": "en",
+      "textDirection": "ltr",
+      "year": 1995,
+      "canon": "protestant",
+      "philosophy": "formal",
+      "copyright": "New American Standard Bible®, Copyright © 1960, 1971, 1977, 1995 by The Lockman Foundation. All rights reserved."
+    },
+    {
       "id": "NET",
       "label": "New English Translation",
       "abbreviation": "NET",
