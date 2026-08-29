@@ -448,6 +448,34 @@ test("settings: verse-by-verse mode toggles passage layout class", async ({
   );
 });
 
+test("settings: numberless verse-by-verse text stays within the passage", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    localStorage.setItem("showVerseNumbers", "false");
+    localStorage.setItem("verseByVerse", "true");
+  });
+
+  await page.goto("/");
+  await waitForPassage(page);
+
+  await expect(page.locator("body")).toHaveClass(/hide-verse-numbers/);
+  await expect(page.locator("body")).toHaveClass(/verse-by-verse-mode/);
+
+  const bounds = await page.locator("#passageText").evaluate((passage) => {
+    const verseText = passage.querySelector(".verse-text");
+    if (!verseText) throw new Error("Expected rendered verse text");
+
+    return {
+      passageLeft: passage.getBoundingClientRect().left,
+      verseTextLeft: verseText.getBoundingClientRect().left,
+    };
+  });
+
+  expect(bounds.verseTextLeft).toBeGreaterThanOrEqual(bounds.passageLeft);
+});
+
 test("settings: font size buttons update passage font size", async ({
   page,
 }) => {
