@@ -1,0 +1,108 @@
+name: Publish v2.2.0
+
+on:
+  push:
+    branches: [exp]
+    paths:
+      - .github/workflows/publish-v2.2.0.yml
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      MAIN_SHA: d8ebe3ab410d344ed02fe2ba0f57c420c850107c
+    steps:
+      - name: Publish v2.2.0
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          CURRENT_MAIN="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+          test "$CURRENT_MAIN" = "$MAIN_SHA"
+
+          if gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v2.2.0" >/dev/null 2>&1; then
+            echo "v2.2.0 already exists; refusing to overwrite it" >&2
+            exit 1
+          fi
+
+          cat > /tmp/v2.2.0.md <<'EOF'
+          ## What's new in v2.2.0
+
+          ### Scottish Metrical Psalter
+          - Added the **Scottish Psalter (1650)**, a rhymed and metered version of all 150 Psalms made for singing.
+          - While reading Psalms, open the Translation picker to find the new **Metrical Psalters** section.
+          - The Psalter keeps its poetic line breaks and can be downloaded for offline use.
+          - Choosing it does not replace your normal Bible translation. Leave Psalms and your usual translation returns automatically.
+
+          ### Bookmarks
+          - You can now bookmark verses with red, green, or blue markers.
+          - Bookmarked verses show a ribbon in the passage.
+          - A bookmarks sheet makes saved verses easy to find again.
+          - Signed-in bookmarks can sync across devices.
+
+          ### Better search
+          - Search is easier to use on phones and makes better use of the screen.
+          - Matching Bible sections open automatically.
+          - Search results are more accurate and easier to read.
+          - Partial-word searches behave more reliably.
+          - Scrolling search results no longer moves the passage behind the search panel.
+
+          ### Easier navigation and verse tools
+          - Book, chapter, and verse selection now flows naturally from one picker to the next.
+          - The chapter picker now has **Go**, so you can open a chapter without choosing a verse.
+          - Chapter swipes recover more cleanly after interrupted gestures.
+          - Verse tools respond more reliably and have clearer labels.
+          - Verse copy and share actions work more consistently.
+          - Added a setting for how verse selection gestures behave.
+          - Verse-by-verse reading has cleaner spacing and alignment.
+
+          ### Appearance and reading options
+          - Added **Light**, **Dark**, and **System** appearance buttons.
+          - Font size is now easier to adjust with **Aa−** and **Aa+** controls.
+          - Added the **Luna Lux** theme and a new pink theme.
+          - Added fullscreen reading while scrolling.
+          - Added optional vibration feedback on supported Android phones.
+          - Passage copyright text is easier to read.
+
+          ### Easier installation
+          - The install prompt is smarter and waits until the Bible is ready before appearing.
+          - Supported browsers can install Lege Lux normally.
+          - iPhone and iPad users now get clear Home Screen installation steps.
+          - Dismissing the install prompt keeps it out of the way for a while.
+
+          ### Faster and more reliable
+          - Lege Lux opens to the Bible text faster.
+          - Previously opened passages can restore more quickly.
+          - The first screen is steadier with less shifting while the app opens.
+          - Your chapter, translation, and reading position restore more reliably.
+          - Switching translations does a better job of keeping you near the same verse.
+          - Offline use and repeat visits are more reliable thanks to improved caching.
+          - Font and theme loading have been improved.
+          - Includes many additional bug fixes, accessibility improvements, and performance refinements.
+
+          ### About and diagnostics
+          - Added Source Code links for GitHub and GitLab.
+          - Version details and debug reports now include more useful information when reporting a problem.
+
+          **Full Changelog**: https://github.com/stevenfarless/lege-lux/compare/v2.1.0...v2.2.0
+          EOF
+
+          gh release create v2.2.0 \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$MAIN_SHA" \
+            --title "v2.2.0" \
+            --notes-file /tmp/v2.2.0.md
+
+          RELEASE_TAG="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v2.2.0" --jq '.tag_name')"
+          RELEASE_NAME="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v2.2.0" --jq '.name')"
+          RELEASE_PRE="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v2.2.0" --jq '.prerelease')"
+          TAG_SHA="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/v2.2.0" --jq '.object.sha')"
+
+          test "$RELEASE_TAG" = "v2.2.0"
+          test "$RELEASE_NAME" = "v2.2.0"
+          test "$RELEASE_PRE" = "false"
+          test "$TAG_SHA" = "$MAIN_SHA"
