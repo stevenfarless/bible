@@ -72,6 +72,7 @@ const APP_SHELL = [
   './book-aliases.js',
   './reading-state.js',
   './translation-store.js',
+  './psalm-translations.js',
   './ui.js',
   './navigation.js',
   './search.js',
