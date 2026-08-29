@@ -325,6 +325,7 @@ body.verse-by-verse-mode .passage-text .verse-text,
 body.verse-by-verse-mode.hide-verse-numbers .passage-text .verse,
 html.hide-verse-numbers.verse-by-verse-enabled:not(:has(body[data-app-ready="true"])) .passage-text .verse {
     grid-template-columns: 1fr;
+    margin-left: 0;
 }
 
 body.verse-by-verse-mode.hide-verse-numbers .passage-text .verse-text,
