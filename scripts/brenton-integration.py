@@ -157,8 +157,8 @@ def validate() -> None:
 
     if len(meta.get("books", [])) != 53:
         raise RuntimeError(f"Expected 53 Brenton books; found {len(meta.get('books', []))}")
-    if len(index.get("refs", [])) != 29004:
-        raise RuntimeError(f"Expected 29,004 Brenton verses; found {len(index.get('refs', []))}")
+    if len(index.get("refs", [])) != 29005:
+        raise RuntimeError(f"Expected 29,005 Brenton verses; found {len(index.get('refs', []))}")
     if not daniel.get("3", {}).get("72a") or not daniel.get("3", {}).get("72b"):
         raise RuntimeError("Lettered Daniel 3 LXX verses were not preserved")
     if genesis.get("1", {}).get("1") != "In the beginning God made the heaven and the earth.":
