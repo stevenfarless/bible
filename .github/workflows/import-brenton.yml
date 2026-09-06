@@ -104,7 +104,7 @@ jobs:
           text = path.read_text(encoding='utf-8')
           old = "export async function loadStructure(bookName) {"
           new = """export async function loadStructure(bookName, translation = null) {
-    if (translation === 'BST') return [];"""
+              if (translation === 'BST') return [];"""
           if old not in text:
               raise SystemExit('Expected loadStructure signature not found')
           path.write_text(text.replace(old, new), encoding='utf-8')
