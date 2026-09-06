@@ -1,0 +1,190 @@
+name: Import Brenton Septuagint
+
+on:
+  push:
+    branches:
+      - exp
+    paths:
+      - .github/workflows/import-brenton.yml
+      - scripts/import-brenton.py
+  workflow_dispatch:
+
+jobs:
+  import:
+    name: Import Brenton Septuagint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout exp
+        uses: actions/checkout@v7
+        with:
+          ref: exp
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Import public-domain Brenton text
+        run: python scripts/import-brenton.py
+
+      - name: Preserve native LXX verse labels and headings
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('bible-api.js')
+          text = path.read_text(encoding='utf-8')
+          old = """        const verseNums = Object.keys(chapterData)
+              .map(Number)
+              .filter(Number.isFinite)
+              .filter((v) => v > 0)
+              .sort((a, b) => a - b)
+              .filter((v) => {
+                  if (verseStart !== null && v < verseStart) return false;
+                  if (verseEnd !== null && v > verseEnd) return false;
+                  return true;
+              });"""
+          new = """        const verseNums = Object.keys(chapterData)
+              .filter((v) => /^[1-9]\\d*(?:[a-z]+|-[1-9]\\d*[a-z]*)?$/i.test(v))
+              .sort((a, b) => {
+                  const parse = (value) => {
+                      const match = String(value).match(/^(\\d+)([a-z]*)(?:-(\\d+)([a-z]*))?$/i);
+                      if (!match) return [Number.MAX_SAFE_INTEGER, '', Number.MAX_SAFE_INTEGER, ''];
+                      return [
+                          Number(match[1]),
+                          match[2] || '',
+                          match[3] ? Number(match[3]) : Number(match[1]),
+                          match[4] || '',
+                      ];
+                  };
+                  const av = parse(a);
+                  const bv = parse(b);
+                  return av[0] - bv[0]
+                      || av[1].localeCompare(bv[1])
+                      || av[2] - bv[2]
+                      || av[3].localeCompare(bv[3]);
+              })
+              .filter((v) => {
+                  const base = parseInt(v, 10);
+                  if (verseStart !== null && base < verseStart) return false;
+                  if (verseEnd !== null && base > verseEnd) return false;
+                  return true;
+              });"""
+          if old not in text:
+              raise SystemExit('Expected verse-number rendering block not found')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+
+          path = Path('bsb-structure.js')
+          text = path.read_text(encoding='utf-8')
+          old = "export async function loadStructure(bookName) {"
+          new = """export async function loadStructure(bookName, translation = null) {
+              if (translation === 'BST') return [];"""
+          if old not in text:
+              raise SystemExit('Expected loadStructure signature not found')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+
+          path = Path('app.js')
+          text = path.read_text(encoding='utf-8')
+          old = "const allEvents = await loadStructure(book);"
+          new = "const allEvents = await loadStructure(book, this.state.translation);"
+          if old not in text:
+              raise SystemExit('Expected app loadStructure call not found')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+
+          path = Path('swipe.js')
+          text = path.read_text(encoding='utf-8')
+          old = "const allEvents = await loadStructure(pos.book);"
+          new = "const allEvents = await loadStructure(pos.book, app.state.translation);"
+          if old not in text:
+              raise SystemExit('Expected swipe loadStructure call not found')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+
+      - name: Allow lettered LXX references in search
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('search.js')
+          text = path.read_text(encoding='utf-8')
+
+          text = text.replace(
+              "'^(' + escapedName + ')\\\\s+([\\\\d]+)(?:[:\\\\s]([\\\\d]+))?$'",
+              "'^(' + escapedName + ')\\\\s+([\\\\d]+)(?:[:\\\\s]([\\\\d]+[a-z]?))?$'"
+          )
+          text = text.replace(
+              "const verse = m[3] ? parseInt(m[3], 10) : null;",
+              "const verse = m[3] ? (/^[0-9]+$/.test(m[3]) ? parseInt(m[3], 10) : m[3].toLowerCase()) : null;",
+              1
+          )
+          text = text.replace(
+              "if (verse !== null && !Number.isFinite(verse)) continue;",
+              "if (verse !== null && typeof verse === 'number' && !Number.isFinite(verse)) continue;",
+              1
+          )
+
+          old = r"const match = cleaned.match(/^((?:\d\s+)?[A-Za-z][A-Za-z ]*?)\s+([\d]+)(?:[:\s]([\d]+))?$/);"
+          new = r"const match = cleaned.match(/^((?:\d\s+)?[A-Za-z][A-Za-z ]*?)\s+([\d]+)(?:[:\s]([\d]+[a-z]?))?$/i);"
+          if old not in text:
+              raise SystemExit('Expected fallback search reference regex not found')
+          text = text.replace(old, new)
+
+          old = "const verse = match[3] ? parseInt(match[3], 10) : null;"
+          new = "const verse = match[3] ? (/^[0-9]+$/.test(match[3]) ? parseInt(match[3], 10) : match[3].toLowerCase()) : null;"
+          if old not in text:
+              raise SystemExit('Expected fallback verse parse not found')
+          text = text.replace(old, new)
+
+          text = text.replace(
+              "if (verse !== null && !Number.isFinite(verse)) return null;",
+              "if (verse !== null && typeof verse === 'number' && !Number.isFinite(verse)) return null;",
+              1
+          )
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate import
+        run: |
+          python -m py_compile scripts/import-brenton.py
+          node --check bible-api.js
+          node --check bsb-structure.js
+          node --check app.js
+          node --check swipe.js
+          node --check search.js
+          node - <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const dir = path.join('translations', 'BST');
+          const meta = JSON.parse(fs.readFileSync(path.join(dir, 'meta.json'), 'utf8'));
+          const index = JSON.parse(fs.readFileSync(path.join(dir, 'BST_search_index.json'), 'utf8'));
+          if (meta.books.length !== 53) throw new Error(`Expected 53 Brenton books; found ${meta.books.length}`);
+          if (index.refs.length !== 29004) throw new Error(`Expected 29,004 Brenton verses; found ${index.refs.length}`);
+          const daniel = JSON.parse(fs.readFileSync(path.join(dir, 'Daniel.json'), 'utf8'));
+          if (!daniel['3'] || !daniel['3']['72a'] || !daniel['3']['72b']) {
+            throw new Error('Lettered Daniel 3 LXX verses were not preserved');
+          }
+          const genesis = JSON.parse(fs.readFileSync(path.join(dir, 'Genesis.json'), 'utf8'));
+          if (genesis['1']?.['1'] !== 'In the beginning God made the heaven and the earth.') {
+            throw new Error('Genesis 1:1 does not match Brenton');
+          }
+          if (!index.refs.includes('Daniel 3:72a')) {
+            throw new Error('Lettered verse missing from BST search index');
+          }
+          console.log(`BST validation passed: ${meta.books.length} books, ${index.refs.length} verses`);
+          NODE
+
+      - name: Remove one-time workflow
+        run: rm .github/workflows/import-brenton.yml
+
+      - name: Commit Brenton translation
+        run: |
+          git config user.name "stevenfarless"
+          git config user.email "125781365+stevenfarless@users.noreply.github.com"
+          git add translations/BST translations/index.json bible-api.js bsb-structure.js app.js swipe.js search.js scripts/import-brenton.py .github/workflows/import-brenton.yml
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "feat(translations): add Brenton Septuagint" \
+            -m "Import the public-domain 1851 Brenton Septuagint from eBible USFM, preserve native LXX versification and lettered verses, add metadata and local search indexing, and register BST as an on-demand translation."
+          git push origin HEAD:exp
