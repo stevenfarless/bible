@@ -93,7 +93,7 @@ ORDER_INDEX = {name: index for index, name in enumerate(ORDER)}
 
 NOTE_RE = re.compile(r"\\(?:f|x)\s.*?\\(?:f|x)\*", re.DOTALL)
 FIG_RE = re.compile(r"\\fig\s.*?\\fig\*", re.DOTALL)
-INLINE_MARKER_RE = re.compile(r"\\[A-Za-z0-9]+\*?(?:\s+)?")
+INLINE_MARKER_RE = re.compile(r"\\[A-Za-z0-9]+\*?")
 VERSE_RE = re.compile(r"^\\v\s+([0-9]+[a-z]?(?:-[0-9]+[a-z]?)?)\s*(.*)$", re.I)
 CHAPTER_RE = re.compile(r"^\\c\s+(\d+)")
 ID_RE = re.compile(r"^\\id\s+([A-Za-z0-9]+)", re.M)
@@ -326,9 +326,8 @@ def main() -> None:
             "source": SOURCE_URL,
         }
         write_json(OUT / "info.json", info, indent=2)
-        write_json(OUT / "meta.json", {"info": info, "books": book_meta}, indent=2)
+        write_json(OUT / "meta.json", {"translation": "BST", "books": book_meta}, indent=2)
         write_json(OUT / "BST_search_index.json", build_search_index(parsed))
-
         register_translation()
 
         print(f"Imported BST: {len(parsed)} books, {verse_count} verses")
