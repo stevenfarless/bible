@@ -1725,7 +1725,13 @@ class BibleApp {
 
   async _loadTranslationRegistry() {
     try {
-      const res = await fetch("./translations/index.json");
+      const buildId =
+  document.querySelector('meta[name="build-id"]')?.content || "";
+const registryUrl =
+  buildId && !buildId.startsWith("__BUILD_")
+    ? `./translations/index.json?v=${encodeURIComponent(buildId)}`
+    : "./translations/index.json";
+const res = await fetch(registryUrl);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const translations = data.translations || [];
