@@ -4,6 +4,13 @@
 const BOOKMARKS_KEY = "bookmarksV1";
 const BOOKMARK_COLORS = ["red", "green", "blue"];
 const BOOKMARK_COLOR_SET = new Set(BOOKMARK_COLORS);
+const VERSE_ID_PATTERN = /^[1-9]\d*(?:[a-z]+|-[1-9]\d*[a-z]*)?$/i;
+
+function normalizeVerseId(value) {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (!VERSE_ID_PATTERN.test(raw)) return null;
+  return /^\d+$/.test(raw) ? Number(raw) : raw;
+}
 
 function emptyBookmarks() {
   return { version: 1, items: {} };
@@ -15,7 +22,7 @@ function isValidBookmarkItem(item) {
     typeof item === "object" &&
     typeof item.book === "string" &&
     Number.isInteger(Number(item.chapter)) &&
-    Number.isInteger(Number(item.verse)) &&
+    normalizeVerseId(item.verse) !== null &&
     Number.isFinite(Number(item.updatedAt)) &&
     (item.deleted === true || BOOKMARK_COLOR_SET.has(item.color))
   );
@@ -32,7 +39,7 @@ function normalizeBookmarks(value) {
     state.items[id] = {
       book: item.book,
       chapter: Number(item.chapter),
-      verse: Number(item.verse),
+      verse: normalizeVerseId(item.verse),
       color: BOOKMARK_COLOR_SET.has(item.color) ? item.color : "red",
       createdAt: Number(item.createdAt || item.updatedAt || Date.now()),
       updatedAt: Number(item.updatedAt),
@@ -70,12 +77,11 @@ function makeBookKey(book) {
 }
 
 function getBookmarkId(book, chapter, verse) {
-  return `${makeBookKey(book)}_${Number(chapter)}_${Number(verse)}`;
+  return `${makeBookKey(book)}_${Number(chapter)}_${normalizeVerseId(verse)}`;
 }
 
 function getSelectedVerse(app) {
-  const verse = Number(app.state?.selectedVerse);
-  return Number.isInteger(verse) && verse > 0 ? verse : null;
+  return normalizeVerseId(app.state?.selectedVerse);
 }
 
 function getBookmark(app, book, chapter, verse) {
@@ -143,7 +149,7 @@ function getVisibleBookmarks(app) {
       if (Number(a.chapter) !== Number(b.chapter)) {
         return Number(a.chapter) - Number(b.chapter);
       }
-      return Number(a.verse) - Number(b.verse);
+      return String(a.verse).localeCompare(String(b.verse), undefined, { numeric: true });
     });
 }
 
@@ -178,7 +184,7 @@ export function applyBookmarkMarkers(app) {
     if (Number(item.chapter) !== Number(app.state.currentChapter)) continue;
 
     const verseEl = passage.querySelector(
-      `.verse[data-verse="${Number(item.verse)}"]`,
+      `.verse[data-verse="${item.verse}"]`,
     );
 
     if (!verseEl) continue;
@@ -655,7 +661,7 @@ function getVisibleVersePreview(app, item) {
   }
 
   const verse = app.passageText?.querySelector(
-    `.verse[data-verse="${Number(item.verse)}"]`,
+    `.verse[data-verse="${item.verse}"]`,
   );
   const textEl = verse?.querySelector(".verse-text") ?? verse;
   const text = textEl ? app.stripHTML?.(textEl.innerHTML).trim() : "";
@@ -675,7 +681,7 @@ async function jumpToBookmark(app, id) {
   await app.loadPassage(item.book, item.chapter, false, "bookmark-jump");
 
   requestAnimationFrame(() => {
-    app.scrollToVerse?.(Number(item.verse));
+    app.scrollToVerse?.(item.verse);
   });
 }
 

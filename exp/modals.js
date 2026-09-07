@@ -637,9 +637,15 @@ function _renderVersePickerView(app) {
 
     const grid = document.createElement('div');
     grid.className = 'chapter-grid';
-    const verseCount = getCurrentVerseCount(app);
+    const verseIds = Array.from(
+        app.passageText.querySelectorAll('.verse[data-verse]'),
+        (verse) => {
+            const raw = verse.dataset.verse;
+            return /^\d+$/.test(raw) ? Number(raw) : raw.toLowerCase();
+        }
+    );
 
-    if (verseCount === 0) {
+    if (verseIds.length === 0) {
         const empty = document.createElement('p');
         empty.className = 'reference-picker-empty';
         empty.textContent = 'No verses found in current passage';
@@ -674,17 +680,20 @@ function _renderVersePickerView(app) {
 
     const activeVerse = app.state.selectedVerse;
 
-    for (let i = 1; i <= verseCount; i++) {
+    for (const verseId of verseIds) {
         const btn = document.createElement('button');
         btn.className = 'chapter-item';
         btn.type = 'button';
-        btn.textContent = i;
-        btn.classList.toggle('picker-item--active', i === activeVerse);
+        btn.textContent = verseId;
+        btn.classList.toggle(
+            'picker-item--active',
+            String(verseId) === String(activeVerse)
+        );
         btn.addEventListener('click', () => {
-            app._dbgUserAction?.('picker selected verse: ' + app.state.currentBook + ' ' + app.state.currentChapter + ':' + i);
-            app._dbgEvent?.('picker selected verse: ' + app.state.currentBook + ' ' + app.state.currentChapter + ':' + i);
+            app._dbgUserAction?.('picker selected verse: ' + app.state.currentBook + ' ' + app.state.currentChapter + ':' + verseId);
+            app._dbgEvent?.('picker selected verse: ' + app.state.currentBook + ' ' + app.state.currentChapter + ':' + verseId);
             app.referencePickerDraft = null;
-            app.scrollToVerse(i);
+            app.scrollToVerse(verseId);
             closeReferencePicker(app);
         });
         grid.appendChild(btn);
