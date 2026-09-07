@@ -104,8 +104,12 @@ jobs:
           psalm_structure = json.loads((structure_dir / 'Psalm.json').read_text(encoding='utf-8'))
           assert psalm_structure, 'Psalm native structure is empty'
           assert all(event['type'] in {'heading', 'para_break'} for event in psalm_structure)
-          assert any(event['ch'] == 22 for event in psalm_structure), 'Psalm 22 has no structure events'
-          assert any(event['ch'] == 23 for event in psalm_structure), 'Psalm 23 has no structure events'
+          assert not any(
+              event.get('type') == 'heading'
+              and event.get('ch') == 23
+              and 'shepherd' in event.get('text', '').lower()
+              for event in psalm_structure
+          ), 'Psalm 23 inherited a mismatched shepherd heading'
 
           daniel = json.loads((bst / 'Daniel.json').read_text(encoding='utf-8'))
           assert '72a' in daniel['3'] and '72b' in daniel['3']
