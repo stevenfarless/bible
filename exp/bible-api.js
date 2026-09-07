@@ -81,6 +81,26 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
+function verseSortKey(value) {
+    const match = String(value).match(/^(\d+)([a-z]*)(?:-(\d+)([a-z]*))?$/i);
+    if (!match) return [Number.MAX_SAFE_INTEGER, '', Number.MAX_SAFE_INTEGER, ''];
+    return [
+        Number(match[1]),
+        match[2] || '',
+        match[3] ? Number(match[3]) : Number(match[1]),
+        match[4] || '',
+    ];
+}
+
+function compareVerseLabels(a, b) {
+    const av = verseSortKey(a);
+    const bv = verseSortKey(b);
+    return av[0] - bv[0]
+        || av[1].localeCompare(bv[1])
+        || av[2] - bv[2]
+        || av[3].localeCompare(bv[3]);
+}
+
 function _buildWordRegex(q) {
     const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return new RegExp(`\\b${escaped}\\b`, 'i');
@@ -585,24 +605,7 @@ export class BibleApi {
         const verseNums = Object.keys(chapterData)
             .filter((v) => /^[1-9]\d*(?:[a-z]+|-[1-9]\d*[a-z]*)?$/i.test(v))
             .map((v) => /^\d+$/.test(v) ? Number(v) : v)
-            .sort((a, b) => {
-                const parse = (value) => {
-                    const match = String(value).match(/^(\d+)([a-z]*)(?:-(\d+)([a-z]*))?$/i);
-                    if (!match) return [Number.MAX_SAFE_INTEGER, '', Number.MAX_SAFE_INTEGER, ''];
-                    return [
-                        Number(match[1]),
-                        match[2] || '',
-                        match[3] ? Number(match[3]) : Number(match[1]),
-                        match[4] || '',
-                    ];
-                };
-                const av = parse(a);
-                const bv = parse(b);
-                return av[0] - bv[0]
-                    || av[1].localeCompare(bv[1])
-                    || av[2] - bv[2]
-                    || av[3].localeCompare(bv[3]);
-            })
+            .sort(compareVerseLabels)
             .filter((v) => {
                 const base = parseInt(v, 10);
                 if (verseStart !== null && base < verseStart) return false;
@@ -635,24 +638,24 @@ export class BibleApi {
         }
 
         const headingEvents = scaffoldEvents
-    .filter((evt) => evt.type === 'heading' && Number.isFinite(evt.v))
-    .sort((a, b) => a.v - b.v);
+            .filter((evt) => evt.type === 'heading' && evt.v !== undefined && evt.v !== null)
+            .sort((a, b) => compareVerseLabels(a.v, b.v));
 
-const headingRangeEndByStart = new Map();
+        const headingRangeEndByStart = new Map();
 
-for (let i = 0; i < headingEvents.length; i++) {
-    const startVerse = headingEvents[i].v;
-    const nextHeadingVerse = headingEvents[i + 1]?.v ?? null;
-    const versesInRange = verseNums.filter((v) => (
-        v >= startVerse &&
-        (nextHeadingVerse === null || v < nextHeadingVerse)
-    ));
-    const endVerse = versesInRange[versesInRange.length - 1];
+        for (let i = 0; i < headingEvents.length; i++) {
+            const startVerse = headingEvents[i].v;
+            const nextHeadingVerse = headingEvents[i + 1]?.v ?? null;
+            const versesInRange = verseNums.filter((v) => (
+                compareVerseLabels(v, startVerse) >= 0 &&
+                (nextHeadingVerse === null || compareVerseLabels(v, nextHeadingVerse) < 0)
+            ));
+            const endVerse = versesInRange[versesInRange.length - 1];
 
-    if (Number.isFinite(endVerse)) {
-        headingRangeEndByStart.set(startVerse, endVerse);
-    }
-}
+            if (endVerse !== undefined) {
+                headingRangeEndByStart.set(String(startVerse), endVerse);
+            }
+        }
 
         const parts = [];
         let inParagraph = false;
@@ -667,12 +670,12 @@ for (let i = 0; i < headingEvents.length; i++) {
                     if (showHeadings) {
                         closeP();
 
-    const endVerse = headingRangeEndByStart.get(evt.v);
-    const rangeAttrs = Number.isFinite(endVerse)
-        ? ` role="button" tabindex="0" data-start-verse="${evt.v}" data-end-verse="${endVerse}" aria-label="Select section: ${escapeHtml(evt.text)}"`
-        : '';
+                    const endVerse = headingRangeEndByStart.get(String(evt.v));
+                    const rangeAttrs = endVerse !== undefined
+                        ? ` role="button" tabindex="0" data-start-verse="${evt.v}" data-end-verse="${endVerse}" aria-label="Select section: ${escapeHtml(evt.text)}"`
+                        : '';
 
-    parts.push(`<h3 class="pericope-heading"${rangeAttrs}>${escapeHtml(evt.text)}</h3>`);
+                    parts.push(`<h3 class="pericope-heading"${rangeAttrs}>${escapeHtml(evt.text)}</h3>`);
 }
                 } else if (evt.type === 'para_break') {
                     closeP();

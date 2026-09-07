@@ -14,6 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "translations" / "BST"
+STRUCTURE_OUT = OUT / "BST_structure"
 SOURCE_URL = "https://ebible.org/Scriptures/eng-Brenton_usfm.zip"
 
 IGNORED_USFM_IDS = {'FRT', 'INT', 'XXA', 'OTH', 'XXC', 'BAK', 'XXB'}
@@ -99,8 +100,9 @@ INLINE_MARKER_RE = re.compile(r"\\[A-Za-z0-9]+\*?")
 VERSE_RE = re.compile(r"^\\v\s+([0-9]+[a-z]?(?:-[0-9]+[a-z]?)?)\s*(.*)$", re.I)
 CHAPTER_RE = re.compile(r"^\\c\s+(\d+)")
 ID_RE = re.compile(r"^\\id\s+([A-Za-z0-9]+)", re.M)
-STRUCTURAL_RE = re.compile(r"^\\(?:id|ide|h|toc\d?|mt\d?|mte\d?|ms\d?|s\d?|r|d|sp|cl|cp|rem|sts)\b", re.I)
-PARA_RE = re.compile(r"^\\(?:p|m|q\d?|qr|qc|b|mi|pi\d?|li\d?|ph\d?|pc|cls|pmo|pm|pmc|nb)\s*(.*)", re.I)
+HEADING_RE = re.compile(r"^\\s\d*\s+(.+)$", re.I)
+PARA_RE = re.compile(r"^\\(p|m|q\d?|qr|qc|b|mi|pi\d?|li\d?|ph\d?|pc|cls|pmo|pm|pmc|nb)\s*(.*)$", re.I)
+STRUCTURAL_RE = re.compile(r"^\\(?:id|ide|h|toc\d?|mt\d?|mte\d?|ms\d?|r|d|sp|cl|cp|rem|sts)\b", re.I)
 
 
 def clean_text(value: str) -> str:
@@ -110,7 +112,11 @@ def clean_text(value: str) -> str:
     return value.strip()
 
 
-def parse_usfm(path: Path) -> tuple[str, OrderedDict[str, OrderedDict[str, str]]]:
+def event_verse(value: str):
+    return int(value) if value.isdigit() else value
+
+
+def parse_usfm(path: Path):
     content = path.read_text(encoding="utf-8-sig")
     content = NOTE_RE.sub("", content)
     content = FIG_RE.sub("", content)
@@ -120,9 +126,11 @@ def parse_usfm(path: Path) -> tuple[str, OrderedDict[str, OrderedDict[str, str]]
     code = id_match.group(1).upper()
 
     chapters: OrderedDict[str, OrderedDict[str, str]] = OrderedDict()
+    events: list[dict] = []
     chapter = None
     verse = None
     buffer: list[str] = []
+    pending_events: list[dict] = []
 
     def flush() -> None:
         nonlocal verse, buffer
@@ -132,6 +140,18 @@ def parse_usfm(path: Path) -> tuple[str, OrderedDict[str, OrderedDict[str, str]]
                 chapters.setdefault(chapter, OrderedDict())[verse] = text
         verse = None
         buffer = []
+
+    def queue_break() -> None:
+        if not any(event.get("type") == "para_break" for event in pending_events):
+            pending_events.append({"type": "para_break"})
+
+    def attach_pending(target_verse: str) -> None:
+        if chapter is None or not pending_events:
+            return
+        for pending in pending_events:
+            event = {"ch": int(chapter), "v": event_verse(target_verse), **pending}
+            events.append(event)
+        pending_events.clear()
 
     for raw_line in content.splitlines():
         line = raw_line.strip()
@@ -143,6 +163,14 @@ def parse_usfm(path: Path) -> tuple[str, OrderedDict[str, OrderedDict[str, str]]
             flush()
             chapter = chapter_match.group(1)
             chapters.setdefault(chapter, OrderedDict())
+            pending_events.clear()
+            continue
+
+        heading_match = HEADING_RE.match(line)
+        if heading_match:
+            heading = clean_text(heading_match.group(1))
+            if heading:
+                pending_events.append({"type": "heading", "text": heading})
             continue
 
         verse_match = VERSE_RE.match(line)
@@ -153,24 +181,30 @@ def parse_usfm(path: Path) -> tuple[str, OrderedDict[str, OrderedDict[str, str]]
             verse = verse_match.group(1)
             if verse in chapters[chapter]:
                 raise ValueError(f"{path.name}: duplicate verse {chapter}:{verse}")
+            attach_pending(verse)
             if verse_match.group(2):
                 buffer.append(verse_match.group(2))
+            continue
+
+        para_match = PARA_RE.match(line)
+        if para_match:
+            trailing = para_match.group(2)
+            if verse is not None and trailing:
+                buffer.append(trailing)
+            elif not trailing:
+                queue_break()
             continue
 
         if verse is None or STRUCTURAL_RE.match(line):
             continue
 
-        para_match = PARA_RE.match(line)
-        if para_match:
-            if para_match.group(1):
-                buffer.append(para_match.group(1))
-        elif not line.startswith("\\"):
+        if not line.startswith("\\"):
             buffer.append(line)
         else:
             buffer.append(line)
 
     flush()
-    return code, chapters
+    return code, chapters, events
 
 
 def normalize_term(word: str) -> str:
@@ -196,13 +230,13 @@ def normalize_term(word: str) -> str:
     return w
 
 
-def build_search_index(books: list[tuple[str, str, dict]]) -> dict:
+def build_search_index(books) -> dict:
     refs: list[str] = []
     texts: list[str] = []
     postings: dict[str, list[int]] = {}
     token_re = re.compile(r"[A-Za-z0-9']+")
 
-    for book_name, _, chapters in books:
+    for book_name, _, chapters, _ in books:
         for chapter, verses in chapters.items():
             for verse, text in verses.items():
                 verse_id = len(refs)
@@ -220,6 +254,139 @@ def build_search_index(books: list[tuple[str, str, dict]]) -> dict:
     return {"version": 2, "refs": refs, "texts": texts, "postings": postings}
 
 
+def segment(native_start, native_end, baseline_chapter, baseline_start, baseline_end, offset=0):
+    return {
+        "nativeVerseStart": native_start,
+        "nativeVerseEnd": native_end,
+        "baselineChapter": baseline_chapter,
+        "baselineVerseStart": baseline_start,
+        "baselineVerseEnd": baseline_end,
+        "verseOffsetToBaseline": offset,
+    }
+
+
+def build_psalm_versification() -> dict:
+    chapters = {}
+    chapters["9"] = {
+        "label": "MT 9–10",
+        "baselineChapters": [9, 10],
+        "segments": [
+            segment(1, 1, 9, 1, 1, 0),
+            segment(2, 21, 9, 1, 20, -1),
+            segment(22, 39, 10, 1, 18, -21),
+        ],
+    }
+    for chapter in range(10, 113):
+        chapters[str(chapter)] = {
+            "label": f"MT {chapter + 1}",
+            "baselineChapters": [chapter + 1],
+        }
+    chapters["113"] = {
+        "label": "MT 114–115",
+        "baselineChapters": [114, 115],
+        "segments": [
+            segment(1, 8, 114, 1, 8, 0),
+            segment(9, 26, 115, 1, 18, -8),
+        ],
+    }
+    chapters["114"] = {
+        "label": "MT 116:1–9",
+        "baselineChapters": [116],
+        "reversePriority": 0,
+        "segments": [segment(1, 9, 116, 1, 9, 0)],
+    }
+    chapters["115"] = {
+        "label": "MT 116:10–19",
+        "baselineChapters": [116],
+        "reversePriority": 1,
+        "segments": [segment(1, 10, 116, 10, 19, 9)],
+    }
+    for chapter in range(116, 146):
+        chapters[str(chapter)] = {
+            "label": f"MT {chapter + 1}",
+            "baselineChapters": [chapter + 1],
+        }
+    chapters["146"] = {
+        "label": "MT 147:1–11",
+        "baselineChapters": [147],
+        "reversePriority": 0,
+        "segments": [segment(1, 11, 147, 1, 11, 0)],
+    }
+    chapters["147"] = {
+        "label": "MT 147:12–20",
+        "baselineChapters": [147],
+        "reversePriority": 1,
+        "segments": [segment(1, 9, 147, 12, 20, 11)],
+    }
+    chapters["151"] = {
+        "label": "no MT equivalent",
+        "baselineChapters": [],
+    }
+    return {"chapters": chapters}
+
+
+def build_jeremiah_versification() -> dict:
+    # Brenton's own chapter table gives these Hebrew/English correspondences.
+    baseline = {
+        25: [25, 49], 26: [46], 27: [50], 28: [51], 29: [47, 49],
+        30: [49], 31: [48], 32: [25], 33: [26], 34: [27], 35: [28],
+        36: [29], 37: [30], 38: [31], 39: [32], 40: [33], 41: [34],
+        42: [35], 43: [36], 44: [37], 45: [38], 46: [39], 47: [40],
+        48: [41], 49: [42], 50: [43], 51: [44, 45], 52: [52],
+    }
+    chapters = {}
+    for native, equivalents in baseline.items():
+        label = "Hebrew/English " + " & ".join(str(value) for value in equivalents)
+        chapters[str(native)] = {
+            "label": label,
+            "baselineChapters": equivalents,
+        }
+    return {"chapters": chapters}
+
+
+def build_versification() -> dict:
+    return {
+        "scheme": "brenton-lxx",
+        "baselineScheme": "protestant",
+        "books": {
+            "Psalm": build_psalm_versification(),
+            "Joel": {
+                "chapters": {
+                    "2": {
+                        "label": "Protestant 2:1–27",
+                        "baselineChapters": [2],
+                        "reversePriority": 0,
+                        "segments": [segment(1, 27, 2, 1, 27, 0)],
+                    },
+                    "3": {
+                        "label": "Protestant 2:28–32",
+                        "baselineChapters": [2],
+                        "reversePriority": 1,
+                        "segments": [segment(1, 5, 2, 28, 32, 27)],
+                    },
+                    "4": {
+                        "label": "Protestant 3",
+                        "baselineChapters": [3],
+                    },
+                }
+            },
+            "Malachi": {
+                "chapters": {
+                    "3": {
+                        "label": "Protestant 3–4",
+                        "baselineChapters": [3, 4],
+                        "segments": [
+                            segment(1, 18, 3, 1, 18, 0),
+                            segment(19, 24, 4, 1, 6, -18),
+                        ],
+                    }
+                }
+            },
+            "Jeremiah": build_jeremiah_versification(),
+        },
+    }
+
+
 def metadata_entry() -> dict:
     return {
         "id": "BST",
@@ -235,6 +402,7 @@ def metadata_entry() -> dict:
 
 
 def write_json(path: Path, data: object, *, indent: int | None = None) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps(data, ensure_ascii=False, indent=indent) + ("\n" if indent else ""),
         encoding="utf-8",
@@ -250,17 +418,6 @@ def register_translation() -> None:
     index["translations"] = entries
     write_json(index_path, index, indent=2)
 
-    bible_api = ROOT / "bible-api.js"
-    text = bible_api.read_text(encoding="utf-8")
-    if '"BST"' not in text:
-        needle = '"ASV", "BLB", "BSB", "CSB"'
-        replacement = '"ASV", "BLB", "BSB", "BST", "CSB"'
-        occurrences = text.count(needle)
-        if occurrences < 2:
-            raise RuntimeError(f"Expected both translation registries in bible-api.js; found {occurrences}")
-        text = text.replace(needle, replacement)
-        bible_api.write_text(text, encoding="utf-8")
-
 
 def main() -> None:
     with tempfile.TemporaryDirectory(prefix="brenton-") as temp_dir_name:
@@ -268,7 +425,7 @@ def main() -> None:
         zip_path = temp_dir / "brenton.zip"
         request = urllib.request.Request(
             SOURCE_URL,
-            headers={"User-Agent": "Lege-Lux-Brenton-Importer/1.0"},
+            headers={"User-Agent": "Lege-Lux-Brenton-Importer/2.0"},
         )
         with urllib.request.urlopen(request, timeout=60) as response:
             zip_path.write_bytes(response.read())
@@ -278,12 +435,13 @@ def main() -> None:
         with zipfile.ZipFile(zip_path) as archive:
             archive.extractall(source_dir)
 
-        parsed: list[tuple[str, str, dict]] = []
+        parsed = []
         seen_destinations: set[str] = set()
         unknown_codes: list[str] = []
 
-        for path in sorted(source_dir.rglob("*.usfm")) + sorted(source_dir.rglob("*.USFM")):
-            code, chapters = parse_usfm(path)
+        paths = sorted(source_dir.rglob("*.usfm")) + sorted(source_dir.rglob("*.USFM"))
+        for path in paths:
+            code, chapters, events = parse_usfm(path)
             if code in IGNORED_USFM_IDS:
                 continue
             mapped = BOOK_MAP.get(code)
@@ -295,23 +453,25 @@ def main() -> None:
             if name in seen_destinations:
                 raise RuntimeError(f"Duplicate destination book {name} from source id {code}")
             seen_destinations.add(name)
-            parsed.append((name, testament, chapters))
+            parsed.append((name, testament, chapters, events))
 
         if unknown_codes:
             raise RuntimeError("Unmapped Brenton USFM ids: " + ", ".join(sorted(set(unknown_codes))))
-        if len(parsed) < 50:
-            raise RuntimeError(f"Expected a full Brenton corpus; parsed only {len(parsed)} books")
+        if len(parsed) != 53:
+            raise RuntimeError(f"Expected 53 Brenton books; parsed {len(parsed)}")
 
         parsed.sort(key=lambda item: ORDER_INDEX.get(item[0], 10_000))
 
         if OUT.exists():
             shutil.rmtree(OUT)
-        OUT.mkdir(parents=True)
+        STRUCTURE_OUT.mkdir(parents=True)
 
         book_meta = []
         verse_count = 0
-        for name, testament, chapters in parsed:
+        structure_count = 0
+        for name, testament, chapters, events in parsed:
             write_json(OUT / f"{name}.json", chapters)
+            write_json(STRUCTURE_OUT / f"{name}.json", events, indent=2)
             chapter_numbers = [int(ch) for ch in chapters if str(ch).isdigit()]
             book_meta.append({
                 "name": name,
@@ -319,22 +479,34 @@ def main() -> None:
                 "chapters": max(chapter_numbers) if chapter_numbers else len(chapters),
             })
             verse_count += sum(len(verses) for verses in chapters.values())
+            structure_count += len(events)
 
         info = metadata_entry() | {
             "manuscriptTradition": ["Septuagint"],
             "textualBasis": (
                 "Sir Lancelot C. L. Brenton's English translation of the Greek Septuagint. "
                 "Imported from the eBible.org eng-Brenton USFM edition with native LXX "
-                "chapter/verse numbering and lettered LXX verses preserved."
+                "chapter/verse numbering and lettered LXX verses preserved. The eBible EZR "
+                "file repeats Nehemiah as chapters 11–23 while also supplying a standalone "
+                "NEH file; Lege Lux retains Ezra 1–10 and the standalone Nehemiah copy to "
+                "avoid duplicating the same text in the book picker."
             ),
             "source": SOURCE_URL,
         }
+        meta = {
+            "translation": "BST",
+            "books": book_meta,
+            "versification": build_versification(),
+        }
         write_json(OUT / "info.json", info, indent=2)
-        write_json(OUT / "meta.json", {"translation": "BST", "books": book_meta}, indent=2)
+        write_json(OUT / "meta.json", meta, indent=2)
         write_json(OUT / "BST_search_index.json", build_search_index(parsed))
         register_translation()
 
-        print(f"Imported BST: {len(parsed)} books, {verse_count} verses")
+        print(
+            f"Imported BST: {len(parsed)} books, {verse_count} verses, "
+            f"{structure_count} structure events"
+        )
 
 
 if __name__ == "__main__":

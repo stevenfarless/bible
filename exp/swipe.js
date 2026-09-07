@@ -465,9 +465,11 @@ export function initSwipe(app) {
             app.state.currentBook = incomingPos.book;
             app.state.currentChapter = incomingPos.chapter;
 
-            const title = incomingPos.book === 'Psalm'
-                ? `Psalm ${incomingPos.chapter}`
-                : `${app.getDisplayName(incomingPos.book)} ${incomingPos.chapter}`;
+            const title = app.formatPassageTitle
+                ? app.formatPassageTitle(incomingPos.book, incomingPos.chapter)
+                : (incomingPos.book === 'Psalm'
+                    ? `Psalm ${incomingPos.chapter}`
+                    : `${app.getDisplayName(incomingPos.book)} ${incomingPos.chapter}`);
 
             if (app.passageTitle) app.passageTitle.textContent = title;
             app.updateNavigationState?.();

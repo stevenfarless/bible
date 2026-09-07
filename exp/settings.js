@@ -2,6 +2,7 @@
 // Reading preferences: load from storage, apply to DOM, persist to Firebase and localStorage.
 
 import { changeColorTheme, applyLightMode } from './ui.js';
+import { mapReferenceBetweenMetas } from './versification.js';
 
 const DEFAULTS = {
     fontSize: 20,
@@ -462,6 +463,7 @@ export async function changeTranslation(
     const previousTranslation = app.state.translation;
     const previousBook = app.state.currentBook;
     const previousChapter = app.state.currentChapter;
+    const previousMeta = app.translationMeta;
     app._dbgEvent?.('changeTranslation request: ' + previousTranslation + ' -> ' + translation + ' while at ' + previousBook + ' ' + previousChapter + ' syncPreference=' + syncPreference);
 
     const chromeBottom = Math.max(
@@ -480,7 +482,9 @@ export async function changeTranslation(
 
     const verseAnchor = visibleVerse
         ? {
-            number: parseInt(visibleVerse.dataset.verse, 10),
+            id: /^\d+$/.test(visibleVerse.dataset.verse)
+                ? Number(visibleVerse.dataset.verse)
+                : visibleVerse.dataset.verse,
             offset: visibleVerse.getBoundingClientRect().top - chromeBottom,
         }
         : null;
@@ -516,9 +520,12 @@ export async function changeTranslation(
     let meta = null;
 
     try {
-        const response = await fetch(
-            `./translations/${encodeURIComponent(translation)}/meta.json`
-        );
+        const buildId =
+            document.querySelector('meta[name="build-id"]')?.content || '';
+        const metaUrl = buildId && !buildId.startsWith('__BUILD_')
+            ? `./translations/${encodeURIComponent(translation)}/meta.json?v=${encodeURIComponent(buildId)}`
+            : `./translations/${encodeURIComponent(translation)}/meta.json`;
+        const response = await fetch(metaUrl);
 
         if (response.ok) {
             meta = await response.json();
@@ -527,7 +534,33 @@ export async function changeTranslation(
         app._dbgEvent?.('changeTranslation meta fetch failed: ' + translation + ' — ' + (error?.message || error));
     }
 
+    const mappedReference = mapReferenceBetweenMetas(
+        previousMeta,
+        meta,
+        {
+            book: previousBook,
+            chapter: previousChapter,
+            verse: verseAnchor?.id ?? null,
+        }
+    );
+
     app._rebuildBibleBooks(meta);
+
+    if (mappedReference && app.getAllBooks().includes(mappedReference.book)) {
+        app.state.currentBook = mappedReference.book;
+        app.state.currentChapter = Math.min(
+            app.getChapterCount(mappedReference.book),
+            Math.max(1, mappedReference.chapter)
+        );
+        if (verseAnchor && mappedReference.verse != null) {
+            verseAnchor.id = mappedReference.verse;
+        }
+        app._dbgEvent?.(
+            'changeTranslation mapped reference: ' +
+            previousBook + ' ' + previousChapter + ' -> ' +
+            app.state.currentBook + ' ' + app.state.currentChapter
+        );
+    }
 
     if (meta?.books?.length) {
         app.bibleApi.setBookList(
@@ -554,12 +587,16 @@ export async function changeTranslation(
 
     if (availableVerses.length === 0) return;
 
-    const targetVerse = availableVerses.reduce((nearest, verse) => {
+    const exactVerse = availableVerses.find(
+        (verse) => String(verse.dataset.verse) === String(verseAnchor.id)
+    );
+    const anchorNumber = parseInt(verseAnchor.id, 10);
+    const targetVerse = exactVerse || availableVerses.reduce((nearest, verse) => {
         const nearestNumber = parseInt(nearest.dataset.verse, 10);
         const verseNumber = parseInt(verse.dataset.verse, 10);
 
-        return Math.abs(verseNumber - verseAnchor.number)
-            < Math.abs(nearestNumber - verseAnchor.number)
+        return Math.abs(verseNumber - anchorNumber)
+            < Math.abs(nearestNumber - anchorNumber)
             ? verse
             : nearest;
     });

@@ -737,3 +737,15 @@
         transition: none;
     }
 }
+
+.chapter-item-native,
+.chapter-item-equivalent {
+    display: block;
+}
+
+.chapter-item-equivalent {
+    margin-top: 0.15rem;
+    font-size: 0.68em;
+    line-height: 1.1;
+    opacity: 0.72;
+}

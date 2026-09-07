@@ -1,78 +1,81 @@
-// bsb-structure.js
-// Loads pre-computed structure scaffold data from local repo files.
-// Each record is a flat array of events: { ch, v, type, text? }
-// type is 'heading' or 'para_break'.
-// Events fire BEFORE the verse they reference.
-//
-// Protestant canon books use BSB_structure.
-// Deuterocanon books (not in the 66-book Protestant canon) use WEB_structure.
-// Local paths:
-//   ./translations/BSB/BSB_structure/{bookName}.json
-//   ./translations/WEB/WEB_structure/{bookName}.json
+// Passage structure loader.
+// BSB/WEB scaffolds serve ordinary translations; BST uses structure generated
+// directly from the Brenton USFM so headings and paragraph breaks stay aligned
+// with native Septuagint versification.
 
 import { PROTESTANT_BOOKS } from './bible-structure.js';
 
 const _cache = new Map();
-// Deduplicates concurrent in-flight fetches for the same book.
-// Rapid chapter navigation can call loadStructure() for the same book
-// before the first fetch resolves. Both would pass the _cache.has() check
-// and issue duplicate requests without this guard.
 const _fetchPromise = new Map();
 
 function sanitizeForLog(value) {
     return String(value).replace(/[\r\n]/g, '');
 }
 
-/**
- * Returns the scaffold event array for the given book name.
- * Results are cached in memory for the session.
- *
- * Protestant canon books load from BSB_structure.
- * Deuterocanon books load from WEB_structure.
- *
- * @param {string} bookName - Exact book name matching the file key,
- *   e.g. 'John', '1 Corinthians', 'Song of Solomon', 'Tobit'.
- * @returns {Promise<Array>} Flat array of structure events, or [] on failure.
- */
+function structureUrl(bookName, translation) {
+    if (translation === 'BST') {
+        return `./translations/BST/BST_structure/${encodeURIComponent(bookName)}.json`;
+    }
+
+    const folder = PROTESTANT_BOOKS.has(bookName)
+        ? 'BSB/BSB_structure'
+        : 'WEB/WEB_structure';
+    return `./translations/${folder}/${encodeURIComponent(bookName)}.json`;
+}
+
+function verseSortKey(value) {
+    const match = String(value).match(/^(\d+)([a-z]*)(?:-(\d+)([a-z]*))?$/i);
+    if (!match) return [Number.MAX_SAFE_INTEGER, '', Number.MAX_SAFE_INTEGER, ''];
+    return [
+        Number(match[1]),
+        match[2] || '',
+        match[3] ? Number(match[3]) : Number(match[1]),
+        match[4] || '',
+    ];
+}
+
+function compareVerseLabels(a, b) {
+    const av = verseSortKey(a);
+    const bv = verseSortKey(b);
+    return av[0] - bv[0]
+        || av[1].localeCompare(bv[1])
+        || av[2] - bv[2]
+        || av[3].localeCompare(bv[3]);
+}
+
 export async function loadStructure(bookName, translation = null) {
-    if (_cache.has(bookName)) return _cache.get(bookName);
-    if (_fetchPromise.has(bookName)) return _fetchPromise.get(bookName);
+    const url = structureUrl(bookName, translation);
+    if (_cache.has(url)) return _cache.get(url);
+    if (_fetchPromise.has(url)) return _fetchPromise.get(url);
 
     const promise = (async () => {
-        const folder = PROTESTANT_BOOKS.has(bookName)
-            ? 'BSB/BSB_structure'
-            : 'WEB/WEB_structure';
-        const url = `./translations/${folder}/${encodeURIComponent(bookName)}.json`;
         try {
             const res = await fetch(url);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
             const events = Array.isArray(data) ? data : [];
-            _cache.set(bookName, events);
+            _cache.set(url, events);
             return events;
         } catch (err) {
-            const safeBookName = sanitizeForLog(bookName);
-            console.warn('bsb-structure: could not load scaffold for "%s"', safeBookName, err);
-            _cache.set(bookName, []);
+            console.warn(
+                'passage-structure: could not load scaffold for "%s" (%s)',
+                sanitizeForLog(bookName),
+                sanitizeForLog(translation || 'default'),
+                err
+            );
+            _cache.set(url, []);
             return [];
         } finally {
-            _fetchPromise.delete(bookName);
+            _fetchPromise.delete(url);
         }
     })();
 
-    _fetchPromise.set(bookName, promise);
+    _fetchPromise.set(url, promise);
     return promise;
 }
 
-/**
- * Returns only the events for a specific chapter, sorted ascending by verse.
- *
- * @param {Array} events - Full event array from loadStructure().
- * @param {number} chapter - Chapter number.
- * @returns {Array}
- */
 export function eventsForChapter(events, chapter) {
     return events
-        .filter(e => e.ch === chapter)
-        .sort((a, b) => a.v - b.v);
+        .filter((event) => Number(event.ch) === Number(chapter))
+        .sort((a, b) => compareVerseLabels(a.v, b.v));
 }

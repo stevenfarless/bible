@@ -369,20 +369,23 @@ export function attachEventListeners(app) {
     const HOLD_MS = 500;
     const MOVE_LIMIT = 12;
     const selectPericopeHeading = (heading) => {
-      const startVerse = Number(heading.dataset.startVerse);
-      const endVerse = Number(heading.dataset.endVerse);
+      const startVerse = heading.dataset.startVerse;
+      const endVerse = heading.dataset.endVerse;
+      if (!startVerse || !endVerse) return;
 
-      if (!Number.isInteger(startVerse) || !Number.isInteger(endVerse)) return;
-      if (endVerse < startVerse) return;
-
-      const startEl = app.passageText?.querySelector(
-        `.verse[data-verse="${startVerse}"]`,
+      const verses = Array.from(
+        app.passageText?.querySelectorAll('.verse[data-verse]') || [],
       );
-      const endEl = app.passageText?.querySelector(
-        `.verse[data-verse="${endVerse}"]`,
+      const startIndex = verses.findIndex(
+        (verse) => verse.dataset.verse === startVerse,
       );
+      const endIndex = verses.findIndex(
+        (verse) => verse.dataset.verse === endVerse,
+      );
+      if (startIndex < 0 || endIndex < startIndex) return;
 
-      if (!startEl || !endEl) return;
+      const startEl = verses[startIndex];
+      const endEl = verses[endIndex];
 
       app.state.selectedVerse = null;
       app.applyVerseGlow?.();

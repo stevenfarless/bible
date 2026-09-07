@@ -606,7 +606,19 @@ function _renderChapterPickerView(app) {
         const btn = document.createElement('button');
         btn.className = 'chapter-item';
         btn.type = 'button';
-        btn.textContent = i;
+        const equivalent = app.getChapterEquivalent?.(book, i);
+        if (equivalent) {
+            const nativeNumber = document.createElement('span');
+            nativeNumber.className = 'chapter-item-native';
+            nativeNumber.textContent = i;
+            const alternate = document.createElement('span');
+            alternate.className = 'chapter-item-equivalent';
+            alternate.textContent = equivalent;
+            btn.append(nativeNumber, alternate);
+            btn.setAttribute('aria-label', `${book} ${i}, ${equivalent}`);
+        } else {
+            btn.textContent = i;
+        }
         btn.classList.toggle(
             'picker-item--active',
             book === app.state.currentBook && i === app.state.currentChapter

@@ -1,5 +1,5 @@
 // BUILD_ID is injected at deploy time by the CI workflow:
-//   sed -i "s/9b730d7/$GITHUB_SHA/g" sw.js
+//   sed -i "s/a17b1bf/$GITHUB_SHA/g" sw.js
 // The placeholder below is replaced with the full commit SHA before
 // the file is published to GitHub Pages. Never edit the placeholder
 // directly — changes here are overwritten on every deploy.
@@ -69,6 +69,7 @@ const APP_SHELL = [
   './search-index-engine.js',
   './bible-structure.js',
   './bsb-structure.js',
+  './versification.js',
   './book-aliases.js',
   './reading-state.js',
   './translation-store.js',
@@ -152,7 +153,7 @@ function translationFromUrl(pathname) {
 }
 
 function resolveBuildId() {
-  return '9b730d7';
+  return 'a17b1bf';
 }
 
 async function precacheFiles() {
@@ -292,7 +293,10 @@ self.addEventListener('fetch', (event) => {
       const resp = await fetch(event.request);
       if (event.request.method === 'GET' && resp && resp.status === 200) {
         const translation = translationFromUrl(url.pathname);
-        const allowCache = translation === null || installedTranslations.has(translation);
+        const isTranslationStructure = url.pathname.includes('_structure/');
+        const allowCache = translation === null
+          || installedTranslations.has(translation)
+          || isTranslationStructure;
         if (allowCache) cache.put(event.request, resp.clone());
       }
       return resp;
