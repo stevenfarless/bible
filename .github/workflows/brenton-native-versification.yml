@@ -27,6 +27,7 @@ jobs:
           python - <<'PY'
           import base64
           import gzip
+          import re
           from pathlib import Path
 
           payload = Path('scripts/apply-brenton-native.py.gz.b64').read_text(encoding='ascii').strip()
@@ -36,6 +37,26 @@ jobs:
           Path('scripts/apply-brenton-native.py').write_bytes(gzip.decompress(decoded))
           PY
           python scripts/apply-brenton-native.py
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          path = Path('scripts/import-brenton.py')
+          text = path.read_text(encoding='utf-8')
+          text, removed = re.subn(
+              r'\ndef trim_duplicate_combined_ezra\(.*?\n(?=def main\(\) -> None:)',
+              '\n',
+              text,
+              flags=re.DOTALL,
+          )
+          if removed != 1:
+              raise RuntimeError(f'Expected one Ezra trimming helper, removed {removed}')
+          call = '        trim_duplicate_combined_ezra(parsed)\n'
+          if call not in text:
+              raise RuntimeError('Expected Ezra trimming call')
+          text = text.replace(call, '')
+          path.write_text(text, encoding='utf-8')
+          PY
 
       - name: Import Brenton corpus and native structure
         run: |
@@ -61,7 +82,7 @@ jobs:
           books = {book['name']: book for book in meta['books']}
 
           assert len(meta['books']) == 53, len(meta['books'])
-          assert books['Ezra']['chapters'] == 10, books['Ezra']
+          assert books['Ezra']['chapters'] == 23, books['Ezra']
           assert books['Nehemiah']['chapters'] == 13, books['Nehemiah']
           assert books['Psalm']['chapters'] == 151, books['Psalm']
           assert books['Joel']['chapters'] == 4, books['Joel']
@@ -88,6 +109,9 @@ jobs:
 
           daniel = json.loads((bst / 'Daniel.json').read_text(encoding='utf-8'))
           assert '72a' in daniel['3'] and '72b' in daniel['3']
+
+          importer = (root / 'scripts' / 'import-brenton.py').read_text(encoding='utf-8')
+          assert 'trim_duplicate_combined_ezra' not in importer
 
           print(
               'Validated BST:',
