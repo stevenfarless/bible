@@ -34,17 +34,29 @@ export function updateNavigationState(app) {
     if (app.nextChapterBtn) app.nextChapterBtn.disabled = currentBookIndex === books.length - 1 && isLastChapter;
 }
 
+function getCurrentVerseIds(app) {
+    return Array.from(
+        app.passageText.querySelectorAll('.verse[data-verse]'),
+        (verse) => {
+            const raw = verse.dataset.verse;
+            return /^\d+$/.test(raw) ? Number(raw) : raw.toLowerCase();
+        }
+    );
+}
+
 /**
  * Scrolls to the next verse in the current chapter, or advances to the
  * next chapter if already on the last verse.
  * @param {object} app
  */
 export function navigateToNextVerse(app) {
-    const currentVerse = app.state.selectedVerse || 1;
-    const maxVerse = app.getCurrentVerseCount();
+    const verses = getCurrentVerseIds(app);
+    const currentIndex = app.state.selectedVerse == null
+        ? 0
+        : verses.findIndex((verse) => String(verse) === String(app.state.selectedVerse));
 
-    if (currentVerse < maxVerse) {
-        app.scrollToVerse(currentVerse + 1);
+    if (currentIndex < verses.length - 1) {
+        app.scrollToVerse(verses[currentIndex + 1]);
     } else {
         app.navigateChapter(1);
     }
@@ -57,10 +69,13 @@ export function navigateToNextVerse(app) {
  * @param {object} app
  */
 export function navigateToPreviousVerse(app) {
-    const currentVerse = app.state.selectedVerse || 1;
+    const verses = getCurrentVerseIds(app);
+    const currentIndex = app.state.selectedVerse == null
+        ? 0
+        : verses.findIndex((verse) => String(verse) === String(app.state.selectedVerse));
 
-    if (currentVerse > 1) {
-        app.scrollToVerse(currentVerse - 1);
+    if (currentIndex > 0) {
+        app.scrollToVerse(verses[currentIndex - 1]);
         return;
     }
 

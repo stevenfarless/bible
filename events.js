@@ -409,14 +409,15 @@ export function attachEventListeners(app) {
     let holdActivated = false;
 
     const selectVerse = (verse) => {
-      const num = parseInt(verse?.dataset.verse, 10);
-      if (!num) return;
+      const raw = verse?.dataset.verse;
+      if (!raw) return;
+      const value = /^\d+$/.test(raw) ? Number(raw) : raw.toLowerCase();
 
-      if (app.state.selectedVerse === num) {
+      if (app.state.selectedVerse === value) {
         app.state.selectedVerse = null;
         app.applyVerseGlow();
       } else {
-        app.scrollToVerse(num);
+        app.scrollToVerse(value);
       }
     };
 
