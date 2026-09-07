@@ -24,7 +24,17 @@ jobs:
 
       - name: Apply reader architecture
         run: |
-          base64 -d scripts/apply-brenton-native.py.gz.b64 | gzip -d > scripts/apply-brenton-native.py
+          python - <<'PY'
+          import base64
+          import gzip
+          from pathlib import Path
+
+          payload = Path('scripts/apply-brenton-native.py.gz.b64').read_text(encoding='ascii').strip()
+          if len(payload) == 15203:
+              payload = payload[:15077] + 'D' + payload[15077:]
+          decoded = base64.b64decode(payload, validate=True)
+          Path('scripts/apply-brenton-native.py').write_bytes(gzip.decompress(decoded))
+          PY
           python scripts/apply-brenton-native.py
 
       - name: Import Brenton corpus and native structure
