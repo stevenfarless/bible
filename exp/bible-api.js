@@ -584,6 +584,7 @@ export class BibleApi {
 
         const verseNums = Object.keys(chapterData)
             .filter((v) => /^[1-9]\d*(?:[a-z]+|-[1-9]\d*[a-z]*)?$/i.test(v))
+            .map((v) => /^\d+$/.test(v) ? Number(v) : v)
             .sort((a, b) => {
                 const parse = (value) => {
                     const match = String(value).match(/^(\d+)([a-z]*)(?:-(\d+)([a-z]*))?$/i);
