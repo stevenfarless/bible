@@ -38,7 +38,16 @@ jobs:
           python scripts/apply-brenton-native.py
 
       - name: Import Brenton corpus and native structure
-        run: python scripts/import-brenton.py
+        run: |
+          for attempt in 1 2 3; do
+            if python scripts/import-brenton.py; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
 
       - name: Validate generated Brenton data
         run: |
