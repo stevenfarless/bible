@@ -1,0 +1,16 @@
+{
+  "id": "BST",
+  "label": "Brenton Septuagint Translation",
+  "abbreviation": "BST",
+  "language": "en",
+  "textDirection": "ltr",
+  "year": 1851,
+  "canon": "septuagint",
+  "philosophy": "formal",
+  "copyright": "Brenton Septuagint Translation (1851). Public domain.",
+  "manuscriptTradition": [
+    "Septuagint"
+  ],
+  "textualBasis": "Sir Lancelot C. L. Brenton's English translation of the Greek Septuagint. Imported from the eBible.org eng-Brenton USFM edition with native LXX chapter/verse numbering and lettered LXX verses preserved.",
+  "source": "https://ebible.org/Scriptures/eng-Brenton_usfm.zip"
+}

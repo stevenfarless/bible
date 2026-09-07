@@ -22,12 +22,12 @@ export const PRECACHED_TRANSLATIONS = new Set([
 ]);
 
 export const LOCAL_TRANSLATIONS = new Set([
-    "ASV", "BLB", "BSB", "CSB", "ESV", "ISV", "KJV", "LEB",
+    "ASV", "BLB", "BSB", "BST", "CSB", "ESV", "ISV", "KJV", "LEB",
     "MEV", "MSB", "NASB95", "NET", "NIV", "NKJV", "NLT", "NRSVUE", "WEB",
 ]);
 
 const REPO_TRANSLATIONS = new Set([
-    "ASV", "BLB", "BSB", "CSB", "ESV", "ISV", "KJV", "LEB",
+    "ASV", "BLB", "BSB", "BST", "CSB", "ESV", "ISV", "KJV", "LEB",
     "MEV", "MSB", "NASB95", "NET", "NIV", "NKJV", "NLT", "NRSVUE", "WEB",
 ]);
 
@@ -583,13 +583,29 @@ export class BibleApi {
             : '';
 
         const verseNums = Object.keys(chapterData)
-            .map(Number)
-            .filter(Number.isFinite)
-            .filter((v) => v > 0)
-            .sort((a, b) => a - b)
+            .filter((v) => /^[1-9]\d*(?:[a-z]+|-[1-9]\d*[a-z]*)?$/i.test(v))
+            .sort((a, b) => {
+                const parse = (value) => {
+                    const match = String(value).match(/^(\d+)([a-z]*)(?:-(\d+)([a-z]*))?$/i);
+                    if (!match) return [Number.MAX_SAFE_INTEGER, '', Number.MAX_SAFE_INTEGER, ''];
+                    return [
+                        Number(match[1]),
+                        match[2] || '',
+                        match[3] ? Number(match[3]) : Number(match[1]),
+                        match[4] || '',
+                    ];
+                };
+                const av = parse(a);
+                const bv = parse(b);
+                return av[0] - bv[0]
+                    || av[1].localeCompare(bv[1])
+                    || av[2] - bv[2]
+                    || av[3].localeCompare(bv[3]);
+            })
             .filter((v) => {
-                if (verseStart !== null && v < verseStart) return false;
-                if (verseEnd !== null && v > verseEnd) return false;
+                const base = parseInt(v, 10);
+                if (verseStart !== null && base < verseStart) return false;
+                if (verseEnd !== null && base > verseEnd) return false;
                 return true;
             });
 

@@ -16,6 +16,8 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "translations" / "BST"
 SOURCE_URL = "https://ebible.org/Scriptures/eng-Brenton_usfm.zip"
 
+IGNORED_USFM_IDS = {'FRT', 'INT', 'XXA', 'OTH', 'XXC', 'BAK', 'XXB'}
+
 BOOK_MAP = {
     "GEN": ("Genesis", "Old Testament"),
     "EXO": ("Exodus", "Old Testament"),
@@ -282,6 +284,8 @@ def main() -> None:
 
         for path in sorted(source_dir.rglob("*.usfm")) + sorted(source_dir.rglob("*.USFM")):
             code, chapters = parse_usfm(path)
+            if code in IGNORED_USFM_IDS:
+                continue
             mapped = BOOK_MAP.get(code)
             if not mapped:
                 unknown_codes.append(code)

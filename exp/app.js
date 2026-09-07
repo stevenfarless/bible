@@ -1878,7 +1878,7 @@ class BibleApp {
 
     let scaffoldEvents = [];
     try {
-      const allEvents = await loadStructure(book);
+      const allEvents = await loadStructure(book, this.state.translation);
       scaffoldEvents = eventsForChapter(allEvents, chapter);
     } catch (err) {
       console.warn("loadPassage: BSB structure scaffold unavailable", err);
