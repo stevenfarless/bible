@@ -29,20 +29,24 @@ jobs:
 
           path = Path('app.js')
           text = path.read_text()
-          old = '''      const buildId =
-  document.querySelector('meta[name="build-id"]')?.content || "";
-const registryUrl =
-  buildId && !buildId.startsWith("__BUILD_")
-    ? `./translations/index.json?v=${encodeURIComponent(buildId)}`
-    : "./translations/index.json";
-const res = await fetch(registryUrl);'''
-          new = '''      const buildId =
-        document.querySelector('meta[name="build-id"]')?.content || "";
-      const registryUrl =
-        buildId && !buildId.startsWith("__BUILD_")
-          ? `./translations/index.json?v=${encodeURIComponent(buildId)}`
-          : "./translations/index.json";
-      const res = await fetch(registryUrl);'''
+          old = "\n".join([
+              "      const buildId =",
+              "  document.querySelector('meta[name=\"build-id\"]')?.content || \"\";",
+              "const registryUrl =",
+              "  buildId && !buildId.startsWith(\"__BUILD_\")",
+              "    ? `./translations/index.json?v=${encodeURIComponent(buildId)}`",
+              "    : \"./translations/index.json\";",
+              "const res = await fetch(registryUrl);",
+          ])
+          new = "\n".join([
+              "      const buildId =",
+              "        document.querySelector('meta[name=\"build-id\"]')?.content || \"\";",
+              "      const registryUrl =",
+              "        buildId && !buildId.startsWith(\"__BUILD_\")",
+              "          ? `./translations/index.json?v=${encodeURIComponent(buildId)}`",
+              "          : \"./translations/index.json\";",
+              "      const res = await fetch(registryUrl);",
+          ])
 
           if text.count(old) != 1:
               raise SystemExit('Expected misindented registry block not found exactly once')
@@ -57,13 +61,15 @@ const res = await fetch(registryUrl);'''
           python - <<'PY'
           from pathlib import Path
           text = Path('app.js').read_text()
-          expected = '''      const buildId =
-        document.querySelector('meta[name="build-id"]')?.content || "";
-      const registryUrl =
-        buildId && !buildId.startsWith("__BUILD_")
-          ? `./translations/index.json?v=${encodeURIComponent(buildId)}`
-          : "./translations/index.json";
-      const res = await fetch(registryUrl);'''
+          expected = "\n".join([
+              "      const buildId =",
+              "        document.querySelector('meta[name=\"build-id\"]')?.content || \"\";",
+              "      const registryUrl =",
+              "        buildId && !buildId.startsWith(\"__BUILD_\")",
+              "          ? `./translations/index.json?v=${encodeURIComponent(buildId)}`",
+              "          : \"./translations/index.json\";",
+              "      const res = await fetch(registryUrl);",
+          ])
           if expected not in text:
               raise SystemExit('Final registry block does not match expected formatting')
           PY
