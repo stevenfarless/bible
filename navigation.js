@@ -24,6 +24,12 @@ export function updateNavigationState(app) {
     }
 
     app.currentChapterSpan.textContent = app.state.currentChapter;
+    const chapterEquivalent = app.getChapterEquivalent?.(book, app.state.currentChapter);
+    const chapterLabel = chapterEquivalent
+        ? `${full} ${app.state.currentChapter} (${chapterEquivalent})`
+        : `${full} ${app.state.currentChapter}`;
+    app.chapterSelector?.setAttribute('title', chapterLabel);
+    app.chapterSelector?.setAttribute('aria-label', chapterLabel);
 
     const books = app.getAllBooks();
     const currentBookIndex = books.indexOf(book);

@@ -4,6 +4,7 @@
 
 import { BibleApi, LOCAL_TRANSLATIONS } from "./bible-api.js";
 import { loadStructure, eventsForChapter } from "./bsb-structure.js";
+import { formatPassageTitle, getChapterEquivalent } from "./versification.js";
 import {
   initializeState,
   navigateChapter as navChapter,
@@ -1079,6 +1080,7 @@ class BibleApp {
     this.searchExpandedTestaments = new Set();
     this.searchExpandedBooks = new Set();
     this.bibleApi = new BibleApi(this.state.translation || "KJV");
+    this.translationMeta = null;
 
     // Expose instance for Playwright debug log attachment — REMOVE BEFORE MERGING TO MAIN.
     window._bibleApp = this;
@@ -1386,6 +1388,13 @@ class BibleApp {
   getDisplayName(book) {
     return getDisplayName(this, book);
   }
+  getChapterEquivalent(book, chapter) {
+    return getChapterEquivalent(this.translationMeta, book, chapter);
+  }
+  formatPassageTitle(book, chapter) {
+    const displayName = book === "Psalm" ? "Psalm" : this.getDisplayName(book);
+    return formatPassageTitle(this.translationMeta, displayName, book, chapter);
+  }
 
   /**
    * Rebuild app.bibleBooks from a translation's meta.json.
@@ -1398,6 +1407,7 @@ class BibleApp {
    * @param {object|null} meta  parsed meta.json, or null on fetch failure
    */
   _rebuildBibleBooks(meta) {
+    this.translationMeta = meta || null;
     this.bibleBooks = buildBibleBooks(meta);
     this._dbgEvent(
       `_rebuildBibleBooks: ${Object.values(this.bibleBooks).reduce((n, t) => n + Object.keys(t).length, 0)} books`,
@@ -1427,6 +1437,7 @@ class BibleApp {
           book,
           chapter: parseInt(chapter, 10),
           translation: translation || "KJV",
+          buildId: document.querySelector('meta[name="build-id"]')?.content || "",
           title,
           html,
         }),
@@ -1452,7 +1463,14 @@ class BibleApp {
         return false;
       }
 
-      const { book, chapter, translation, title, html } = JSON.parse(raw);
+      const { book, chapter, translation, buildId, title, html } = JSON.parse(raw);
+      const currentBuildId =
+        document.querySelector('meta[name="build-id"]')?.content || "";
+      if (currentBuildId && buildId !== currentBuildId) {
+        this._dbgEvent("cache MISS: passage cache belongs to another build");
+        localStorage.removeItem(PASSAGE_CACHE_KEY);
+        return false;
+      }
       const cachedHtml = typeof html === "string" ? html : "";
 
       const hasLoadingPlaceholder =
@@ -1763,7 +1781,11 @@ class BibleApp {
       // when a deuterocanonical translation is restored from localStorage
       // on page refresh without a changeTranslation call.
       const startingTranslation = this.state.translation;
-      fetch(`./translations/${startingTranslation}/meta.json`)
+      fetch(
+        buildId && !buildId.startsWith("__BUILD_")
+          ? `./translations/${startingTranslation}/meta.json?v=${encodeURIComponent(buildId)}`
+          : `./translations/${startingTranslation}/meta.json`
+      )
         .then((r) => (r.ok ? r.json() : null))
         .then((meta) => {
           if (meta?.books?.length) {
@@ -1865,6 +1887,15 @@ class BibleApp {
       chapter = 1;
     }
 
+    const chapterCount = this.getChapterCount(book);
+    if (chapterCount > 0 && (chapter < 1 || chapter > chapterCount)) {
+      const requestedChapter = chapter;
+      chapter = Math.min(chapterCount, Math.max(1, Number(chapter) || 1));
+      this._dbgEvent(
+        `loadPassage: ${book} ${requestedChapter} outside canon — clamped to ${chapter}`,
+      );
+    }
+
     if (!restoreScroll)
       this.saveReadingPosition?.("loadPassage-start:" + source);
 
@@ -1887,7 +1918,7 @@ class BibleApp {
       const allEvents = await loadStructure(book, this.state.translation);
       scaffoldEvents = eventsForChapter(allEvents, chapter);
     } catch (err) {
-      console.warn("loadPassage: BSB structure scaffold unavailable", err);
+      console.warn("loadPassage: passage structure scaffold unavailable", err);
     }
 
     const data = await this.bibleApi.fetchPassage(
@@ -1915,10 +1946,7 @@ class BibleApp {
     }
 
     this.updateNavigationState();
-    const title =
-      book === "Psalm"
-        ? `Psalm ${chapter}`
-        : `${this.getDisplayName(book)} ${chapter}`;
+    const title = this.formatPassageTitle(book, chapter);
     this.passageTitle.textContent = title;
     this.passageText.innerHTML = data.passages[0];
     this.originalPassageHtml = this.passageText.innerHTML;

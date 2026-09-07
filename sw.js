@@ -69,6 +69,7 @@ const APP_SHELL = [
   './search-index-engine.js',
   './bible-structure.js',
   './bsb-structure.js',
+  './versification.js',
   './book-aliases.js',
   './reading-state.js',
   './translation-store.js',
@@ -292,7 +293,10 @@ self.addEventListener('fetch', (event) => {
       const resp = await fetch(event.request);
       if (event.request.method === 'GET' && resp && resp.status === 200) {
         const translation = translationFromUrl(url.pathname);
-        const allowCache = translation === null || installedTranslations.has(translation);
+        const isTranslationStructure = url.pathname.includes('_structure/');
+        const allowCache = translation === null
+          || installedTranslations.has(translation)
+          || isTranslationStructure;
         if (allowCache) cache.put(event.request, resp.clone());
       }
       return resp;
