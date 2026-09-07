@@ -35,6 +35,17 @@
       "precache": true
     },
     {
+      "id": "BST",
+      "label": "Brenton Septuagint Translation",
+      "abbreviation": "BST",
+      "language": "en",
+      "textDirection": "ltr",
+      "year": 1851,
+      "canon": "septuagint",
+      "philosophy": "formal",
+      "copyright": "Brenton Septuagint Translation (1851). Public domain."
+    },
+    {
       "id": "CSB",
       "label": "Christian Standard Bible",
       "abbreviation": "CSB",

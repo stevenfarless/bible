@@ -1,0 +1,270 @@
+{
+  "translation": "BST",
+  "books": [
+    {
+      "name": "Genesis",
+      "testament": "Old Testament",
+      "chapters": 50
+    },
+    {
+      "name": "Exodus",
+      "testament": "Old Testament",
+      "chapters": 40
+    },
+    {
+      "name": "Leviticus",
+      "testament": "Old Testament",
+      "chapters": 27
+    },
+    {
+      "name": "Numbers",
+      "testament": "Old Testament",
+      "chapters": 36
+    },
+    {
+      "name": "Deuteronomy",
+      "testament": "Old Testament",
+      "chapters": 34
+    },
+    {
+      "name": "Joshua",
+      "testament": "Old Testament",
+      "chapters": 24
+    },
+    {
+      "name": "Judges",
+      "testament": "Old Testament",
+      "chapters": 21
+    },
+    {
+      "name": "Ruth",
+      "testament": "Old Testament",
+      "chapters": 4
+    },
+    {
+      "name": "1 Samuel",
+      "testament": "Old Testament",
+      "chapters": 31
+    },
+    {
+      "name": "2 Samuel",
+      "testament": "Old Testament",
+      "chapters": 24
+    },
+    {
+      "name": "1 Kings",
+      "testament": "Old Testament",
+      "chapters": 22
+    },
+    {
+      "name": "2 Kings",
+      "testament": "Old Testament",
+      "chapters": 25
+    },
+    {
+      "name": "1 Chronicles",
+      "testament": "Old Testament",
+      "chapters": 29
+    },
+    {
+      "name": "2 Chronicles",
+      "testament": "Old Testament",
+      "chapters": 36
+    },
+    {
+      "name": "Ezra",
+      "testament": "Old Testament",
+      "chapters": 23
+    },
+    {
+      "name": "Nehemiah",
+      "testament": "Old Testament",
+      "chapters": 13
+    },
+    {
+      "name": "Esther",
+      "testament": "Old Testament",
+      "chapters": 10
+    },
+    {
+      "name": "Job",
+      "testament": "Old Testament",
+      "chapters": 42
+    },
+    {
+      "name": "Psalm",
+      "testament": "Old Testament",
+      "chapters": 151
+    },
+    {
+      "name": "Proverbs",
+      "testament": "Old Testament",
+      "chapters": 31
+    },
+    {
+      "name": "Ecclesiastes",
+      "testament": "Old Testament",
+      "chapters": 12
+    },
+    {
+      "name": "Song of Solomon",
+      "testament": "Old Testament",
+      "chapters": 8
+    },
+    {
+      "name": "Isaiah",
+      "testament": "Old Testament",
+      "chapters": 66
+    },
+    {
+      "name": "Jeremiah",
+      "testament": "Old Testament",
+      "chapters": 52
+    },
+    {
+      "name": "Lamentations",
+      "testament": "Old Testament",
+      "chapters": 5
+    },
+    {
+      "name": "Ezekiel",
+      "testament": "Old Testament",
+      "chapters": 48
+    },
+    {
+      "name": "Daniel",
+      "testament": "Old Testament",
+      "chapters": 12
+    },
+    {
+      "name": "Hosea",
+      "testament": "Old Testament",
+      "chapters": 14
+    },
+    {
+      "name": "Joel",
+      "testament": "Old Testament",
+      "chapters": 4
+    },
+    {
+      "name": "Amos",
+      "testament": "Old Testament",
+      "chapters": 9
+    },
+    {
+      "name": "Obadiah",
+      "testament": "Old Testament",
+      "chapters": 1
+    },
+    {
+      "name": "Jonah",
+      "testament": "Old Testament",
+      "chapters": 4
+    },
+    {
+      "name": "Micah",
+      "testament": "Old Testament",
+      "chapters": 7
+    },
+    {
+      "name": "Nahum",
+      "testament": "Old Testament",
+      "chapters": 3
+    },
+    {
+      "name": "Habakkuk",
+      "testament": "Old Testament",
+      "chapters": 3
+    },
+    {
+      "name": "Zephaniah",
+      "testament": "Old Testament",
+      "chapters": 3
+    },
+    {
+      "name": "Haggai",
+      "testament": "Old Testament",
+      "chapters": 2
+    },
+    {
+      "name": "Zechariah",
+      "testament": "Old Testament",
+      "chapters": 14
+    },
+    {
+      "name": "Malachi",
+      "testament": "Old Testament",
+      "chapters": 3
+    },
+    {
+      "name": "1 Esdras",
+      "testament": "Deuterocanon",
+      "chapters": 9
+    },
+    {
+      "name": "Tobit",
+      "testament": "Deuterocanon",
+      "chapters": 14
+    },
+    {
+      "name": "Judith",
+      "testament": "Deuterocanon",
+      "chapters": 16
+    },
+    {
+      "name": "Wisdom of Solomon",
+      "testament": "Deuterocanon",
+      "chapters": 19
+    },
+    {
+      "name": "Sirach",
+      "testament": "Deuterocanon",
+      "chapters": 51
+    },
+    {
+      "name": "Baruch",
+      "testament": "Deuterocanon",
+      "chapters": 5
+    },
+    {
+      "name": "Letter of Jeremiah",
+      "testament": "Deuterocanon",
+      "chapters": 1
+    },
+    {
+      "name": "Susanna",
+      "testament": "Deuterocanon",
+      "chapters": 1
+    },
+    {
+      "name": "Bel and the Dragon",
+      "testament": "Deuterocanon",
+      "chapters": 1
+    },
+    {
+      "name": "1 Maccabees",
+      "testament": "Deuterocanon",
+      "chapters": 16
+    },
+    {
+      "name": "2 Maccabees",
+      "testament": "Deuterocanon",
+      "chapters": 15
+    },
+    {
+      "name": "Prayer of Manasseh",
+      "testament": "Deuterocanon",
+      "chapters": 1
+    },
+    {
+      "name": "3 Maccabees",
+      "testament": "Deuterocanon",
+      "chapters": 7
+    },
+    {
+      "name": "4 Maccabees",
+      "testament": "Deuterocanon",
+      "chapters": 18
+    }
+  ]
+}

@@ -79,30 +79,30 @@ export function parseReference(reference, bookList) {
         for (const name of sorted) {
             const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const prefixRe = new RegExp(
-                '^(' + escapedName + ')\\s+([\\d]+)(?:[:\\s]([\\d]+))?$',
+                '^(' + escapedName + ')\\s+([\\d]+)(?:[:\\s]([\\d]+[a-z]?))?$',
                 'i'
             );
             const m = cleaned.match(prefixRe);
             if (m) {
                 const chapter = parseInt(m[2], 10);
-                const verse = m[3] ? parseInt(m[3], 10) : null;
+                const verse = m[3] ? (/^[0-9]+$/.test(m[3]) ? parseInt(m[3], 10) : m[3].toLowerCase()) : null;
                 if (!Number.isFinite(chapter)) continue;
-                if (verse !== null && !Number.isFinite(verse)) continue;
+                if (verse !== null && typeof verse === 'number' && !Number.isFinite(verse)) continue;
                 return { book: name, chapter, verse };
             }
         }
         return null;
     }
 
-    const match = cleaned.match(/^((?:\d\s+)?[A-Za-z][A-Za-z ]*?)\s+([\d]+)(?:[:\s]([\d]+))?$/);
+    const match = cleaned.match(/^((?:\d\s+)?[A-Za-z][A-Za-z ]*?)\s+([\d]+)(?:[:\s]([\d]+[a-z]?))?$/i);
     if (!match) return null;
 
     const book = match[1].trim();
     const chapter = parseInt(match[2], 10);
-    const verse = match[3] ? parseInt(match[3], 10) : null;
+    const verse = match[3] ? (/^[0-9]+$/.test(match[3]) ? parseInt(match[3], 10) : match[3].toLowerCase()) : null;
 
     if (!book || !Number.isFinite(chapter)) return null;
-    if (verse !== null && !Number.isFinite(verse)) return null;
+    if (verse !== null && typeof verse === 'number' && !Number.isFinite(verse)) return null;
 
     return { book, chapter, verse };
 }

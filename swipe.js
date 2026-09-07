@@ -89,7 +89,7 @@ async function _renderIntoPanel(app, panel, pos) {
     try {
         let scaffoldEvents = [];
         try {
-            const allEvents = await loadStructure(pos.book);
+            const allEvents = await loadStructure(pos.book, app.state.translation);
             scaffoldEvents = eventsForChapter(allEvents, pos.chapter);
         } catch (_) { }
 

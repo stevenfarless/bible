@@ -34,7 +34,8 @@ function sanitizeForLog(value) {
  *   e.g. 'John', '1 Corinthians', 'Song of Solomon', 'Tobit'.
  * @returns {Promise<Array>} Flat array of structure events, or [] on failure.
  */
-export async function loadStructure(bookName) {
+export async function loadStructure(bookName, translation = null) {
+    if (translation === 'BST') return [];
     if (_cache.has(bookName)) return _cache.get(bookName);
     if (_fetchPromise.has(bookName)) return _fetchPromise.get(bookName);
 
